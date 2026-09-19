@@ -379,15 +379,26 @@ explicitly export from the help screen.
 
 ---
 
-## ADR-010 · pnpm workspaces, Node 24 LTS, React Native 0.87 with the New Architecture on
+## ADR-010 · npm workspaces, Node 24 LTS, React Native 0.87 with the New Architecture on
 
 **Status:** Accepted
 
-**Monorepo tool: pnpm workspaces, no Nx/Turborepo.** Five packages
+**Monorepo tool: npm workspaces, no Nx/Turborepo.** Five packages
 (`formula-engine`, `schema`, `api`, `mobile`, `tools`). Turborepo's remote caching
-solves a problem a team of this size does not have; pnpm's strict `node_modules` layout
-solves one it does - it makes an accidental import of a transitive dependency a build
-error, which matters when the rule is that `formula-engine` imports **nothing**.
+solves a problem a team of this size does not have.
+
+> **AMENDED at G3 — was pnpm.** Reason: every gate in the build prompt verifies with
+> `npm run ...` and `npm audit --audit-level=high`. Using pnpm would mean either
+> rewriting the gate commands or maintaining a shim, and neither buys anything. npm 11
+> ships with Node 24, so this removes a tool rather than adding one.
+>
+> **What the change costs us.** pnpm's strict `node_modules` layout would have made an
+> accidental import of a transitive dependency a build *error* — useful, because the
+> rule is that `formula-engine` imports **nothing**. npm's hoisted layout does not.
+> **Replacement control:** a CI check asserting `packages/formula-engine/package.json`
+> has an empty `dependencies` object, plus the lint ban on `Date.now`, `new Date()`,
+> `Math.random`, `Intl` and `process` inside that package (ADR-012). The property is
+> still enforced, just by a test rather than by the resolver.
 
 **Node: 24 LTS.** Node 24 is the current Active LTS in 2026; Node 22 is in maintenance;
 Node 26 released May 2026 but does not enter LTS until October 2026. **Pin 24** - the
@@ -407,7 +418,8 @@ its `package.json` `dependencies` is empty. Purity is the property that lets it 
 identically under Node and Hermes (ADR-012).
 
 **Reverse it if:** build times exceed ~5 minutes, at which point Turborepo earns its
-config.
+config. Revert to pnpm if the empty-dependencies CI check proves insufficient in
+practice — i.e. if a phantom-dependency import ever reaches main.
 
 **Sources:** [Node.js release schedule](https://nodejs.org/en/blog/announcements/evolving-the-nodejs-release-schedule) ·
 [endoflife.date/nodejs](https://endoflife.date/nodejs) ·

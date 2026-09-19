@@ -1,6 +1,6 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 3
+Updated: 2026-09-19T00:00:00Z   Iteration: 4
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -12,7 +12,7 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 | G0 | Repo, state ledger, spec extraction | **PASS** | `ls` of all four files + `wc -l SPEC-DIGEST.md` = **526 lines** (threshold 200). Output in BUILD_LOG.md. |
 | G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
 | G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 BLOCKED-ON-HUMAN** |
-| G3 | Security audit / STRIDE | TODO | needs `npm audit --audit-level=high` + STRIDE rows |
+| G3 | Security audit / STRIDE | **PASS** | `npm audit --audit-level=high` -> **found 0 vulnerabilities**; `STRIDE rows: 87`; 21 items mirrored into TRACEABILITY.md |
 | G4 | Schema + migrations, SQLite & Postgres | TODO | needs up/down/up on both engines + UPDATE/DELETE rejection test |
 | G5 | **Formula Engine + vectors.json** | TODO | needs `test:vectors` under Node AND Hermes, >= 30 vectors, diff empty |
 | G6 | Auth service (phone + OTP) | TODO | needs integration tests |
@@ -90,6 +90,18 @@ sheet and the one handwritten photograph that exists on disk:
   (`open|ready|closed|not_closed`); the decisions doc state machine (p.8) shows all
   five. Both shorter lists are lossy and both `not_started` and `not_closed` are
   load-bearing. **Flagged because it changes a schema the prompt specified literally.**
+- **OD-7 · ADR-010 amended at G3: npm workspaces, not pnpm.** Every gate verifies with
+  `npm run ...` / `npm audit`, so pnpm would need a shim or rewritten gates for no gain;
+  npm 11 ships with Node 24. **Cost:** pnpm's strict layout would have made a phantom
+  transitive import a build error, which mattered for the "formula-engine imports
+  nothing" rule. **Replacement control:** a CI check asserting that package's
+  `dependencies` is empty, plus the ADR-012 lint ban. Amended in the ADR rather than
+  changed silently.
+- **OD-8 · A moderate advisory passed the G3 gate.** `vitest@2/3` pulled
+  `@vitest/mocker` with GHSA-82fw-gwwq-j7x9 (path traversal / arbitrary file read).
+  `--audit-level=high` — the threshold the prompt specifies — would have let it through
+  silently. Upgraded to `vitest@5` (free, no tests written yet) and recorded a standing
+  policy: **moderate findings are triaged weekly and fixed or accepted in writing.**
 - **OD-6 · Stack conflict resolved toward the prompt.** Every existing artifact says
   Flutter (architecture doc L1-L5, `tokens.dart`, the resource plan's four Flutter
   devs). `TARGET_STACK=react-native` overrides, and the two-engine rule collapses to
@@ -120,7 +132,7 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Next action
 
-**G3 - Security audit and STRIDE threat model.** (G0-G2 complete.)
+**G4 - Database schema and migrations.** (G0-G3 complete.) Then **G5, the Formula Engine** - the heart of the product.
 
 <!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN

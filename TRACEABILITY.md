@@ -105,8 +105,28 @@ Resolving it costs one row here and one engine function. Blocks no gate.
 | L-25 | Consent Manager review before 2026-11-13 | Calendar item | Eng | TODO |
 | L-26 | Full DPDP compliance by 2027-05-15 | Programme milestone | **Business** | TODO |
 
-## Security action items (populated at G3)
+## Security action items (from SECURITY-AUDIT.md §7, populated at G3)
 
 | Ref | Threat | Mitigation | Test | Status |
 |-----|--------|-----------|------|--------|
-| - | *Populated when G3 completes.* | - | - | TODO |
+| S-01 | Device theft, DB read | SQLCipher + Keystore key | `test/db-encryption.spec.ts` | TODO |
+| S-02 | OS backup extraction | `allowBackup=false` | manifest assertion | TODO |
+| S-03 | App lock brute force | Argon2id PIN, persisted backoff | `test/app-lock.spec.ts` | TODO |
+| S-04 | Forgotten PIN lockout | OTP recovery, never locked out | `test/pin-recovery.spec.ts` | TODO |
+| S-05 | Screenshot leak | `FLAG_SECURE` on 2 screens only | render test | TODO |
+| S-06 | MITM | TLS 1.3, no cleartext | config assertion | TODO |
+| S-07 | Rogue CA | CA pinning + expiry + kill switch | `test/pinning.spec.ts` | TODO |
+| S-08 | Origin bypass | Cloudflare-only SG + origin secret | Terraform + smoke test | TODO |
+| S-09 | SSH exposure | SSM only, no inbound 22 | Terraform assertion | TODO |
+| S-10 | **Cross-tenant read** | 3 layers incl. Postgres RLS | `test/tenancy.spec.ts` | TODO |
+| S-11 | **Cross-tenant write / forged shop_id** | shop_id from session only | `test/tenancy.spec.ts` | TODO |
+| S-12 | UPDATE/DELETE on entries | REVOKE + trigger | `test/append-only.spec.ts` | TODO (G4) |
+| S-13 | OTP abuse | Rate-limit matrix | `test/otp-limits.spec.ts` | TODO |
+| S-14 | SIM swap | Device binding, 24h hold on export/delete | `test/cooling-off.spec.ts` | ACCEPTED RISK |
+| S-15 | Push payload leak | Trigger-only push | `test/push-payload.spec.ts` | TODO |
+| S-16 | Log leakage | Allow-list logger + scrubber | `test/log-hygiene.spec.ts` | TODO |
+| S-17 | Secrets in repo/APK | gitleaks, SSM, OIDC | CI scan | TODO |
+| S-18 | Vulnerable dependencies | audit + Trivy, high fails | CI | **DONE - 0 vulns** |
+| S-19 | Backup/restore unproven | Two paths + timed drill | drill output | BLOCKED-ON-HUMAN |
+| S-20 | Cloudflare TLS abroad | residency analysis | - | BLOCKED-ON-HUMAN |
+| S-21 | Unsynced entries lost with device | Prompt sync; disclosed | - | ACCEPTED |

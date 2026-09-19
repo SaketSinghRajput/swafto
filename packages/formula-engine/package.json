@@ -1,0 +1,11 @@
+{
+  "name": "@swafto/formula-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "description": "L3 Domain. Pure. No I/O, no clock, no locale, no network. Zero runtime dependencies BY CONTRACT (ADR-010).",
+  "dependencies": {},
+  "scripts": { "test": "vitest run" }
+}

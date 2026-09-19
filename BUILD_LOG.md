@@ -117,3 +117,46 @@ Output:
 G2 PASS.
 
 NEXT — G3 security audit and STRIDE.
+
+## 2026-09-19 · G3 · Security audit and STRIDE · PASS
+
+Set up the npm workspace (needed before `npm audit` can mean anything), then wrote
+SECURITY-AUDIT.md: STRIDE across six trust boundaries from the architecture DFD,
+87 table rows, 21 register items mirrored into TRACEABILITY.md.
+
+FOUND — a real advisory the specified gate would have missed. `vitest@2/3` pulls
+`@vitest/mocker` with GHSA-82fw-gwwq-j7x9, path traversal / arbitrary file read,
+severity MODERATE. `--audit-level=high` exits 0 on it. Upgraded to vitest@5 (free, no
+tests written against the old version yet) and added a standing policy that moderate
+findings get triaged weekly rather than silently passing. Recorded as OD-8.
+
+DECIDED — on-device encryption is SQLCipher keyed from the Android Keystore, NOT
+per-field encryption. Per-field would destroy SUM() in SQL, which is exactly how
+derive-on-read stays cheap enough to justify having no totals table. The architecture's
+no-cache rule and the encryption choice are coupled, which was not obvious going in.
+
+DECIDED — certificate pinning: pin the CA, not the leaf, with two pins, an expiry after
+which it soft-fails open, and a server-side kill switch. Leaf pinning would brick every
+installed app on a cert rotation, and on devices that update rarely over metered 2G
+that is an unrecoverable outage — the app would lose both its sync AND its ability to
+deliver the fix. Also noted the opposite failure: an old Android may not trust a NEWER
+root, so we bundle our own trust anchor.
+
+NAMED — SIM swap is an ACCEPTED RISK, not a solved one. Phone-only auth has no second
+factor by design (no email, no password per G15). Mitigations are partial: device
+binding, notify the old device, and a 24-hour hold on export and account deletion after
+any number change or new-device sign-in. That hold is the important one — it stops
+immediate exfiltration or destruction. Written down as residual rather than papered over.
+
+NOTED — the security group IS the perimeter. With no NAT gateway and the instance in a
+public subnet (architecture §08), there is no network layer behind which to hide, so
+Cloudflare-only ingress rules plus an origin secret header carry the whole load.
+
+Command:
+  $ npm audit --audit-level=high && echo "STRIDE rows: $(grep -c '^| ' SECURITY-AUDIT.md)"
+Output:
+  found 0 vulnerabilities
+  STRIDE rows: 87
+G3 PASS.
+
+NEXT — G4 database schema and migrations.

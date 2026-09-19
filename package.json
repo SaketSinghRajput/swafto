@@ -1,0 +1,30 @@
+{
+  "name": "swafto",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SWAFTO Retail Desk V1 — offline-first daily cash-and-credit closing for small Indian retail shops",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc --build --force",
+    "lint": "eslint .",
+    "test:unit": "vitest run --dir packages",
+    "test:vectors": "node --experimental-strip-types tools/run-vectors.ts",
+    "test:vectors:node": "node tools/run-vectors.mjs --runtime=node --out=.vectors-node.json",
+    "test:vectors:hermes": "node tools/run-vectors-hermes.mjs --out=.vectors-hermes.json",
+    "test:vectors:diff": "node tools/diff-vectors.mjs .vectors-node.json .vectors-hermes.json",
+    "check:traceability": "node tools/check-traceability.mjs",
+    "check:contrast": "node tools/check-contrast.mjs",
+    "check:i18n": "node tools/check-i18n.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^5.0.1"
+  }
+}
