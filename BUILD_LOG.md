@@ -335,7 +335,7 @@ FOUND, by the new check, on its very first run — TWO REAL DEFECTS:
      and HUMAN-ACTIONS.md stopped at H9. I had invented a cross-reference to a section
      I never wrote. Nothing else would have caught it. H10 now exists (native review
      of the Odia and Hindi strings).
-  2. AD-999 was a dangling reference in BUILD_LOG — a deliberately fake ID from a
+  2. a fabricated decision id was a dangling reference in BUILD_LOG — a deliberately fake ID from a
      negative test, left in the record where a reader would later hunt for it.
      Rephrased without inventing an ID.
 That is the rule paying for itself in one run.
@@ -375,8 +375,10 @@ NEGATIVE-TESTED EVERYTHING NEW (§5.1), 7 planted failures, all caught:
   - Odia template pushed to 111 chars -> FAILED "111 chars against a 70-char segment"
   - template ending with a variable -> FAILED
   - Devanagari numerals in Hindi -> FAILED (constraint 8)
-  - contradictory sentence "RESOLVED but still BLOCKED" -> FAILED with the sentence
-  - dangling AD-042 and B99 -> FAILED naming both
+  - a sentence asserting a resolved status and an unresolved one at once ->
+    FAILED, quoting the offending sentence back
+  - two deliberately fabricated IDs (one decision, one benchmark) -> FAILED
+    naming both, with file and line
   - code text drifting from the submission -> FAILED showing md vs code
   - an unregistered templateId sent -> FAILED naming file:line
   All reverted; all green again.
@@ -386,5 +388,27 @@ Commands:
   $ npm run check:prose        -> no contradictory sentences, no dangling IDs
   $ npm run check:sms          -> markdown and code agree, all ids registered
 
-NEXT — G6 continues: OTP service with persistent rate limits (B.2), then AD-011 for
-the origin-exposure control AD-008 created.
+NEXT — G6 continues: OTP service with persistent rate limits (injection B.2), then
+the compensating control for the origin exposure that AD-008 created (injection C).
+That decision does not have an ID yet and is deliberately not cited as one here:
+citing an ID before writing it is precisely the dangling reference the prose check
+exists to catch, and it caught this line.
+
+### Iteration 8 addendum · the prose check caught my own log three more times
+
+After committing, `check:prose` failed on the BUILD_LOG entry I had just written:
+  - two fabricated IDs quoted from a negative test, which a later reader would hunt for
+  - a forward reference to a decision id I had not written yet, in a "NEXT" line
+  - and the log sentence that QUOTED the contradictory-sentence test, which trips the
+    contradiction rule by construction
+
+The third is the interesting one. A log that quotes a failure verbatim will contain
+the tokens that caused it. Two ways out: an escape hatch in the checker, or rephrase
+the log. TOOK THE REPHRASE. An escape hatch is a hole that grows — the first time
+something legitimate needs it, it gets used, and thereafter it is available to
+anything. Describing the failure instead of quoting it costs nothing and the record
+is just as clear.
+
+Net: four real defects found by a check that did not exist an hour ago, three of them
+in prose I had written minutes earlier while being deliberately careful. That is the
+argument for §5.6 better than any I could make.
