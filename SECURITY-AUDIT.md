@@ -176,13 +176,22 @@ ledger is an unrecoverable trust failure.
 | **Per phone number - send** | 3 | 15 min | 1 h |
 | Per phone number - send | 10 | 24 h | 24 h |
 | **Per phone number - verify attempts** | 5 per code | code lifetime | code invalidated, must resend |
-| Per IP - send | 20 | 1 h | 1 h |
+| Per IP - send | **2000** | 1 h | **none - telemetry only** |
 | Per device id - send | 5 | 1 h | 1 h |
 | Global send rate | circuit-breaker | 1 min | alarm + degrade |
 
 Code properties: **6 digits, cryptographically random (`crypto.randomInt`, never
-`Math.random`), single-use, 5-minute TTL, invalidated on success or on resend**,
+`Math.random`), single-use, 10-minute TTL, invalidated on success or on resend**,
 compared in **constant time**, and **stored only as a hash**.
+
+> **THE TTL WAS 5 MINUTES HERE AND 10 IN `SMS-TEMPLATES.md`, AND HAD BEEN SINCE
+> INJECTION 08.** This row was written at G3 and stated five without reasoning; the
+> template work later argued ten, named the constant `OTP_TTL_SECONDS = 600`, and put
+> *"Valid 10 min"* into the English message. Nobody reconciled them. At iteration 17
+> the code transcribed THIS row, which would have shipped an English SMS promising ten
+> minutes for a code that died in five - a lie in the one artifact that cannot be
+> cheaply changed after DLT registration. Resolved to **ten** in SPEC-DIGEST §1, and
+> `check:sms` now fails if any template's stated duration disagrees with the constant.
 
 Resend throttle with visible countdown - the screen copy already has
 `Resend code in {{ resendLabel }}`.
@@ -200,10 +209,34 @@ rule earns the stated hour - and attempts made while locked out are not recorded
 a handset retrying in the background cannot extend its own lockout. Per T1.3 that
 last property matters more than the limits themselves.
 
-**Two open questions about these numbers**, raised while implementing them and
-deliberately NOT acted on: R-006 (is a 5-minute TTL long enough on a real 2G cell?
-DEVICE-CHECKLIST D2 measures it) and R-007 (per-IP limits under carrier-grade NAT -
-a monitoring rule rather than a change).
+#### The per-IP limit is deliberately WIDE, and here is why nobody should tighten it
+
+**Indian mobile carriers run large-scale carrier-grade NAT.** Thousands of unrelated
+subscribers leave through one public address. A per-IP limit tuned as though an IP
+were a user does not stop an attacker - who rotates addresses for nothing - it locks
+out **a whole neighbourhood of real shopkeepers on the same cell**, all at once, with
+no way for any of them to understand why, at the moment they are trying to reach
+their own ledgers. T1.3's rule applies exactly: locking a shopkeeper out of his own
+books is worse than the threat.
+
+So the division of labour is explicit:
+
+- **Per-NUMBER limits are the real protection** and carry the strict thresholds. They
+  are the ones that cap the SMS bill, and a phone number identifies one user.
+- **Per-IP is a WIDE backstop** against a single host hammering the endpoint - orders
+  of magnitude looser, at 2000/hour. A single crude source still trips it; a busy
+  carrier NAT does not come close.
+- **It never hard-locks.** Saturation is recorded as telemetry, not as a lockout, so
+  it can never be the thing that blocks a genuine sign-in.
+
+**If per-IP rejections ever appear in volume, CGNAT is the first hypothesis and the
+limit must NOT be tightened before it is ruled out.** The signature is distinctive:
+many distinct phone numbers behind one address, each with a low per-number count.
+Tightening in response to that pattern rejects paying customers and does nothing to
+the attacker it was aimed at. Ruled at iteration 19; R-007 closed.
+
+**One open question remains about these numbers:** none. R-006 (the TTL) was resolved
+to ten minutes in SPEC-DIGEST C-8, and R-007 is this section.
 
 #### SIM swap - the honest position
 

@@ -48,17 +48,37 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
 /**
- * Code lifetime. SECURITY-AUDIT TB6: "6 digits, cryptographically random, single-use,
- * 5-minute TTL, invalidated on success or on resend".
+ * Code lifetime: TEN minutes. Resolved at iteration 19, and the resolution is
+ * recorded in SPEC-DIGEST §1 because TWO ARTIFACTS ALREADY DISAGREED before any code
+ * existed.
  *
- * Kept at the spec's 5 minutes. I argued for 10 on the grounds that an SMS on a
- * congested rural cell can take minutes - which is a real concern on this product's
- * network profile - but it is a concern, not a measurement, and DEVICE-CHECKLIST D2
- * measures exactly this ("How long it took. Time it."). R-006 holds the question open
- * until that number exists. Guessing upward would weaken a security control on a
- * hunch; guessing downward would strand real users. Measure it.
+ *   SECURITY-AUDIT TB6, written at G3:  "5-minute TTL", stated, no reasoning.
+ *   SMS-TEMPLATES.md, written later:    "10 minutes", with the trade-off argued,
+ *                                       and naming this very constant as 600.
+ *
+ * At iteration 17 I transcribed TB6 and wrote R-006 saying "the spec stands". That
+ * deference was to the WRONG ARTIFACT: the later, more specific, reasoned ruling said
+ * ten. Deferring to an existing decision is only safe if you find all of them, and I
+ * found one and stopped.
+ *
+ * Why ten is also right on the merits, not merely older-and-newer bookkeeping:
+ *   - The English template SAYS "Valid 10 min" and is about to go to DLT
+ *     registration, where a wording fix costs twelve re-registrations. The copy is
+ *     the expensive artifact; the constant is the cheap one. Make the copy true.
+ *   - SMS on a congested Indian cell takes minutes, not seconds, and a shopkeeper
+ *     aged 35-70 does not have the handset in his hand when it lands. A five-minute
+ *     window fails the SCENARIO, not the edge case.
+ *   - What ten minutes costs: a code readable off a lock screen for five more
+ *     minutes, on a single-user device behind a counter, with an optional app lock.
+ *     What five costs: a failed sign-in on a weak cell, indistinguishable to the user
+ *     from a wrong code, while he is trying to reach his own ledger.
+ *   - Guessing does not decide it and the attempt limit does: six digits against five
+ *     attempts is five in a million however long the code lives.
+ *
+ * DEVICE-CHECKLIST D2 still measures real carrier latency. It can now only push this
+ * number UP.
  */
-export const OTP_TTL_SECONDS = 5 * MINUTE;
+export const OTP_TTL_SECONDS = 10 * MINUTE;
 
 /** 6 digits, per TB6 and B.3. Stated here so nothing else picks its own length. */
 export const OTP_DIGITS = 6;
@@ -86,13 +106,29 @@ export const OTP_LIMITS = {
     source: 'SECURITY-AUDIT TB6, "Per phone number - send", 10 / 24 h, lockout 24 h',
   },
 
-  /** TB6: per IP - send - 20 per 1 h, lockout 1 h. */
+  /**
+   * DELIBERATELY WIDE, AND IT MUST STAY THAT WAY. Ruled at iteration 19; R-007.
+   *
+   * Indian mobile carriers run large-scale carrier-grade NAT, so thousands of
+   * unrelated subscribers leave through one public address. A per-IP limit tuned as
+   * though an IP were a user does not stop an attacker - who rotates addresses for
+   * nothing - it locks out a whole neighbourhood of real shopkeepers on one cell, at
+   * the moment each is trying to reach his own ledger. T1.3 again: that is worse than
+   * the threat.
+   *
+   * Per-NUMBER limits are the real protection. This is a backstop against one crude
+   * host hammering the endpoint, and NOTHING MORE.
+   *
+   * `lockoutSeconds: 0` means telemetry, not a lock: `consume` records the attempt
+   * and reports `allowed`, so exceeding this can never be the thing that blocks a
+   * genuine sign-in. Read the saturation counter; do not gate on it.
+   */
   sendPerIp: {
     name: 'otp:send:ip:hour',
     windowSeconds: HOUR,
-    max: 20,
-    lockoutSeconds: HOUR,
-    source: 'SECURITY-AUDIT TB6, "Per IP - send", 20 / 1 h, lockout 1 h',
+    max: 2000,
+    lockoutSeconds: 0,
+    source: 'SECURITY-AUDIT TB6 as amended at iteration 19, "Per IP - send", 2000 / 1 h, telemetry only',
   },
 
   /** TB6: per device id - send - 5 per 1 h, lockout 1 h. */
@@ -117,7 +153,9 @@ export const OTP_LIMITS = {
     windowSeconds: OTP_TTL_SECONDS,
     max: 5,
     lockoutSeconds: OTP_TTL_SECONDS,
-    source: 'SECURITY-AUDIT TB6, "Per phone number - verify attempts", 5 per code',
+    source:
+      'SECURITY-AUDIT TB6, "Per phone number - verify attempts", 5 per code; TTL per ' +
+      'SPEC-DIGEST §1 ruling (10 min)',
   },
 } as const satisfies Record<string, RateRule>;
 

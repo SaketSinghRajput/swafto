@@ -1,5 +1,27 @@
 # REVIEW
 
+## The adversary checklist (§6.3)
+
+A1 fixture uniformity · A2 composed removals · A3 topology drift · A4 guards that have
+never executed · A5 untested rejection paths · A6 documents describing a system that
+changed · A7 externally frozen artifacts · A8 reconstructed-from-memory constants ·
+A9 derived claims about how two things interact · A10 generated files nothing
+regenerates ·
+
+**A11 · CONTENTS, NOT METADATA.** Is the claim about the artifact's *identity* or
+about what is actually *inside* it? Added after two instances in one iteration:
+static font instances at 42 KB against 858 KB - an apparent 85% saving - containing
+**zero Odia glyphs**, a defect that survives any review reading file sizes, filenames
+or family names; and the near-miss on Noto, where the family name was verified and
+the licence was not.
+
+*Ask: what did I check - the label or the payload? Open the payload.* It generalises
+well past fonts - a migration file that exists and is empty, a translation bundle
+with the right key count and English values, a screenshot of the right screen with
+stale data, a dependency at the right version from the wrong registry. Where an
+artifact is binary or generated, inspect its contents.
+
+
 Findings from the adversarial passes required by §5.3, plus standing findings about
 the checks themselves.
 
@@ -182,6 +204,16 @@ because they exist precisely to handle the abnormal.
 ---
 
 ### R-006 · The OTP TTL is a judgement call that a measurement we have not taken would settle
+
+> **CLOSED at iteration 19 - and closed against my own reasoning here, which was
+> wrong in a way worth keeping.** I wrote below that "the spec stands" and deferred to
+> SECURITY-AUDIT TB6's five minutes. There were TWO specs. `SMS-TEMPLATES.md` had
+> ruled ten minutes at injection 08, with the trade-off argued and the constant named
+> as 600, and its English template already promised "Valid 10 min" - so transcribing
+> TB6 would have shipped a lie in the one artifact that cannot be cheaply changed.
+> Deferring to an existing decision is only safe if you find all of them. See
+> SPEC-DIGEST C-8. The lesson generalises past this entry: "the spec says X" is a
+> claim about search coverage, not about X.
 
 **Raised at iteration 17, implementing B.2. Not acted on.**
 

@@ -102,6 +102,57 @@ for (const f of walk('.')) {
   }
 }
 
+/* ---- copy must agree with the constant it describes -------------------- */
+/**
+ * A NUMBER STATED IN COPY IS A PROMISE, AND IT DRIFTS.
+ *
+ * "Valid 10 min" sat in the English template while SECURITY-AUDIT TB6 said five and
+ * the code, transcribing TB6, used five. The shopkeeper would have been told ten and
+ * given five, at the moment he is trying to reach his own ledger, with no way to tell
+ * a dead code from a wrong one - and in the one artifact that cannot be cheaply
+ * changed, because fixing wording after DLT registration means twelve
+ * re-registrations.
+ *
+ * Nothing caught it. The markdown-vs-code check compared the two copies of the TEXT
+ * and both said ten; the disagreement was between the text and a CONSTANT, which no
+ * check looked at. This closes that.
+ *
+ * Deliberately generous in what it matches: any template stating a duration, in any
+ * language, must agree. Hindi and Odia carry no validity clause today (AD-012), so
+ * this is quiet for them - and it fires the moment one gains a number.
+ */
+const ttlSrc = read('apps/api/src/rate-limit/limits.ts');
+const ttlExpr = /export const OTP_TTL_SECONDS = (\d+) \* (MINUTE|SECOND|HOUR);/.exec(ttlSrc);
+if (!ttlExpr) {
+  failures.push(
+    'could not read OTP_TTL_SECONDS out of limits.ts - this check cannot verify the ' +
+      'template copy against a constant it cannot find, and silently passing would ' +
+      'be worse than failing.',
+  );
+} else {
+  const unit = { SECOND: 1, MINUTE: 60, HOUR: 3600 }[ttlExpr[2]];
+  const ttlSeconds = Number(ttlExpr[1]) * unit;
+  const ttlMinutes = ttlSeconds / 60;
+
+  // "10 min", "10 minutes", "10-minute", and the Hindi/Odia words, in case a
+  // validity clause is ever restored to them.
+  const DURATION = /([0-9]+) ?-? ?(minutes|minute|mins|min|मिनट|ମିନିଟ)/gi;
+  let checked = 0;
+  for (const [key, text] of codeTemplates) {
+    for (const m of text.matchAll(DURATION)) {
+      checked += 1;
+      if (Number(m[1]) !== ttlMinutes) {
+        failures.push(
+          `template ${key} promises "${m[0]}" but OTP_TTL_SECONDS is ${ttlSeconds}s ` +
+            `(${ttlMinutes} min). The message would tell a shopkeeper one thing and the ` +
+            `server would do another.`,
+        );
+      }
+    }
+  }
+  console.log(`  OTP_TTL_SECONDS       : ${ttlSeconds}s · ${checked} duration(s) stated in copy`);
+}
+
 console.log(`  templates in markdown : ${mdTemplates.size}`);
 console.log(`  templates in code     : ${codeTemplates.size}`);
 console.log(`  distinct ids          : ${registered.size}`);

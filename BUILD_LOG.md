@@ -1219,3 +1219,137 @@ no-restricted-properties for Date.now and Math.random, no-restricted-syntax for
 exempted because several exist precisely to drive a clock the engine refuses to read.
 
 NEXT — the DC-003 compensating control, then the OTP service B.3-B.5.
+
+## 2026-09-19 · Iteration 19 · Injection 13: verify the verifiers
+
+### A · THE TTL CONTRADICTION — AND IT WAS OLDER AND WORSE THAN REPORTED
+
+Not code-vs-template. TWO ARTIFACTS ALREADY DISAGREED, and had since injection 08:
+
+  SECURITY-AUDIT TB6, written at G3 (06f6044):   "5-minute TTL", stated, no reasoning.
+  SMS-TEMPLATES.md,   written at inj 08 (d57e537): "10 minutes", trade-off argued,
+                                                   naming OTP_TTL_SECONDS = 600, and
+                                                   "Valid 10 min" in the English SMS.
+
+At iteration 17 I transcribed TB6 and wrote R-006 saying "the spec stands". THAT
+DEFERENCE WAS TO THE WRONG ARTIFACT. The later, more specific, reasoned ruling said
+ten. Deferring to an existing decision is only safe if you find ALL of them, and I
+found one and stopped. "The spec says X" is a claim about search coverage, not about X.
+
+RULED 10 MINUTES · SPEC-DIGEST C-8. The copy is the expensive artifact — after DLT
+registration a wording change is twelve re-registrations, the constant is one line —
+and five minutes fails the SCENARIO, not the edge case. TB6 annotated in place, not
+quietly rewritten. R-006 closed against my own reasoning.
+
+CHECK · check:sms now reads OTP_TTL_SECONDS out of limits.ts and compares it against
+every duration stated in any template, in any language. Negative-tested three ways:
+drift the constant (caught), drift the copy (caught), make the constant unreadable
+(caught — and it FAILS rather than skipping, because a check that cannot find its
+subject must not pass).
+
+### B · §5.12 THE VERIFIER INVENTORY
+
+VERIFIERS.md, generated from tools/check-verifiers.mjs and therefore unable to drift
+from it. 16 verifiers: command, claim, implementing file, plantable defect.
+
+  $ npm run check:verifiers   ->  every cited command exists; every benchmark mapped
+  $ npm run prove:verifiers   ->  plants each defect, requires a FAILURE, restores,
+                                  and verifies the restore
+
+12 of 16 are plantable and ALL TWELVE now fail on their planted defect. The other four
+carry a written reason they cannot be planted rather than a blank.
+
+THE HEADLINE NUMBER: 10 of 40 benchmarks have an instrument. 30 DO NOT. That is what
+the SHA lock was hiding — it froze the thresholds and left the measuring instruments
+unexamined, so a benchmark could be green because nothing measured it.
+
+§5.12.4 RETROACTIVE SWEEP OVER ALL 21 GATES — FIVE FINDINGS:
+
+  V-1 · G2's recorded command IS BROKEN AND ALWAYS WAS. Its alternation is escaped in
+        a way that grep -E reads as a LITERAL pipe rather than an alternation. It
+        matches nothing, returns 0, exits 1, and could never have produced the "52"
+        printed beside it. The corrected command gives 40. A gate PASS whose evidence
+        line has never once produced its own recorded output.
+
+  V-2 · G3's "STRIDE rows: 87" counted EVERY TABLE ROW in SECURITY-AUDIT — trust
+        boundaries, the register, the rate-limit table — and labelled them STRIDE.
+        Real STRIDE threat rows, then and now: 28. Right number, wrong noun. Checked
+        against the file as it stood at the G3 commit, not only as it stands today.
+
+  V-3 · G19 cites `npm run check:traceability`, WHICH I DELETED AT ITERATION 15 as a
+        script naming a missing file. B13 and B39 have had no instrument since. I
+        removed a dead command and did not notice a gate depended on its name.
+
+  V-4 · G4 REOPENED. Planting `BEFORE UPDATE OF amount ON entries` — narrowing the
+        append-only trigger to ONE COLUMN — left the entire suite green. Every
+        append-only test had only ever updated `amount`. On Postgres the REVOKE would
+        still catch it; ON SQLITE THE TRIGGER IS THE ONLY DEFENCE, and SQLite is the
+        authoritative store. A column-scoped trigger there means a ledger row whose
+        section, party, day or label can be rewritten in place, silently, forever.
+        Now swept across four unconstrained columns on both engines — chosen because
+        none carries a CHECK constraint, so a rejection can only be the append-only
+        trigger and not some other guard firing first and passing for the wrong
+        reason. The planted narrowing now fails. G4 re-earned, not re-assumed.
+
+  V-5 · BENCHMARKS-RESULTS.md, referenced by the frozen BENCHMARKS.md since iteration
+        6, DID NOT EXIST. Same family as the three absent commands.
+
+B3 MEASURED FOR THE FIRST TIME, and the instrument was wrong before the engine was.
+First reading 57.73% branch. The 63 golden vectors ran in a SEPARATE Node process the
+coverage tool could not see. Putting them under the runner moved the same unchanged
+engine to 85.71%. 28 points of the apparent shortfall were the instrument.
+85.71% against B3's 100% is a real miss, recorded in BENCHMARKS-RESULTS.md with where
+the gap is: rejection and gate-closed arms — the same shape as assertPaise 0/59, since
+the corpus describes VALID days and therefore cannot reach the arms that fire when
+something is wrong. Threshold unchanged. Attempt 1 of 3.
+
+B1 likewise recorded: 63 of 70, attempt 1 of 3, to be closed at G7/G8 where the
+scenarios exist rather than by writing seven vectors today to move a number.
+
+CAUGHT MYSELF: check-verifiers used shell:true, which check:tooling bans as a platform
+trap. It flagged my own file. Replaced with explicit .cmd resolution on Windows. The
+mechanism from iteration 15 catching the author of the mechanism.
+
+### C · A11 · CONTENTS, NOT METADATA — added to the checklist in REVIEW.md
+
+### D
+
+D.1 · R-007 RULED, and the spec was wrong as written. Per-IP goes from 20/hour with a
+      1-hour lockout to 2000/hour, telemetry only, never a lock. Carrier-grade NAT
+      means one address can be a whole neighbourhood of real shopkeepers on one cell.
+      Made STRUCTURAL rather than conventional: lockoutSeconds 0 marks a
+      telemetry-only rule and consume() cannot return allowed:false for one, so a
+      future caller cannot gate on it by accident. It reports `saturated` instead.
+      Tested by hammering it 2025 times: 0 denials, saturation reported. The CGNAT
+      reasoning is in SECURITY-AUDIT so nobody tightens it later for looking loose.
+
+D.2 · The comparison D.2 asks for, done exactly rather than rendered: ten 1s measure
+      6720 units against ten 0s at 11320 — A 4600-UNIT GAP IN A SINGLE ROW, about 2.3
+      em. With tnum both are 10870. Asserted in check:font, plus a teeth-check that
+      fails if the default digits ever measure equal while being reported
+      proportional. Negative-tested by removing the "1" from the tnum map.
+
+D.3 · ADR-015 strengthened: the discard must be SEEN. Silently discarding still leaves
+      "did I already type that?", and people answer that question by typing it again —
+      which is how an expense gets entered twice. Field visibly empty showing its
+      placeholder, banner names how many lines survived, banner persists until
+      dismissed or the next commit, because a faded toast is no banner to someone who
+      was looking at the customer.
+
+D.4 · The cast's lie assumed nowhere else — CONFIRMED BY GREP, not by reasoning: the
+      engine reads no `source` field at all. The DB CHECK constraint did already
+      validate it, but the rejection corpus had no case, so a wrong value was refused
+      by luck of schema rather than by design. Added `enum-unknown-source`; 34 -> 35
+      cases.
+
+Commands:
+  $ npm run check:all         -> 11 checks, all pass
+  $ npm run prove:verifiers   -> 12 of 12 plantable verifiers fail as they should
+  $ npx vitest run            -> 303 passed, 0 skipped (was 231)
+  $ npm run coverage          -> 85.71% branch (B3 MISSED, recorded)
+  $ npm run test:vectors:diff -> divergence: NONE
+
+Injection 14 persisted verbatim and injections.lock RE-PINNED deliberately — the only
+sanctioned reason, a new injection arriving. The lock caught the unpinned file first.
+
+NEXT — DC-003's compensating control, then the OTP service on the limiter.

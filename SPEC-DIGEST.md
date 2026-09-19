@@ -124,6 +124,44 @@ all three where it speaks explicitly.
 - **Ruling:** mode sets are **per-section**, not global. Shop Stock is meaningless for
   a purchase and for a collection. The engine validates mode against section.
 
+### C-8 · OTP code lifetime: 5 minutes vs 10 — **RULED: 10 minutes**
+
+- **SECURITY-AUDIT TB6**, written at G3: *"single-use, 5-minute TTL"*. Stated, with no
+  reasoning attached.
+- **SMS-TEMPLATES.md §5**, written at injection 08: *"**10 minutes.** Long enough for
+  an SMS to arrive over a congested 2G cell, short enough that a code read off a lock
+  screen an hour later is dead."* It names the constant as `OTP_TTL_SECONDS = 600` and
+  puts **"Valid 10 min"** into the English message.
+
+**How it surfaced, which matters as much as the ruling.** At iteration 17 the limiter
+transcribed TB6 and set 300. I recorded R-006 saying I preferred ten but that "the
+spec stands" - deferring to a ruling while looking at only one of the two that
+existed. The contradiction was two iterations old and nothing had caught it, because
+every check compared the markdown to the CODE, never the copy to a CONSTANT.
+
+**Ruling: 10 minutes**, on four grounds.
+
+1. **The copy is the expensive artifact.** `SMS-TEMPLATES.md` is the DLT submission.
+   After registration a wording change is twelve re-registrations; the constant is one
+   line. Where a number appears in both, the registered text is the constraint and the
+   constant is the variable.
+2. **Five minutes fails the scenario, not the edge case.** SMS over a congested Indian
+   cell takes minutes, and these users are 35-70 and do not have the handset in hand
+   when it lands. Priority 2 (trust) and priority 4 (works on a weak network) point
+   the same way.
+3. **The asymmetry of harm.** Ten minutes costs a code readable from a lock screen for
+   five extra minutes, on a single-user device behind a counter, with an optional app
+   lock. Five costs a failed sign-in that the shopkeeper cannot distinguish from a
+   wrong code, while he is trying to reach his own ledger.
+4. **The window is not the control anyway.** Six digits against five attempts per code
+   is five in a million however long it lives.
+
+**TB6 is annotated in place rather than quietly rewritten**, and R-006 is closed.
+`check:sms` now fails if any template's stated duration disagrees with the constant,
+in any language - negative-tested by drifting the constant, drifting the copy, and
+making the constant unreadable. DEVICE-CHECKLIST D2 still measures real carrier
+latency and can now only push this number up.
+
 ---
 
 ## 2 · The nine decisions (S2) — normative

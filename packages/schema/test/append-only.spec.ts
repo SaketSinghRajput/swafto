@@ -106,6 +106,38 @@ describe('G4 · entries is append-only, enforced by the database', () => {
     });
   });
 
+  /**
+   * EVERY COLUMN, not just `amount`.
+   *
+   * Found by §5.12 --prove at iteration 19. Narrowing the trigger to
+   * `BEFORE UPDATE OF amount ON entries` - a one-word change that leaves every other
+   * column of a ledger row freely mutable - and THE ENTIRE SUITE STILL PASSED,
+   * because every append-only test updated `amount` and nothing else.
+   *
+   * On Postgres the REVOKE would still have caught it. On SQLITE THE TRIGGER IS THE
+   * ONLY DEFENCE, and SQLite is the authoritative store (constraint 2). A
+   * column-scoped trigger there means a ledger row whose section, party, day or
+   * label can be rewritten in place, silently, forever.
+   *
+   * These columns are chosen because none of them carries a CHECK constraint, so a
+   * rejection here can only be the append-only trigger and not some other guard
+   * firing first and making the test pass for the wrong reason.
+   */
+  const UNCONSTRAINED_COLUMNS: [string, string][] = [
+    ['label', "'rewritten'"],
+    ['created_at', "'2020-01-01T00:00:00.000Z'"],
+    ['source', "'imported'"],
+    ['device_id', 'NULL'],
+  ];
+
+  for (const [column, value] of UNCONSTRAINED_COLUMNS) {
+    it(`REJECTS an UPDATE of "${column}", not only of amount`, () => {
+      expect(() =>
+        db.exec(`UPDATE entries SET ${column} = ${value} WHERE id = '${ENTRY}'`),
+      ).toThrow(/append-only/);
+    });
+  }
+
   it('REJECTS a DELETE on entries', () => {
     expect(() => db.exec(`DELETE FROM entries WHERE id = '${ENTRY}'`)).toThrow(/append-only/);
     expect(db.prepare('SELECT count(*) AS n FROM entries').get()).toEqual({ n: 1 });

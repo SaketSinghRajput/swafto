@@ -138,6 +138,26 @@ describe('G4 · Postgres migrations and append-only', () => {
     expect(String(still.rows[0].amount)).toBe('678000');
   }, 20_000);
 
+  /**
+   * The same sweep as the SQLite side. Postgres has REVOKE as well as the trigger,
+   * so a column-scoped trigger would still be caught here - but the test must prove
+   * that rather than assume it, and the two engines are meant to behave identically
+   * (G4). See the comment in append-only.spec.ts for how this was found.
+   */
+  maybe()('REJECTS an UPDATE of any column, not only amount', async () => {
+    for (const [column, value] of [
+      ['label', "'rewritten'"],
+      ['created_at', "'2020-01-01T00:00:00.000Z'"],
+      ['source', "'imported'"],
+      ['device_id', 'NULL'],
+    ]) {
+      await expect(
+        client.query(`UPDATE entries SET ${column} = ${value} WHERE id = '${ENTRY}'`),
+        `UPDATE of ${column} must be rejected`,
+      ).rejects.toThrow();
+    }
+  }, 20_000);
+
   maybe()('has Row-Level Security enabled on every tenant-scoped table (S-10)', async () => {
     // Scoped to `public`. Without the namespace join this counted a table of the
     // same name in ANY schema, and it silently returned 12 the moment another suite

@@ -624,6 +624,16 @@ answer is not the obvious one.
    with an empty amount field and a non-blocking banner along the lines of *"3 lines
    saved. The amount you were typing was not saved."*
 
+   **The discard must be VISIBLE, and that is a requirement rather than a nicety.**
+   Silently discarding is better than silently restoring, but it still leaves the
+   shopkeeper asking "did I already type that?" - and the way people resolve that
+   question is by typing it again, which is how an expense gets entered twice. So:
+   the amount field is visibly EMPTY, showing its placeholder rather than a value;
+   the banner names how many lines survived, so the answer to "what did I lose" is on
+   screen rather than inferred; and the banner persists until dismissed or until the
+   next line is committed, because a toast that has already faded is the same as no
+   banner for anyone who was looking at the customer. The G12 test asserts all three.
+
 **Why discarding is the safe choice and restoring is the dangerous one.** A resurrected
 half-typed amount is a WRONG NUMBER THAT LOOKS LIKE A RIGHT ONE. Someone typing 450 who
 is interrupted after 45 comes back to a field reading 45 - in the right place, looking

@@ -267,6 +267,28 @@ describe('B.2 · rate limits are persistent and shared', () => {
     expect((await limiter.consume(rule, OTHER_PHONE)).allowed).toBe(true);
   });
 
+  maybe()('the per-IP backstop NEVER denies, however hard it is hammered (R-007)', async () => {
+    // Carrier-grade NAT means one address can be a whole town of real shopkeepers.
+    // This rule exists to be COUNTED, not enforced, and that has to be structural -
+    // a future caller must not be able to gate on it by accident.
+    await primary.query('DELETE FROM rate_events');
+    const clock = clockAt(T0);
+    const limiter = new RateLimiter(runner(primary), { secret: SECRET, now: clock.now });
+    const rule = OTP_LIMITS.sendPerIp;
+
+    expect(rule.lockoutSeconds).toBe(0);
+
+    let denied = 0;
+    let saturated = false;
+    for (let i = 0; i < rule.max + 25; i += 1) {
+      const d = await limiter.consume(rule, IP);
+      if (!d.allowed) denied += 1;
+      if (d.saturated) saturated = true;
+    }
+    expect(denied, 'a telemetry-only rule must never deny').toBe(0);
+    expect(saturated, 'but it must REPORT that it went over').toBe(true);
+  }, 180_000);
+
   maybe()('consumeAll stops at the first rejection and names the rule', async () => {
     await primary.query('DELETE FROM rate_events');
     const clock = clockAt(T0);
@@ -323,7 +345,14 @@ describe('B.2 · rate limits are persistent and shared', () => {
     for (const r of ALL_OTP_RULES) {
       expect(r.max, r.name).toBeGreaterThan(0);
       expect(r.windowSeconds, r.name).toBeGreaterThan(0);
-      expect(r.lockoutSeconds, r.name).toBeGreaterThan(0);
+      // 0 is legal and meaningful: it marks a TELEMETRY-ONLY rule, which never
+      // denies (R-007). Anything else must carry a real lockout.
+      expect(r.lockoutSeconds, r.name).toBeGreaterThanOrEqual(0);
+      if (r.lockoutSeconds === 0) {
+        expect(r.name, 'only the per-IP backstop is telemetry-only').toBe(
+          OTP_LIMITS.sendPerIp.name,
+        );
+      }
       expect(r.source, r.name + ' source').toMatch(/SECURITY-AUDIT TB6/);
     }
   });
@@ -342,20 +371,21 @@ describe('B.2 · rate limits are persistent and shared', () => {
 
     expect(rows).toContain('| Per phone number - send | 3 | 15 min | 1 h |');
     expect(rows).toContain('| Per phone number - send | 10 | 24 h | 24 h |');
-    expect(rows).toContain('| Per IP - send | 20 | 1 h | 1 h |');
+    expect(rows).toContain('| Per IP - send | 2000 | 1 h | none - telemetry only |');
     expect(rows).toContain('| Per device id - send | 5 | 1 h | 1 h |');
     expect(
       rows.some((r) => r.startsWith('| Per phone number - verify attempts | 5 per code |')),
     ).toBe(true);
-    expect(md).toContain('5-minute TTL');
+    expect(md).toContain('10-minute TTL');
 
     expect(OTP_LIMITS.sendPerPhoneBurst.max).toBe(3);
     expect(OTP_LIMITS.sendPerPhoneBurst.windowSeconds).toBe(15 * 60);
     expect(OTP_LIMITS.sendPerPhoneDaily.max).toBe(10);
     expect(OTP_LIMITS.sendPerPhoneDaily.windowSeconds).toBe(24 * 3600);
-    expect(OTP_LIMITS.sendPerIp.max).toBe(20);
+    expect(OTP_LIMITS.sendPerIp.max).toBe(2000);
+    expect(OTP_LIMITS.sendPerIp.lockoutSeconds).toBe(0);
     expect(OTP_LIMITS.sendPerDevice.max).toBe(5);
     expect(OTP_LIMITS.verifyPerCode.max).toBe(5);
-    expect(OTP_TTL_SECONDS).toBe(5 * 60);
+    expect(OTP_TTL_SECONDS).toBe(10 * 60);
   });
 });

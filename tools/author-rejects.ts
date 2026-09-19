@@ -95,6 +95,27 @@ cases.push({
   },
 });
 
+/**
+ * D1's reversibility column, defended.
+ *
+ * `source` exists for exactly one purpose: so a future UPI import stays reversible
+ * without a migration. Adversary pass F-04 added the first vector that exercises
+ * 'imported' - and did it with `'imported' as 'manual'`, a cast that LIES, written
+ * while the typechecker was not running. The cast was never load-bearing (the engine
+ * reads no `source` field at all, confirmed by grep), but the column had no
+ * rejection case, so a wrong value would have been stored rather than refused.
+ */
+cases.push({
+  name: 'enum-unknown-source',
+  violates: 'source is manual or imported and nothing else (D1)',
+  layers: ['schema'],
+  schema: {
+    table: 'entries',
+    columns: 'id, shop_id, day_id, section, amount, mode, created_at, source',
+    values: "'{{uuid}}', '{{shop}}', '{{openDay}}', 'cash_sales', 1000, 'cash', '{{now}}', 'ocr'",
+  },
+});
+
 cases.push({
   name: 'enum-shop-stock-on-a-purchase',
   violates: 'mode validity is per section; a purchase has four modes, not five (C-7)',

@@ -11,10 +11,10 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 |------|-------|--------|----------|
 | G0 | Repo, state ledger, spec extraction | **PASS** | `ls` of all four files + `wc -l SPEC-DIGEST.md` = **526 lines** (threshold 200). Output in BUILD_LOG.md. |
 | G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
-| G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|resolved autonomously (DECISIONS-AUTONOMOUS.md)' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 resolved autonomously (DECISIONS-AUTONOMOUS.md)** |
-| G3 | Security audit / STRIDE | **PASS** | `npm audit --audit-level=high` -> **found 0 vulnerabilities**; `STRIDE rows: 87`; 21 items mirrored into TRACEABILITY.md |
-| G4 | Schema + migrations, SQLite & Postgres | **PASS** | `vitest run --dir packages` -> **21 passed, 0 skipped** on BOTH engines. up/down/up clean; UPDATE and DELETE on `entries` rejected by trigger (SQLite) and trigger+REVOKE (Postgres); RLS forced on all 6 tenant tables |
-| G5 | **Formula Engine + vectors.json** | **PASS** | **46 vectors** (>=30). Node: `ALL PASS`. Hermes 0.12 real VM: `no vector threw`. Diff: `divergence: NONE`. Both checks negative-tested - injected errors DO fail them. |
+| G2 | Legal audit | **PASS**, evidence corrected at iteration 19 | `grep -cE 'ACTION-REQUIRED or resolved autonomously' LEGAL-AUDIT.md` -> **40**. The command recorded here previously escaped its alternation as `\|` inside `grep -E`, where that means a LITERAL pipe - it matches nothing, returns 0 and exits 1, and could never have produced the 52 printed beside it. See V-1. 26 items mirrored into TRACEABILITY.md; 7 resolved autonomously. |
+| G3 | Security audit / STRIDE | **PASS**, evidence corrected at iteration 19 | `npm audit --audit-level=high` -> **found 0 vulnerabilities**. STRIDE THREAT rows re-counted: **28**. The 87 recorded here counted EVERY table row in the file - trust boundaries, the register, the rate-limit table - and labelled them STRIDE. Right number, wrong noun. See V-2. 23 items mirrored into TRACEABILITY.md |
+| G4 | Schema + migrations, SQLite & Postgres | **PASS**, REOPENED and re-earned at iteration 19 | `npx vitest run packages/schema` -> **63 passed, 0 skipped** on BOTH engines. §5.12.4 reopened it: the append-only claim had only ever been tested by updating `amount`, so narrowing the trigger to `BEFORE UPDATE OF amount` left the suite green while every other column of a ledger row became mutable on SQLite - the authoritative store. Now swept across four unconstrained columns on both engines, and that planted narrowing fails. See V-4 |
+| G5 | **Formula Engine + vectors.json** | **PASS**, count refreshed at iteration 19 | **63 vectors** (gate minimum 30; B1 asks 70 - recorded as missed in BENCHMARKS-RESULTS.md). Node: `ALL PASS`. Hermes 0.12 real VM: `no vector threw`. Diff: `divergence: NONE`. Both negative-tested. The vectors now also run INSIDE vitest, so coverage can see them - which moved the first honest B3 reading from 57.73% to 85.71%. |
 | G6 | Auth service (phone + OTP) | TODO | needs integration tests |
 | G7 | Sync API (idempotent) | TODO | needs 3x replay of 200-entry batch, byte-identical |
 | G8 | Read API (shared engine) | TODO | needs canonical day through API == vectors.json |
@@ -28,7 +28,7 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 | G16 | Localisation od/hi/en | TODO | needs missing-key test + tri-language screenshot |
 | G17 | Offline endurance, 30 days | TODO | needs empty diff |
 | G18 | Low-end device performance | TODO | constrained AVD (2048MB, 2 cores), release build, median+p95 of 3 runs |
-| G19 | Traceability closure | TODO | needs `npm run check:traceability` |
+| G19 | Traceability closure | TODO | **its instrument does not exist.** `check:traceability` was removed at iteration 15 as a script naming a missing file, and B13 and B39 have had no verifier since. Rebuild it before claiming this gate. See V-3 |
 | G20 | Adversarial self-review | TODO | REVIEW.md, >= 5 real findings. Amendment §5.3 adds reviews after G9, G16 and G19 too |
 
 Legend: `PASS` command ran and its output proves the claim · `IN-PROGRESS` started,

@@ -363,10 +363,42 @@ for (const spec of FONTS) {
   const tnum = f.featureSubstitutions('tnum');
   const tabularWidths = gids.map((g) => f.advanceWidth(tnum.has(g) ? tnum.get(g) : g));
 
+  /**
+   * D.2 asks for the render test by name: "prove it by rendering 1111111111 against
+   * 0000000000 and comparing widths". The font file lets us do better than render -
+   * the advance widths are exact integers, so this is the same comparison without a
+   * device, a renderer or a screenshot to eyeball.
+   */
+  const widthOf = (digit, count, subs) => {
+    const g = f.map.get(digit.codePointAt(0));
+    const gid = subs.has(g) ? subs.get(g) : g;
+    return f.advanceWidth(gid) * count;
+  };
+  const noSubs = new Map();
+  f.ones = { plain: widthOf('1', 10, noSubs), tnum: widthOf('1', 10, tnum) };
+  f.zeros = { plain: widthOf('0', 10, noSubs), tnum: widthOf('0', 10, tnum) };
+
   f.digitWidths = tabularWidths;
   f.tabularByDefault = new Set(defaultWidths).size === 1;
   f.tabularWithFeature = new Set(tabularWidths).size === 1;
   f.needsTnum = !f.tabularByDefault && f.tabularWithFeature;
+
+  // The comparison D.2 names, asserted rather than described.
+  if (f.ones.tnum !== f.zeros.tnum) {
+    failures.push(
+      `${spec.file}: with tnum applied, "1111111111" is ${f.ones.tnum} units and ` +
+        `"0000000000" is ${f.zeros.tnum}. A money column cannot align.`,
+    );
+  }
+  // And the check must have teeth: if the DEFAULT digits already matched, the
+  // comparison would pass whether or not tnum did anything at all.
+  if (!f.tabularByDefault && f.ones.plain === f.zeros.plain) {
+    failures.push(
+      `${spec.file}: the default digits are reported proportional, yet "1111111111" ` +
+        `and "0000000000" measure the same without tnum. One of those two readings is ` +
+        'wrong, and this check cannot tell which.',
+    );
+  }
 
   if (!f.tabularByDefault && !f.tabularWithFeature) {
     failures.push(
@@ -431,6 +463,10 @@ if (needTnum.length) {
   console.log(
     `\n  C.4 · ${needTnum.length} of ${loaded.length} weights have PROPORTIONAL digits by ` +
       'default.\n' +
+      `        Measured on ${needTnum[0].spec.file}: ten 1s are ${needTnum[0].ones.plain} units ` +
+      `against ten 0s at ${needTnum[0].zeros.plain} -\n` +
+      `        a ${needTnum[0].zeros.plain - needTnum[0].ones.plain}-unit gap in one row. ` +
+      `With tnum both are ${needTnum[0].ones.tnum}.\n` +
       '        `tnum` is present and resolves all ten to one width, so the capability\n' +
       '        exists - but it is OFF unless the money style asks for it. Every money\n' +
       "        style MUST set fontVariant: ['tabular-nums'].\n" +

@@ -17,6 +17,9 @@ const GENERATED = [
   { file: 'SMS-TEMPLATES.md', by: ['tools/check-sms-segments.mjs', '--update-md'] },
   { file: 'packages/schema/migrations/0001_init.sqlite.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
   { file: 'packages/schema/migrations/0001_init.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // §5.12: the verifier inventory is generated from the same data the check reads,
+  // so the table cannot drift from the thing it documents.
+  { file: 'VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
 ];
 
 const before = new Map(GENERATED.map((g) => [g.file, readFileSync(g.file, 'utf8')]));
