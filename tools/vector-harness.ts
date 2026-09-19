@@ -188,12 +188,21 @@ export function evaluateVector(v: VectorCase): Record<string, unknown> {
     // Render boundary. Included so a Node/Hermes formatting divergence is caught
     // here rather than on a shopkeeper's screen.
     formatChecks: {
-      '12345678': formatPaise(12345678),
-      '630000': formatPaise(630000),
-      '-25000': formatPaise(-25000),
-      '1': formatPaise(1),
       '0': formatPaise(0),
-      '100000000': formatPaise(100000000),
+      '1': formatPaise(1),
+      '99': formatPaise(99),
+      '630000': formatPaise(630000),
+      // DC-002: every canonical figure in this project is five digits or fewer, and
+      // Indian and Western grouping are IDENTICAL below 1,00,000. The entries below
+      // are the ones that can actually tell the two conventions apart.
+      '9999900': formatPaise(9999900),
+      '10000000': formatPaise(10000000),
+      '15000000': formatPaise(15000000),
+      '124560000': formatPaise(124560000),
+      '1000000000': formatPaise(1000000000),
+      '12345678': formatPaise(12345678),
+      '-25000': formatPaise(-25000),
+      '-124560000': formatPaise(-124560000),
     },
   });
 }

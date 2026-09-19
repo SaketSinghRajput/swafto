@@ -2,7 +2,7 @@
   "$schema": "https://swafto.app/schemas/vectors-v1.json",
   "generatedBy": "tools/author-vectors.ts",
   "note": "GOLDEN TEST VECTORS. Expected values are HAND-WRITTEN against the specification, never computed from the engine. Executed under Node AND Hermes; CI fails if the two runtimes disagree on any vector (ADR-012).",
-  "count": 51,
+  "count": 59,
   "vectors": [
     {
       "name": "canonical-15-july",
@@ -4201,6 +4201,920 @@
       }
     },
     {
+      "name": "grouping-divergence-boundary-99999-vs-100000",
+      "proves": "QUESTION: at what magnitude do Indian and Western digit grouping first differ? ANSWER: 1,00,000. Below it they are identical, which is why every five-digit figure in this project is structurally blind to a locale bug (DC-002).",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 9999900,
+          "countedCash": 9999900,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 9999900,
+        "formatChecks": {
+          "0": "₹0.00",
+          "1": "₹0.01",
+          "99": "₹0.99",
+          "630000": "₹6,300.00",
+          "9999900": "₹99,999.00",
+          "10000000": "₹1,00,000.00",
+          "12345678": "₹1,23,456.78",
+          "15000000": "₹1,50,000.00",
+          "124560000": "₹12,45,600.00",
+          "1000000000": "₹1,00,00,000.00",
+          "-25000": "-₹250.00",
+          "-124560000": "-₹12,45,600.00"
+        }
+      }
+    },
+    {
+      "name": "six-digit-supplier-outstanding",
+      "proves": "QUESTION: does a shop owing 1,50,000 to suppliers compute correctly? ANSWER: yes, and it is the smallest realistic figure that would expose a Western-grouping bug.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000066",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 5000000,
+            "mode": "udhar",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "s-wholesaler"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 10000000
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p5": 5000000,
+        "p8": 15000000,
+        "p2": 0,
+        "p3": 150000
+      }
+    },
+    {
+      "name": "seven-digit-amounts-stay-exact-and-group-correctly",
+      "proves": "QUESTION: does the adversarial shop figure of 12,45,600 survive the engine and the render boundary? ANSWER: yes - integer paise are exact at this magnitude.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 124560000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000067",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 25440000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 25440000,
+        "p3": 150000000,
+        "p4": 25440000
+      }
+    },
+    {
+      "name": "bi6-single-customer-holds-everything",
+      "proves": "QUESTION: what does concentration report when ONE customer owes the entire udhar book? ANSWER: 10000 bp - the worst case the metric exists to surface.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": [
+          {
+            "partyId": "c-only",
+            "amount": 4500000,
+            "since": "2026-06-01"
+          }
+        ]
+      },
+      "expect": {
+        "bi6Available": true,
+        "bi6TopPartyId": "c-only",
+        "bi6TopShareBasisPoints": 10000,
+        "bi6Top3ShareBasisPoints": 10000,
+        "bi6CustomerCount": 1
+      }
+    },
+    {
+      "name": "bi6-two-customers-top-three-is-the-whole-book",
+      "proves": "QUESTION: what does the top-THREE share report when the shop has only two customers? ANSWER: 10000 bp. A two-customer book genuinely is fully concentrated.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": [
+          {
+            "partyId": "c-a",
+            "amount": 3000000,
+            "since": "2026-06-01"
+          },
+          {
+            "partyId": "c-b",
+            "amount": 1000000,
+            "since": "2026-06-02"
+          }
+        ]
+      },
+      "expect": {
+        "bi6Available": true,
+        "bi6TopShareBasisPoints": 7500,
+        "bi6Top3ShareBasisPoints": 10000,
+        "bi6CustomerCount": 2
+      }
+    },
+    {
+      "name": "collection-takes-an-outstanding-to-exactly-zero",
+      "proves": "QUESTION: can a collection settle a customer to exactly zero without going negative or leaving a rounding tail? ANSWER: yes - integer paise settle exactly.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000068",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 456789,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          }
+        ],
+        "priorCreditOutstanding": 456789,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p7": 0,
+        "p1": 456789
+      }
+    },
+    {
+      "name": "eight-sections-skipped-one-entry",
+      "proves": "QUESTION: does a day with a single entry and everything else deliberately skipped reach ready? ANSWER: yes - a skip is a decision, so all 8 sections are resolved.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": [
+            "upi_sales",
+            "udhar_sales",
+            "expense",
+            "purchase",
+            "udhar_collection",
+            "party_payment",
+            "withdrawal"
+          ]
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000069",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 4000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "dayState": "ready",
+        "cashCheckUnlocked": true,
+        "p4": 4000,
+        "progressDone": 9
+      }
+    },
+    {
+      "name": "forty-entries-in-one-section",
+      "proves": "QUESTION: does a busy section sum exactly over many entries? ANSWER: yes. Forty cash sales of 37.77 sum to 1,510.80 with no floating-point drift.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000070",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000071",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000072",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000073",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000074",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000075",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000076",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000077",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000078",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000079",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000080",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000081",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000082",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000083",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000084",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000085",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000086",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000087",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000088",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000089",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000090",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000091",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000092",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000093",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000094",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000095",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000096",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000097",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000098",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000099",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000100",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000101",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000102",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000103",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000104",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000105",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000106",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000107",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000108",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000109",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 3777,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 151080,
+        "p4": 151080,
+        "p3": 301080
+      }
+    },
+    {
       "name": "format-paise-uses-indian-grouping-and-latin-numerals",
       "proves": "The render boundary groups 1,23,456.78 the Indian way, always in Latin numerals, in every language. Hand-rolled rather than Intl, so Hermes and Node agree.",
       "input": {
@@ -4225,10 +5139,16 @@
         "formatChecks": {
           "0": "₹0.00",
           "1": "₹0.01",
+          "99": "₹0.99",
           "630000": "₹6,300.00",
+          "9999900": "₹99,999.00",
+          "10000000": "₹1,00,000.00",
           "12345678": "₹1,23,456.78",
-          "100000000": "₹10,00,000.00",
-          "-25000": "-₹250.00"
+          "15000000": "₹1,50,000.00",
+          "124560000": "₹12,45,600.00",
+          "1000000000": "₹1,00,00,000.00",
+          "-25000": "-₹250.00",
+          "-124560000": "-₹12,45,600.00"
         }
       }
     },
@@ -4253,7 +5173,7 @@
         },
         "entries": [
           {
-            "id": "01890000-0000-7000-8000-000000000066",
+            "id": "01890000-0000-7000-8000-000000000110",
             "dayId": "2026-07-15",
             "section": "cash_sales",
             "amount": 10000,

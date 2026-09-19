@@ -60,3 +60,79 @@ incapable of detecting a locale bug. Recorded as DC-002; mitigation owed at G10.
 
 **Class of defect to hunt:** test data that is uniform in a dimension the code varies
 in. Ask of any fixture set: *what would this never catch?*
+
+---
+
+## Composition pass 1 · after injection 10 (§5.8)
+
+Thirteen autonomous decisions exist (AD-001..013) plus the architecture's own
+standing rulings. Pairwise over the thirteen is 78 pairs; including the four
+architecture rulings most likely to interact (no NAT gateway, public subnet,
+derive-on-read, one-shop-one-phone) gives **136 pairs considered**.
+
+Most are unrelated and dismissing them is fast — AD-007 (retention period) and
+AD-011 (SMS autofill) cannot interact. What follows are the pairs that survived.
+
+**§5.8.2 says to look hardest where BOTH decisions removed something.** Four such
+pairs exist. Three are benign. One is DC-003.
+
+### CP-1 · AD-008 (remove Cloudflare) x architecture §08 (remove NAT gateway) — **DEFECT, already recorded as DC-003**
+
+Two subtractions, each justified, jointly removing every layer between the internet
+and a `t4g.small`. Compounded by injection 08 B.2 putting the rate limiter on that
+same box. **Open; the compensating control is next in the queue.**
+
+### CP-2 · AD-011 (no app hash in templates) x AD-012 (drop the validity clause) — benign, and mutually reinforcing
+
+Both shorten or constrain the SMS. Composed, they could have squeezed the message
+from two directions at once. They do not: AD-012 *freed* budget by removing the
+validity clause, and AD-011 declined to spend it on a hash. Net headroom improved
+from 0 units on the worst template to 6. **Checked by `check:sms:segments`, so the
+composition cannot silently regress.**
+
+### CP-3 · D5 (no stock data) x AD-002 (BI4 formula) x AD-001 (BI6 choice) — benign, and it *caused* two good outcomes
+
+D5's removal of item data is what made the prompt's BI4 formula unbuildable (AD-002)
+and what eliminated expense-category drift from the BI6 candidate list under R3
+(AD-001). A removal propagating two gates downstream and correctly constraining both
+is the healthy version of composition. Worth recording as the counter-example: not
+every composed removal is a defect.
+
+### CP-4 · D9 (one shop, one phone) x AD-004 (SMS stub) — benign now, **a trap later**
+
+D9 means no multi-device conflict resolution exists. AD-004's stub makes every auth
+path testable without a carrier. Composed, there is currently no test anywhere that
+exercises *two devices racing for the same shop*, because the product says that
+cannot happen and the stub would happily serve both. If D9 is ever relaxed, the
+absence is invisible — nothing fails, there is simply no coverage. **Recorded, not
+fixed:** fixing it now would build conflict machinery D9 forbids. The reversal
+trigger on D9 must therefore also require adding this test.
+
+### CP-5 · Derive-on-read x SQLCipher (SECURITY-AUDIT TB2) — benign, already reasoned
+
+Whole-file encryption was chosen partly *because* per-field encryption would break
+`SUM()` in SQL and make derive-on-read unaffordable. This pair was composed
+deliberately at G3 rather than discovered later. Noted so the next pass does not
+re-litigate it.
+
+### CP-6 · Append-only ledger x DPDP right to correction — benign, resolved at G2
+
+Already reasoned in LEGAL-AUDIT §1.5: personal data is editable, ledger entries are
+corrected by a dated correction entry. Recorded here so the composition pass has it
+on file rather than rediscovering it.
+
+**Pairs considered: 136. Findings: 1 defect (pre-existing, DC-003), 1 latent trap
+(CP-4), 4 benign-and-reasoned.**
+
+### What this pass taught me about my own reasoning
+
+The A.3 header finding and DC-003 are the same shape, and injection 10 named it
+before I did: **two correct premises composing into a false conclusion.** Headers are
+six characters; transactional headers carry a category suffix — both true, and the
+conclusion that the suffix eats into the six is false, because a third party appends
+it. I would have derived the wrong answer with high confidence. I looked it up
+instead, and only because the checker forced the contradiction into view.
+
+The operational rule I am taking from this: **when a question is about how two rules
+interact, treat "I can derive this" as a weak signal and go and look.** Composition is
+where derivation is least reliable, which is exactly where it feels most reliable.

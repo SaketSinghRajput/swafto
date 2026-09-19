@@ -1126,6 +1126,157 @@ vectors.push({
   expect: { p1: 999999999, p3: 1999999999 },
 });
 
+/* =================================================================== *
+ * 17b - DC-002: the grouping blindness in our own sample data
+ * =================================================================== */
+
+vectors.push({
+  name: 'grouping-divergence-boundary-99999-vs-100000',
+  proves:
+    'QUESTION: at what magnitude do Indian and Western digit grouping first differ? ' +
+    'ANSWER: 1,00,000. Below it they are identical, which is why every five-digit ' +
+    'figure in this project is structurally blind to a locale bug (DC-002).',
+  input: {
+    day: day({ openingCash: R(99999), countedCash: R(99999) }),
+    entries: [],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: {
+    p3: R(99999),
+    formatChecks: {
+      '0': '\u20B90.00',
+      '1': '\u20B90.01',
+      '99': '\u20B90.99',
+      '630000': '\u20B96,300.00',
+      '9999900': '\u20B999,999.00',
+      '10000000': '\u20B91,00,000.00',
+      '15000000': '\u20B91,50,000.00',
+      '124560000': '\u20B912,45,600.00',
+      '1000000000': '\u20B91,00,00,000.00',
+      '12345678': '\u20B91,23,456.78',
+      '-25000': '-\u20B9250.00',
+      '-124560000': '-\u20B912,45,600.00',
+    },
+  },
+});
+
+vectors.push({
+  name: 'six-digit-supplier-outstanding',
+  proves:
+    'QUESTION: does a shop owing 1,50,000 to suppliers compute correctly? ANSWER: yes, ' +
+    'and it is the smallest realistic figure that would expose a Western-grouping bug.',
+  input: {
+    day: day(),
+    entries: [e('purchase', R(50000), 'udhar', { partyId: 's-wholesaler' })],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: R(100000),
+  },
+  context: ctx(),
+  expect: { p5: R(50000), p8: R(150000), p2: 0, p3: R(1500) },
+});
+
+vectors.push({
+  name: 'seven-digit-amounts-stay-exact-and-group-correctly',
+  proves:
+    'QUESTION: does the adversarial shop figure of 12,45,600 survive the engine and ' +
+    'the render boundary? ANSWER: yes - integer paise are exact at this magnitude.',
+  input: {
+    day: day({ openingCash: R(1245600) }),
+    entries: [e('cash_sales', R(254400), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p1: R(254400), p3: R(1500000), p4: R(254400) },
+});
+
+vectors.push({
+  name: 'bi6-single-customer-holds-everything',
+  proves:
+    'QUESTION: what does concentration report when ONE customer owes the entire udhar ' +
+    'book? ANSWER: 10000 bp - the worst case the metric exists to surface.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({
+    trailing: closedRun(14),
+    openCustomerCredit: [{ partyId: 'c-only', amount: R(45000), since: '2026-06-01' }],
+  }),
+  expect: {
+    bi6Available: true,
+    bi6TopPartyId: 'c-only',
+    bi6TopShareBasisPoints: 10000,
+    bi6Top3ShareBasisPoints: 10000,
+    bi6CustomerCount: 1,
+  },
+});
+
+vectors.push({
+  name: 'bi6-two-customers-top-three-is-the-whole-book',
+  proves:
+    'QUESTION: what does the top-THREE share report when the shop has only two ' +
+    'customers? ANSWER: 10000 bp. A two-customer book genuinely is fully concentrated.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({
+    trailing: closedRun(14),
+    openCustomerCredit: [
+      { partyId: 'c-a', amount: R(30000), since: '2026-06-01' },
+      { partyId: 'c-b', amount: R(10000), since: '2026-06-02' },
+    ],
+  }),
+  expect: {
+    bi6Available: true,
+    bi6TopShareBasisPoints: 7500,
+    bi6Top3ShareBasisPoints: 10000,
+    bi6CustomerCount: 2,
+  },
+});
+
+vectors.push({
+  name: 'collection-takes-an-outstanding-to-exactly-zero',
+  proves:
+    'QUESTION: can a collection settle a customer to exactly zero without going ' +
+    'negative or leaving a rounding tail? ANSWER: yes - integer paise settle exactly.',
+  input: {
+    day: day(),
+    entries: [e('udhar_collection', R(4567.89), 'cash', { partyId: 'c1' })],
+    priorCreditOutstanding: R(4567.89),
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p7: 0, p1: R(4567.89) },
+});
+
+vectors.push({
+  name: 'eight-sections-skipped-one-entry',
+  proves:
+    'QUESTION: does a day with a single entry and everything else deliberately skipped ' +
+    'reach ready? ANSWER: yes - a skip is a decision, so all 8 sections are resolved.',
+  input: {
+    day: day({ skippedSections: ALL_SECTIONS.filter((s) => s !== 'cash_sales') }),
+    entries: [e('cash_sales', R(40), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { dayState: 'ready', cashCheckUnlocked: true, p4: R(40), progressDone: 9 },
+});
+
+vectors.push({
+  name: 'forty-entries-in-one-section',
+  proves:
+    'QUESTION: does a busy section sum exactly over many entries? ANSWER: yes. Forty ' +
+    'cash sales of 37.77 sum to 1,510.80 with no floating-point drift.',
+  input: {
+    day: day(),
+    entries: Array.from({ length: 40 }, () => e('cash_sales', R(37.77), 'cash')),
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p1: 151080, p4: 151080, p3: 151080 + R(1500) },
+});
+
 vectors.push({
   name: 'format-paise-uses-indian-grouping-and-latin-numerals',
   proves:
@@ -1135,12 +1286,18 @@ vectors.push({
   context: ctx(),
   expect: {
     formatChecks: {
-      '12345678': '₹1,23,456.78',
-      '630000': '₹6,300.00',
-      '-25000': '-₹250.00',
-      '1': '₹0.01',
       '0': '₹0.00',
-      '100000000': '₹10,00,000.00',
+      '1': '₹0.01',
+      '99': '₹0.99',
+      '630000': '₹6,300.00',
+      '9999900': '₹99,999.00',
+      '10000000': '₹1,00,000.00',
+      '15000000': '₹1,50,000.00',
+      '124560000': '₹12,45,600.00',
+      '1000000000': '₹1,00,00,000.00',
+      '12345678': '₹1,23,456.78',
+      '-25000': '-₹250.00',
+      '-124560000': '-₹12,45,600.00',
     },
   },
 });

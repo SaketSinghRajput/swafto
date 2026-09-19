@@ -479,3 +479,64 @@ Commands:
 STILL OWED — injection 09 C (the nine React Native traps, before G10), then injection
 08's B.2 persistent rate limits, the origin-exposure control for DC-003, B.3-B.5 the
 OTP service, and the vector shortfall at 51 of 70.
+
+## 2026-09-19 · Iteration 10 · Injection 10: §5.8 composition, C.1 grouping closed
+
+C.1 DONE AND PROVEN EMPIRICALLY. This is the headline result of the iteration.
+
+I injected the exact bug DC-002 predicts — swapped Indian 2-2-3 grouping for Western
+3-3-3 in formatPaise — and ran all 59 vectors.
+
+  ONLY 2 OF 59 VECTORS CAUGHT IT.
+
+Both were the new ones. The canonical 15 July day did not notice. Nothing containing
+6,780 or 18,240 or 27,600 noticed. Fifty-seven vectors, every unit test and every
+screenshot would have shipped a wrong-locale bug to a real shopkeeper looking at
+what he really owes a real supplier. Your prediction was exactly right and now it is
+measured rather than argued.
+
+ADDED 8 VECTORS, 51 -> 59. Each states the question it answers, per instruction:
+  - grouping-divergence-boundary-99999-vs-100000 (where the conventions first differ)
+  - six-digit-supplier-outstanding (1,50,000 - the smallest realistic exposing figure)
+  - seven-digit-amounts-stay-exact (12,45,600 - seeds the adversarial shop)
+  - bi6-single-customer-holds-everything (10000 bp, total concentration)
+  - bi6-two-customers-top-three-is-the-whole-book
+  - collection-takes-an-outstanding-to-exactly-zero
+  - eight-sections-skipped-one-entry
+  - forty-entries-in-one-section (exact summation over many rows)
+Node and Hermes agree on all 59.
+
+ADDED the C.1 static check: one money-formatting path. toLocaleString,
+Intl.NumberFormat and Intl.DateTimeFormat are banned in shipped code, as is toFixed on
+a money identifier. Negative-tested — a planted toLocaleString fails with file:line.
+
+§5.8 ADOPTED. Ran composition pass 1: 136 pairs considered, 1 defect (DC-003,
+pre-existing), 1 latent trap, 4 benign-and-reasoned. Written to REVIEW.md.
+
+FOUND, CP-4 — a trap I had not seen. D9 (one shop, one phone) composed with AD-004
+(the SMS stub) means NOTHING anywhere tests two devices racing for the same shop.
+Nothing fails; there is simply no coverage, and the absence is invisible. Deliberately
+NOT fixed — building that test now would require conflict machinery D9 forbids.
+Instead D9's reversal trigger now carries the obligation to add it.
+
+RECORDED, CP-3 — the counter-example, because §5.8 could otherwise train me to treat
+every composed removal as suspect. D5's removal of stock data propagated correctly
+through two gates: it made the prompt's BI4 formula unbuildable (AD-002) and
+eliminated expense-category drift from the BI6 candidates under R3 (AD-001). That is
+composition working.
+
+PROCESS FAILURE, REPEATED. I patched JavaScript with a Python string replacement
+again — one iteration after recording that exact lesson — and corrupted a newline
+escape again. Reverted from git and used the editor. Recording it a second time
+because clearly once was not enough: the rule is that mechanical edits to anything
+with its own escaping rules go through the editor, not a script.
+
+Commands:
+  $ npm run test:vectors:node  -> ALL PASS (59 vectors)
+  $ npm run test:vectors:diff  -> divergence: NONE
+  $ npm run check:governance   -> 5 invariants incl. C.1 formatting path
+  $ node tools/check-prose.mjs -> clean
+
+NEXT — C.2 bundled Odia font (launch-blocking for the primary language, invisible on
+an emulator), then the remaining RN traps, persistent rate limits, the DC-003
+compensating control, the OTP service, G7/G8.

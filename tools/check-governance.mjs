@@ -77,6 +77,41 @@ for (const f of shipped) {
 if (stubs.length) failures.push(`B40 stubs/TODOs in shipped paths: ${stubs.join(', ')}`);
 else ok.push('B40: no stubs or TODOs in shipped paths');
 
+// 5 · ONE money-formatting path (injection 09 C.1, DC-002).
+//
+// `toLocaleString('en-IN')` is banned outright: Hermes ships without full ICU in many
+// configurations and falls back SILENTLY to Western grouping. No error, no warning,
+// just the wrong comma on a number a shopkeeper is checking against his cash box.
+// Every paise-to-string conversion goes through formatPaise, which is hand-rolled and
+// covered by vectors under both runtimes.
+const FORMAT_BANS = [
+  [/\btoLocaleString\s*\(/, 'toLocaleString - silently wrong on Hermes without ICU'],
+  [/\bIntl\.NumberFormat\b/, 'Intl.NumberFormat - unavailable or partial on Hermes'],
+  [/\bIntl\.DateTimeFormat\b/, 'Intl.DateTimeFormat - the engine must stay locale-free'],
+];
+const formatOffenders = [];
+for (const f of shipped) {
+  if (/[\\/](test|__tests__)[\\/]/.test(f) || /\.spec\.|\.test\./.test(f)) continue;
+  read(f)
+    .split('\n')
+    .forEach((line, i) => {
+      const t = line.trimStart();
+      if (t.startsWith('//') || t.startsWith('*')) return;
+      for (const [re, why] of FORMAT_BANS) {
+        if (re.test(line)) formatOffenders.push(`${f}:${i + 1} uses ${why}`);
+      }
+      // A bare toFixed on a money-ish identifier is a second formatting path.
+      if (/\b(amount|paise|total|balance|cash|sum)\w*\.toFixed\s*\(/i.test(line)) {
+        formatOffenders.push(`${f}:${i + 1} formats money with toFixed, not formatPaise`);
+      }
+    });
+}
+if (formatOffenders.length) {
+  failures.push(`C.1 money formatting: ${formatOffenders.join('; ')}`);
+} else {
+  ok.push('C.1: one money-formatting path, no Intl/toLocaleString in shipped code');
+}
+
 for (const o of ok) console.log(`  ok   ${o}`);
 if (failures.length) {
   console.error('\nGOVERNANCE FAILURES:');
