@@ -223,6 +223,26 @@ export function evaluateAll(file: VectorFile): Record<string, Record<string, unk
  * Compare a vector's hand-written expectations against what the engine produced.
  * Returns human-readable failures; empty means the vector passed.
  */
+/**
+ * Stable stringify: object keys sorted, ARRAY ORDER PRESERVED.
+ *
+ * Array order is meaningful here - OP6 warnings are consumed in due-date order and
+ * the P3 working lines are the cash-check screen's line order - so sorting those
+ * would hide a real defect. Object key order is not meaningful and was producing
+ * false failures when the engine happened to emit keys in a different sequence.
+ */
+function stable(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>;
+    return `{${Object.keys(o)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stable(o[k])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(v) ?? 'null';
+}
+
 export function checkExpectations(
   name: string,
   expected: Record<string, unknown>,
@@ -233,8 +253,8 @@ export function checkExpectations(
     return [`${name}: threw ${String(actual.__error)}`];
   }
   for (const key of Object.keys(expected)) {
-    const want = JSON.stringify(expected[key]);
-    const got = JSON.stringify(actual[key]);
+    const want = stable(expected[key]);
+    const got = stable(actual[key]);
     if (want !== got) failures.push(`${name}.${key}: expected ${want}, got ${got}`);
   }
   return failures;

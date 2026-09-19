@@ -243,3 +243,4 @@ code. They are resolved in `DECISIONS-AUTONOMOUS.md`:
 | Cloudflare residency question | **AD-008** - conservative reading, DNS-only |
 | Pipeline proof without AWS | LocalStack + docker-compose + a locally executed rollback |
 | Performance without a phone | **AD-009** - constrained AVD, limitations recorded |
+

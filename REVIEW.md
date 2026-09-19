@@ -177,3 +177,4 @@ that still holds a never-expiring session.
 can occur, enumerate what the system **does** — every flow, including the recovery and
 failure paths — not what the rules **allow**. Recovery flows are the likeliest source,
 because they exist precisely to handle the abnormal.
+

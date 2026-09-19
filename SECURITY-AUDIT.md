@@ -23,7 +23,7 @@ below is organised by them.
 | **TB1** | Shopkeeper to device | Physical possession, app lock | A phone on a shop counter is handled by customers and staff |
 | **TB2** | App to local SQLite (L3-L4) | File system | A rooted or stolen device exposes the file directly |
 | **TB3** | Device to internet (L5-L6) | **The one network hop** | Hostile networks; a cheap device with a stale trust store |
-| **TB4** | Edge to API (L6-L7) | Cloudflare to EC2 | The origin must not be reachable except through the edge |
+| **TB4** | Internet to API (L6-L7) | **Direct to the EC2 origin** | Since AD-008 there is NO proxy in the data path. The security group IS the perimeter |
 | **TB5** | API to Postgres (L7-L9) | Tenancy enforcement | **Where cross-tenant leakage would happen** |
 | **TB6** | System to external processors | SMS, FCM, Sentry, S3 | Third parties, and residency (LEGAL §2) |
 
@@ -114,14 +114,21 @@ trust store". That cost is real and it cuts both ways:
 **Net:** pinning is worth it only with an expiry and a kill switch. Pinning without a
 recovery path is a self-inflicted outage waiting for a rotation.
 
-### TB4 · Edge to API
+### TB4 · Internet to API
+
+> **TOPOLOGY CHANGED AT AD-008 — read before implementing G9.** This section
+> originally assumed Cloudflare proxied the API. It does not. Cloudflare is DNS-only;
+> TLS terminates on the EC2 origin in `ap-south-1` so that plaintext personal data
+> never exists outside India. Every mitigation below has been rewritten against that
+> topology, and the DDoS row that previously read DONE now reads OPEN, because the
+> thing that made it DONE was removed. See DC-003.
 
 | ID | S | Threat | Impact | Control | Status |
 |----|---|--------|--------|---------|--------|
-| T4.1 | S | Attacker reaches the EC2 origin directly, bypassing Cloudflare's WAF and rate limits | All edge protections bypassed | **Security group allows :443 only from Cloudflare's published IP ranges**, refreshed by a scheduled job. Plus a shared origin secret header the API requires. *There is no NAT gateway and the instance is in a public subnet (architecture §08) - so the security group IS the perimeter* | REQUIRED |
-| T4.2 | D | Volumetric DDoS | Outage | Cloudflare free tier (architecture §08, replaces a load balancer) | DONE by design |
+| T4.1 | S | The EC2 origin is directly addressable on the public internet | No network layer in front of the API at all | **CHANGED BY AD-008.** Cloudflare is DNS-only, so an IP allowlist of its ranges is no longer meaningful. With no NAT gateway and a public subnet (architecture §08), the security group and the API's own rate limiter are the ONLY perimeter. See DC-003 | **OPEN - control not yet decided** |
+| T4.2 | D | Volumetric or L7 flood | Outage AND the SMS bill, together - injection 08 B.2 put the rate limiter on the same box the flood lands on | **NO LONGER MITIGATED.** Cloudflare's absorption left with AD-008. AWS Shield Standard covers L3/L4 only. An in-region ALB or CloudFront keeps termination in ap-south-1, unlike Cloudflare's global edge - to be confirmed, then decided | **OPEN - see DC-003** |
 | T4.3 | E | SSH exposed to the world | Full compromise | **No inbound SSH.** Access via **AWS SSM Session Manager** only - which also avoids needing a bastion or a NAT gateway | REQUIRED |
-| T4.4 | I | Cloudflare terminates TLS outside India | **Residency** - see LEGAL L-10 | **RESOLVED-AUTONOMOUSLY** - needs counsel | RESOLVED-AUTONOMOUSLY |
+| T4.4 | I | TLS terminating outside India would be a possible DPDP transfer | Residency (LEGAL L-10) | **CLOSED by AD-008** - Cloudflare is DNS-only and TLS terminates on the origin in ap-south-1, so plaintext personal data never leaves India. The open legal question was sidestepped rather than answered | DONE |
 
 ### TB5 · API to Postgres - multi-tenant isolation
 
@@ -301,7 +308,7 @@ failure mode: an operator error or a bad migration is faithfully snapshotted.
 | S-05 | T1.5 screenshot leak | `FLAG_SECURE` on 2 screens only | render test | REQUIRED |
 | S-06 | T3.1 MITM | TLS 1.3, no cleartext | config assertion | REQUIRED |
 | S-07 | T3.2 rogue CA | CA pinning + expiry + kill switch | `test/pinning.spec.ts` | REQUIRED |
-| S-08 | T4.1 origin bypass | Cloudflare-only SG + origin secret | Terraform + smoke test | REQUIRED |
+| S-08 | T4.1 directly addressable origin | Tight security group + origin secret; L7 absorption still to be decided | Terraform assertion + smoke test | **OPEN (DC-003)** |
 | S-09 | T4.3 SSH exposure | SSM only, no inbound 22 | Terraform assertion | REQUIRED |
 | S-10 | **T5.1 cross-tenant read** | 3 layers incl. Postgres RLS | **`test/tenancy.spec.ts`** | REQUIRED |
 | S-11 | **T5.2 cross-tenant write / forged shop_id** | `shop_id` from session only; body value rejected | **`test/tenancy.spec.ts`** | REQUIRED |
@@ -313,7 +320,7 @@ failure mode: an operator error or a bad migration is faithfully snapshotted.
 | S-17 | Secrets in repo/APK | gitleaks, SSM, OIDC | CI scan | REQUIRED |
 | S-18 | Vulnerable dependencies | audit + Trivy, high fails | CI | **DONE - 0 vulnerabilities** |
 | S-19 | Backup/restore unproven | Two paths + timed drill | drill output recorded | **RESOLVED-AUTONOMOUSLY** |
-| S-20 | T4.4 Cloudflare TLS abroad | residency analysis | - | **RESOLVED-AUTONOMOUSLY** |
+| S-20 | T4.4 TLS terminating abroad | AD-008: DNS-only, TLS on the origin in ap-south-1 | Terraform assertion | DONE |
 | S-21 | T2.4 unsynced entries lost with device | Prompt sync; disclosed | - | **ACCEPTED** |
 
 ---

@@ -2,9 +2,9 @@
   "$schema": "https://swafto.app/schemas/rejects-v1.json",
   "generatedBy": "tools/author-rejects.ts",
   "note": "THE REJECTION CORPUS (§5.11). vectors.json describes days that are VALID; this describes inputs that must be REFUSED, and names every layer obliged to refuse them. Cases whose only layer is `api` are pending the auth and sync work, and the runner reports them as PENDING rather than letting them pass silently.",
-  "count": 32,
+  "count": 34,
   "coverage": {
-    "engine": 9,
+    "engine": 11,
     "schema": 15,
     "api": 8
   },
@@ -243,6 +243,56 @@
         ]
       },
       "messageMatches": "Not a valid date"
+    },
+    {
+      "name": "state-closed-summary-of-an-open-day",
+      "violates": "BI windows count CLOSED days; admitting an open one opens a gate early",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "toClosedDaySummary",
+        "args": [
+          {
+            "day": {
+              "date": "2026-07-15",
+              "state": "open",
+              "openingCash": 150000,
+              "countedCash": 605000,
+              "skippedSections": []
+            },
+            "entries": [],
+            "priorCreditOutstanding": 0,
+            "priorSupplierOutstanding": 0
+          }
+        ]
+      },
+      "messageMatches": "not 'closed'"
+    },
+    {
+      "name": "state-closed-summary-without-a-count",
+      "violates": "a closed day always carries the cash a human counted",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "toClosedDaySummary",
+        "args": [
+          {
+            "day": {
+              "date": "2026-07-15",
+              "state": "closed",
+              "openingCash": 150000,
+              "countedCash": null,
+              "skippedSections": []
+            },
+            "entries": [],
+            "priorCreditOutstanding": 0,
+            "priorSupplierOutstanding": 0
+          }
+        ]
+      },
+      "messageMatches": "has no counted cash"
     },
     {
       "name": "identity-udhar-sale-without-a-party",

@@ -187,6 +187,44 @@ cases.push({
 });
 
 /* ================================================================== *
+ * STATE GUARDS - found by adversary pass 01 (F-02) at zero coverage.
+ * Written, reviewed, and never once run against the input that trips them -
+ * the same shape as assertPaise at 0/59.
+ * ================================================================== */
+
+const openDayInput = {
+  day: {
+    date: '2026-07-15',
+    state: 'open',
+    openingCash: 150000,
+    countedCash: 605000,
+    skippedSections: [],
+  },
+  entries: [],
+  priorCreditOutstanding: 0,
+  priorSupplierOutstanding: 0,
+};
+
+cases.push({
+  name: 'state-closed-summary-of-an-open-day',
+  violates: 'BI windows count CLOSED days; admitting an open one opens a gate early',
+  layers: ['engine'],
+  engine: { fn: 'toClosedDaySummary', args: [openDayInput] },
+  messageMatches: "not 'closed'",
+});
+
+cases.push({
+  name: 'state-closed-summary-without-a-count',
+  violates: 'a closed day always carries the cash a human counted',
+  layers: ['engine'],
+  engine: {
+    fn: 'toClosedDaySummary',
+    args: [{ ...openDayInput, day: { ...openDayInput.day, state: 'closed', countedCash: null } }],
+  },
+  messageMatches: 'has no counted cash',
+});
+
+/* ================================================================== *
  * IDENTITY - party and tenancy
  * ================================================================== */
 

@@ -1277,6 +1277,111 @@ vectors.push({
   expect: { p1: 151080, p4: 151080, p3: 151080 + R(1500) },
 });
 
+/* =================================================================== *
+ * 17c - dimensions that NEVER varied, found by adversary pass 01
+ * =================================================================== */
+
+vectors.push({
+  name: 'year-boundary-aging-and-horizon',
+  proves:
+    'QUESTION: does date arithmetic survive a YEAR boundary? ANSWER: yes. Every other ' +
+    'vector computes 2026-07-15; nothing crossed 31 December until this one (F-03).',
+  input: {
+    day: {
+      date: '2027-01-01',
+      state: 'open',
+      openingCash: R(1500),
+      countedCash: null,
+      skippedSections: [],
+    },
+    entries: [],
+    priorCreditOutstanding: R(5000),
+    priorSupplierOutstanding: 0,
+  },
+  context: {
+    today: '2027-01-01',
+    trailing: [],
+    openCustomerCredit: [{ partyId: 'c-newyear', amount: R(5000), since: '2026-11-30' }],
+    openSupplierDues: [
+      { partyId: 's-newyear', amount: R(2000), purchasedOn: '2026-12-20', dueDate: '2027-01-05' },
+    ],
+  },
+  // 2026-11-30 to 2027-01-01 is 32 days, so the customer is past 30.
+  expect: {
+    agingVocabularies: { 'c-newyear': 'days_since', 's-newyear': 'current' },
+    op4Count: 1,
+    p3: R(1500),
+  },
+});
+
+vectors.push({
+  name: 'leap-day-arithmetic',
+  proves:
+    'QUESTION: does 29 February exist for the aging maths? ANSWER: yes. 2024-01-30 to ' +
+    '2024-02-29 is exactly 30 days, which sits on the aging threshold (F-03).',
+  input: {
+    day: {
+      date: '2024-02-29',
+      state: 'open',
+      openingCash: R(1000),
+      countedCash: null,
+      skippedSections: [],
+    },
+    entries: [],
+    priorCreditOutstanding: R(3000),
+    priorSupplierOutstanding: 0,
+  },
+  context: {
+    today: '2024-02-29',
+    trailing: [],
+    openCustomerCredit: [
+      { partyId: 'c-at30', amount: R(1000), since: '2024-01-30' },
+      { partyId: 'c-at31', amount: R(2000), since: '2024-01-29' },
+    ],
+    openSupplierDues: [],
+  },
+  // 30 days is NOT past 30; 31 is. The boundary is exclusive.
+  expect: { agingVocabularies: { 'c-at30': 'current', 'c-at31': 'days_since' } },
+});
+
+vectors.push({
+  name: 'imported-source-participates-identically',
+  proves:
+    'QUESTION: does an entry with source "imported" behave exactly like a manual one? ' +
+    'ANSWER: yes. That column exists so D1 stays reversible, and until now NO fixture ' +
+    'had ever set it to anything but manual (F-04).',
+  input: {
+    day: day(),
+    entries: [
+      { ...e('upi_sales', R(2000), 'upi'), source: 'imported' as 'manual' },
+      e('upi_sales', R(3000), 'upi'),
+    ],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p4: R(5000), p1: 0, p3: R(1500) },
+});
+
+vectors.push({
+  name: 'expense-labels-are-carried',
+  proves:
+    'QUESTION: do labelled expenses total correctly? ANSWER: yes. No fixture populated ' +
+    'the label field at all before this - the Form C description column (F-09).',
+  input: {
+    day: day(),
+    entries: [
+      { ...e('expense', R(20), 'cash'), label: 'chai' },
+      { ...e('expense', R(450), 'cash'), label: 'tempo bhada' },
+      { ...e('expense', R(500), 'shop_stock'), label: 'ଦୋକାନ ଷ୍ଟକ୍ ଖର୍ଚ୍ଚ' },
+    ],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p6: R(970), p2: R(470), p3: R(1030) },
+});
+
 vectors.push({
   name: 'format-paise-uses-indian-grouping-and-latin-numerals',
   proves:

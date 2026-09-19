@@ -37,6 +37,21 @@ const GSM_BASIC =
   '¿abcdefghijklmnopqrstuvwxyzäöñüà';
 const GSM_EXTENDED = '^{}\\[~]|€'; // each costs TWO septets
 
+/**
+ * WHY 127 AND NOT 128 (adversary pass 01, F-05).
+ *
+ * The GSM 03.38 basic table has 128 POSITIONS, but position 0x1B is ESC - the escape
+ * into the extension table, not a character anyone can type. GSM_BASIC therefore
+ * holds 127 CONTENT characters, and the extension characters are listed separately
+ * above because each costs two septets rather than one.
+ *
+ * Recorded because this alphabet was reconstructed from memory, and it decides GSM-7
+ * (160 chars) against UCS-2 (70). One wrong character silently halves or doubles the
+ * budget for an entire language - the mechanism behind DC-001.
+ */
+export const GSM_BASIC_CONTENT_CHARS = 127;
+export { GSM_BASIC, GSM_EXTENDED };
+
 function gsmSeptets(text) {
   let n = 0;
   for (const ch of text) {
@@ -142,7 +157,12 @@ console.log(
 
 /* ---- regenerate the markdown tables ------------------------------------- */
 if (process.argv.includes('--update-md')) {
-  let md = readFileSync(MD, 'utf8').split('\r\n').join('\n');
+  const rawMd = readFileSync(MD, 'utf8');
+  // Preserve the file's own line endings. Writing LF into a CRLF file rewrites every
+  // line, and makes check-generated report drift that is not content drift - which is
+  // exactly what it did on its first run (adversary pass 01, F-08).
+  const mdCrlf = rawMd.includes('\r\n');
+  let md = rawMd.split('\r\n').join('\n');
   const byId = new Map();
   for (const t of table) {
     if (!byId.has(t.id)) byId.set(t.id, []);
@@ -180,7 +200,7 @@ if (process.argv.includes('--update-md')) {
     md = [...lines.slice(0, start), (header + body).trimEnd(), ...lines.slice(end)].join('\n');
     rewritten += 1;
   }
-  writeFileSync(MD, md);
+  writeFileSync(MD, mdCrlf ? md.split('\n').join('\r\n') : md);
   console.log(`  rewrote ${rewritten} table(s) in ${MD} from measured values`);
 }
 

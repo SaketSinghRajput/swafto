@@ -28,11 +28,12 @@
     "db:emit": "node --experimental-strip-types tools/emit-sql.mjs",
     "check:prose": "node tools/check-prose.mjs",
     "check:sms": "node tools/check-sms-templates.mjs",
-    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling",
+    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated",
     "check:sms:segments": "node tools/check-sms-segments.mjs",
     "check:tooling": "node tools/check-tooling.mjs",
     "detection-rate": "node tools/detection-rate.mjs",
-    "rejects:author": "node --experimental-strip-types tools/author-rejects.ts"
+    "rejects:author": "node --experimental-strip-types tools/author-rejects.ts",
+    "check:generated": "node tools/check-generated.mjs"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",

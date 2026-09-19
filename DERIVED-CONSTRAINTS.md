@@ -44,6 +44,13 @@ matras and the virama are separate UTF-16 units while reading as one glyph clust
 the Odia for "code" looks like two shapes and is four units - so visual counting
 undercounts *systematically*, not randomly. See AD-013.
 
+**Its own derived dependency (adversary pass 01, F-05).** The GSM-7 alphabet that
+decides which budget applies was itself reconstructed from memory: 127 content
+characters, because GSM 03.38's 128th position is the ESC extension marker rather
+than a typeable character. That reasoning is now stated in the tool and asserted
+against `GSM_BASIC_CONTENT_CHARS`. A single wrong character in that string would
+silently halve or double the budget for a whole language.
+
 **Second-order consequence.** The same byte arithmetic determines whether Android's
 SMS Retriever is viable: it needs the message plus an 11-character hash inside 140
 bytes. At 2 bytes per character that is unaffordable for the sign-in template in both

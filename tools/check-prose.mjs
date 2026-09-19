@@ -40,6 +40,17 @@ function mdFiles(dir, out = []) {
 const RESOLVED = /\b(RESOLVED|DECIDED|CLOSED|COMPLIANT)\b/;
 const UNRESOLVED = /\b(BLOCKED|PENDING|NEEDS|TBD|AWAITING)\b/;
 
+/**
+ * F-07: the uppercase rule missed `RESOLVED-AUTONOMOUSLY - needs counsel`, twice, in
+ * the very file R-001 was discovered in. `needs` was lowercase, so the pair never
+ * tripped. These are the lowercase phrases that genuinely contradict a resolved
+ * status - not the bare word "needs", which appears harmlessly in ordinary prose
+ * ("this needs to be fast"), but the specific constructions that assert outstanding
+ * work.
+ */
+const UNRESOLVED_PHRASES =
+  /\b(needs counsel|needs a decision|still blocked|still pending|awaiting counsel|awaiting a decision|not yet decided|to be decided)\b/i;
+
 const failures = [];
 const files = mdFiles('.');
 
@@ -58,7 +69,7 @@ for (const f of files) {
     for (const sentence of line.split(/(?<=[.!?;])\s+|\s\|\s/)) {
       if (!sentence.trim()) continue;
       sentencesScanned += 1;
-      if (RESOLVED.test(sentence) && UNRESOLVED.test(sentence)) {
+      if (RESOLVED.test(sentence) && (UNRESOLVED.test(sentence) || UNRESOLVED_PHRASES.test(sentence))) {
         failures.push(
           `${f}:${i + 1} asserts both a resolved and an unresolved status in one ` +
             `sentence:\n           "${sentence.trim().slice(0, 140)}"`,

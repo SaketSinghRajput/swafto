@@ -299,7 +299,8 @@ benchmarks.lock. Hash normalises CRLF so a Windows line-ending change is not mis
 for someone moving a threshold.
 
 FOUND — my own token purge was too blunt. A blanket find/replace turned LEGAL-AUDIT's
-status legend into "RESOLVED-AUTONOMOUSLY - needs counsel", which is self-
+status legend into one asserting a resolved status and an outstanding legal review
+in the same sentence, which is self-
 contradictory, and left AD-003 reading "Previously `resolved autonomously`", which is
 circular nonsense. Repaired each damaged sentence individually. Worth recording: a
 mechanical fix to documentation can produce text that passes every automated check and
@@ -678,3 +679,76 @@ paths, not what the rules allow.
 NEXT — the queue, unchanged: C.2 bundled Odia font, remaining RN traps, persistent
 rate limits, the DC-003 compensating control, the OTP service, G7/G8 (where the 8
 PENDING rejection cases get their layer). Then the two fixtures, then G10.
+
+## 2026-09-19 · Iteration 13 · Adversary pass 01 (self-directed)
+
+First self-generated injection: INJECTIONS/13-adversary-01.md. Artifacts only —
+BUILD_LOG and the AD rationales were not read while forming findings. Ten findings,
+all executed this iteration.
+
+F-01 HIGH · SECURITY-AUDIT still designed around Cloudflare being in the data path.
+  TB4 called the boundary "Cloudflare to EC2". T4.1 mitigated origin bypass with an
+  allowlist of Cloudflare IP ranges. T4.2 marked volumetric DDoS "DONE by design" on
+  the strength of the Cloudflare free tier. AD-008 removed Cloudflare from that path
+  three iterations ago. Anyone implementing G9 from that document would have built
+  the wrong allowlist AND believed DDoS was handled. Rewritten; DDoS now reads OPEN,
+  because the thing that made it DONE was removed.
+
+F-02 HIGH · toClosedDaySummary's two guards had never executed. Same shape as
+  assertPaise at 0/59. If an open day were silently admitted, every BI gate would
+  open early on partial data. Now 2 engine cases in the rejection corpus (34 total).
+
+F-03 · Every vector computed the same calendar day. MY FIRST READING WAS WRONG and I
+  corrected it before filing: the CONTEXT dates do span 2026-05-10 to 2026-08-24, so
+  month boundaries were already crossed. What was genuinely unexercised was a YEAR
+  boundary and a leap day. dates.ts handles both correctly — a fixture gap, not a
+  defect. Added one vector each. The pull was toward the dramatic version, and
+  measuring instead of asserting is what caught it.
+
+F-04 · source was never 'imported' anywhere. That column exists solely so D1 stays
+  reversible; the reversal path had zero coverage. One vector added.
+
+F-05 · The GSM-7 alphabet was reconstructed from memory: 127 characters against a
+  128-position table. The discrepancy is correct — 0x1B is ESC, not a typeable
+  character — but nothing said so. Now documented, exported as
+  GSM_BASIC_CONTENT_CHARS, and recorded in DC-001 as that constraint's own derived
+  dependency.
+
+F-06 · AD-010 said "ADR-011 is annotated as superseded". It was not. A decision
+  recorded as done that was never carried out — which is a small finding about how I
+  write AD entries, not just about this file.
+
+F-07 · Two rows still asserted a resolved status alongside an outstanding legal
+  review. A SECOND instance of R-001, in the file R-001 was discovered in, surviving
+  because the checker matched uppercase tokens only. Extended the rule to lowercase
+  phrases that genuinely assert outstanding work.
+
+F-08 · Nothing enforced that generated files were generated. check-generated.mjs
+  FOUND REAL DRIFT ON ITS FIRST RUN — the SMS table writer emitted LF into a CRLF
+  file, rewriting every line. Line-ending drift, not content drift, but it would have
+  masked the real thing. Generator fixed to preserve line endings.
+
+F-09 · No fixture populated `label`. One vector added; prerequisite for Form C.
+F-10 · TRACEABILITY listed BI6 as WIP when its row was complete.
+
+MECHANISM (§5.10.1) · tools/edit.mjs. CRLF-mismatched anchors have now cost three
+separate detours. replaceIn normalises for matching, restores the file's own endings,
+and THROWS on a missing anchor so a silent no-op is impossible. It threw twice during
+this iteration, correctly.
+
+ALSO FIXED, found while executing · checkExpectations compared with JSON.stringify,
+which is key-order sensitive. A vector failed purely because the engine emitted two
+object keys in a different order. Replaced with a stable stringify that sorts object
+keys and PRESERVES array order — array order is meaningful for OP6 warnings and the
+P3 working lines, so sorting those would hide a real defect. Verified both properties.
+
+Vectors 59 -> 63. Rejection corpus 32 -> 34. Tests 191 -> 193.
+
+Commands:
+  $ node tools/check-generated.mjs -> every artifact matches its authoring script
+  $ npx vitest run                 -> 193 passed
+  $ npm run test:vectors:diff      -> divergence: NONE
+
+NEXT — the queue: C.2 bundled Odia font, remaining RN traps, persistent rate limits,
+the DC-003 compensating control (now correctly described in SECURITY-AUDIT as open),
+the OTP service, G7/G8.

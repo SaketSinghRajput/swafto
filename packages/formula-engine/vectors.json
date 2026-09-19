@@ -2,7 +2,7 @@
   "$schema": "https://swafto.app/schemas/vectors-v1.json",
   "generatedBy": "tools/author-vectors.ts",
   "note": "GOLDEN TEST VECTORS. Expected values are HAND-WRITTEN against the specification, never computed from the engine. Executed under Node AND Hermes; CI fails if the two runtimes disagree on any vector (ADR-012).",
-  "count": 59,
+  "count": 63,
   "vectors": [
     {
       "name": "canonical-15-july",
@@ -5115,6 +5115,192 @@
       }
     },
     {
+      "name": "year-boundary-aging-and-horizon",
+      "proves": "QUESTION: does date arithmetic survive a YEAR boundary? ANSWER: yes. Every other vector computes 2026-07-15; nothing crossed 31 December until this one (F-03).",
+      "input": {
+        "day": {
+          "date": "2027-01-01",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 500000,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2027-01-01",
+        "trailing": [],
+        "openCustomerCredit": [
+          {
+            "partyId": "c-newyear",
+            "amount": 500000,
+            "since": "2026-11-30"
+          }
+        ],
+        "openSupplierDues": [
+          {
+            "partyId": "s-newyear",
+            "amount": 200000,
+            "purchasedOn": "2026-12-20",
+            "dueDate": "2027-01-05"
+          }
+        ]
+      },
+      "expect": {
+        "agingVocabularies": {
+          "c-newyear": "days_since",
+          "s-newyear": "current"
+        },
+        "op4Count": 1,
+        "p3": 150000
+      }
+    },
+    {
+      "name": "leap-day-arithmetic",
+      "proves": "QUESTION: does 29 February exist for the aging maths? ANSWER: yes. 2024-01-30 to 2024-02-29 is exactly 30 days, which sits on the aging threshold (F-03).",
+      "input": {
+        "day": {
+          "date": "2024-02-29",
+          "state": "open",
+          "openingCash": 100000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 300000,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2024-02-29",
+        "trailing": [],
+        "openCustomerCredit": [
+          {
+            "partyId": "c-at30",
+            "amount": 100000,
+            "since": "2024-01-30"
+          },
+          {
+            "partyId": "c-at31",
+            "amount": 200000,
+            "since": "2024-01-29"
+          }
+        ],
+        "openSupplierDues": []
+      },
+      "expect": {
+        "agingVocabularies": {
+          "c-at30": "current",
+          "c-at31": "days_since"
+        }
+      }
+    },
+    {
+      "name": "imported-source-participates-identically",
+      "proves": "QUESTION: does an entry with source \"imported\" behave exactly like a manual one? ANSWER: yes. That column exists so D1 stays reversible, and until now NO fixture had ever set it to anything but manual (F-04).",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000110",
+            "dayId": "2026-07-15",
+            "section": "upi_sales",
+            "amount": 200000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "imported"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000111",
+            "dayId": "2026-07-15",
+            "section": "upi_sales",
+            "amount": 300000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p4": 500000,
+        "p1": 0,
+        "p3": 150000
+      }
+    },
+    {
+      "name": "expense-labels-are-carried",
+      "proves": "QUESTION: do labelled expenses total correctly? ANSWER: yes. No fixture populated the label field at all before this - the Form C description column (F-09).",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000112",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 2000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "label": "chai"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000113",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 45000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "label": "tempo bhada"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000114",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 50000,
+            "mode": "shop_stock",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "label": "ଦୋକାନ ଷ୍ଟକ୍ ଖର୍ଚ୍ଚ"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p6": 97000,
+        "p2": 47000,
+        "p3": 103000
+      }
+    },
+    {
       "name": "format-paise-uses-indian-grouping-and-latin-numerals",
       "proves": "The render boundary groups 1,23,456.78 the Indian way, always in Latin numerals, in every language. Hand-rolled rather than Intl, so Hermes and Node agree.",
       "input": {
@@ -5173,7 +5359,7 @@
         },
         "entries": [
           {
-            "id": "01890000-0000-7000-8000-000000000110",
+            "id": "01890000-0000-7000-8000-000000000115",
             "dayId": "2026-07-15",
             "section": "cash_sales",
             "amount": 10000,
