@@ -80,6 +80,9 @@ describe('G4 · migrations run up, down, and up again (SQLite)', () => {
       'shops',
       'users',
     ]);
+    // rate_events is server-only (injection 08 B.2). A device that carried it would
+    // be keeping a keyed log of sign-in attempts on the handset, for nothing.
+    expect(tables).not.toContain('rate_events');
   });
 });
 

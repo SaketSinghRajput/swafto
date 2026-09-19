@@ -178,3 +178,57 @@ can occur, enumerate what the system **does** — every flow, including the reco
 failure paths — not what the rules **allow**. Recovery flows are the likeliest source,
 because they exist precisely to handle the abnormal.
 
+
+---
+
+### R-006 · The OTP TTL is a judgement call that a measurement we have not taken would settle
+
+**Raised at iteration 17, implementing B.2. Not acted on.**
+
+SECURITY-AUDIT TB6 fixes the code lifetime at **5 minutes**. Writing the limiter I
+argued for 10, on the ground that this product's users are on congested rural cells
+where an SMS can take minutes rather than seconds, and that a code which expires
+before it arrives is a support burden rather than a security control - the real
+defence against guessing is 5 attempts against a 6-digit space, not the window.
+
+**That argument is a concern, not evidence, so the spec stands.** The code is 5
+minutes, as ruled.
+
+**What would settle it.** DEVICE-CHECKLIST D2 measures exactly this: *"How long it
+took. Time it."* - real carrier latency on a real SIM on a weak signal, in seconds. If
+median delivery plus the time an unhurried 60-year-old needs to read six digits off a
+notification and type them approaches 5 minutes, the TTL is wrong and the evidence
+will say so. If it is 20 seconds, the question is closed and this entry can be struck.
+
+**Why it is written down rather than acted on.** Lengthening a credential's lifetime
+on a hunch weakens a security control for a comfort I have not demonstrated; shortening
+it strands real users. The honest position is that the number is currently a guess in
+both directions, and that one measurement we have already committed to taking resolves
+it. Recorded as AD-017's third reversal trigger.
+
+---
+
+### R-007 · The per-IP limit assumes an IP means something, and in India it often does not
+
+**Raised at iteration 17, implementing B.2. Not acted on.**
+
+TB6 sets **20 sends per IP per hour, lockout 1 hour**. Indian mobile carriers place
+very large numbers of subscribers behind carrier-grade NAT, so one public address can
+represent a great many real shopkeepers. An IP limit is therefore the weakest
+identifier in the set: it does not stop an attacker, who rotates addresses, and it can
+in principle reject legitimate users who share an address with a noisy one.
+
+**I am not proposing a change, and it is worth saying why the obvious worry is
+probably overstated.** Sign-in is rare in this product - sessions do not expire
+(B.4/ADR-007), so a handset authenticates roughly once in its life. Twenty sends an
+hour from one carrier NAT is a lot of first-time sign-ins from one address in one
+hour. The limit is likely fine, and the case for loosening it is much weaker than it
+first appeared. **This is the F-03 lesson applied before filing rather than after:
+the dramatic version of this finding is not the true one.**
+
+**What it obliges instead - a monitoring rule, not a limit change.** If per-IP
+rejections ever appear in volume, carrier-grade NAT is the FIRST hypothesis and the
+limit must not be tightened before it is ruled out. The signal is distinctive: many
+distinct phone numbers rejected behind one address, each with a low per-number count.
+Tightening in response to that pattern would reject a district of paying customers
+while doing nothing to the attacker it was aimed at.

@@ -1029,3 +1029,98 @@ Commands:
 
 NEXT — persistent restart-surviving rate limits (injection 08 B.2), the DC-003
 compensating control, then the OTP service B.3-B.5.
+
+## 2026-09-19 · Iteration 17 · B.2 persistent rate limits
+
+Injection 08 B.2: limits must survive a restart and be shared across instances,
+"whatever you choose, prove it: a test that restarts the service mid-limit and asserts
+the counter survived."
+
+STORE: POSTGRES (AD-017), by R3 - prefer the component already in the system. Redis is
+faster and is a second thing to run, pay for, secure, monitor and back up, on the
+t4g.small that DC-003 already calls the entire perimeter, to relieve load that does
+not exist. In-memory was never a candidate and B.2 says why better than I can.
+
+I ALMOST INVENTED THE LIMITS, AND THAT IS THE HEADLINE. I wrote a complete set of my
+own - 5/hour, 10/day, 30 per IP, a 10-minute TTL - each with a paragraph of
+justification, and only then checked whether the question had already been answered.
+It had: SECURITY-AUDIT TB6, headed "concrete, and they are the spec". Nothing would
+have flagged it. The numbers were plausible, the prose was good, and the effect would
+have been silently overriding an earlier decision with a later opinion.
+
+  The code now TRANSCRIBES that table. Every rule carries a `source` string naming the
+  row it came from, and a test reads the numbers back out of SECURITY-AUDIT.md and
+  compares them. Negative-tested from BOTH sides: changing max from 3 to 8 in the code
+  fails, and changing 20 to 50 in the markdown fails.
+
+  The two places where I still think the spec deserves a second look are R-006 (is a
+  5-minute TTL long enough on a real 2G cell? DEVICE-CHECKLIST D2 already measures
+  exactly that) and R-007 (per-IP limits under carrier-grade NAT). Raised, not
+  implemented. R-007 explicitly records that the dramatic version of that finding is
+  NOT the true one - sign-in is a once-per-device event, so 20/hour from one carrier
+  NAT is probably fine - which is the F-03 lesson applied before filing.
+
+TWO DESIGN POINTS THAT ARE NOT INCIDENTAL.
+
+  SLIDING WINDOW, NOT FIXED. A fixed window resets on a boundary and lets through
+  double across it. For the per-number-per-DAY cap - the one B.3 names as protecting
+  the bill - that is twice the money at every midnight, silently. There is a test that
+  fails specifically on fixed-window behaviour.
+
+  THE LOCKOUT IS SEPARATE FROM THE WINDOW. TB6 has a Lockout column and it means what
+  it says: three sends in fifteen minutes earns an HOUR, not another fifteen minutes.
+  A plain sliding window would have released the caller as soon as the events aged
+  out - quietly weakening the spec while looking correct. A breach writes ONE lockout
+  marker; attempts made while locked out write nothing, so the release time never
+  moves. That last property is load-bearing: a handset retrying in the background
+  would otherwise extend its own lockout indefinitely, and T1.3 says locking a
+  shopkeeper out of his own ledger is worse than any threat in the table.
+
+NO PERSONAL DATA IN THE TABLE. The bucket is an HMAC under a server secret, never the
+phone number. Rate limiting happens BEFORE authentication, so a plain-text table would
+become a list of every number that ever tried to sign in - a DPDP liability in the one
+table anonymous callers write to. The constructor refuses a key under 16 characters,
+because a bare hash of a ten-digit Indian mobile number is brute-forceable in seconds.
+
+SCHEMA. `rate_events` is server-only - the exact mirror of the device-only outbox - and
+both halves are now asserted: it must exist on Postgres and must NOT exist on SQLite.
+
+TWO REAL DEFECTS FOUND IN EXISTING TESTS WHILE DOING THIS.
+
+  1. THE POSTGRES SUITE HAD BEEN SKIPPING ALL ALONG. `npx vitest run` reported "4
+     skipped" for two iterations with a healthy container listening on the very port
+     the tests expect, because nothing set DATABASE_URL and the suite read its absence
+     as "no database". I had been reporting that skip honestly and had not asked why.
+     The URL is now defaulted. 4 skipped -> 0.
+
+  2. THE NEW SUITE THEN SKIPPED ALL THIRTEEN OF ITS TESTS in the full run while
+     passing alone: it and postgres.spec.ts run in parallel workers and raced on
+     CREATE TABLE in one shared schema, and the loser caught the error and marked
+     itself unreachable. The run stayed green. Fixed with a separate schema rather
+     than by serialising the suite.
+
+  AND THAT EXPOSED A THIRD. With a second schema present, the S-10 row-level-security
+  assertion returned 12 instead of 6: it queried pg_class by relname with no namespace
+  join, so it had been counting tables in ANY schema. It was only ever right by
+  accident. Now scoped to `public`.
+
+  All three are the same shape and it is worth naming: a test that does not run, or
+  runs against more than it means to, reports success either way.
+
+Commands:
+  $ npx vitest run     -> 230 passed, 0 SKIPPED (was 212 passed, 4 skipped)
+  $ npm run check:all  -> all pass
+
+FOUND, NOT YET FIXED - and it is bigger than anything above:
+  `npm run typecheck` -> "Cannot read file tsconfig.json". THERE IS NO tsconfig.json
+  ANYWHERE IN THE REPO. It has never run. Vitest transpiles without typechecking, so
+  seventeen iterations of TypeScript have had no type checking at all.
+  `npm run lint` -> "'eslint' is not recognized". ESLint is not installed and there is
+  no config. It has never run either.
+  Worse than either: CONSTRAINT 6 says money is integer paise everywhere, "lint
+  enforced", and ADR-003 is titled "enforced by lint". THAT ENFORCEMENT DOES NOT
+  EXIST. It is the same class as F-01 and F-06 - a control documented as present and
+  never built - and it is attached to a non-negotiable constraint.
+  Next iteration.
+
+NEXT — tsconfig and a real lint, including the paise rule ADR-003 promises.

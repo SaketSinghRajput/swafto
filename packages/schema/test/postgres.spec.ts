@@ -17,7 +17,17 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { migrationUp, migrationDown } from '../src/spec.ts';
 
-const URL = process.env.DATABASE_URL;
+/**
+ * Defaulted, not required.
+ *
+ * For two iterations `npx vitest run` reported "4 skipped" with a healthy Postgres
+ * container listening on this very port, because nothing set DATABASE_URL and the
+ * suite took its absence as "no database". A test that skips under the command
+ * everyone actually runs is a test that does not exist - the same disease as a guard
+ * that never executes. `tools/pg-up.mjs` prints exactly this URL.
+ */
+const DEFAULT_URL = 'postgres://postgres:postgres@localhost:55432/swafto_test';
+const URL = process.env.DATABASE_URL ?? DEFAULT_URL;
 
 const SHOP = '00000000-0000-7000-8000-000000000001';
 const DAY = '2026-07-15';
@@ -36,7 +46,7 @@ let reachable = false;
  * false at collection time and silently skip every Postgres test even with a database
  * right there. (It did exactly that, which is how this comment came to exist.)
  */
-if (URL) {
+{
   try {
     // `pg` is CommonJS: under an ESM dynamic import the named export can land on
     // `.default`. Take whichever is actually there rather than assuming.
@@ -66,7 +76,8 @@ describe('G4 · Postgres migrations and append-only', () => {
       console.log(
         '\n  [G4/postgres] SKIPPED — no reachable database.' +
           '\n  Start one with: node tools/pg-up.mjs' +
-          '\n  Then: DATABASE_URL=postgres://postgres:postgres@localhost:55432/swafto_test npm run test:unit\n',
+          '\n  The URL is defaulted to that container, so starting it is enough -' +
+          '\n  no DATABASE_URL needs setting.\n',
       );
     }
     expect(true).toBe(true);
@@ -82,11 +93,13 @@ describe('G4 · Postgres migrations and append-only', () => {
     );
     const names = t1.rows.map((r: { table_name: string }) => r.table_name);
     // NOTE: outbox is device-local and must NOT exist on the server (architecture D4).
+    // rate_events is its mirror image: server-only, and must NOT exist on the device.
     expect(names).toEqual([
       'days',
       'devices',
       'entries',
       'parties',
+      'rate_events',
       'section_skips',
       'shops',
       'users',
@@ -124,10 +137,16 @@ describe('G4 · Postgres migrations and append-only', () => {
   }, 20_000);
 
   maybe()('has Row-Level Security enabled on every tenant-scoped table (S-10)', async () => {
+    // Scoped to `public`. Without the namespace join this counted a table of the
+    // same name in ANY schema, and it silently returned 12 the moment another suite
+    // created its own copies - a query that was only ever right by accident.
     const res = await client.query(
-      `SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
-       WHERE relname IN ('entries','days','parties','section_skips','devices','users')
-       ORDER BY relname`,
+      `SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity
+         FROM pg_class c
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relname IN ('entries','days','parties','section_skips','devices','users')
+        ORDER BY c.relname`,
     );
     expect(res.rows.length).toBe(6);
     for (const r of res.rows) {

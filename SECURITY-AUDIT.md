@@ -187,6 +187,24 @@ compared in **constant time**, and **stored only as a hash**.
 Resend throttle with visible countdown - the screen copy already has
 `Resend code in {{ resendLabel }}`.
 
+**This table is now executable.** `apps/api/src/rate-limit/limits.ts` transcribes it,
+every rule carries the row it came from, and `rate-limit.spec.ts` reads these numbers
+back out of this file and compares. Changing a number here without changing the code -
+or the reverse - fails the build. Verified in both directions.
+
+**The store is Postgres, and the reason is AD-017.** The limits above are only as good
+as the counter behind them: an in-memory counter resets on every deploy and counts per
+process, so it would quietly multiply each limit by the instance count. The lockout
+column is implemented as a lockout, not as a longer window - breaching the 15-minute
+rule earns the stated hour - and attempts made while locked out are not recorded, so
+a handset retrying in the background cannot extend its own lockout. Per T1.3 that
+last property matters more than the limits themselves.
+
+**Two open questions about these numbers**, raised while implementing them and
+deliberately NOT acted on: R-006 (is a 5-minute TTL long enough on a real 2G cell?
+DEVICE-CHECKLIST D2 measures it) and R-007 (per-IP limits under carrier-grade NAT -
+a monitoring rule rather than a change).
+
 #### SIM swap - the honest position
 
 Phone-only auth means **SIM swap is a complete account takeover with no second factor**.
@@ -313,7 +331,7 @@ failure mode: an operator error or a bad migration is faithfully snapshotted.
 | S-10 | **T5.1 cross-tenant read** | 3 layers incl. Postgres RLS | **`test/tenancy.spec.ts`** | REQUIRED |
 | S-11 | **T5.2 cross-tenant write / forged shop_id** | `shop_id` from session only; body value rejected | **`test/tenancy.spec.ts`** | REQUIRED |
 | S-12 | T5.5 UPDATE/DELETE on entries | REVOKE + trigger | `test/append-only.spec.ts` (G4) | REQUIRED |
-| S-13 | T6.1/T6.2 OTP abuse | Rate-limit matrix §2 TB6 | `test/otp-limits.spec.ts` | REQUIRED |
+| S-13 | T6.1/T6.2 OTP abuse | Rate-limit matrix §2 TB6, enforced by a **persistent, shared** limiter (AD-017) | `apps/api/test/rate-limit.spec.ts` - 14 cases incl. restart, two instances, and a fixed-window leak | **BUILT, awaiting the endpoints at G6** |
 | S-14 | T6.3 SIM swap | Device binding, notify, 24 h hold on export/delete | `test/cooling-off.spec.ts` | **ACCEPTED RISK** |
 | S-15 | T6.4 push payload leak | Trigger-only push | `test/push-payload.spec.ts` | REQUIRED |
 | S-16 | T6.5 / §5 log leakage | Allow-list logger + scrubber | **`test/log-hygiene.spec.ts`** | REQUIRED |
@@ -322,6 +340,8 @@ failure mode: an operator error or a bad migration is faithfully snapshotted.
 | S-19 | Backup/restore unproven | Two paths + timed drill | drill output recorded | **RESOLVED-AUTONOMOUSLY** |
 | S-20 | T4.4 TLS terminating abroad | AD-008: DNS-only, TLS on the origin in ap-south-1 | Terraform assertion | DONE |
 | S-21 | T2.4 unsynced entries lost with device | Prompt sync; disclosed | - | **ACCEPTED** |
+| S-22 | **Limiter state lost on deploy or split per process** | Postgres-backed sliding window with an explicit lockout (AD-017). An in-memory limiter resets on every release and multiplies every limit by the instance count, silently | `apps/api/test/rate-limit.spec.ts` - "the counter survives a restart" and "two instances share one budget"; both FAIL against an in-memory limiter, verified | **BUILT** |
+| S-23 | **Rate-limit table becomes a list of every phone number that tried to sign in** | Bucket is an HMAC under a server secret, never the identifier. Rate limiting is pre-authentication, so this is the one table anonymous callers write to | `rate-limit.spec.ts` - "never stores the identifier"; constructor refuses a key under 16 chars | **BUILT** |
 
 ---
 

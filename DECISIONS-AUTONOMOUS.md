@@ -606,6 +606,77 @@ misaligned everywhere else. Constraint 8 is not satisfied by the font alone.
 
 ---
 
+## AD-017 · Rate-limit state lives in Postgres, as a sliding window with an explicit lockout
+
+**Question.** Injection 08 B.2: rate limits must survive a restart and be shared across
+instances. "Decide the store under the decision procedure - Postgres is already there
+and adequate at this scale; Redis is faster and is another thing to run and pay for."
+
+**Options.** (a) In-memory. (b) Postgres. (c) Redis.
+
+**Deciding rule.** **R3** - prefer the component already in the system.
+
+- **(a) is not a candidate**, and B.2 explains why better than I can: it resets on
+  deploy, handing an attacker a clean slate on every release, and it counts
+  per-process, so every limit is silently multiplied by the instance count the moment
+  the service scales past one. Nothing fails; the SMS bill just goes up.
+- **(c) Redis** is faster and is a second thing to run, pay for, secure, monitor and
+  back up - on a `t4g.small` that DC-003 already says is the entire perimeter. The
+  load it would relieve does not exist: OTP traffic is a handful of rows per shop per
+  day.
+- **(b) Postgres** is already running, already backed up, already in the threat model.
+
+**Choice.** (b).
+
+**Two design points that are not incidental.**
+
+1. **SLIDING WINDOW, NOT FIXED.** A fixed window resets on a boundary and lets through
+   twice the limit across it. For the per-number-per-day cap - the one B.3 names as
+   protecting the bill - that is double the money at every midnight, silently. One row
+   per attempt and a count over the trailing window is exact, and there is a test that
+   fails specifically on the fixed-window behaviour.
+2. **THE LOCKOUT IS SEPARATE FROM THE WINDOW.** SECURITY-AUDIT TB6 has a Lockout
+   column, and it means what it says: three sends in fifteen minutes earns an HOUR
+   off, not another fifteen minutes. A plain sliding window would have released the
+   caller as soon as the events aged out, quietly weakening the spec. A breach writes
+   one lockout marker; further attempts while locked out write NOTHING, so the release
+   time never moves. That last property is load-bearing - a handset retrying in the
+   background would otherwise extend its own lockout forever, and T1.3 says locking a
+   shopkeeper out of his own ledger is worse than any threat in the table.
+
+**NO PERSONAL DATA IN THE TABLE.** The bucket is an HMAC of the identifier under a
+server secret, never the phone number. Rate limiting happens before authentication, so
+a plain-text table would become a list of every number that ever tried to sign in - a
+DPDP liability in the one table designed to be written by anonymous callers. The
+limiter only ever needs equality, so a keyed hash costs it nothing, and the
+constructor refuses a key under 16 characters because a bare hash of a ten-digit
+Indian mobile number is brute-forceable in seconds.
+
+**I ALMOST INVENTED THE LIMITS.** I wrote a complete set of my own - 5/hour, 10/day,
+30 per IP, a 10-minute TTL - each with a paragraph of justification, before checking
+whether the question was already answered. It was: SECURITY-AUDIT TB6, headed
+"concrete, and they are the spec". The code now transcribes that table, every rule
+carries the row it came from, and a test reads the numbers back out of the markdown
+and compares. An invented number with good prose beside it is harder to catch than an
+obviously wrong one. The two places where I still think the spec deserves a second
+look are R-006 and R-007 in REVIEW.md, raised rather than quietly implemented.
+
+**REVERSAL TRIGGER.** Any one of:
+
+- **Measured limiter latency becomes a material share of the OTP request budget**, or
+  `rate_events` write volume becomes a material share of database load. Then Redis
+  earns its keep and this becomes (c). Not before - and "it feels slow" is not a
+  measurement.
+- **DC-003's compensating control lands somewhere that already offers rate limiting**
+  (a WAF, an API gateway). Then the cheap pre-database limit belongs there and this
+  store keeps only the per-number accounting.
+- **R-006 resolves against the 5-minute TTL** once DEVICE-CHECKLIST D2 measures real
+  carrier latency. That changes a constant, not the store.
+
+**Iteration 17 · B.2**
+
+---
+
 ## Open questions
 
 None. The blocked-on-a-human status is abolished entirely; anything genuinely

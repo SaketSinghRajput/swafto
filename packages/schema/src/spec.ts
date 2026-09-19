@@ -272,6 +272,40 @@ export function outboxDDL(d: Dialect): string[] {
   ];
 }
 
+/**
+ * RATE LIMITING — SERVER ONLY, the mirror image of the outbox (injection 08 B.2).
+ *
+ * "An in-memory rate limiter is the default an agent reaches for and it is worthless
+ * here: it resets on deploy, and it counts per-process. The OTP limits are now the
+ * only thing standing between an attacker and your SMS bill, so they are
+ * security-critical state."
+ *
+ * A SLIDING WINDOW, not a fixed one. A fixed window resets on a boundary and lets
+ * through 2x the limit across it - for the per-number-per-DAY cap, the one protecting
+ * the bill, that is double the money at every midnight. One row per attempt and a
+ * count over the trailing window is exact, and at OTP volumes (single digits per
+ * number per day) the row count is trivial.
+ *
+ * NO PERSONAL DATA. `bucket` is an HMAC of the identifier under a server secret, never
+ * the phone number itself. Rate limiting is pre-authentication, so this table would
+ * otherwise become a list of every phone number that ever tried to sign in - a DPDP
+ * liability sitting in the one table designed to be written by unauthenticated
+ * callers. The limiter only ever needs equality, so a keyed hash loses it nothing.
+ *
+ * NOT tenant-scoped, and deliberately outside the RLS set: it is written before any
+ * shop is known.
+ */
+export function rateLimitDDL(d: Dialect): string[] {
+  if (d !== 'postgres') return [];
+  return [
+    `CREATE TABLE rate_events (
+  id      BIGSERIAL PRIMARY KEY,
+  bucket  TEXT NOT NULL,
+  at      TIMESTAMPTZ NOT NULL
+)`,
+  ];
+}
+
 export function indexesDDL(_d: Dialect): string[] {
   return [
     // The hot path: every derived figure reads one day's entries (derive-on-read).
@@ -285,6 +319,9 @@ export function indexesDDL(_d: Dialect): string[] {
     // BI windows walk closed days in date order.
     `CREATE INDEX days_state_idx ON days (shop_id, state, date)`,
     `CREATE INDEX parties_kind_idx ON parties (shop_id, kind)`,
+    // Every rate-limit decision is "count rows in this bucket since T", and every
+    // prune is "delete rows before T". One composite index serves both.
+    ...(_d === 'postgres' ? [`CREATE INDEX rate_events_bucket_idx ON rate_events (bucket, at)`] : []),
   ];
 }
 
@@ -400,6 +437,7 @@ export function migrationUp(d: Dialect): string[] {
   return [
     ...tablesDDL(d),
     ...outboxDDL(d),
+    ...rateLimitDDL(d),
     ...indexesDDL(d),
     ...appendOnlyDDL(d),
     ...tenancyDDL(d),
@@ -409,6 +447,7 @@ export function migrationUp(d: Dialect): string[] {
 /** The `down` migration. Reverse dependency order. */
 export function migrationDown(d: Dialect): string[] {
   const drops = [
+    'rate_events',
     'outbox',
     'section_skips',
     'entries',

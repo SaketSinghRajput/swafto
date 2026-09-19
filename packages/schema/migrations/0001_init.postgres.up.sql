@@ -114,6 +114,12 @@ CREATE TABLE section_skips (
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
+CREATE TABLE rate_events (
+  id      BIGSERIAL PRIMARY KEY,
+  bucket  TEXT NOT NULL,
+  at      TIMESTAMPTZ NOT NULL
+);
+
 CREATE INDEX entries_day_idx ON entries (shop_id, day_id);
 
 CREATE INDEX entries_party_idx ON entries (shop_id, party_id);
@@ -125,6 +131,8 @@ CREATE INDEX entries_corrects_idx ON entries (shop_id, corrects_day_id);
 CREATE INDEX days_state_idx ON days (shop_id, state, date);
 
 CREATE INDEX parties_kind_idx ON parties (shop_id, kind);
+
+CREATE INDEX rate_events_bucket_idx ON rate_events (bucket, at);
 
 CREATE OR REPLACE FUNCTION entries_append_only() RETURNS TRIGGER AS $$
 BEGIN
