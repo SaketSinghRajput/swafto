@@ -1,0 +1,340 @@
+SWAFTO · FLOW STRATEGY · BEHAVIOURAL EVIDENCE APPLIED TO THE 27 SCREENS
+
+Five strategies, and
+one of them says your
+constraint is an advantage.
+
+The screens and components are settled. What isn't settled is how they
+connect in time -- which is where daily-use products are actually won or lost.
+These five are built on published findings rather than instinct, and each one
+names the screen it changes and the number that proves it.
+
+KIVETZ · URMINSKY · ZHENG           KAHNEMAN · FREDRICKSON 1993  J. TECH. BEHAV. SCI. 2021
+2006
+                                    80% chose to repeat a        Manual-entry tracking
+A 12-stamp coffee card              longer unpleasant trial      produced stronger habit
+with 2 stamps pre-filled            because it merely ended      formation than photo and
+beat a 10-stamp card                slightly warmer. The end of  wearable alternatives; low-
+despite identical real effort       an experience dominates      burden users struggled far
+-- and the tendency to              the memory of it.            more to remember to
+accelerate predicted                                             engage at all (p<0.001).
+retention.
+
+NIELSEN NORMAN GROUP
+
+Cognitive load in forms
+falls with grouping,
+single column, visible
+labels outside fields,
+and proactive constraints
+rather than after-the-fact
+errors.
+
+STRATEGY 01
+
+THE TWO-SPEED LEDGER
+
+Separate the five-second
+capture from the five-minute
+close -- but never the data
+
+A sale entered at 11am and a sale entered during the evening close are the
+same record. The paths to them must not cost the same.
+
+SWAFTO · Retail Desk Flow Strategy                                                            1
+This is the single highest-risk decision in the flow, and it is easy to get wrong in a way
+that looks fine in a design review. If the only route into a cash sale runs Today  day
+close list  section  form, every transaction costs three navigation taps before the
+first digit. Twenty transactions a day is sixty taps spent on getting to the field
+rather than filling it, and that is the cost that decides whether the app is used
+through the day or opened once at 9pm to be filled from memory -- at which point it
+is a slower version of the paper sheet and its numbers are guesses.
+
+So: the six rails on Today write straight into their section, and "Done" returns to
+Today, not to the list. The day close list is then a review pass over records that
+mostly already exist. Same data, same components, two speeds. The failure mode to
+design against is a separate "quick add" that lands somewhere other than the day
+record -- that is how you end up with two sources of truth and a reconciliation that
+can't reconcile.
+
+              rail -- 2 taps to the first digit
+
+Today                                                 Entry form      writes   Day record
+
+cold start                                               one of four          one source of truth
+
+                                                                              all 9 done or skipped
+
+at close
+
+                                    Day close list                            Cash check                                          Closed
+
+                                         review pass                             the ending
+
+                                                                                                     same form, one tap later
+Both paths reach one form and write one record. A quick-add that writes anywhere else is the bug this diagram exists to prevent.
+
+The rails are not a shortcut to a different feature -- they are a shorter path to the same
+form. That is the whole strategy, and it is worth a picture because the tempting wrong
+version looks almost identical on a screen list.
+
+SCREENS       T1 rails route directly to T7­T10 with an origin so Done returns to
+COMPONENTS    Today. T5 becomes a review surface, not the only door.
+ANTI-PATTERN
+              Entry forms take an origin parameter. SectionStepRow must render
+              "already entered" attractively -- at close, most rows should already be
+              full.
+
+              A floating action button that opens a generic "add transaction" sheet.
+              It forces a type choice the rails already answered, and it invites exactly
+              the AI-guessing the product removed.
+
+SWAFTO · Retail Desk Flow Strategy                                                                                                        2
+THE NUMBER
+
+Taps from cold start to the first digit of a cash sale. Target  2. Then track the
+share of entries created through rails versus through the day-close list -- if the
+list dominates after week two, capture has failed and the app has become a
+9pm chore filled from memory.
+
+STRATEGY 02
+
+ENDOWED PROGRESS
+
+Never show zero of nine
+
+The progress ring is not decoration. It is the single most load-bearing
+motivational element in the flow, and there is a specific, well-replicated way to
+set it.
+
+Kivetz, Urminsky and Zheng gave café customers a 12-stamp card with two stamps
+already filled in, against a plain 10-stamp card. Identical work -- ten more purchases
+either way. The pre-filled group completed faster. And the finding that matters
+commercially: the tendency to accelerate toward the goal predicted retention and
+faster re-engagement. Progress you are given changes behaviour as much as
+progress you earn.
+
+Applied honestly here: the shopkeeper's opening cash is real work he did yesterday,
+carried forward by decision 6. Count it. The day opens at 1 of 10, not 0 of 9.
+Sections marked "nothing to enter" advance the ring too -- decision 8 already
+permits this, and a deliberate skip is a real decision, not an absence. The line I would
+not cross is advancing the ring for something he did not do; the effect survives on
+honest endowment and the trust does not survive a fake one.
+
+SCREENS     T1's ring and T5's list header both open pre-advanced. T2 (first run) is
+COMPONENTS  the exception -- a brand-new user has nothing carried, so his first act
+WATCH       genuinely is the first step.
+
+             DayProgressRing counts skipped as done and starts at 1.
+             NothingToEnterAction is a progress event, and should feel like one.
+
+            If skip rates climb toward 100% on a section, the ring is being farmed
+            rather than filled. That is the failure mode of this strategy and strategy
+            4's instrumentation catches it.
+
+SWAFTO · Retail Desk Flow Strategy                                                        3
+      THE NUMBER
+
+    Interval between consecutive section entries, across the day. If the gradient is
+    working the intervals shorten as the ring fills. That acceleration is the leading
+    indicator -- Kivetz found it predicts retention before retention itself is
+    measurable.
+
+STRATEGY 03
+
+DESIGN THE ENDING
+
+The cash check is the
+last thing he does,
+roughly 300 times a year
+
+Which makes it the end of the experience -- every single day -- and endings
+are what people remember an experience by.
+
+Kahneman and Fredrickson had participants hold their hands in painfully cold water
+twice: once for 60 seconds, once for 60 seconds plus 30 more seconds as the water
+warmed slightly. The second trial contained strictly more discomfort. 80% chose to
+repeat it, because it ended better. People do not remember an average of an
+experience; they remember its peak and its end.
+
+So BalancedState is not a nice-to-have and not the absence of a difference -- it is
+the highest-leverage screen in the product, and the only genuinely good moment the
+day contains. Give it real weight. And DifferenceCallout , the bad ending, must not
+read as an accusation: a 250 shortfall is ordinary shop life -- change given, a chai
+forgotten. "Missing 250" is a verdict. "250 less than expected -- what
+happened?" is a question, and the reason chips turn it into something resolved
+rather than something endured. A resolved negative ending is a completed one; an
+unresolved one is the memory he brings to tomorrow.
+
+SWAFTO · Retail Desk Flow Strategy                                                     4
+SCREENS     T13 balanced, T12 difference, T14 summary -- designed as one
+            ending, never three artboards. The last frame of the day is the
+COMPONENTS  summary and the carry-forward note, never a spinner, an error or a
+NEVER       prompt to do something else.
+
+             BalancedState earns motion and scale. DifferenceCallout owns its
+            reason chips, and its copy is interrogative, not declarative.
+
+            End the day on an upsell, a rating prompt, a sync failure, or a backup
+            nag. Whatever sits last is what the day is remembered as.
+
+THE NUMBER
+
+Share of closes that land balanced, and the trend of it. A shopkeeper whose
+closes get more accurate over weeks is a shopkeeper the product is working for
+-- it is the cleanest single measure of whether SWAFTO is doing its actual job.
+
+STRATEGY 04
+
+KEEP THE USEFUL BURDEN
+
+Typing the number is the habit.
+Reaching the field is the waste.
+
+This is the counterintuitive one, and it changes how the no-AI decision should be
+understood -- from a constraint you accepted into a mechanism you should
+protect.
+
+The obvious assumption is that less effort means better adherence. A 2021 study
+across 100 participants comparing three dietary tracking methods found the
+opposite: habit formation was stronger with the standard manual-entry app
+than with the deliberately lower-burden alternatives -- a photo-based app and a
+wearable. Participants using the low-burden methods reported significantly greater
+difficulty remembering to use them at all (4.0 and 5.0 versus 2.35 on a difficulty
+scale, p<0.001). The authors name the tension directly: reducing burden can
+undermine the repetition that builds the habit.
+
+Read across to SWAFTO carefully -- that research is dietary, not commercial, and I
+would not overclaim the transfer. But the mechanism is plausible and it points
+somewhere useful: the deliberate act of entering a number is not just how data
+arrives, it is plausibly what makes the routine stick. Which gives you a sharp
+
+SWAFTO · Retail Desk Flow Strategy                                                  5
+distinction to design by. Burden of engagement is an asset. Burden of
+navigation is pure waste. Keep the typing, the section choice, the physical act of
+counting the cash box. Remove the taps to reach a field, the keyboard dismissed
+between line items, the party re-typed for the fortieth time, the trip back to Today.
+
+SCREENS     T7 keeps the keypad up across repeated entries -- that is navigation
+            cost, not engagement. T8 matches an existing party but never auto-
+COMPONENTS  fills the amount; the number stays his to type.
+INSTRUMENT
+SEPARATELY   AmountField persists its keypad. PartyField matches without filling.
+            Neither ever suggests a value, which is also decision 1 holding the line.
+
+            Time-in-field versus time-in-navigation. Only the second should fall
+            across releases. A release that reduces both may have removed
+            something load-bearing.
+
+THE NUMBER
+
+Median minutes from first entry to close, split into keystroke time and navigation
+time. The total has to come in under the paper sheet by week two. The split tells
+you whether you got there by making the app faster or by making it emptier.
+
+STRATEGY 05
+
+THE ACTIVATION LADDER
+
+Let the app earn its complexity
+as he earns his history
+
+On day one this product is one field. By day thirty it is a five-metric report. That
+progression is already implied by the gating decisions -- run it deliberately, as a
+ladder with a named rung at each step, because every unlock is a small peak
+and peaks are what get remembered.
+
+The rungs are already determined by the arithmetic: opening cash  first entry 
+first close, which reveals the Reports tab  first party created  7 closed days
+unlocks business movement and collection efficiency  14 unlocks profit trend  30
+unlocks cash-flow stability and working capital. Nothing here is a growth trick; each
+unlock happens because the maths genuinely becomes possible, which is why the
+app can say so plainly and be believed.
+
+SWAFTO · Retail Desk Flow Strategy                                                     6
+The strategic value is that this doubles as your activation funnel. Measure the drop
+between rungs and the steepest one tells you where the product actually fails. My
+prediction, stated so it can be wrong: the steepest drop will be between first
+entry and first close -- the moment he has to physically count the cash box for the
+first time and let a piece of software grade him on it. Everything before that is typing.
+That step is the one that asks for trust.
+
+SCREENS     X1 asks four questions and stops. T2 offers one action. R1 does not
+COMPONENTS  exist until the first close. P4 reads as new rather than broken.
+SEQUENCING
+             GateCard states the gate and the progress toward it -- "after 14
+            closed days · 6 so far" -- never an empty chart or a zero, which reads
+            as breakage.
+
+            If the first-entry-to-first-close drop is as steep as predicted, the fix is
+            almost certainly in strategy 3's territory: the ending is too frightening
+            the first time, and needs a gentler first close.
+
+THE NUMBER
+
+Conversion between each rung, cohorted by install week. Rung 3 -- first close --
+is the activation event to optimise; days-to-first-close is the number that should
+fall as you improve the product.
+
+THE INSTRUMENTATION
+
+Nine events, and everything above is measurable
+
+These are the events the five strategies need. They are also, conveniently, almost
+exactly the events the four open questions from the decisions document need --
+so the analytics layer serves both.
+
+SWAFTO · Retail Desk Flow Strategy                                                         7
+EVENT            CARRIES                          ANSWERS
+
+app_opened       cold/warm, entry point           Baseline for tap-to-digit
+
+entry_started    section, origin (rail | list)    Strategy 1 -- is capture working
+
+entry_saved      section, ms in field, ms in nav  Strategy 4 -- which burden is falling
+
+section_skipped  section                          Strategy 2 -- is the ring being farmed
+
+cash_check_opened ring state at open              Strategy 2 -- gradient acceleration
+
+day_closed       difference, reason, total minutes Strategy 3 -- balanced rate; strategy 4 --
+                                                                                        the budget
+
+correction_posted days since the close it references Decision 7 -- is the close gate misplaced
+
+due_date_set     chip or custom, supplier         Decision 4 -- do terms exist in their heads
+
+rung_reached     rung id, days since install      Strategy 5 -- the activation funnel
+
+Where this evidence is thinner than it looks
+
+The goal-gradient and peak-end findings are robust and widely
+replicated, but both come from contexts -- loyalty cards, laboratory
+discomfort -- a long way from a shop counter in Bhubaneswar. The self-
+monitoring burden study is the most directly analogous in structure and
+the least analogous in domain: dietary logging is voluntary self-
+improvement, whereas a day close is obligatory commercial record-
+keeping, and obligation may swamp every habit mechanism described
+here. Treat all five as well-motivated hypotheses with instrumentation
+attached, not as settled facts about your users. The five numbers above
+are how they stop being borrowed.
+
+SOURCES
+
+What these are built on
+
+Kivetz, Urminsky & Zheng (2006), "The Goal-Gradient Hypothesis Resurrected", Journal of Marketing
+Research 43(1) -- purchase acceleration, illusionary goal progress, and retention.
+Nielsen Norman Group -- The Peak­End Rule, on Kahneman & Fredrickson (1993).
+"Is Burden Always Bad?", Journal of Technology in Behavioral Science (2021) -- burden, engagement
+and habit formation in mobile self-monitoring.
+
+SWAFTO · Retail Desk Flow Strategy                                                                  8
+Nielsen Norman Group -- Four Principles to Reduce Cognitive Load in Forms.
+Internal: the nine V1 decisions, the 27-screen build map, Retail Desk V1 and the 15-07-2026 note.
+
+SWAFTO · flow strategy · 8 September 2026 · five hypotheses, nine events, and the numbers that turn
+one into the other.
+
+SWAFTO · Retail Desk Flow Strategy                                                                   9
+

@@ -1,0 +1,425 @@
+SWAFTO · RETAIL DESK V1 · SYSTEM ARCHITECTURE AND DATA FLOW · 18 SEPTEMBER 2026
+
+Ten layers, one engine, and
+nothing crossing the wire but facts.
+
+The architecture ADR-001 described had eleven layers, three of which were
+AI. The decisions taken since removed the AI entirely and made the client
+authoritative for every number a shopkeeper sees. What is left is smaller, and
+the part that matters -- the arithmetic -- now exists in exactly one specified
+place and two verified implementations.
+
+REMOVED                                  REMOVED                        DEFERRED
+
+Layer 4 · Speech                         Layer 10 · Knowledge &         Layer 11 · Autonomous
+Intelligence                             Learning                       Operations
+
+Whisper, STT, multilingual               Proprietary model training on  AI-driven monitoring and
+voice capture. Decision 1                usage data. Nothing to train   incident response. One
+removed AI from the input                on, and nothing in V1 that     instance and a person is the
+path entirely.                           needs it.                      correct answer at this scale.
+
+PROMOTED
+
+Domain Layer
+
+Was one layer among eleven.
+It is now the centre of the
+system and the only thing a
+competitor cannot copy in a
+weekend.
+
+01 -- THE LAYER MODEL
+
+Ten layers, split by the one network hop
+
+Read top to bottom: that is the path a cash entry takes from a shopkeeper's thumb to
+durable storage. Everything above the dashed line runs on the phone and works with
+the network switched off.
+
+SWAFTO · System Architecture & DFD · V1                                                                1
+CLIENT -- FLUTTER · WORKS FULLY OFFLINE
+
+            Presentation
+
+L1
+              52 screens · 36 components · SwaftoTheme (Comfort / Focus)
+
+            Interaction
+
+L2
+              navigation · form controllers · origin routing · day-state mirror
+
+            Domain -- Formula Engine
+
+L3
+              every rupee the shopkeeper sees is computed here, on the phone
+
+            Local store                                                                                                             same golden
+                                                                                                                                    test vectors --
+L4                                                                                                                                  CI fails if
+              SQLite · append-only entries · days · parties · outbox                                                                they diverge
+
+            Sync client
+
+L5
+              drains the outbox · idempotent retries · never blocks a save
+
+                                                                              HTTPS -- entries, day records, parties and auth only
+
+SERVER -- AWS ap-south-1
+
+            Edge
+
+L6
+              Cloudflare · TLS · DDoS · rate limiting -- no load balancer in V1
+
+            API
+
+L7
+              REST · auth middleware · idempotency keys · shop-scoped access
+
+            Domain -- Formula Engine (verification)
+
+L8
+              recomputes on sync; a divergence from the client is an alarm, not a fix
+
+            Persistence
+
+L9
+              PostgreSQL · append-only entries · immutable day closes · audit chain
+
+            Platform operations
+
+L10
+              backups · restore drills · migrations · monitoring · Terraform
+
+The two filled layers are the same rules expressed twice. That is deliberate and it is the subject
+of section 02 -- it is also the only duplication in the system that is allowed to exist.
+
+SWAFTO · System Architecture & DFD · V1                                                                                                              2
+LAYER OWNS                               MUST NEVER DO
+ON THE PHONE
+
+L1  Rendering, tokens,                   Contain a hex literal, compute a total, or decide a business rule.
+
+    accessibility
+
+L2  Routing, form state,                 Know the arithmetic. It asks L3 and displays the answer.
+
+    focus, origin
+
+L3  Formula Engine, day                  Touch the network, the database, or any widget. Pure functions only -- which is
+
+    lifecycle, validation                what makes it testable and portable.
+
+L4  SQLite, append-only                  Store a derived total. Ever. Entries in, entries out.
+
+    writes, outbox
+
+L5  Outbox drain, retry,                 Block a user action, or let a failed sync surface as an error on an entry screen.
+
+    token refresh
+
+IN MUMBAI
+
+L6  TLS, DDoS, rate limits, Hold state or terminate business logic.
+
+    caching
+
+L7  REST surface, auth,                  Compute a figure the client will display, or accept a write without a shop scope.
+
+    idempotency, tenancy
+
+L8  Independent                          Silently overwrite a client figure. A mismatch is a bug report, not a correction.
+
+    recomputation,
+
+    divergence alarm
+
+L9  Durable entries,                     Update or delete an entry row. Append only, forever.
+
+    closes, parties, audit
+
+L10 Backups, migrations, Exist only in someone's shell history.
+             monitoring, IaC
+
+02 -- THE CENTRAL DECISION
+
+The engine is specified once and implemented twice
+
+This is the architectural consequence of being offline-first and correctness-first at the
+same time, and it is the part most likely to be got wrong by a team in a hurry.
+
+Offline-first means the phone must compute every figure without asking anyone --
+otherwise the app is useless in bad signal, which is most of the time. Correctness-
+first means something independent has to be able to say the phone got it right.
+Those two requirements force the same arithmetic to exist in two runtimes, and the
+naive resolutions are both wrong: sharing code across Dart and the server language
+creates a build coupling you will regret, and letting them drift creates two truths
+about a shopkeeper's money.
+
+SWAFTO · System Architecture & DFD · V1                                                                                     3
+The resolution: one specification, one test-vector file, two implementations
+
+Write the rules once as a plain-text specification with a companion
+ vectors.json -- a few hundred worked examples, each a set of entries and
+every figure they should produce. Both implementations import that same
+file as their test fixture. CI fails if either one disagrees with a vector. You get
+independent implementations that cannot silently diverge, without coupling
+two codebases, and the vectors become the artefact a new developer reads
+to understand the product's actual rules.
+
+RULE UNDER TEST  VECTOR MUST PROVE
+
+Cash equation    Only Cash -mode expenses and purchases reduce the cash balance; UPI, Other,
+                 Udhar and Shop stock do not -- while all five still count toward total expenses.
+Withdrawal       Reduces cash, never appears in expenses, never touches profit.
+Carry-forward
+Missed day       Day N opening equals day N-1 counted closing, never the expected figure.
+Correction
+                 A gap produces a not_closed day and never an interpolated balance.
+Skip vs empty
+                 An adjustment posted on day N referencing closed day N-3 changes day N's
+                 figures and leaves N-3 byte-identical.
+                 A skipped section and an untouched section produce the same total and different
+                 day states.
+
+03 -- DATA FLOW, LEVEL 0
+
+Context diagram
+
+What the system exchanges with the world outside it. Four external entities, and
+notably no payment rail, no bank and no accounting package -- V1 talks to nothing
+that could change a number behind the shopkeeper's back.
+
+SWAFTO · System Architecture & DFD · V1                                                            4
+                                                                                            SMS gateway
+
+                                                                                              DLT-registered
+
+                                                                      OTP send request
+
+                     entries · count · corrections
+
+  Shopkeeper                                        0 · SWAFTO        notification payload  Push service
+
+one shop, one phone                                 day close system                                 FCM
+
+                     figures · alerts · reports
+
+                                                                      day book export
+
+                                                                                            Accountant
+
+                                                                                            receives exports
+
+The SMS gateway delivers the code to the handset outside this system's boundary; the
+shopkeeper then types it back in, which is why the only modelled flow is the send request.
+
+04 -- DATA FLOW, LEVEL 1
+
+Six processes, five stores
+
+Each band is one process reading left to right. Stores are shown wherever they are
+touched, which is conventional and keeps the arrows from crossing.
+
+SWAFTO · System Architecture & DFD · V1                                                                       5
+            phone · OTP                  1.0 Authenticate               refresh token
+
+Shopkeeper                                   long-lived session                                     D5 Session
+
+            typed amount                 2.0 Capture entry                                          D1 Entries
+                                                                                                    D3 Parties
+Shopkeeper                                  rail or day-close list
+
+                                                                                                    D4 Outbox
+
+                                         3.0 Compute figures            cash · sales · outstanding
+
+D1 Entries                               derive on read · never stored                              Shopkeeper
+
+                                          4.0 Close day                 frozen close record
+
+D1 Entries                               expected vs counted                                        D2 Days
+
+                                                 5.0 Sync               entries + closes
+
+D4 Outbox                                idempotent · background                                    Server (L7­L9)
+
+                                         6.0 Report & export            CSV / PDF
+
+D1 + D2                                      history-gated metrics                                  Shopkeeper
+
+Processes 3.0 and 4.0 are filled because they are the Formula Engine -- the only two that turn
+stored facts into money figures. Every store they read is append-only, so any figure on any
+screen can be reproduced from the entry log at any later date.
+
+05 -- DATA FLOW, LEVEL 2
+
+Process 4.0 -- closing the day
+
+Expanded because this is the product. Note the branch at 4.4: the reason step exists
+only on a non-zero difference, and it is blocking.
+
+SWAFTO · System Architecture & DFD · V1                                                                             6
+     4.1 Gather totals           4.2 Compute expected         4.3 Capture counted                                                4.4 Difference
+
+        all 9 done or skipped           shown as its working         he counts the box                                           counted - expected
+
+    4.5 Require reason                                  difference  0 -- blocking                                            D2 Days
+                                                                                                difference = 0 -- skips 4.5
+gave change · forgot · miscount
+                                          4.6 Freeze day      4.7 Set next opening
+
+                                         immutable from here    = counted, not expected
+
+4.5 is dashed because it is conditional. It is also the only step in the whole system that blocks the shopkeeper,
+and that is deliberate: an unexplained difference entered today is an unanswerable question next month.
+
+4.7 is where the audit chain is forged. Because the next day's opening is the counted figure
+and never the expected one, every subsequent balance inherits a number a human physically
+verified.
+
+06 -- DATA STORES
+
+Five stores, two of them append-only forever
+
+STORE       SHAPE                                             RULES
+
+D1 Entries   id · shop_id · day_id · section ·                Append-only. An edit writes a new version; a correction
+            amount · mode · party_id · due_date ·             writes a new row carrying corrects_day_id . id is
+            corrects_day_id · created_at ·                    client-generated so the server upsert is idempotent and a
+            source                                            retried outbox can never duplicate a sale. source is
+                                                              always manual in V1 and exists so UPI import stays
+                                                              reversible without a migration.
+
+D2 Days      shop_id · date · state ·                         One row per shop per date. state  open, ready,
+            opening_cash · counted_cash ·                     closed, not_closed. Immutable once closed. No totals
+            difference · reason · closed_at                   stored -- only the two figures a human supplied and the
+                                                              reason.
+
+D3 Parties id · shop_id · name · phone · kind · Customers and suppliers in one table with a kind flag.
+
+            default_due_days                                  Balances are never stored -- they derive from D1.
+
+D4 Outbox    entry_id · attempts · last_error ·               Local only, never synced. Drains in order; a permanent
+            queued_at                                         failure surfaces in the sync detail view, never on an entry
+                                                              screen.
+
+D5 Session shop_id · refresh_token ·                          Device keystore, not the database. Long-lived by decision
+                                                              -- a re-auth costs a real SMS.
+                             access_token · expires_at
+
+SWAFTO · System Architecture & DFD · V1                                                                                                              7
+      There is no totals table, and there never will be
+
+     Every figure in this document -- cash received, expected balance, net sales,
+     a customer's outstanding, a month's profit trend -- is computed from D1 and
+     D2 at read time. Caching them is the standard optimisation and the standard
+     way a ledger ends up displaying a number that no longer matches its own
+     entries. At 25 entries a day the computation is free; the staleness would not
+     be.
+
+07 -- CROSS-CUTTING RULES
+
+Six invariants that hold at every layer
+
+If a change would break one of these, it is not a change -- it is a different product.
+
+01 The local write is the write
+
+          A save commits to SQLite and the UI proceeds. No spinner, no optimistic-then-rollback,
+          no network in the critical path. Sync is a background consequence, never a
+          precondition.
+
+02 Every write is idempotent
+
+          Client-generated UUIDs mean the outbox can retry forever without creating a duplicate
+          entry. This is what makes rule 1 safe, and it is the single most commonly skipped piece
+          of offline-first plumbing.
+
+03 Nothing derived crosses the wire
+
+          The API exchanges entries, day records and parties. It never returns a computed total
+          for display. One engine on the phone produces every number the shopkeeper reads,
+          which is why the app is complete offline including its reports.
+
+04 Append-only, forever
+
+          No UPDATE and no DELETE on D1. Corrections are new rows that reference old days.
+          The entry log is the source of truth and every screen is a projection of it.
+
+05 One shop, one phone
+
+          An explicit non-goal for V1, stated so nobody builds conflict resolution for a case that
+          does not occur. Revisit only when a real shop asks for a second device, and treat it as a
+          genuine architectural change rather than a setting.
+
+SWAFTO · System Architecture & DFD · V1                                                              8
+06 Divergence is an alarm, not a repair
+
+          When the server's recomputation disagrees with the client's, the server does not
+          overwrite. It records both and raises. A money app that silently corrects itself is a
+          money app whose bugs you never find.
+
+08 -- DEPLOYMENT VIEW
+
+Which layer runs on which box
+
+LAYERS  RUNS ON                          NOTES
+
+L1­L5   Android handset, Flutter         Budget devices, Android-first. iOS target exists in the build
+L6                                       but is not a launch platform.
+L7­L8
+L9      Cloudflare free tier             Replaces a load balancer entirely at this scale.
+L10
+        One EC2 t4g.small, public subnet Docker, systemd, security group. No NAT gateway, no ECS,
+                                                               no Kubernetes.
+
+        RDS PostgreSQL db.t4g.micro,     7-day automated backups plus a nightly logical dump to
+        single-AZ                        S3 -- two independent recovery paths.
+
+        Terraform, GitHub Actions,       ~200 lines of IaC. This is the mitigation for running a
+        CloudWatch                       single node: rebuild in thirty minutes rather than from
+                                         memory.
+
+Total infrastructure cost at 500 shops is 3,180 a month, and the architecture does not need
+to change until roughly 15,000 shops -- at which point L7 becomes two instances behind a
+load balancer and L9 steps up an instance class. Nothing else in this document moves.
+
+09 -- DELIBERATE ABSENCES
+
+What this architecture does not have
+
+Listed because every one of them is something a reviewer will ask about, and each
+absence is a decision rather than an oversight.
+
+SWAFTO · System Architecture & DFD · V1                                                                 9
+NOT PRESENT                              WHY
+
+Any AI or ML in the request path Decision 1. Also the evidence that manual entry builds a stronger habit than
+                                                            low-burden capture.
+
+A message queue                          The outbox on the device is the queue. A server-side broker at 600,000
+                                         requests a month is infrastructure looking for a problem.
+
+A cache layer                            Nothing is expensive enough to cache, and a cache over derived figures
+                                         would reintroduce exactly the staleness section 06 exists to prevent.
+
+Microservices                            One domain, one team of interns, one deployable. Service boundaries cost
+                                         more than they save below about ten engineers.
+
+Real-time / websockets                   One shop, one phone. There is no second client to push to.
+
+A payment rail or bank                   V1 records money that has already moved. Nothing in this system can
+integration                              move a rupee, which removes an entire class of risk and regulation.
+
+Item or inventory tables                 Decision 5. No input collects them, so no store holds them.
+
+SWAFTO · Retail Desk V1 · final layered architecture and data flow diagrams · 18 September 2026 ·
+supersedes the eleven-layer model in ADR-001 · derived from the nine V1 decisions, the Strategy 1
+interaction specification and the infrastructure cost model.
+
+SWAFTO · System Architecture & DFD · V1                                                                            10
+

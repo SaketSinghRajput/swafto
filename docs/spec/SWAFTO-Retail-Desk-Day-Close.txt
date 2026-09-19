@@ -1,0 +1,412 @@
+SWAFTO · RETAIL DESK V1 · SCREEN DESIGN IN MARIGOLD LEDGER
+
+The sheet is the product.
+No microphone.
+
+Voice capture is out, and no model touches the input path. What
+replaces it is the thing your paper Retail Desk sheet already is: a nine-
+section day close that ends in a cash reconciliation. Here is that
+reframed as screens, plus every output from the 15-07 note mapped to
+the input that produces it -- and the six places the sheet currently can't
+produce one.
+
+      Why this makes the product stronger, not weaker
+
+     Your own ADR-001 already concluded that "AI automation" is not a
+     differentiator -- Dukaan AI ships free offline voice billing in 24
+     languages including Odia. And your resource plan names the actual
+     wedge: trustworthy daily cash/credit closing, a "trust/correctness
+     wedge against free incumbents". Removing voice doesn't cost you the
+     moat. It stops you competing on the one axis you were already going
+     to lose, and puts everything behind the axis you can win: the number
+     in the cash box matching the number on the screen.
+
+01 -- FEATURE REFRAME
+
+What comes out, what stays, what has to come in
+
+Removing the microphone leaves a hole where the home screen's hero was. It
+has to be filled by something, and the sheet tells you what.
+
+SWAFTO · Retail Desk Day Close                                              1
+REMOVED                                     KEPT
+
+Tap & Speak                                 Today's overview
+The voice capture card and its mic          Still the first thing on screen -- but it now
+affordance, everywhere it appears.          reads from the day close, not from ad-
+                                            hoc entries.
+Speech-to-transaction
+Whisper / STT in the entry path. Layer 4's  Cash in hand
+speech intelligence no longer sits          Promoted. It is the output of the
+between the user and their data.            reconciliation, not a standalone widget.
+
+AI expense categorisation                   Notifications
+No model guesses whether "chai 20" is       Repointed at dues and deficits, which are
+an expense or a sale. The user picks the    computed, not predicted.
+section first, then types.
+                                            Odia / Hindi / English
+Parchi / bill scanning                      Unaffected. Localisation is not AI.
+Anything that reads a number off an
+image and writes it into the ledger         Reports
+without the user typing it.                 Becomes the home of everything in the
+                                            Business Intelligence column of your
+"Insights" as AI output                     note.
+Renamed. Everything in Reports is
+arithmetic on entered numbers, and the
+formula is shown.
+
+SWAFTO · Retail Desk Day Close                                                             2
+    ADDED
+
+    Day-close progress
+    The new hero: "6 of 9 sections done". A
+    shopkeeper's day has a beginning and
+    an end, and the app should know which
+    one it's in.
+
+    Cash Check screen
+    Section 9 of your sheet, given its own
+    screen. Expected vs actual vs difference.
+    This is the product.
+
+    Six typed entry rails
+    Cash sale, Udhar sale, Expense,
+    Purchase, Collection, Party payment.
+    Each opens a form with the exact fields
+    the paper sheet has.
+
+    Party ledgers
+    Udhar sales and collections roll up per
+    customer; purchases and party
+    payments roll up per supplier. That's
+    outputs 7 and 8 for free.
+
+    Carry-forward lock
+    Tomorrow's opening cash is today's
+    actual closing, never the expected. Non-
+    negotiable.
+
+02 -- INPUT MODEL
+
+Nine sections, in the order the shopkeeper already fills them
+
+Taken verbatim from Retail Desk V1. Do not reorder these. The paper
+sequence is muscle memory, and matching it is the cheapest usability win
+available to you.
+
+SWAFTO · Retail Desk Day Close                                            3
+00                                             01
+
+Opening                                        Cash sales
+
+Opening cash, opening UPI. Locked to           Line items  total.
+yesterday's actual closing.
+
+02                                             03
+
+UPI sales                                      Udhar sales
+
+Line items  total. Marked auto-reconciliation  Creditor name · amount · phone. Feeds the
+on the sheet -- see gap 01.                    customer ledger.
+
+04                                             05
+
+Expenses                                       Purchase
+
+Type · amount · mode.                          Supplier (optional) · amount · mode. Udhar
+                                               mode feeds the supplier ledger.
+  CASH UPI OTHER UDHAR SHOP STOCK
+                                                 CASH UPI OTHER UDHAR
+
+06                                             07
+
+Udhar collection                               Party payment
+
+Customer · phone · amount · mode. Closes       Supplier · phone · amount · mode. Closes out
+out section 03.                                section 05.
+
+08                                             09
+
+Personal withdrawal                            Cash check
+
+Cash and UPI. Reduces cash, is not an          Actual closing cash counted in the box,
+expense -- see gap 03.                         against the system's expected balance. The
+                                               difference is the whole trust proposition.
+
+03 -- SCREENS
+
+Three screens, in Marigold Ledger
+
+Ink indigo #13294B on the header, marigold #F5A524 carrying every primary
+action with dark ink on top of it at 8.75:1. Money in is #0B6B3A, money out
+#C2371F, and both always carry a sign as well as a colour.
+
+SWAFTO · Retail Desk Day Close                                                               4
+9:41                                                         9:41                                        
+                                         TUE · 15 JUL
+ S swafto                                                    < Day close · 15 Jul
+
+Good morning, Rajanikanta                                    Opening cash 1,500 · carried from
+                                                             yesterday's count
+Sharma Kirana Store
+
+Today's book                                                  Cash sales                               6,780
+
+Cash check not done yet                  6/9                        7 entries
+
+                                                              UPI sales                                3,120
+
+                                                                    Entered manually
+
+           Continue day close
+
+                                                              Udhar sales                              1,550
+
+                                                                    3 customers
+
+Today so far                                   Full sheet >   Expenses                                 1,180
+
+   Cash received                 Cash paid                          5 entries · 1 shop stock
+
+ + 9,180                        - 4,380                       Purchase                                 3,200
+
+  = Expected in box             Net sales                           2 suppliers
+
+ 6,300                          11,450
+
+Udhar to collect                You owe suppliers                  Udhar collection                    2,400
+                                                             
+18,240                          27,600
+                                                                    2 customers
+
+                                                             7     Party payment                       --
+
+! Cash short for Thursday. 12,000 due to Agarwal                   Tap to enter
+   Traders, expected balance 6,300.
+                                                             8     Personal withdrawal                 --
+ 4 customers past 30 days. 7,900 of udhar
+                                                                   Not entered
+    uncollected.
+
+                                                             9     Cash check                          --
+
+                          U                  -                     Count the box
+
+Cash sale            Udhar sale          Expense
+
+                                                                   Enter party payment
+
+Purchase             Collection          Party pay
+
+                                                                   Skip to cash check
+
+Home       Day book             Parties            Reports
+
+                                                             Home  Day book                   Parties  Reports
+
+Home                                                         Day close
+
+The hero is the day's completion state, not a                The paper sheet, one row per section, in the
+capture button. Six rails below it are direct                same order. Entered sections show their total
+manual entry -- one tap to the right form, no                so the owner can check against the paper he
+interpretation step.
+
+SWAFTO · Retail Desk Day Close                                                                                  5
+                                may still be keeping in parallel for the first
+                                few weeks.
+
+SWAFTO · Retail Desk Day Close                                                  6
+9:41                                       
+
+< Cash check
+
+Step 9 of 9 · count what's in the box
+
+Expected in the box                      1,500
+                                         6,780
+6,300                                    2,400
+                                         3,200
+Opening cash
++ Cash sales                               680
++ Udhar collected in cash                  500
+- Cash purchase
+- Cash expenses
+- Withdrawal
+
+You counted
+
+6,050
+
+Tap to change
+
+                               Missing
+
+        - 250
+
+            Gave change Forgot an expense
+                    Miscount Don't know
+
+i Tomorrow's opening cash will be 6,050 -- what
+
+   you counted, not what was expected.
+
+      Close the day
+
+Home  Day book                  Parties  Reports
+
+Cash check
+
+The expected figure is shown as its working,
+not as a verdict -- the owner can see which
+line is wrong. A non-zero difference demands
+a reason before the day closes, which is what
+stops silent drift.
+
+SWAFTO · Retail Desk Day Close                    7
+04 -- INPUT  OUTPUT MAP
+
+Every output in your 15-07 note,
+and the day it can first appear
+
+The primary column is pure arithmetic and works from the first closed day.
+The operational and intelligence columns need history -- showing them
+empty on day one is how a shopkeeper decides the app is broken, so gate
+them and say what's coming.
+
+SWAFTO · Retail Desk Day Close                                              8
+OUTPUT                          COMPUTED FROM                  FORMULA                                  AVAILABLE
+
+PRIMARY · SIMPLE ARITHMETIC                                                                               Day 1
+                                                                                                          Day 1
+Total cash received             §1 cash sales, §6 collections cash_sales + cash_collections               Day 1
+                                (cash mode)                                                               Day 1
+                                                                                                          Day 1
+Total cash paid                 §4 §5 §7 §8 (cash mode only) cash_exp + cash_pur +                        Day 1
+                                                                                cash_party + cash_wdrl    Day 1
+                                                                                                          Day 1
+Expected cash balance Opening + above                          open + received - paid
+                                                                                                          Day 1
+Net sales                       §1 §2 §3                       cash + upi + udhar sales                   ~7 days
+                                                                                                          ~7 days
+Net purchase                    §5, all modes                   purchase                                  Day 1*
+                                                                                                          ~7 days
+Total expenses                  §4, all modes incl. shop        expense                                   ~3 days
+Credit outstanding              stock                           udhar_sales -  collections
+                                                                                                          ~14 days
+                                §3 minus §6, per customer                                                 ~21 days
+                                                                                                          ~30 days
+Supplier outstanding            §5 (udhar mode) minus §7        udhar_purchase -  party_pay               ~30 days
+                                                                                                          Blocked
+OPERATIONAL                     §9 difference + expected       |G-F| and F vs floor                       Open
+Daily cash health               balance                        E ÷ B, vs own trailing mean
+
+Expense pressure                Total expenses ÷ net sales
+
+Collection efficiency           §6 ÷ §3 over window            collected ÷ given, 30d
+
+Payment due                     Supplier outstanding, aged days since udhar purchase
+
+Business movement               Today's net sales vs trailing  B_today ÷ mean(B, 7d)
+                                mean
+
+Cash deficit warning            Expected balance vs aged       F - dues(next 7d) < 0
+                                dues
+
+BUSINESS INTELLIGENCE
+
+Profit trend                    Net sales - purchase -         B - D - E, over time
+                                expenses, daily
+
+Sales consistency               Daily net sales series         stdev ÷ mean (CoV)
+
+Cash flow stability             Closing cash series + deficit variance of G, deficit-day
+
+                                days                           count
+
+Working capital pressure Outstandings vs cash                  (credit_out + supplier_out) ÷
+                                                               cash
+
+Inventory pressure              Needs item-level stock data not derivable from V1
+
+Output #6 (unwritten)           Left incomplete in the 15-07 --
+                                note
+
+SWAFTO · Retail Desk Day Close                                                                                      9
+* Payment due can age from day one, but it can only say "23 days since purchase", not
+"overdue", until the sheet carries an agreed term. See gap 04.
+
+05 -- BEFORE YOU BUILD
+
+Six things the sheet can't currently answer
+
+Each one is a decision, not a bug. They are cheap now and expensive after
+four Flutter developers have written forms against V1.
+
+01 "UPI auto-reconciliation" is doing a lot of work on that sheet
+
+            Opening UPI, UPI sales and closing UPI are all marked auto. If that integration isn't
+            live on day one, half the reconciliation is unverifiable and the app can only balance
+            the cash side -- which is still valuable, but it is a different promise. Note that
+            statement parsing is a data integration, not AI, so it doesn't conflict with the
+            decision you just made.
+
+                Decide: ship V1 with manual UPI totals and reconcile only cash, or block launch on
+                the UPI integration? Recommend the former -- cash is where the leakage is.
+
+02 "Shop stock" as an expense mode breaks the cash equation
+
+            An expense settled from shop stock is a real cost but not a cash outflow. If it lands
+            in the cash-paid total, every expected balance is wrong by that amount and the
+            user's first reconciliation fails for a reason they can't see.
+
+                Rule: expense modes split into cash-affecting (Cash) and non-cash-affecting (UPI,
+                Other, Udhar, Shop stock). Only Cash enters the cash equation; all modes enter
+                total expenses.
+
+03 Personal withdrawal is not an expense
+
+            It reduces cash and it must not touch profit. Your profit formula on the sheet ( Net
+            sales - purchase - expense ) is right precisely because withdrawal is absent from
+            it -- worth stating explicitly in the engine, because it is the single most common
+            error in small-shop bookkeeping and one intern will "fix" it back.
+
+                Rule: withdrawal reduces cash, never expenses, never profit. Cover it with a
+                Formula Engine test that fails loudly.
+
+SWAFTO · Retail Desk Day Close  10
+04 Purchases have no payment term, so
+          "Payment Due" can't mean overdue
+
+            The supplier outstanding is computable, but nothing on the sheet says when it's
+            owed. Without a term, the best the app can say is "23 days old" -- which is not an
+            alert, it's a fact.
+
+                Add: an optional "due in ___ days" on udhar-mode purchases, defaulting per
+                supplier after the first entry.
+
+05 Inventory pressure has no input to stand on
+
+            Your own note marks it "(future)", correctly. "Top 3 items sold" is free text, which is
+            a nice diary line and useless as data. There is no item master, no quantity, no
+            stock count anywhere in V1 -- so this output cannot exist without a new input
+            section, and adding one lengthens the day close, which is the one thing you
+            cannot afford.
+
+                Decide: leave it out of V1 entirely and don't show it greyed out, or introduce a
+                minimal item list (name + qty sold) as an optional tenth section.
+
+06 Nothing yet says what happens when the day isn't closed
+
+            Shops miss days. If day 16's opening cash depends on day 15's actual count and
+            day 15 was never closed, the chain breaks -- and a ledger that silently guesses is
+            worse than no ledger.
+
+                Decide: on reopening after a gap, prompt for a single cash count and mark the
+                intervening days "not closed" rather than interpolating. Never invent a balance.
+
+SWAFTO · Retail Desk V1 reframed without voice or model-assisted input · palette A1 Marigold Ledger ·
+drawn from the 15-07-2026 input/output note, Retail Desk V1 sheet, ADR-001 and the finalized resource
+plan.
+
+SWAFTO · Retail Desk Day Close                                                                         11
+

@@ -1,0 +1,407 @@
+SWAFTO · RETAIL DESK V1 · INTERACTION SPECIFICATION
+
+Strategy 1 -- The Two-Speed Ledger
+
+One day record, two paths to it, different navigation costs and identical data. This
+document specifies exactly how every screen and component behaves on each path,
+what the single origin parameter controls, and the eight edge cases that decide
+whether the reconciliation can be trusted.
+
+APPLIES TO           COMPONENTS                        DEPENDS ON                STATUS                       DATE
+
+T1, T5, T7­T10, T6,  20                                Decisions 6, 7, 8, 9      Ready to build               8 September 2026
+T16
+
+01 The principle
+
+A sale entered at 11 a.m. and the same sale entered during the evening close are one record.
+The paths to that record must not cost the same, because they are used in completely
+different circumstances -- one hand on the phone with a customer waiting, versus sitting down
+at the end of the day.
+
+    The rule: the six rails on Today open the entry form directly, and Done returns to Today. The
+    day-close list opens the same form one tap later, and Done returns to the list. Two speeds, one
+    form, one record. Anything that captures a transaction and writes it somewhere other than the day
+    record is a defect, however convenient it looks.
+
+                     rail -- 2 taps around the typing
+
+Today                                                  Entry form                writes   Day record
+
+    T1                                                       T7­T10                      one source of truth
+
+          at close                                                                       all 9 done or skipped
+
+                     Day close list                                                      Cash check             Closed
+
+                                 T5                                                           T11­T13
+
+                                                       same form, one tap later
+
+Both paths reach one form and write one record. The rails are a shorter route to the same place, never a separate
+feature.
+
+02 Path A -- rail capture, during the day
+
+Used twenty to forty times a day, one-handed, with a customer waiting. Every tap here is
+multiplied by the number of transactions, which is why it is specified to the tap.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                                          1
+Path A · rail                                                                        T1  T7­T10  T1
+
+A1 User taps a rail tile on Today. Six tiles, each hard-bound to one section tap 1
+          -- no type picker, no disambiguation step.
+
+A2 Entry form opens full screen with section preset and origin:              0 taps
+          "rail" . Bottom nav is hidden; the keypad needs the height.
+
+A3  AmountField is focused on open with the keypad already up.               0 taps
+
+    The first digit is reachable without a further tap. The view opens on a
+
+    blank line, not on the section's contents.
+
+A4 User types the amount, plus party or mode where the form archetype typing
+          requires it.
+
+A5 User taps Save. The write completes locally and immediately -- never tap 2
+          gated on network.
+
+A6 Form dismisses. Returns to Today, not to the day-close list. Today        0 taps
+          recomputes in place with no full-screen loading state.
+
+Two taps around the typing. The first digit is reachable on tap one. A secondary Save & add another
+keeps the form open with the keypad up for a run of consecutive sales -- that path costs one tap per
+additional entry and never returns to Today until the user is done.
+
+03 Path B -- close review, at the end of the day
+
+Used once. Its job is not fast entry; its job is to let the shopkeeper see the whole day at once,
+fill the gaps and reach the cash check. Its extra tap is paid once and amortised across every
+section he touches.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                2
+Path B · list                                                               T1  T5  T7­T10  T5
+
+B1 User taps Continue day close on Today.                                   tap 1 · once
+
+B2 Day close list opens. Nine rows, each in one of three states --          0 taps
+
+entered with its total, explicitly skipped, or untouched. On a day where
+
+capture worked, most rows are already full.
+
+B3 User taps a section row.                                                 tap 2
+
+B4 The same entry form opens with origin: "list" -- but showing             0 taps
+          the section's existing entries, with an empty line ready at the
+          bottom and the keypad up. Reviewing is the default posture here,
+          adding is secondary.
+
+B5 User edits, deletes or adds lines. SectionTotalBar updates on every typing
+          change.
+
+B6 User taps Done. Returns to the list, and the row updates to              tap 3
+          "entered" with its new total.
+
+B7 When all nine rows are entered or skipped, Cash check unlocks and --
+          the primary action on the list changes to open it.
+
+Three taps for the first section, two for every one after it -- the trip into the list is paid once. If a
+shopkeeper is doing his whole day here, that is the correct cost. If he is doing it here instead of using the
+rails, capture has failed and the numbers are recalled rather than recorded.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                         3
+04 What origin controls
+
+One parameter, four behaviours. Everything else about the form is identical, which is what
+keeps this a single component rather than two that drift apart.
+
+BEHAVIOUR           ORIGIN = "RAIL"     ORIGIN = "LIST"                             WHY
+
+Return              Today (T1)          Day close list (T5)                         Return where the
+destination                                                                         user came from;
+                                                                                    anything else strands
+                                                                                    them
+
+Opening view        One blank line      Existing entries, blank line at the bottom  Capture is additive;
+                                        Done                                        review is inspective
+Primary action      Save
+                                                                                    "Save" commits one
+                                                                                    thing; "Done" closes
+                                                                                    a review
+
+Secondary           Save & add another Add a line                                   Same function,
+action                                                                              framed for the
+                                                                                    posture the user is in
+
+Not controlled by origin : validation, the write path, the section's business rules, the mode split, keypad
+behaviour, or anything the shopkeeper can see in the data. If a second behaviour difference is ever proposed, it
+belongs in the section's own config, not here.
+
+05 Component reactions
+
+Every component that participates, what it receives, and how it behaves on each path. A rail
+path, B list path.
+
+COMPONENT           RECEIVES            BEHAVIOUR
+
+EntryRail ×6        section, dayState    A Emits openEntry(section, "rail") . Disabled with an
+                                        explanatory line when the day is closed -- never silently
+                                        inert. Not present on T5.
+
+DayProgressRing     section states      Advances when a section moves untouched  entered or
+MetricCell ×4                           skipped; decrements if the last line of a section is deleted.
+                    derived day         Opens at 1 of 10 per Strategy 2. Animates on return from either
+                    figures             path.
+
+                                        Recompute on return. Cash received, cash paid, expected
+                                        balance and net sales are derived, never stored, so no stale
+                                        total can survive an edit.
+
+OutstandingSummary  party balances      Recomputes only after Form B sections. Unaffected by cash sales
+                                        or expenses.
+
+AlertBanner         deficit, aging      Re-evaluates on return. A save can clear an alert -- that
+                                        transition should be visible, not silent, because it is the app
+                                        rewarding the entry.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                            4
+COMPONENT        RECEIVES               BEHAVIOUR
+
+DayStateBadge    day state              Gates the rails. Open  rails live. Ready  rails still live. Closed 
+                                        rails disabled, correction offered.
+SectionStepRow   state, total
+                                         B Three states. Updates its total in place on return from the
+NothingToEnterAction section            form; never requires a list refresh.
+
+AmountField      --                      B List only. Skipping is a review-time decision -- offering it on
+                                        a rail would invite skipping a section the user only just opened.
+PartyField       direction
+                                        Focused on open, keypad up. Keypad persists across Save &
+ModeSelector     section                add another. Tabular figures,  prefix, never suggests or pre-fills
+                                        a value.
+DueDateChips     supplier
+LineItemRow      entry                  Matches existing parties as the user types; fills name and phone
+SectionTotalBar  section entries        only on explicit selection, and never the amount. A new name
+PrimaryButton    origin                 creates a party on save, not before.
+SyncIndicator    queue depth
+BottomNav        --                     Cash sits apart from UPI / Other / Udhar / Shop stock. Defaults
+ConfirmSheet     dirty state            to Cash -- a default the user can see and change, not a guess
+AppBar           section, origin        about this transaction.
+CashCheckPanel   day record
+                                        Purchase, udhar mode only. Pre-selects the supplier's
+                                        remembered chip if one exists; always skippable, never blocking.
+
+                                        Editable and deletable while the day is open. Read-only the
+                                        moment the day closes.
+
+                                        Sticky, updates on every save or delete. On path B it is the
+                                        number the shopkeeper checks against his paper sheet.
+
+                                        Label from the table above. Never disabled while a valid
+                                        amount is present, including offline.
+
+                                        Reflects pending writes. Never blocks, never modal, never
+                                        appears on the save button. The write already succeeded.
+
+                                        Hidden during entry. Restored on return, with the correct tab
+                                        active for the origin.
+
+                                        Only on back-with-input. Never on save, never on a clean
+                                        dismissal.
+
+                                        Back variant with the section name. Back behaves exactly as the
+                                        confirm rules below specify.
+
+                                        Recomputes its working whenever the day record changes -- see
+                                        edge case E7, which is the one that can put a wrong number in
+                                        front of the user.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                       5
+06 The write path
+
+Identical on both paths. This is what makes the two speeds safe.
+
+STEP        BEHAVIOUR
+
+1 · append  Save appends an immutable entry: {id, dayId, section, amount, mode?, partyId?,
+            dueDate?, createdAt, source:"manual"} . Editing a line writes a new version; it does not
+            mutate in place.
+
+2 · local   The local write commits and the UI proceeds. No spinner, no optimistic-then-rollback. Per
+            decision 9 the local write is the write.
+
+3 · queue   The entry joins the sync queue. Queue depth drives SyncIndicator and nothing else.
+
+4 · derive  All day figures -- cash received, cash paid, expected balance, net sales, section totals, progress
+            -- are computed from entries on read. Nothing is cached and reconciled later. This is what
+            guarantees a correction or a deletion can never leave a stale total on a screen.
+
+5 · source Always "manual" in V1. The field exists so that decision 1 stays reversible without a migration.
+
+The derive-on-read rule is the single most important line in this section. Storing running totals is the standard
+optimisation and it is the standard way a ledger app ends up showing a number that no longer matches its own
+entries.
+
+07 Edge cases
+
+Eight, each with a ruling. These are where a two-path design either holds together or quietly
+corrupts the day.
+
+E1 Rail tapped before the day has been started
+
+RULING      Intercept with opening cash (T6), then continue straight into the intended form with the
+NEVER       section preserved.
+
+            Drop the user on Today after the interception. The intent was a cash sale; losing it costs the
+            tap saving this whole strategy exists to protect.
+
+E2 Rail tapped when today is already closed
+
+RULING      Rails render disabled with a visible line -- "Today is closed. Post a correction instead." --
+WHY         routing to T16.
+
+            Decision 7 makes a closed day immutable. A disabled control that explains itself is the
+            difference between a rule and a bug.
+
+E3 Entry made into a section already marked "Nothing to enter"
+
+RULING      The save un-skips the section. Ring recounts. A brief confirmation states it: "Expenses is no
+WHY         longer marked empty."
+
+            Decision 8 depends on skipped and empty staying distinguishable. A silent state change
+            here is exactly the corruption that decision was written to prevent.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                             6
+E4 Save while offline
+
+RULING  Succeeds. Form dismisses normally. SyncIndicator shows pending and nothing else
+NEVER   changes.
+
+        A blocking dialog, a retry prompt, or a save button that goes into a loading state. A cash
+        entry lost to signal is lost permanently.
+
+E5 Back pressed mid-entry
+
+RULING  If any digit has been typed, ConfirmSheet asks before discarding. If the form is untouched,
+WHY     dismiss silently.
+
+        Confirming an empty form trains the user to dismiss confirmations, which is how the one that
+        mattered gets dismissed too.
+
+E6 The last entry in a section is deleted
+
+RULING  The section returns to untouched, not to skipped. The ring decrements and the cash check
+WHY     re-locks if it was unlocked.
+
+        Deleting an entry is not the same statement as "there was nothing here". Only the user can
+        say the second thing, and only through NothingToEnterAction .
+
+E7 An entry is made while the cash check is open
+
+RULING  Permitted. The expected figure recomputes, and if the user is on the cash check screen it
+WHY     invalidates any counted figure already entered and re-presents the working with a
+        note that the expected amount changed.
+
+        This is the one path that can put a wrong number in front of the shopkeeper at the exact
+        moment he is deciding whether to trust the app. A stale expected balance here is worse than
+        any other bug in this document.
+
+E8 Rapid double-tap on a rail
+
+RULING  Opening the entry form is idempotent -- one form, never two stacked. Save is debounced so
+WHY     a double-tap cannot create two entries.
+
+        One-handed use on a budget device with a laggy display makes double-taps routine, and a
+        duplicated 500 sale destroys the reconciliation.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                7
+08 Anti-patterns
+
+Each of these looks like an improvement in a design review and breaks the strategy.
+
+A generic "add transaction" button                     Quick-add with its own store
+
+A floating action button opening a sheet that asks     Any capture that writes somewhere other than the
+which type. It re-introduces the choice the six rails  day record. Two sources of truth means a
+already answered, and it is one step from asking a     reconciliation that cannot reconcile, which is the
+model to guess the type -- which decision 1            entire product.
+removed.
+
+Returning to the list from a rail                      Inferring the section from the amount
+
+It strands a user who was mid-counter and              "20 is probably an expense." This is the banned
+reintroduces a tap on the highest-frequency path in    guess wearing a heuristic's clothing, and it will be
+the app.                                               wrong in a way the shopkeeper cannot see.
+
+Blocking save on sync                                  Caching day totals
+
+Any spinner between the tap and the dismissal.         Storing running figures for speed. On a device this
+Decision 9 says the local write is the write.          size the computation is free and the staleness is not.
+
+09 Acceptance criteria
+
+Testable statements. If any of these is false, the strategy is not implemented, whatever the
+screens look like.
+
+      From a cold start on Today, the first digit of a cash sale is reachable in one tap, and the entry is
+      committed in two.
+      Saving from a rail returns to Today; saving from the list returns to the list. Neither ever returns to the
+      other.
+
+      The entry form is one component, instantiated with a section and an origin. No forked implementation
+      exists.
+
+      Every entry, from either path, lands in the same day record and is indistinguishable in storage from the
+      other path's entries.
+      No day figure shown anywhere is read from a stored total. All are derived on read.
+      A save completes with the device in aeroplane mode, with no dialog and no button state change.
+
+      Entering a line into a skipped section un-skips it and says so.
+      Deleting the last line of a section returns it to untouched and re-locks the cash check.
+
+      An entry made while the cash check is open invalidates any counted figure and re-presents the
+      working.
+      Double-tapping a rail produces one form; double-tapping save produces one entry.
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                            8
+Rails are visibly disabled and explained on a closed day, and offer the correction route.
+
+10 Instrumentation
+
+Four measurements specific to this strategy. The first two decide whether it worked.
+
+MEASURE              DEFINITION                                                READING
+
+taps_to_first_digit  Taps from app open to focus in AmountField , cold         Target  2. Above 2
+                     start                                                     means a step crept
+                                                                               back in
+
+rail_share           Entries with origin:"rail" ÷ all entries, weekly          Should rise after week
+                                                                               1. If the list dominates,
+                                                                               the app is a 9 p.m.
+                                                                               chore filled from
+                                                                               memory
+
+ms_in_field vs ms_in_nav Time with the keypad up against time navigating, per  Only nav time should
+                                              entry                            fall across releases --
+                                                                               see Strategy 4
+
+entries_per_open     Entries committed per app open                            Near 1 means true
+                                                                               through-the-day
+                                                                               capture; a high number
+                                                                               means batching, which
+                                                                               is Path B behaviour in
+                                                                               disguise
+
+The one signal that matters most: rail_share . Everything in this document exists to make the
+rails cheap enough to use while a customer is standing there. If that number stays low, the design
+is fine on paper and the product is being filled from memory -- and a ledger filled from memory
+reconciles to a number nobody should trust.
+
+SWAFTO · Retail Desk V1 · Strategy 1 interaction specification · 8 September 2026 · depends on
+decisions 6, 7, 8 and 9 · supersedes the screen list dated before those decisions
+
+SWAFTO · Strategy 1 · Two-Speed Ledger                                                                    9
+

@@ -1,0 +1,344 @@
+SWAFTO · DECISIONS BEFORE PIXELS · 8 SEPTEMBER 2026
+
+Nine calls to make before a
+single screen gets generated.
+
+The design prompt I wrote silently assumed answers to four of these. This
+settles them properly, defines the one thing no screen list can express --
+what a day actually is as it moves from open to closed -- and marks the
+four questions that judgment cannot settle, with the metric that will settle
+each once the app is live.
+
+      Working conditions for these rulings
+
+     No shopkeeper access right now, so every call below is made on the
+     paper sheet, the arithmetic, and the platform. Where judgment could
+     plausibly be wrong, the ruling takes the reversible option and the last
+     section names the number that will prove it either way. Two of the
+     nine aren't really decisions at all -- they're accounting facts that a
+     well-meaning developer will otherwise "fix" back.
+
+PART ONE -- THE REGISTER
+
+The nine
+
+Each one names the question, the call, and what changes on screen because of
+it. Confidence is how sure I am. Reversible says what it costs to change your
+mind in six months.
+
+SWAFTO · Retail Desk Decisions                                                 1
+D1                              UPI stays manual in V1
+
+  HIGH CONFIDENCE               Integrate UPI automatically, or type the totals?
+  REVERSIBLE --
+  CHEAP
+
+                                Type them. UPI sales, opening UPI and closing UPI are
+                                ordinary typed fields. Reconcile cash only. Store every UPI
+                                figure with a source field -- manual or imported -- from
+                                the first commit.
+
+                                I assumed Play policy blocked this and I was wrong: Google explicitly
+                                permits READ_SMS for "SMS-based financial transactions -- for
+                                example, Unified Payments Interface (UPI)" and for money-
+                                management apps that track budgets. So the door is open, and the
+                                decision is a product one instead. Three reasons to still wait: the
+                                permission needs a declaration and review round you don't want on
+                                the critical path to launch; transaction SMS formats vary by bank and
+                                PSP and break silently, which is exactly the failure mode a
+                                correctness-first product cannot afford; and the shopkeeper's
+                                PhonePe app already reconciles his UPI for him. Cash is the thing no
+                                other app on his phone is counting. That source field is the entire
+                                cost of keeping the door open.
+
+                                ON SCREEN  UPI sales is a plain typed section. No connecting state, no
+                                           permission prompt in onboarding, no "syncing..." spinner
+                                           anywhere in V1.
+
+SWAFTO · Retail Desk Decisions                                                                          2
+D2                              Only Cash mode touches the cash equation
+
+  NOT A PREFERENCE              What do the five expense modes do to the expected balance?
+  ARITHMETIC
+                                   Expense modes split in two. Cash affects the cash balance.
+                                   UPI, Other, Udhar and Shop stock do not. All five count
+                                   toward total expenses and toward profit.
+
+                                An expense settled from shop stock is a real cost and not a cash
+                                outflow. If it lands in cash-paid, every expected balance is wrong by
+                                that amount and the shopkeeper's very first reconciliation fails for a
+                                reason he cannot see -- which is the worst possible first experience
+                                for a product whose whole promise is that the number is right.
+
+                                ON SCREEN  The mode selector cannot be a flat row of five equal chips.
+                                           Cash sits apart, or the other four carry a "doesn't change your
+                                           cash" line. This is the screen most likely to be generated
+                                           wrong.
+
+D3                              Personal withdrawal is not an expense
+
+  NOT A PREFERENCE              Where does the owner taking 500 for himself land?
+  ACCOUNTING
+                                   It reduces cash. It is never an expense and it never
+                                   touches profit. Your sheet's formula -- net sales -
+                                   purchase - expense -- is correct precisely because
+                                   withdrawal is absent from it.
+
+                                This is the single most common error in small-shop bookkeeping, and
+                                it is the kind of thing a developer will confidently "correct" during a
+                                refactor because it looks like money going out. It needs a Formula
+                                Engine test that fails loudly and names the rule in its message.
+
+                                ON SCREEN  Withdrawal never appears inside an expense list. On the day-
+                                           closed summary it sits below the profit line, visually
+                                           separated, not inside the subtraction.
+
+SWAFTO · Retail Desk Decisions                                                                              3
+D4                              Due dates are optional chips, not a terms field
+
+  MEDIUM -- WATCH IT            How does the app know when a supplier payment is actually due?
+  REVERSIBLE
+                                   An optional due date on udhar-mode purchases, entered as
+                                   quick chips -- 7 days · 15 days · 30 days · pick a date --
+                                   remembered per supplier after first use. Never mandatory,
+                                   never blocking.
+
+                                Without something here, "Payment Due" can only say "23 days since
+                                purchase", which is a fact rather than an alert. But kirana supply
+                                terms are frequently informal -- "next week", "when the truck
+                                comes" -- and a mandatory terms field would stall entry on a
+                                question the shopkeeper often can't answer precisely. Chips let him
+                                answer when he knows and skip when he doesn't. This is the ruling I
+                                am least sure about, and the last section says how to find out.
+
+                                ON SCREEN  One optional row on the purchase form. The aging badge
+                                           reads "overdue" only where a date exists, and "31+ days"
+                                           everywhere else -- two different words, deliberately.
+
+D5                              No item or stock data in V1,
+                                and no placeholder for it
+  HIGH CONFIDENCE
+  REVERSIBLE --                 Do we capture items so Inventory Pressure can exist?
+  COSTLY
+                                   No. Drop Inventory Pressure from the Reports list entirely --
+                                   not greyed out, not "coming soon". "Top 3 items sold" stays
+                                   the free-text diary line it already is, or goes.
+
+                                Your own 15-07 note marks it "(future)", correctly. Item capture is the
+                                one addition that meaningfully lengthens the day close, and day-
+                                close duration is the number that will predict whether anyone still
+                                uses this in week three. A greyed-out card is worse than no card: it
+                                advertises an absence on a screen whose job is to make the
+                                shopkeeper feel on top of things.
+
+                                ON SCREEN Reports carries five metrics, not six. No locked inventory card.
+
+SWAFTO · Retail Desk Decisions                                                                              4
+D6                              A missed day is marked missed, never guessed
+
+  HIGH CONFIDENCE               The shop was shut Thursday, or he just forgot. Then what?
+  INTEGRITY
+                                   Never interpolate a balance. On reopening after a gap, ask
+                                   for one fresh cash count and mark the intervening days
+                                    not closed . A not-closed day can still be closed late, but a
+                                   late close never rewrites a later day's opening cash.
+
+                                A ledger that quietly invents a number to bridge a gap is worse than
+                                no ledger, because the shopkeeper has no way to know which figures
+                                he can trust. Marking the gap costs one banner and buys the entire
+                                credibility of every number after it.
+
+                                ON SCREEN A third day-state on the day list, and a gap banner on home.
+                                                  Neither existed in the screen list I sent you.
+
+D7                              Open days are editable.
+                                Closed days are immutable.
+  HIGH CONFIDENCE
+  SHAPES EVERYTHING             It's 9pm, the day is closed, and he realises this morning's cash sale was
+                                680 not 860. Now what?
+
+                                Inside an open day, edit anything, any line, freely. Once a
+                                day is closed it is frozen. A correction is posted as a dated
+                                adjustment on the current open day, carrying a reference
+                                to the day it corrects.
+
+                                Every closed day's counted cash is the next day's opening. Let
+                                someone edit a closed day and you either silently invalidate every
+                                balance after it or you cascade a rewrite through the chain -- and the
+                                chain is the product. Real paper ledgers already work this way: you
+                                don't erase an entry, you post a correction underneath it. It costs the
+                                shopkeeper nothing he isn't used to, and it gives you an audit trail
+                                for free. This is the biggest of the nine and it is the one my screen list
+                                had no answer for at all.
+
+                                ON SCREEN  Every closed-day view is read-only with a single "Post a
+                                           correction" action. That's a whole screen the earlier prompt
+                                           was missing.
+
+SWAFTO · Retail Desk Decisions                                                                              5
+D8                              Any order -- but "skipped" and
+                                "empty" are different words
+  HIGH CONFIDENCE
+  REVERSIBLE                    Must the nine sections be filled in sequence?
+
+                                Free order. Enter anything, any time, as the day happens.
+                                Each section can be explicitly marked "Nothing to enter".
+                                Cash Check unlocks only once all eight preceding sections
+                                are entered or deliberately skipped.
+
+                                A shopkeeper's expenses don't arrive in a tidy block at 9pm; a forced
+                                sequence would mean the app only works if he sits down at the end
+                                of the day, which is exactly the behaviour the paper sheet already
+                                fails to produce. The important half of this ruling is the second half: a
+                                day with genuinely zero expenses and a day where expenses
+                                were forgotten produce the identical reconciliation number
+                                and mean completely different things. If the app can't tell them
+                                apart, neither can the shopkeeper, and neither can you when you're
+                                debugging why his cash never matches.
+
+                                ON SCREEN  Every section row has three states, not two: entered with a
+                                           total, explicitly skipped, or not touched. The day list I
+                                           specified had two.
+
+SWAFTO · Retail Desk Decisions                                                                             6
+D9                              Offline-first, and one shop means one phone
+
+  HIGH CONFIDENCE               What happens with no signal, and what happens on a second device?
+  SCOPE GUARD
+                                   A local write always succeeds; sync happens in the
+                                   background and never blocks an entry. V1 assumes one
+                                   shop, one phone -- supporting two devices on one shop is
+                                   an explicit non-goal.
+
+                                Connectivity at a counter is unreliable and a cash entry that fails
+                                because of signal is a lost transaction, permanently. Naming single-
+                                device as a non-goal matters just as much: without it, someone will
+                                spend three weeks building conflict resolution for a scenario that
+                                does not occur in V1, and your resource plan does not have three
+                                weeks.
+
+                                ON SCREEN No blocking spinners on any entry path. A quiet sync indicator
+                                                  at most. No merge-conflict UI anywhere.
+
+PART TWO -- THE MECHANISM
+
+What a day is, as a state machine
+
+A screen list can't express this, which is why the earlier one quietly got it wrong.
+Decisions 6, 7 and 8 are all really statements about this diagram.
+
+SWAFTO · Retail Desk Decisions                                                                            7
+                                         edit any line, any order
+
+         Not started       first entry   Open                                           Ready                                                      Closed
+
+         opening cash set                editable                                    check unlocked                                              frozen forever
+
+                                                                         all 8 done                  count the cash
+                                                                        or skipped
+                                                                                                                                                 references,
+                                           day ends                                                                                              never mutates
+                                           without closing
+
+                                            Not closed                                                                               Correction
+
+                                         gap, never guessed                                                                               posted on today's open day
+
+                                                                   late close -- cannot rewrite a later opening
+
+                                                                           counted cash becomes tomorrow's opening -- never the expected figure
+
+      Solid = the day moves. Dashed = a state or link that exists only because something went wrong.
+      Closed is the only filled state: it is the goal, and the only one that can never be edited.
+
+The chain runs through the filled box. Every arrow out of Closed is either the carry-
+forward that starts tomorrow, or a reference that reads it without changing it -- which is
+the whole of decision 7 in one picture.
+
+PART THREE -- NAVIGATION
+
+Correcting the IA I slipped into a design prompt
+
+I wrote a four-tab bottom nav into that prompt as though it were settled. It
+wasn't, and two of the four don't survive contact with the decisions above.
+
+I WROTE VERDICT                 INSTEAD
+
+Home     Keep,                  Today. The day close is this screen's spine, not a place you navigate to. Naming it Today
+         rename                 makes the app's unit of work obvious.
+
+Day book Cut                    It duplicated Home. The day close lives behind "Continue day close"; past days live
+                                behind a date control on Today, which is also where D7's read-only closed-day view
+                                belongs.
+
+Parties Keep                    Earns a tab. Chasing udhar is the second job this app does, and outstandings are the
+                                only figures a shopkeeper looks up outside a day close.
+
+Reports  Keep, but              On day one this tab is nothing but locked cards. Have it appear after the first close so
+         gate                   the first close visibly unlocks something -- or, if that reads as broken, ship it from day
+                                one showing a single honest gate card and nothing else.
+
+SWAFTO · Retail Desk Decisions                                                                                                                                        8
+Three tabs, then: Today · Parties · Reports. Worth saying plainly that a tab which
+appears later is mildly unconventional and I can't validate it without users -- if it tests
+badly, the fallback in the last row costs nothing to switch to.
+
+PART FOUR -- WHAT JUDGMENT CAN'T SETTLE
+
+Four questions, and the number that answers each
+
+Without shop access these stay open. Rather than guess, instrument for them
+now -- each is a single event you'd have to log anyway, and the answer arrives
+free with the first twenty users.
+
+DECISION 4                                             Share of udhar purchases where
+                                                       a due date is set. Under ~20%
+Do shopkeepers actually think in payment terms, or     and terms aren't how they think
+is a due date a question they can't answer?            -- drop the overdue framing and
+                                                       age everything by days since
+                                                       purchase.
+
+DECISION 8                                             Spread of entry timestamps
+                                                       within a day. If entries cluster in
+Is free-order entry actually used through the day, or  one late block, the day close is a
+does everyone sit down at 9pm anyway?                  single sitting and should be
+                                                       optimised as one flow, not as
+                                                       nine visits.
+
+DECISION 8                                             Skip rate per section, against the
+                                                       rate of 0 entries. A section
+Is "Nothing to enter" used honestly, or does it        skipped almost every day is
+become a button people mash to reach the cash          either genuinely irrelevant to that
+check?                                                 shop or the gate is being gamed.
+
+DECISION 7                                             Corrections per closed day, and
+                                                       the gap between close and first
+Is the close happening too early -- are people         correction. A spike within an hour
+closing and then immediately correcting?               means the close gate is in the
+                                                       wrong place, not that people are
+                                                       careless.
+
+SWAFTO · Retail Desk Decisions                                                               9
+EVERYTHING                       Median minutes from first entry
+                                 to close, and the drop-off curve
+How long does a day close take?  by week. This is the number that
+                                 predicts retention -- if it climbs
+                                 past what the paper sheet takes,
+                                 nothing else in this document
+                                 matters.
+
+SOURCES
+
+What changed my mind
+
+Google Play Console -- Use of SMS or Call Log permission groups, which permits READ_SMS for "SMS-
+based financial transactions -- for example, Unified Payments Interface (UPI)" and for SMS-based money
+management. This reversed my assumption in decision 1; the ruling stands but the reasoning is now a
+product trade-off rather than a platform block.
+Retail Desk V1 sheet · the 15-07-2026 input/output note · ADR-001 · SWAFTO Finalized Resource Plan.
+
+SWAFTO · nine decisions, one state machine, four open questions · 8 September 2026 · screens should
+be generated against this, not before it.
+
+SWAFTO · Retail Desk Decisions                                                                          10
+

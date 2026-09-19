@@ -1,0 +1,465 @@
+{{ screenId }}
+{{ screenName }}
+{{ modeName }}
+SWAFTO
+9:41
+Sharma Kirana Store
+{{ pageTitle }}
+{{ greetingSub }}
+{{ badge }}
+9:41
+{{ barTitle }}
+{{ barSub }}
+9:41
+Swafto
+Four questions, then your book.
+9:41
+{{ authBarTitle }}
+{{ authBarSub }}
+Choose your language
+भाषा चुनें · ଭାଷା ବା୛ந்து
+ଓଡ଼ିଆ
+हिन्दी
+English
+Your phone number
+We will send a 6-digit code to confirm it is you.
++91
+00000 00000
+{{ authPhoneDisplay }}
+Enter the code
+Sent to +91 {{ authPhoneDisplay }} ·
+Edit
+{{ b.display }}
+Checking…
+Resend code
+Resend code in {{ resendLabel }}
+Trouble? I changed my number.
+OTP problems
+Four states. Each says plainly what happened and what to do next — none blames the user.
+State {{ p.n }} of 4
+{{ p.title }}
+{{ p.message }}
+{{ p.ctaLabel }}
+Sharma Kirana Store
+This device signed out — usually because you signed in somewhere else. Your book is untouched and safe on our server.
+Verify with +91 {{ authPhoneDisplay }}
+SIM changed, phone lost, or a new device — pick what fits.
+I still have my old number
+Verify it, then add the new one · a few minutes
+I don't have it anymore
+We'll help over WhatsApp · takes a day or two
+{{ recoveryPhoneHelp }}
++91
+00000 00000
+{{ oldPhoneDisplay }}
+{{ recoveryPhoneHelp }}
++91
+00000 00000
+{{ newPhoneDisplay }}
+Code sent to +91 {{ oldPhoneDisplay }}
+{{ b.display }}
+Resend code
+Resend code in {{ recResendLabel }}
+Code sent to +91 {{ newPhoneDisplay }}
+{{ b.display }}
+Resend code
+Resend code in {{ recResendLabel }}
+Number updated
+Your account now signs in with +91 {{ newPhoneDisplay }}.
+Continue
+Without the old number we verify you by hand. Message us with your shop name — it usually takes
+a day or two
+, not instant.
+Message us on WhatsApp
+Log out of Sharma Kirana Store?
+Signing back in needs a new SMS code to +91 {{ authPhoneDisplay }}.
+{{ logoutSyncLine }}
+{{ logoutSyncLine }}
+Stay signed in
+Log out
+Set a 4-digit PIN
+Stop a customer reading your day's cash while your phone is on the counter.
+Not now
+Confirm your PIN
+Type the same 4 digits again.
+Those didn't match. Try again.
+App lock is on
+Forgot your PIN? We'll recover it by SMS to +91 {{ authPhoneDisplay }} — you're never locked out.
+Done
+{{ group.title }}
+{{ row.label }}
+{{ row.value }}
+Shop name
+Shop type
+Kirana / general
+Pharmacy
+Hardware
+Other
+Address
+GSTIN · optional
+Appears on anything you export for your accountant — that's the reason to fill it in.
+Name
+Phone number
++91 {{ authPhoneDisplay }}
+Change
+Preferred language
+\u0b13\u0b21\u0b3c\u0b3f\u0b06
+\u0939\u093f\u0928\u094d\u0926\u0940
+English
+Colours
+Cash received
++ \u20b91,200
+Comfort
+Cash received
++ \u20b91,200
+Focus
+Text size
+Cash sale
+\u20b9850
+Larger text, more spacing
+Cash sale
+\u20b9850
+Smaller text, more on screen
+Last backup
+{{ backupLastLine }}
+Everything up to today is saved to your account.
+Export
+Date range
+This month
+Last 3 months
+This financial year
+Custom range
+Format
+CSV · accountant
+PDF · a file
+Send it
+WhatsApp
+Save to phone
+This deletes your book, not just the app
+Deleting your account permanently removes:
+Closed days
+214
+Customer ledgers
+38
+Udhar records
+\u20b918,240
+Export your data first
+Continue to delete
+Confirm deletion
+Type
+{{ obShop }}
+to confirm.
+Your account is deleted after
+30 days
+. Sign in again any time before then to cancel — nothing is lost until the 30 days pass.
+SWAFTO
+Version 1.4.2 · Build 214
+Privacy policy
+Terms of service
+Open-source licences
+You can also delete your account from the web:
+swafto.app/delete-account
+{{ f.q }}
+{{ f.a }}
+Message us on WhatsApp
+Three states. A local save has already succeeded, so none of this is an error — none of it uses red.
+State 1 of 3 · Offline banner
+You're offline — saved on this phone. We'll sync when you're back.
+Quiet and inline. Never a modal, never blocks you from working.
+State 2 of 3 · Sync details
+{{ syncPendingCount }} waiting to upload
+{{ it.label }}
+{{ it.time }}
+State 3 of 3 · Last synced
+Last synced: {{ backupLastLine }}
+Update needed
+This version calculates balances differently. Update to keep your numbers correct.
+Something went wrong
+Everything you've entered today is saved on this phone. Nothing is lost.
+Try again
+Report the problem
+Clear all
+{{ n.text }}
+{{ n.time }}
+You're all caught up
+Nothing needs your attention right now.
+Know when udhar is overdue
+We'll tell you when a customer's udhar crosses 30 days, or when a payment to a supplier is coming due. Nothing else.
+Allow
+Not now
+1 · Shop name
+2 · Language
+ଓଡ଼ିଆ
+हिन्दी
+English
+Words change. Amounts stay in the same numerals everywhere.
+3 · Text size
+Standard
+Large
+4 · Cash in the box right now
+₹
+Optional. Leave it and Today will ask before your first sale.
+{{ ringDone }}
+Today's book
+{{ ringLabel }}
+{{ ringCaption }}
+{{ openingLine }}
+Continue day close
+View day summary
+Today so far
+{{ syncText }}
+Cash received
+{{ cashReceived }}
+Cash paid
+{{ cashPaid }}
+Expected in box
+{{ expected }}
+Net sales
+{{ netSales }}
+Udhar to collect
+{{ toCollect }}
+You owe suppliers
+{{ owed }}
+Cash short for Thursday.
+{{ deficitText }}
+Udhar ageing.
+{{ agingText }}
+0
+Today's book
+Not started
+Nothing carried over yet
+Count the cash in the box before the first sale. From tomorrow this is carried from your count and never asked again.
+Enter opening cash
+Today's figures appear here after the first entry. A sale from a rail below will ask for opening cash first, then open the form.
+Add to today
+Today is closed.
+Post a correction instead.
+Cash sale
+Udhar sale
+Expense
+Purchase
+Collection
+Party pay
+{{ ringDone }}
+{{ ringLabel }} done
+{{ openingLine }}
+{{ syncText }}
+{{ row.n }}
+{{ row.name }}
+{{ row.sub }}
+{{ row.total }}
+Nothing to enter
+Undo
+9
+Cash check
+{{ lockLine }}
+What's in the box right now?
+Count the notes and coins before the first sale. Tomorrow onwards this is carried from tonight's count — you won't be asked.
+{{ pendingLine }}
+{{ ln.secondary }}
+{{ ln.amount }}
+New line. Type the amount and save — the keypad stays up for the next one.
+{{ partyLabel }}
+{{ m.name }}
+{{ m.phone }}
+Balance {{ m.balance }}
+Existing party · {{ partyPhone }} · only the name and phone were filled
+New party — created when you save, not before
+{{ dirCopy }}
+{{ ln.primary }}
+{{ ln.secondary }}
+{{ ln.amount }}
+Description
+Supplier · optional
+{{ m.name }}
+{{ ln.primary }}
+{{ ln.secondary }}
+{{ ln.amount }}
+Money you take for yourself. It reduces the cash in the box. It is
+not an expense
+and is never counted in profit.
+{{ ln.primary }}
+{{ ln.secondary }}
+{{ ln.amount }}
+The expected amount changed.
+An entry was added, so your earlier count was cleared. Count again.
+Expected in the box
+{{ expected }}
+{{ x.label }}
+{{ x.amount }}
+{{ x.amount }}
+{{ x.amount }}
+Expected
+{{ expected }}
+You counted ·
+change
+{{ countedText }}
+− {{ diffAbs }}
++ {{ diffAbs }}
+{{ diffQuestion }}
+{{ r.label }}
+Add the expense now
+{{ carryLine }}
+It matches.
+{{ expected }}
+Counted {{ countedText }} · Expected {{ expected }}
+Every rupee in the box is in the book. Tuesday is ready to close.
+{{ carryLine }}
+Estimated profit
+{{ profit }}
+Net sales
++ {{ netSales }}
+Purchase · all modes
+{{ purchaseTotal }}
+Expenses · all modes
+{{ expenseTotal }}
+Personal withdrawal
+Taken from cash · not an expense · outside profit
+{{ withdrawalTotal }}
+Cash check
+Expected
+{{ expected }}
+Counted
+{{ countedText }}
+Difference
+Balanced
+{{ diffLine }}
+{{ carryLine }}
+Udhar to collect
+{{ toCollect }}
+You owe suppliers
+{{ owed }}
+Udhar to collect
+{{ toCollect }}
+You owe suppliers
+{{ owed }}
+Customers
+{{ c.name }}
+{{ c.last }}
+31+ days
+{{ c.balance }}
+Suppliers
+{{ c.name }}
+{{ c.last }}
+Due Thu
+31+ days
+{{ c.balance }}
+{{ selBalanceLabel }}
+{{ selBalance }}
+31+ days
+{{ selAgedText }}
+Due soon
+{{ selDueText }}
+New udhar sale
+Record a collection
+Record a payment
+Ledger
+{{ l.kind }}
+{{ l.date }}
+{{ l.amount }}
+{{ l.amount }}
+Balance {{ l.balance }}
+1
+2
+3
+4
+5
+6
+7
+8
+9
+0
+Send code
+I changed my number.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+0
+Send code
+Send code
+1
+2
+3
+4
+5
+6
+7
+8
+9
+0
+{{ sectionName }} · {{ lineCount }}
+{{ sectionTotal }}
+Received as
+Cash
+UPI
+Other
+Cash
+Paid from the box. Changes your cash.
+UPI
+Other
+Udhar
+Shop stock
+These four don't change your cash. All modes count toward total {{ sectionNameLower }}.
+Due · optional
+7 days
+15 days
+30 days
+Pick date
+{{ amountLabel }}
+₹
+0
+{{ amountText }}
+Cash
+₹
+{{ wdCashText }}
+UPI
+₹
+{{ wdUpiText }}
+1
+2
+3
+4
+5
+6
+7
+8
+9
+00
+0
+{{ secondaryLabel }}
+{{ primaryLabel }}
+Save opening cash
+Check against the book
+{{ nextLabel }}
+Close the day
+Close the day
+Done
+Start the day
+Save
+Save
+Export
+Delete my account
+Cancel
+Update
+Today
+Parties
+Reports
+{{ toastText }}
+Discard this entry?
+What you typed hasn't been saved.
+Keep editing
+Discard
+Delete this line?
+This removes it from today's book.
+Cancel
+Delete
+Close Tuesday 15 July?
+{{ carryLine }}
+Not yet
+Close the day

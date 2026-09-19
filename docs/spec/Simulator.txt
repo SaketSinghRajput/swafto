@@ -1,0 +1,131 @@
+                       SWAFTO Engineering Brief (Official)
+
+Internal Business Intelligence Simulator (Version 1.0)
+
+From: Rajanikanta Garnaik (Founder & Product Owner)
+To: Saket Singh (Chief Technical Associate)
+Timeline: 1 Week
+
+1. Purpose
+This simulator is an internal engineering tool, not a customer-facing product.
+Its mission is to become the mathematical foundation of SWAFTO by allowing us to experiment
+with business logic, validate formulas, and test real-world MSME scenarios before integrating
+them into the mobile application.
+
+2. Engineering Principles
+     Stability before Scalability.
+     Simplicity before Complexity.
+     Transactions are Immutable.
+     Business Closing is the primary calculation unit.
+     Every output must answer a real business question.
+     Every output must be reproducible from transaction data.
+     The simulator must remain modular and easy to extend.
+
+3. Recommended Architecture
+Business Intelligence Engine
+Containing:
+
+     Formula Engine
+     Cash Calculator
+     Metrics Engine
+     Business Health Engine
+     Score Engine
+     Recommendation Engine
+     Scenario Simulator
+This keeps all business calculations centralized and prevents logic from being scattered across
+multiple modules.
+4. MVP Simulator Flow
+Business Inputs
+
+      
+Primary Calculations
+
+      
+Derived Metrics
+
+      
+Business Scores
+
+      
+Business Recommendations
+
+5. Input Dictionary (Editable)
+
+These inputs are intentionally editable. They will evolve as we validate real retailer workflows.
+Current draft:
+
+    1. Opening Cash
+    2. Sales
+    3. Purchases
+    4. Expenses
+    5. Customer Credit Given
+    6. Customer Credit Collection
+    7. Supplier Credit Purchase
+    8. Supplier Payment
+    9. Owner Withdrawal
+    10. Cash Adjustment (Optional)
+We can re-consider Input List, Input Sequence and Other Input Priorities. Please Ask me If you
+face any Confusions around Input Fields.
+6. Output Dictionary
+
+Organized by levels:
+Level 1 ­ Basic Calculations
+
+     Total Cash Received
+     Total Cash Paid
+     Expected Cash
+     Net Sales
+     Net Purchases
+     Total Expenses
+
+Level 2 ­ Operational Metrics
+     Credit Outstanding
+     Supplier Outstanding
+     Cash Flow
+     Expense Pressure
+     Collection Efficiency
+     Payment Due
+
+Level 3 ­ Business Scores
+     Business Health Score
+     Cash Confidence Score
+     Operational Discipline Score
+
+Level 4 ­ Recommendations
+     Daily Business Guidance
+     Business Warnings
+     Suggested Actions
+7. Deliverables
+Within one flexible week:
+
+     Working local simulator
+     Editable input panel
+     Formula engine
+     Output panel
+     Scenario save/load ( If possible )
+     Please add more if you think necessary...
+
+8. Not in Scope
+Do not spend time on:
+
+     Mobile UI polishing
+     Authentication
+     Database
+     Cloud deployment
+     AI
+     Notifications
+     User management
+The objective is to validate business logic -- not to build a production application.
+
+9. Founder Note
+Saket Ji..., We are not building another accounting application.
+We are building the mathematical brain of SWAFTO.
+Every report, recommendation, and future AI capability will depend on the correctness of this
+simulator.
+Please prioritize clarity, correctness, modularity, and documentation over speed.
+If the foundation is strong, everything built on top of it will be stronger.
+Only after the simulator is stable should begin integrating the validated calculation engine into the
+SWAFTO mobile application.
+
+Sign- Rajani Kanta Garnaik Date:- 16-07-2026
+

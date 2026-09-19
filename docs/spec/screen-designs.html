@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="./tokens.css">
+<script src="./store.js"></script>
+<style>body{margin:0;background:var(--surface-ground);color:var(--text-primary);font-family:var(--font-sans)}a{color:var(--brand-soft)}a:hover{color:var(--brand)}input::placeholder{color:var(--text-muted);opacity:1}button{font-family:inherit}@keyframes caret{50%{opacity:0}}@keyframes pop{0%{transform:scale(.5);opacity:0}65%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}@keyframes rise{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}</style>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;font-family:var(--font-sans)">
+  <div style="display:flex;align-items:baseline;gap:10px;padding-left:2px">
+    <span style="font-family:var(--font-mono);font-size:12px;font-weight:500;padding:3px 8px;border-radius:5px;background:#13294B;color:#FFFFFF">{{ screenId }}</span>
+    <span style="font-size:14px;font-weight:600;color:#12181F">{{ screenName }}</span>
+    <span style="font-size:12px;color:#57606A">{{ modeName }}</span>
+  </div>
+  <div data-mode="{{ dataMode }}" data-screen-label="{{ screenId }}" style="width:390px;height:844px;background:var(--surface-ground);color:var(--text-primary);font-size:var(--body-size);line-height:var(--leading-latin);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--rule);box-shadow:0 8px 32px rgba(19,41,75,.14);text-wrap:pretty">
+
+    <sc-if value="{{ sA1 }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ goA2 }}" aria-label="Continue" style="position:absolute;inset:0;z-index:20;background:var(--brand);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+        <span style="font-size:34px;font-weight:700;letter-spacing:.08em;color:var(--on-brand)">SWAFTO</span>
+      </button>
+    </sc-if>
+
+    <sc-if value="{{ isTodayBar }}" hint-placeholder-val="{{ true }}">
+      <div style="background:var(--brand);color:var(--on-brand);padding:0 var(--space-5) var(--space-5);flex:none">
+        <div style="height:44px;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".5"></rect><rect x="5" y="5" width="3" height="7" rx=".5"></rect><rect x="10" y="2" width="3" height="10" rx=".5"></rect><rect x="15" y="0" width="3" height="12" rx=".5"></rect></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="21" height="10" rx="2.5"></rect><rect x="3" y="3" width="15" height="6" rx="1" fill="currentColor" stroke="none"></rect><path d="M24 4v4" stroke-linecap="round"></path></svg>
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);padding-top:var(--space-2)">
+          <div style="min-width:0">
+            <div style="font-size:var(--label-size);font-weight:500;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Sharma Kirana Store</div>
+            <div style="font-size:22px;font-weight:600;line-height:1.25;margin-top:2px">{{ pageTitle }}</div>
+            <div style="font-size:15px;opacity:.85;margin-top:2px">{{ greetingSub }}</div>
+          </div>
+          <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:6px;flex:none;margin-top:14px">
+              <button onClick="{{ goY4 }}" aria-label="Notifications" style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:inherit;cursor:pointer;border-radius:var(--radius-control)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg>
+                <sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--action);border:1.5px solid var(--brand)"></span></sc-if>
+              </button>
+              <span style="font-size:var(--label-size);font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border:1.5px solid var(--on-brand);border-radius:var(--radius-pill)">{{ badge }}</span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isBackBar }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--brand);color:var(--on-brand);padding:0 var(--space-2) var(--space-2);flex:none">
+        <div style="height:44px;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600;padding:0 var(--space-3)">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".5"></rect><rect x="5" y="5" width="3" height="7" rx=".5"></rect><rect x="10" y="2" width="3" height="10" rx=".5"></rect><rect x="15" y="0" width="3" height="12" rx=".5"></rect></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="21" height="10" rx="2.5"></rect><rect x="3" y="3" width="15" height="6" rx="1" fill="currentColor" stroke="none"></rect><path d="M24 4v4" stroke-linecap="round"></path></svg>
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-1)">
+          <button onClick="{{ onBack }}" aria-label="Back" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:inherit;cursor:pointer;border-radius:var(--radius-control)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+          </button>
+          <div style="min-width:0">
+            <div style="font-size:var(--title-size);font-weight:600;line-height:1.25">{{ barTitle }}</div>
+            <div style="font-size:var(--label-size);opacity:.85;margin-top:1px">{{ barSub }}</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sX1 }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--brand);color:var(--on-brand);padding:0 var(--space-5) var(--space-6);flex:none">
+        <div style="height:44px;display:flex;align-items:center;font-size:15px;font-weight:600">9:41</div>
+        <div style="font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-top:var(--space-3)">Swafto</div>
+        <div style="font-size:26px;font-weight:600;line-height:1.2;margin-top:var(--space-2)">Four questions, then your book.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isAuthBar }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--brand);color:var(--on-brand);padding:0 var(--space-2) var(--space-3);flex:none">
+        <div style="height:44px;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600;padding:0 var(--space-3)">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".5"></rect><rect x="5" y="5" width="3" height="7" rx=".5"></rect><rect x="10" y="2" width="3" height="10" rx=".5"></rect><rect x="15" y="0" width="3" height="12" rx=".5"></rect></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="21" height="10" rx="2.5"></rect><rect x="3" y="3" width="15" height="6" rx="1" fill="currentColor" stroke="none"></rect><path d="M24 4v4" stroke-linecap="round"></path></svg>
+          </span>
+        </div>
+        <sc-if value="{{ showBackArrow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:var(--space-1)">
+            <button onClick="{{ onBack }}" aria-label="Back" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:inherit;cursor:pointer;border-radius:var(--radius-control)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+            </button>
+            <div style="min-width:0">
+              <div style="font-size:var(--title-size);font-weight:600;line-height:1.25">{{ authBarTitle }}</div>
+              <div style="font-size:var(--label-size);opacity:.85;margin-top:1px">{{ authBarSub }}</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:var(--space-4) var(--space-4) var(--space-5);display:flex;flex-direction:column;gap:var(--space-4)">
+
+      <sc-if value="{{ sA2 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <div style="font-size:24px;font-weight:600">Choose your language</div>
+          <div style="font-size:15px;color:var(--text-secondary)">भाषा चुनें · ଭାଷା ବା୛ந்து</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-2)">
+          <button onClick="{{ authPickOdia }}" style="min-height:72px;padding:0 var(--space-5);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-card);box-shadow:var(--elevation-card);display:flex;align-items:center;font-size:26px;font-weight:600;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">ଓଡ଼ିଆ</button>
+          <button onClick="{{ authPickHindi }}" style="min-height:72px;padding:0 var(--space-5);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-card);box-shadow:var(--elevation-card);display:flex;align-items:center;font-size:26px;font-weight:600;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">हिन्दी</button>
+          <button onClick="{{ authPickEnglish }}" style="min-height:72px;padding:0 var(--space-5);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-card);box-shadow:var(--elevation-card);display:flex;align-items:center;font-size:26px;font-weight:600;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">English</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sA3 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <div style="font-size:24px;font-weight:600">Your phone number</div>
+          <div style="font-size:15px;color:var(--text-secondary);line-height:1.45">We will send a 6-digit code to confirm it is you.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);min-height:64px;padding:0 var(--space-4);border:2px solid var(--focus-ring);border-radius:var(--radius-control);background:var(--surface-card)">
+          <span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-secondary)">+91</span>
+          <span style="width:1px;height:32px;background:var(--rule-strong)"></span>
+          <sc-if value="{{ authPhoneEmpty }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-disabled);letter-spacing:.04em">00000 00000</span></sc-if>
+          <sc-if value="{{ authPhoneFilled }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;letter-spacing:.04em">{{ authPhoneDisplay }}</span></sc-if>
+          <span style="width:2px;height:34px;background:var(--focus-ring);animation:caret 1s step-end infinite"></span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sA4 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:2px;padding-top:var(--space-2)">
+          <div style="font-size:24px;font-weight:600">Enter the code</div>
+          <div style="font-size:15px;color:var(--text-secondary)">Sent to +91 {{ authPhoneDisplay }} · <a href="#" onClick="{{ editPhone }}" style="color:var(--brand-soft);font-weight:500">Edit</a></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+          <sc-for list="{{ otpBoxes }}" as="b" hint-placeholder-count="6">
+            <div class="tabular" style="{{ b.style }}">{{ b.display }}</div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ authVerifying }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:var(--text-secondary)">Checking…</div>
+        </sc-if>
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:15px">
+          <sc-if value="{{ resendCan }}" hint-placeholder-val="{{ false }}"><a href="#" onClick="{{ resendCode }}" style="color:var(--brand-soft);font-weight:600">Resend code</a></sc-if>
+          <sc-if value="{{ resendCannot }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="color:var(--text-muted)">Resend code in {{ resendLabel }}</span></sc-if>
+        </div>
+        <a href="#" onClick="{{ changeNumberLink }}" style="font-size:15px;font-weight:500;color:var(--brand-soft)">Trouble? I changed my number.</a>
+      </sc-if>
+
+      <sc-if value="{{ sA5 }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:22px;font-weight:600;padding-top:var(--space-2)">OTP problems</div>
+        <div style="font-size:15px;color:var(--text-secondary)">Four states. Each says plainly what happened and what to do next — none blames the user.</div>
+        <sc-for list="{{ problemStates }}" as="p" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+            <span style="align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--text-secondary)">State {{ p.n }} of 4</span>
+            <div style="{{ p.alertStyle }}">
+              <div style="font-size:17px;font-weight:600;line-height:1.4">{{ p.title }}</div>
+              <div style="font-size:15px;line-height:1.5;color:var(--text-primary);margin-top:4px">{{ p.message }}</div>
+            </div>
+            <sc-if value="{{ p.hasCta }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ p.cta }}" style="{{ p.ctaStyle }}">{{ p.ctaLabel }}</button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ sA6 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--space-3);padding:var(--space-6) var(--space-2) var(--space-2)">
+          <div style="width:72px;height:72px;border-radius:50%;background:var(--tint-indigo);color:var(--brand);display:flex;align-items:center;justify-content:center">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg>
+          </div>
+          <div style="font-size:22px;font-weight:600">Sharma Kirana Store</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px;max-width:28ch;line-height:1.5">This device signed out — usually because you signed in somewhere else. Your book is untouched and safe on our server.</p>
+        </div>
+        <button onClick="{{ sessionReverify }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Verify with +91 {{ authPhoneDisplay }}</button>
+      </sc-if>
+
+      <sc-if value="{{ sA7 }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ recDecide }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:15px;color:var(--text-secondary);line-height:1.5;padding-top:var(--space-2)">SIM changed, phone lost, or a new device — pick what fits.</div>
+          <button onClick="{{ recoveryPickHaveOld }}" style="min-height:72px;padding:var(--space-3) var(--space-4);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-card);box-shadow:var(--elevation-card);display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;cursor:pointer" style-active="background:var(--surface-raised)">
+            <span style="font-weight:600;font-size:17px">I still have my old number</span>
+            <span style="font-size:14px;color:var(--text-secondary)">Verify it, then add the new one · a few minutes</span>
+          </button>
+          <button onClick="{{ recoveryPickNoOld }}" style="min-height:72px;padding:var(--space-3) var(--space-4);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-card);box-shadow:var(--elevation-card);display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;cursor:pointer" style-active="background:var(--surface-raised)">
+            <span style="font-weight:600;font-size:17px">I don't have it anymore</span>
+            <span style="font-size:14px;color:var(--text-secondary)">We'll help over WhatsApp · takes a day or two</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ recOldPhone }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:var(--text-secondary);line-height:1.45;padding-top:var(--space-2)">{{ recoveryPhoneHelp }}</div>
+          <div style="display:flex;align-items:center;gap:var(--space-2);min-height:64px;padding:0 var(--space-4);border:2px solid var(--focus-ring);border-radius:var(--radius-control);background:var(--surface-card)">
+            <span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-secondary)">+91</span>
+            <span style="width:1px;height:32px;background:var(--rule-strong)"></span>
+            <sc-if value="{{ oldPhoneEmpty }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-disabled);letter-spacing:.04em">00000 00000</span></sc-if>
+            <sc-if value="{{ oldPhoneFilled }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;letter-spacing:.04em">{{ oldPhoneDisplay }}</span></sc-if>
+            <span style="width:2px;height:34px;background:var(--focus-ring);animation:caret 1s step-end infinite"></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ recNewPhone }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:var(--text-secondary);line-height:1.45;padding-top:var(--space-2)">{{ recoveryPhoneHelp }}</div>
+          <div style="display:flex;align-items:center;gap:var(--space-2);min-height:64px;padding:0 var(--space-4);border:2px solid var(--focus-ring);border-radius:var(--radius-control);background:var(--surface-card)">
+            <span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-secondary)">+91</span>
+            <span style="width:1px;height:32px;background:var(--rule-strong)"></span>
+            <sc-if value="{{ newPhoneEmpty }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-disabled);letter-spacing:.04em">00000 00000</span></sc-if>
+            <sc-if value="{{ newPhoneFilled }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;letter-spacing:.04em">{{ newPhoneDisplay }}</span></sc-if>
+            <span style="width:2px;height:34px;background:var(--focus-ring);animation:caret 1s step-end infinite"></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ recOldOtp }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:var(--text-secondary);padding-top:var(--space-2)">Code sent to +91 {{ oldPhoneDisplay }}</div>
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+            <sc-for list="{{ oldOtpBoxes }}" as="b" hint-placeholder-count="6"><div class="tabular" style="{{ b.style }}">{{ b.display }}</div></sc-for>
+          </div>
+          <div style="font-size:15px">
+            <sc-if value="{{ recResendCan }}" hint-placeholder-val="{{ false }}"><a href="#" onClick="{{ recoveryResendCode }}" style="color:var(--brand-soft);font-weight:600">Resend code</a></sc-if>
+            <sc-if value="{{ recResendCannot }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="color:var(--text-muted)">Resend code in {{ recResendLabel }}</span></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ recNewOtp }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:var(--text-secondary);padding-top:var(--space-2)">Code sent to +91 {{ newPhoneDisplay }}</div>
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+            <sc-for list="{{ newOtpBoxes }}" as="b" hint-placeholder-count="6"><div class="tabular" style="{{ b.style }}">{{ b.display }}</div></sc-for>
+          </div>
+          <div style="font-size:15px">
+            <sc-if value="{{ recResendCan }}" hint-placeholder-val="{{ false }}"><a href="#" onClick="{{ recoveryResendCode }}" style="color:var(--brand-soft);font-weight:600">Resend code</a></sc-if>
+            <sc-if value="{{ recResendCannot }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="color:var(--text-muted)">Resend code in {{ recResendLabel }}</span></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ recDone }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-3);padding:var(--space-6) 0">
+            <div style="width:96px;height:96px;border-radius:50%;background:var(--tint-green);color:var(--money-in);display:flex;align-items:center;justify-content:center;animation:pop 520ms var(--easing) both">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg>
+            </div>
+            <div style="font-size:24px;font-weight:600">Number updated</div>
+            <p style="margin:0;color:var(--text-secondary);max-width:26ch">Your account now signs in with +91 {{ newPhoneDisplay }}.</p>
+          </div>
+          <button onClick="{{ recoveryFinish }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Continue</button>
+        </sc-if>
+        <sc-if value="{{ recHandoff }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4);margin-top:var(--space-2)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+            <div style="font-size:15px;line-height:1.5">Without the old number we verify you by hand. Message us with your shop name — it usually takes <strong style="font-weight:600">a day or two</strong>, not instant.</div>
+          </div>
+          <button onClick="{{ recoveryWhatsapp }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Message us on WhatsApp</button>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sA8 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <div style="font-size:22px;font-weight:600">Log out of Sharma Kirana Store?</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.5">Signing back in needs a new SMS code to +91 {{ authPhoneDisplay }}.</p>
+        </div>
+        <sc-if value="{{ logoutHasPending }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-red);border:1px solid var(--rule-strong);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 3l10 18H2L12 3z"></path><path d="M12 10v4M12 18h.01"></path></svg>
+            <div style="font-size:15px;line-height:1.5">{{ logoutSyncLine }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ logoutNoPending }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-green);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M5 12l5 5L20 7"></path></svg>
+            <div style="font-size:15px;line-height:1.5">{{ logoutSyncLine }}</div>
+          </div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-1)">
+          <button onClick="{{ logoutCancel }}" style="min-height:var(--touch-min);background:var(--surface-card);color:var(--text-primary);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;cursor:pointer" style-active="background:var(--surface-raised)">Stay signed in</button>
+          <button onClick="{{ logoutConfirm }}" style="min-height:var(--touch-min);background:var(--tint-red);color:var(--text-primary);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:700;cursor:pointer" style-active="opacity:.9">Log out</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sS7 }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ lockSet }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+            <div style="font-size:22px;font-weight:600">Set a 4-digit PIN</div>
+            <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.5">Stop a customer reading your day's cash while your phone is on the counter.</p>
+          </div>
+          <div style="display:flex;justify-content:center;gap:var(--space-3);padding:var(--space-4) 0">
+            <sc-for list="{{ lockPinDots }}" as="dot" hint-placeholder-count="4">
+              <span style="width:20px;height:20px;border-radius:50%;border:2px solid var(--text-muted);background:{{ dot.filledColor }}"></span>
+            </sc-for>
+          </div>
+          <a href="#" onClick="{{ lockSkip }}" style="text-align:center;font-size:15px;font-weight:500;color:var(--brand-soft)">Not now</a>
+        </sc-if>
+        <sc-if value="{{ lockConfirm }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+            <div style="font-size:22px;font-weight:600">Confirm your PIN</div>
+            <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.5">Type the same 4 digits again.</p>
+          </div>
+          <div style="display:flex;justify-content:center;gap:var(--space-3);padding:var(--space-4) 0">
+            <sc-for list="{{ lockConfirmDots }}" as="dot" hint-placeholder-count="4">
+              <span style="width:20px;height:20px;border-radius:50%;border:2px solid var(--text-muted);background:{{ dot.filledColor }}"></span>
+            </sc-for>
+          </div>
+          <sc-if value="{{ lockError }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;font-size:15px;font-weight:600;color:var(--money-out)">Those didn't match. Try again.</div>
+          </sc-if>
+        </sc-if>
+        <sc-if value="{{ lockDoneStage }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-3);padding:var(--space-6) 0">
+            <div style="width:96px;height:96px;border-radius:50%;background:var(--tint-green);color:var(--money-in);display:flex;align-items:center;justify-content:center;animation:pop 520ms var(--easing) both">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg>
+            </div>
+            <div style="font-size:24px;font-weight:600">App lock is on</div>
+            <p style="margin:0;color:var(--text-secondary);max-width:28ch;line-height:1.5">Forgot your PIN? We'll recover it by SMS to +91 {{ authPhoneDisplay }} — you're never locked out.</p>
+          </div>
+          <button onClick="{{ lockDone }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Done</button>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sS1 }}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{ settingsGroups }}" as="group" hint-placeholder-count="7">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">{{ group.title }}</div>
+            <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+              <sc-for list="{{ group.rows }}" as="row" hint-placeholder-count="2">
+                <button onClick="{{ row.go }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:0 var(--space-3) 0 var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)">
+                  <span style="flex:1;font-weight:500">{{ row.label }}</span>
+                  <sc-if value="{{ row.hasValue }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-size:15px;color:var(--text-secondary)">{{ row.value }}</span></sc-if>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ sS2 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Shop name</label>
+          <input value="{{ obShop }}" onChange="{{ onObShop }}" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Shop type</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+            <button onClick="{{ setShopKirana }}" style="{{ shopKiranaStyle }}">Kirana / general</button>
+            <button onClick="{{ setShopPharmacy }}" style="{{ shopPharmacyStyle }}">Pharmacy</button>
+            <button onClick="{{ setShopHardware }}" style="{{ shopHardwareStyle }}">Hardware</button>
+            <button onClick="{{ setShopOther }}" style="{{ shopOtherStyle }}">Other</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Address</label>
+          <input value="{{ shopAddress }}" onChange="{{ onShopAddress }}" placeholder="Street, area, town" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">GSTIN · optional</label>
+          <input value="{{ shopGstin }}" onChange="{{ onShopGstin }}" placeholder="22AAAAA0000A1Z5" class="tabular" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+          <div style="font-size:var(--caption-size);color:var(--text-secondary)">Appears on anything you export for your accountant — that's the reason to fill it in.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sS3 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Name</label>
+          <input value="{{ ownerName }}" onChange="{{ onOwnerName }}" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Phone number</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);min-height:56px;padding:0 var(--space-4);border:1px solid var(--rule);border-radius:var(--radius-control);background:var(--surface-raised)">
+            <span class="tabular" style="font-size:var(--body-size);color:var(--text-secondary)">+91 {{ authPhoneDisplay }}</span>
+            <a href="#" onClick="{{ changeNumberFromSettings }}" style="font-size:15px;font-weight:600;color:var(--brand-soft)">Change</a>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Preferred language</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)">
+            <button onClick="{{ setOdia }}" style="{{ langOdiaStyle }}">\u0b13\u0b21\u0b3c\u0b3f\u0b06</button>
+            <button onClick="{{ setHindi }}" style="{{ langHindiStyle }}">\u0939\u093f\u0928\u094d\u0926\u0940</button>
+            <button onClick="{{ setEnglish }}" style="{{ langEnglishStyle }}">English</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sS5 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <div style="font-size:17px;font-weight:600">Colours</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+            <button onClick="{{ setAppearanceComfort }}" style="{{ appearanceComfortCardStyle }}">
+              <div data-mode="comfort" style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3);width:100%;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+                <span style="font-size:var(--label-size);color:var(--text-secondary)">Cash received</span>
+                <span class="tabular" style="font-size:20px;font-weight:700;color:var(--money-in)">+ \u20b91,200</span>
+              </div>
+              <span style="font-size:14px;font-weight:600">Comfort</span>
+            </button>
+            <button onClick="{{ setAppearanceFocus }}" style="{{ appearanceFocusCardStyle }}">
+              <div data-mode="focus" style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3);width:100%;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+                <span style="font-size:var(--label-size);color:var(--text-secondary)">Cash received</span>
+                <span class="tabular" style="font-size:20px;font-weight:700;color:var(--money-in)">+ \u20b91,200</span>
+              </div>
+              <span style="font-size:14px;font-weight:600">Focus</span>
+            </button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="font-size:17px;font-weight:600">Text size</div>
+          <button onClick="{{ setLarge }}" style="{{ sizeLargeCardStyle }}">
+            <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-4);width:100%;display:flex;flex-direction:column;gap:6px;box-sizing:border-box">
+              <span style="font-size:20px;font-weight:600">Cash sale</span>
+              <span class="tabular" style="font-size:26px;font-weight:700">\u20b9850</span>
+            </div>
+            <span style="font-size:14px;font-weight:600">Larger text, more spacing</span>
+          </button>
+          <button onClick="{{ setStd }}" style="{{ sizeStdCardStyle }}">
+            <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-2) var(--space-3);width:100%;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+              <span style="font-size:15px;font-weight:600">Cash sale</span>
+              <span class="tabular" style="font-size:19px;font-weight:700">\u20b9850</span>
+            </div>
+            <span style="font-size:14px;font-weight:600">Smaller text, more on screen</span>
+          </button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sS8 }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4);display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">Last backup</div>
+          <div style="font-size:19px;font-weight:600">{{ backupLastLine }}</div>
+          <div style="font-size:var(--caption-size);color:var(--text-secondary)">Everything up to today is saved to your account.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding-top:var(--space-2)">
+          <div style="font-size:17px;font-weight:600">Export</div>
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Date range</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button onClick="{{ setRangeMonth }}" style="{{ rangeMonthStyle }}">This month</button>
+            <button onClick="{{ setRange3 }}" style="{{ range3Style }}">Last 3 months</button>
+            <button onClick="{{ setRangeFY }}" style="{{ rangeFYStyle }}">This financial year</button>
+            <button onClick="{{ setRangeCustom }}" style="{{ rangeCustomStyle }}">Custom range</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Format</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button onClick="{{ setFormatCsv }}" style="{{ formatCsvStyle }}">CSV · accountant</button>
+            <button onClick="{{ setFormatPdf }}" style="{{ formatPdfStyle }}">PDF · a file</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Send it</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button onClick="{{ setDeliveryWhatsapp }}" style="{{ deliveryWhatsappStyle }}">WhatsApp</button>
+            <button onClick="{{ setDeliverySave }}" style="{{ deliverySaveStyle }}">Save to phone</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sS9 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <div style="font-size:22px;font-weight:600">This deletes your book, not just the app</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.5">Deleting your account permanently removes:</p>
+        </div>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;min-height:56px;padding:0 var(--space-4);border-bottom:1px solid var(--rule);font-size:15px"><span>Closed days</span><span class="tabular" style="font-weight:700">214</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;min-height:56px;padding:0 var(--space-4);border-bottom:1px solid var(--rule);font-size:15px"><span>Customer ledgers</span><span class="tabular" style="font-weight:700">38</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;min-height:56px;padding:0 var(--space-4);font-size:15px"><span>Udhar records</span><span class="tabular" style="font-weight:700">\u20b918,240</span></div>
+        </div>
+        <button onClick="{{ goExportFromDelete }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Export your data first</button>
+        <a href="#" onClick="{{ goS9B }}" style="text-align:center;font-size:15px;font-weight:500;color:var(--text-secondary)">Continue to delete</a>
+      </sc-if>
+
+      <sc-if value="{{ sS9B }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-2)">
+          <div style="font-size:22px;font-weight:600">Confirm deletion</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.5">Type <strong style="font-weight:700;color:var(--text-primary)">{{ obShop }}</strong> to confirm.</p>
+        </div>
+        <input value="{{ deleteConfirmText }}" onChange="{{ onDeleteConfirmText }}" placeholder="Shop name" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+        <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-gold);border:1px solid var(--rule-strong);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 3l10 18H2L12 3z"></path><path d="M12 10v4M12 18h.01"></path></svg>
+          <div style="font-size:15px;line-height:1.5">Your account is deleted after <strong style="font-weight:600">30 days</strong>. Sign in again any time before then to cancel — nothing is lost until the 30 days pass.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sS10 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:var(--space-4) 0">
+          <div style="font-size:20px;font-weight:700;letter-spacing:.06em;color:var(--brand)">SWAFTO</div>
+          <div class="tabular" style="font-size:15px;color:var(--text-secondary)">Version 1.4.2 · Build 214</div>
+        </div>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <button onClick="{{ aboutPrivacy }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:0 var(--space-3) 0 var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)"><span style="flex:1;font-weight:500">Privacy policy</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></button>
+          <button onClick="{{ aboutTerms }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:0 var(--space-3) 0 var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)"><span style="flex:1;font-weight:500">Terms of service</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></button>
+          <button onClick="{{ aboutLicences }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:0 var(--space-3) 0 var(--space-4);background:transparent;border:none;text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)"><span style="flex:1;font-weight:500">Open-source licences</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></button>
+        </div>
+        <div style="font-size:15px;color:var(--text-secondary);line-height:1.5">You can also delete your account from the web:</div>
+        <div style="font-size:15px;font-weight:600;color:var(--brand-soft);word-break:break-all">swafto.app/delete-account</div>
+      </sc-if>
+
+      <sc-if value="{{ sS11 }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="7">
+            <div style="border-bottom:1px solid var(--rule)">
+              <button onClick="{{ f.toggle }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:var(--space-2) var(--space-3) var(--space-2) var(--space-4);background:transparent;border:none;text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)">
+                <span style="flex:1;font-weight:500;font-size:15px">{{ f.q }}</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ f.chevStyle }}"><path d="M9 18l6-6-6-6"></path></svg>
+              </button>
+              <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 var(--space-4) var(--space-3);font-size:15px;color:var(--text-secondary);line-height:1.5">{{ f.a }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ helpWhatsapp }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Message us on WhatsApp</button>
+      </sc-if>
+
+      <sc-if value="{{ sY1 }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:15px;color:var(--text-secondary);padding-top:var(--space-2)">Three states. A local save has already succeeded, so none of this is an error — none of it uses red.</div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+          <span style="align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--text-secondary)">State 1 of 3 · Offline banner</span>
+          <div style="display:flex;align-items:center;gap:var(--space-2);background:var(--tint-indigo);border-radius:var(--radius-control);padding:var(--space-2) var(--space-3)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M2 8.5a17 17 0 0120 0M5 12a12 12 0 0114 0M8.5 15.5a7 7 0 017 0"></path><path d="M2 2l20 20" stroke-width="2"></path><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"></circle></svg>
+            <span style="font-size:14px;color:var(--text-primary);line-height:1.4">You're offline — saved on this phone. We'll sync when you're back.</span>
+          </div>
+          <div style="font-size:14px;color:var(--text-secondary)">Quiet and inline. Never a modal, never blocks you from working.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+          <span style="align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--text-secondary)">State 2 of 3 · Sync details</span>
+          <div style="font-size:17px;font-weight:600">{{ syncPendingCount }} waiting to upload</div>
+          <sc-for list="{{ syncPendingItems }}" as="it" hint-placeholder-count="3">
+            <div style="display:flex;justify-content:space-between;align-items:center;min-height:36px;font-size:15px;border-bottom:1px solid var(--rule);padding:4px 0">
+              <span>{{ it.label }}</span>
+              <span style="color:var(--text-secondary);font-size:14px">{{ it.time }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+          <span style="align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--text-secondary)">State 3 of 3 · Last synced</span>
+          <div style="display:flex;align-items:center;gap:var(--space-2)">
+            <span style="width:28px;height:28px;border-radius:50%;background:var(--tint-green);color:var(--money-in);display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></span>
+            <span style="font-size:15px;font-weight:600">Last synced: {{ backupLastLine }}</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sY2 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-4);padding:var(--space-6) var(--space-2)">
+          <div style="width:80px;height:80px;border-radius:50%;background:var(--tint-indigo);color:var(--brand);display:flex;align-items:center;justify-content:center">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
+          </div>
+          <div style="font-size:24px;font-weight:600">Update needed</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:16px;line-height:1.6;max-width:30ch">This version calculates balances differently. Update to keep your numbers correct.</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sY3 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-3);padding:var(--space-6) var(--space-2)">
+          <div style="width:72px;height:72px;border-radius:50%;background:var(--tint-gold);color:var(--text-primary);display:flex;align-items:center;justify-content:center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"></path><path d="M12 10v4M12 18h.01"></path></svg>
+          </div>
+          <div style="font-size:22px;font-weight:600">Something went wrong</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.5;max-width:28ch">Everything you've entered today is saved on this phone. Nothing is lost.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <button onClick="{{ tryAgain }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer" style-active="background:var(--action-pressed)">Try again</button>
+          <button onClick="{{ reportProblem }}" style="min-height:var(--touch-min);background:var(--surface-card);color:var(--text-primary);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-size:var(--body-size);font-weight:500;cursor:pointer" style-active="background:var(--surface-raised)">Report the problem</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sY4 }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ hasNotifications }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;justify-content:flex-end;padding-top:var(--space-2)">
+            <a href="#" onClick="{{ clearNotifications }}" style="font-size:15px;font-weight:500;color:var(--brand-soft)">Clear all</a>
+          </div>
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+            <sc-for list="{{ notifications }}" as="n" hint-placeholder-count="4">
+              <button onClick="{{ n.markRead }}" style="width:100%;display:flex;align-items:flex-start;gap:var(--space-3);min-height:var(--touch-min);padding:var(--space-3) var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)">
+                <span style="{{ n.dotStyle }}"></span>
+                <span style="flex:1;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:15px;font-weight:{{ n.weight }}">{{ n.text }}</span>
+                  <span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ n.time }}</span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noNotifications }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-3);padding:var(--space-6) 0">
+            <div style="width:72px;height:72px;border-radius:50%;background:var(--tint-green);color:var(--money-in);display:flex;align-items:center;justify-content:center">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg>
+            </div>
+            <div style="font-size:19px;font-weight:600">You're all caught up</div>
+            <p style="margin:0;color:var(--text-secondary);max-width:26ch">Nothing needs your attention right now.</p>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sY5 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-4);padding:var(--space-6) var(--space-2)">
+          <div style="width:76px;height:76px;border-radius:50%;background:var(--tint-indigo);color:var(--brand);display:flex;align-items:center;justify-content:center">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg>
+          </div>
+          <div style="font-size:22px;font-weight:600">Know when udhar is overdue</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px;line-height:1.6;max-width:30ch">We'll tell you when a customer's udhar crosses 30 days, or when a payment to a supplier is coming due. Nothing else.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <button onClick="{{ allowNotif }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;cursor:pointer" style-active="background:var(--action-pressed)">Allow</button>
+          <a href="#" onClick="{{ notNowNotif }}" style="text-align:center;font-size:15px;font-weight:500;color:var(--brand-soft)">Not now</a>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sX1 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">1 · Shop name</label>
+          <input value="{{ obShop }}" onChange="{{ onObShop }}" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">2 · Language</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)">
+            <button onClick="{{ setOdia }}" style="{{ langOdiaStyle }}">ଓଡ଼ିଆ</button>
+            <button onClick="{{ setHindi }}" style="{{ langHindiStyle }}">हिन्दी</button>
+            <button onClick="{{ setEnglish }}" style="{{ langEnglishStyle }}">English</button>
+          </div>
+          <div style="font-size:var(--caption-size);color:var(--text-secondary)">Words change. Amounts stay in the same numerals everywhere.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">3 · Text size</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)">
+            <button onClick="{{ setStd }}" style="{{ sizeStdStyle }}">Standard</button>
+            <button onClick="{{ setLarge }}" style="{{ sizeLargeStyle }}">Large</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">4 · Cash in the box right now</label>
+          <div style="display:flex;align-items:center;gap:var(--space-2);min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card)">
+            <span style="font-size:var(--body-size);color:var(--text-muted)">₹</span>
+            <input inputMode="numeric" placeholder="0" value="{{ obOpening }}" onChange="{{ onObOpening }}" class="tabular" style="flex:1;border:none;background:transparent;color:var(--text-primary);font-family:inherit;font-size:var(--money-row-size);font-weight:700;min-width:0;outline:none">
+          </div>
+          <div style="font-size:var(--caption-size);color:var(--text-secondary)">Optional. Leave it and Today will ask before your first sale.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;gap:var(--space-4);align-items:center">
+            <svg width="76" height="76" viewBox="0 0 64 64" style="flex:none">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="var(--rule)" stroke-width="6"></circle>
+              <circle cx="32" cy="32" r="26" fill="none" stroke="var(--action)" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{ ringDash }}" transform="rotate(-90 32 32)" style="transition:stroke-dasharray 400ms var(--easing)"></circle>
+              <text x="32" y="38" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text-primary)" font-family="inherit">{{ ringDone }}</text>
+            </svg>
+            <div style="min-width:0">
+              <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">Today's book</div>
+              <div style="font-size:var(--money-row-size);font-weight:700;margin-top:2px">{{ ringLabel }}</div>
+              <div style="font-size:var(--caption-size);color:var(--text-secondary);margin-top:2px">{{ ringCaption }}</div>
+            </div>
+          </div>
+          <div style="font-size:var(--caption-size);color:var(--text-secondary);padding-top:var(--space-3);border-top:1px solid var(--rule)">{{ openingLine }}</div>
+          <sc-if value="{{ isOpen }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ continueClose }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Continue day close</button>
+          </sc-if>
+          <sc-if value="{{ isClosed }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ goSummary }}" style="min-height:var(--touch-min);background:var(--surface-card);color:var(--text-primary);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-size:var(--body-size);font-weight:500;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--surface-raised)">View day summary</button>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:var(--space-1)">
+          <span style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">Today so far</span>
+          <span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ syncText }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-3) var(--space-4);min-height:var(--touch-min);display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--label-size);font-weight:500;color:var(--text-secondary)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>Cash received</div>
+            <div class="tabular" style="font-size:var(--money-row-size);font-weight:700;color:var(--money-in)">{{ cashReceived }}</div>
+          </div>
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-3) var(--space-4);min-height:var(--touch-min);display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--label-size);font-weight:500;color:var(--text-secondary)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>Cash paid</div>
+            <div class="tabular" style="font-size:var(--money-row-size);font-weight:700;color:var(--money-out)">{{ cashPaid }}</div>
+          </div>
+          <div style="background:var(--surface-raised);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4);min-height:var(--touch-min);display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--label-size);font-weight:500;color:var(--text-secondary)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 9h14M5 15h14"></path></svg>Expected in box</div>
+            <div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ expected }}</div>
+          </div>
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-3) var(--space-4);min-height:var(--touch-min);display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Net sales</div>
+            <div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ netSales }}</div>
+          </div>
+        </div>
+
+        <button onClick="{{ goParties }}" style="display:grid;grid-template-columns:1fr 1fr;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:0;text-align:left;cursor:pointer;color:inherit;min-height:var(--touch-min)" style-active="background:var(--surface-raised)">
+          <div style="padding:var(--space-3) var(--space-4);display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--rule)">
+            <span style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Udhar to collect</span>
+            <span class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ toCollect }}</span>
+          </div>
+          <div style="padding:var(--space-3) var(--space-4);display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">You owe suppliers</span>
+            <span class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ owed }}</span>
+          </div>
+        </button>
+
+        <sc-if value="{{ showDeficit }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-gold);border:1px solid var(--rule-strong);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 3l10 18H2L12 3z"></path><path d="M12 10v4M12 18h.01"></path></svg>
+            <div style="font-size:15px;line-height:1.45"><strong style="font-weight:600">Cash short for Thursday.</strong> {{ deficitText }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ showAging }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            <div style="font-size:15px;line-height:1.45"><strong style="font-weight:600">Udhar ageing.</strong> {{ agingText }}</div>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sT2 }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-5) var(--space-4);display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;gap:var(--space-4);align-items:center">
+            <svg width="76" height="76" viewBox="0 0 64 64" style="flex:none"><circle cx="32" cy="32" r="26" fill="none" stroke="var(--rule)" stroke-width="6"></circle><text x="32" y="38" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text-primary)" font-family="inherit">0</text></svg>
+            <div>
+              <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">Today's book</div>
+              <div style="font-size:var(--money-row-size);font-weight:700;margin-top:2px">Not started</div>
+              <div style="font-size:var(--caption-size);color:var(--text-secondary);margin-top:2px">Nothing carried over yet</div>
+            </div>
+          </div>
+          <p style="margin:0;color:var(--text-secondary)">Count the cash in the box before the first sale. From tomorrow this is carried from your count and never asked again.</p>
+          <button onClick="{{ goOpening }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Enter opening cash</button>
+        </div>
+        <div style="padding:var(--space-4);border:1px dashed var(--rule-strong);border-radius:var(--radius-card);color:var(--text-secondary);font-size:15px">Today's figures appear here after the first entry. A sale from a rail below will ask for opening cash first, then open the form.</div>
+      </sc-if>
+
+      <sc-if value="{{ showRails }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-top:var(--space-1)">Add to today</div>
+        <sc-if value="{{ closedRails }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:var(--text-secondary);margin-top:-8px">Today is closed. <a href="#" onClick="{{ correction }}" style="color:var(--brand-soft);font-weight:500">Post a correction instead.</a></div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3)">
+          <button onClick="{{ railCashSale }}" disabled="{{ closedRails }}" style="{{ railStyle }}" style-active="background:var(--surface-raised)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="3"></circle><path d="M6 12h.01M18 12h.01"></path></svg><span>Cash sale</span></button>
+          <button onClick="{{ railUdharSale }}" disabled="{{ closedRails }}" style="{{ railStyle }}" style-active="background:var(--surface-raised)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"></circle><path d="M2 21c0-4 3.6-7 8-7 1.4 0 2.7.3 3.8.9"></path><path d="M17 14v7M14 18l3 3 3-3"></path></svg><span>Udhar sale</span></button>
+          <button onClick="{{ railExpense }}" disabled="{{ closedRails }}" style="{{ railStyle }}" style-active="background:var(--surface-raised)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"></path></svg><span>Expense</span></button>
+          <button onClick="{{ railPurchase }}" disabled="{{ closedRails }}" style="{{ railStyle }}" style-active="background:var(--surface-raised)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"></path><path d="M3 8l9 5 9-5M12 13v8"></path></svg><span>Purchase</span></button>
+          <button onClick="{{ railCollection }}" disabled="{{ closedRails }}" style="{{ railStyle }}" style-active="background:var(--surface-raised)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7L7 17M7 8v9h9"></path></svg><span>Collection</span></button>
+          <button onClick="{{ railPartyPay }}" disabled="{{ closedRails }}" style="{{ railStyle }}" style-active="background:var(--surface-raised)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"></path></svg><span>Party pay</span></button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sT5 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:var(--space-4);align-items:center;padding:0 var(--space-1)">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="flex:none">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--rule)" stroke-width="6"></circle>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--action)" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{ ringDash }}" transform="rotate(-90 32 32)" style="transition:stroke-dasharray 400ms var(--easing)"></circle>
+            <text x="32" y="38" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text-primary)" font-family="inherit">{{ ringDone }}</text>
+          </svg>
+          <div>
+            <div style="font-size:var(--money-row-size);font-weight:700">{{ ringLabel }} done</div>
+            <div style="font-size:var(--caption-size);color:var(--text-secondary);margin-top:2px">{{ openingLine }}</div>
+            <div style="font-size:var(--caption-size);color:var(--text-secondary)">{{ syncText }}</div>
+          </div>
+        </div>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="8">
+            <div style="display:flex;align-items:center;gap:var(--space-3);min-height:68px;padding:var(--space-2) var(--space-3) var(--space-2) var(--space-4);border-bottom:1px solid var(--rule)">
+              <button onClick="{{ row.onTap }}" style="flex:1;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);background:transparent;border:none;padding:0;text-align:left;color:inherit;cursor:pointer;min-width:0">
+                <sc-if value="{{ row.isEntered }}" hint-placeholder-val="{{ true }}">
+                  <span style="flex:none;width:32px;height:32px;border-radius:50%;background:var(--tint-green);color:var(--money-in);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></span>
+                </sc-if>
+                <sc-if value="{{ row.isSkipped }}" hint-placeholder-val="{{ false }}">
+                  <span style="flex:none;width:32px;height:32px;border-radius:50%;background:var(--tint-indigo);color:var(--text-secondary);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 12h12"></path></svg></span>
+                </sc-if>
+                <sc-if value="{{ row.isUntouched }}" hint-placeholder-val="{{ false }}">
+                  <span class="tabular" style="flex:none;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--text-muted);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">{{ row.n }}</span>
+                </sc-if>
+                <span style="min-width:0;display:flex;flex-direction:column">
+                  <span style="font-weight:500">{{ row.name }}</span>
+                  <span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ row.sub }}</span>
+                </span>
+              </button>
+              <sc-if value="{{ row.isEntered }}" hint-placeholder-val="{{ true }}">
+                <span class="tabular" style="font-size:var(--money-row-size);font-weight:700;flex:none">{{ row.total }}</span>
+              </sc-if>
+              <sc-if value="{{ row.isUntouched }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ row.onSkip }}" style="flex:none;min-height:var(--touch-min);padding:0 var(--space-3);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-pill);color:var(--text-primary);font-size:14px;font-weight:500;cursor:pointer" style-active="background:var(--surface-raised)">Nothing to enter</button>
+              </sc-if>
+              <sc-if value="{{ row.isSkipped }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ row.onUnskip }}" style="flex:none;min-height:var(--touch-min);padding:0 var(--space-3);background:transparent;border:none;color:var(--brand-soft);font-size:15px;font-weight:500;cursor:pointer">Undo</button>
+              </sc-if>
+            </div>
+          </sc-for>
+          <button onClick="{{ openCheck }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:68px;padding:var(--space-2) var(--space-4);background:var(--surface-raised);border:none;text-align:left;color:inherit;cursor:pointer">
+            <sc-if value="{{ notAllDone }}" hint-placeholder-val="{{ true }}">
+              <span style="flex:none;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--text-muted);color:var(--text-secondary);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg></span>
+            </sc-if>
+            <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+              <span class="tabular" style="flex:none;width:32px;height:32px;border-radius:50%;background:var(--action);color:var(--on-action);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">9</span>
+            </sc-if>
+            <span style="flex:1;display:flex;flex-direction:column;min-width:0">
+              <span style="font-weight:500">Cash check</span>
+              <span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ lockLine }}</span>
+            </span>
+            <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+            </sc-if>
+          </button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sT6 }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="font-size:var(--title-size);font-weight:600">What's in the box right now?</div>
+          <p style="margin:0;color:var(--text-secondary);font-size:15px">Count the notes and coins before the first sale. Tomorrow onwards this is carried from tonight's count — you won't be asked.</p>
+          <sc-if value="{{ hasPending }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:15px;color:var(--text-secondary);padding-top:var(--space-2);border-top:1px solid var(--rule)">{{ pendingLine }}</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sFormA }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ hasLines }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+            <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:var(--space-2);min-height:var(--touch-min);padding:0 var(--space-2) 0 var(--space-4);border-bottom:1px solid var(--rule)">
+                <span style="flex:1;font-size:var(--caption-size);color:var(--text-secondary)">{{ ln.secondary }}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ ln.arrowColor }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ ln.arrowPath }}"></path></svg>
+                <span class="tabular" style="font-size:var(--body-size);font-weight:600;color:{{ ln.amountColor }}">{{ ln.amount }}</span>
+                <button onClick="{{ ln.onDelete }}" aria-label="Delete line" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text-muted);cursor:pointer;border-radius:var(--radius-control)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noLines }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:var(--space-4);border:1px dashed var(--rule-strong);border-radius:var(--radius-card);color:var(--text-secondary);font-size:15px">New line. Type the amount and save — the keypad stays up for the next one.</div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sFormB }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">{{ partyLabel }}</label>
+          <input value="{{ partyValue }}" onChange="{{ onParty }}" placeholder="Name" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+          <sc-if value="{{ hasMatches }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);overflow:hidden">
+              <sc-for list="{{ partyMatches }}" as="m" hint-placeholder-count="1">
+                <button onClick="{{ m.onPick }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:0 var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)">
+                  <span style="flex:1;display:flex;flex-direction:column"><span style="font-weight:500">{{ m.name }}</span><span class="tabular" style="font-size:var(--caption-size);color:var(--text-secondary)">{{ m.phone }}</span></span>
+                  <span class="tabular" style="font-size:var(--caption-size);color:var(--text-secondary)">Balance {{ m.balance }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ partyKnown }}" hint-placeholder-val="{{ false }}">
+            <div class="tabular" style="font-size:var(--caption-size);color:var(--text-secondary)">Existing party · {{ partyPhone }} · only the name and phone were filled</div>
+          </sc-if>
+          <sc-if value="{{ partyNew }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:var(--caption-size);color:var(--text-secondary)">New party — created when you save, not before</div>
+          </sc-if>
+        </div>
+        <div style="font-size:15px;color:var(--text-secondary)">{{ dirCopy }}</div>
+        <sc-if value="{{ hasLines }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+            <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:var(--space-2);min-height:var(--touch-min);padding:0 var(--space-2) 0 var(--space-4);border-bottom:1px solid var(--rule)">
+                <span style="flex:1;display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ ln.primary }}</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ ln.secondary }}</span></span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ ln.arrowColor }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ ln.arrowPath }}"></path></svg>
+                <span class="tabular" style="font-size:var(--body-size);font-weight:600;color:{{ ln.amountColor }}">{{ ln.amount }}</span>
+                <button onClick="{{ ln.onDelete }}" aria-label="Delete line" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text-muted);cursor:pointer;border-radius:var(--radius-control)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sFormC }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Description</label>
+          <input value="{{ labelValue }}" onChange="{{ onLabel }}" placeholder="{{ labelPlaceholder }}" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+        </div>
+        <sc-if value="{{ isPurchase }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <label style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Supplier · optional</label>
+            <input value="{{ supplierValue }}" onChange="{{ onSupplier }}" placeholder="Name" style="min-height:56px;padding:0 var(--space-4);border:1px solid var(--text-muted);border-radius:var(--radius-control);background:var(--surface-card);color:var(--text-primary);font-family:inherit;font-size:var(--body-size);width:100%;box-sizing:border-box">
+            <sc-for list="{{ supplierMatches }}" as="m" hint-placeholder-count="0">
+              <button onClick="{{ m.onPick }}" style="min-height:var(--touch-min);padding:0 var(--space-4);background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);text-align:left;color:inherit;cursor:pointer;font-weight:500" style-active="background:var(--surface-raised)">{{ m.name }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasLines }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+            <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:var(--space-2);min-height:var(--touch-min);padding:0 var(--space-2) 0 var(--space-4);border-bottom:1px solid var(--rule)">
+                <span style="flex:1;display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ ln.primary }}</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ ln.secondary }}</span></span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ ln.arrowColor }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ ln.arrowPath }}"></path></svg>
+                <span class="tabular" style="font-size:var(--body-size);font-weight:600;color:{{ ln.amountColor }}">{{ ln.amount }}</span>
+                <button onClick="{{ ln.onDelete }}" aria-label="Delete line" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text-muted);cursor:pointer;border-radius:var(--radius-control)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sFormD }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <div style="font-size:15px;line-height:1.45">Money you take for yourself. It reduces the cash in the box. It is <strong style="font-weight:600">not an expense</strong> and is never counted in profit.</div>
+        </div>
+        <sc-if value="{{ hasLines }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+            <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="1">
+              <div style="display:flex;align-items:center;gap:var(--space-2);min-height:var(--touch-min);padding:0 var(--space-2) 0 var(--space-4);border-bottom:1px solid var(--rule)">
+                <span style="flex:1;display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ ln.primary }}</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ ln.secondary }}</span></span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ ln.arrowColor }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ ln.arrowPath }}"></path></svg>
+                <span class="tabular" style="font-size:var(--body-size);font-weight:600;color:{{ ln.amountColor }}">{{ ln.amount }}</span>
+                <button onClick="{{ ln.onDelete }}" aria-label="Delete line" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text-muted);cursor:pointer;border-radius:var(--radius-control)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sT11 }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ checkNote }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-gold);border:1px solid var(--rule-strong);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 3l10 18H2L12 3z"></path><path d="M12 10v4M12 18h.01"></path></svg>
+            <div style="font-size:15px;line-height:1.45"><strong style="font-weight:600">The expected amount changed.</strong> An entry was added, so your earlier count was cleared. Count again.</div>
+          </div>
+        </sc-if>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">Expected in the box</div>
+          <div class="tabular" style="font-size:var(--money-hero-size);font-weight:700;line-height:1.2;margin:2px 0 var(--space-3)">{{ expected }}</div>
+          <div style="border-top:1px solid var(--rule)">
+            <sc-for list="{{ expectedLines }}" as="x" hint-placeholder-count="6">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);min-height:40px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:15px">
+                <span style="color:var(--text-secondary)">{{ x.label }}</span>
+                <sc-if value="{{ x.isIn }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-weight:600;color:var(--money-in)">{{ x.amount }}</span></sc-if>
+                <sc-if value="{{ x.isOut }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-weight:600;color:var(--money-out)">{{ x.amount }}</span></sc-if>
+                <sc-if value="{{ x.neutral }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-weight:600">{{ x.amount }}</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sT12 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card)">
+          <div style="padding:var(--space-3) var(--space-4);border-right:1px solid var(--rule)">
+            <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Expected</div>
+            <div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ expected }}</div>
+          </div>
+          <button onClick="{{ recount }}" style="padding:var(--space-3) var(--space-4);background:transparent;border:none;text-align:left;color:inherit;cursor:pointer;display:flex;flex-direction:column;border-radius:0 var(--radius-card) var(--radius-card) 0" style-active="background:var(--surface-raised)">
+            <span style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">You counted · <span style="color:var(--brand-soft)">change</span></span>
+            <span class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ countedText }}</span>
+          </button>
+        </div>
+        <div style="{{ diffCardStyle }}">
+          <div style="display:flex;align-items:center;gap:var(--space-3)">
+            <sc-if value="{{ diffShort }}" hint-placeholder-val="{{ true }}">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--money-out)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+              <span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--money-out);line-height:1.1">− {{ diffAbs }}</span>
+            </sc-if>
+            <sc-if value="{{ diffOver }}" hint-placeholder-val="{{ false }}">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--money-in)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+              <span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--money-in);line-height:1.1">+ {{ diffAbs }}</span>
+            </sc-if>
+          </div>
+          <div style="font-size:var(--title-size);font-weight:600;margin-top:var(--space-2)">{{ diffQuestion }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)">
+            <sc-for list="{{ reasons }}" as="r" hint-placeholder-count="4">
+              <button onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.label }}</button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ showAddExpense }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ addForgottenExpense }}" style="margin-top:var(--space-3);min-height:var(--touch-min);background:var(--surface-card);color:var(--text-primary);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-size:var(--body-size);font-weight:500;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--surface-raised)">Add the expense now</button>
+          </sc-if>
+        </div>
+        <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <div style="font-size:15px;line-height:1.45">{{ carryLine }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sT13 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-3);padding:var(--space-6) 0">
+          <div style="width:112px;height:112px;border-radius:50%;background:var(--tint-green);color:var(--money-in);display:flex;align-items:center;justify-content:center;animation:pop 520ms var(--easing) both">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg>
+          </div>
+          <div style="font-size:28px;font-weight:600;line-height:1.2;margin-top:var(--space-2);animation:rise 420ms 180ms var(--easing) both">It matches.</div>
+          <div class="tabular" style="font-size:40px;font-weight:700;line-height:1.1;animation:rise 420ms 260ms var(--easing) both">{{ expected }}</div>
+          <div class="tabular" style="font-size:15px;color:var(--text-secondary);animation:rise 420ms 340ms var(--easing) both">Counted {{ countedText }} · Expected {{ expected }}</div>
+          <p style="margin:var(--space-2) 0 0;color:var(--text-secondary);max-width:28ch;animation:rise 420ms 420ms var(--easing) both">Every rupee in the box is in the book. Tuesday is ready to close.</p>
+        </div>
+        <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <div style="font-size:15px;line-height:1.45">{{ carryLine }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sT14 }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">Estimated profit</div>
+          <div class="tabular" style="font-size:var(--money-hero-size);font-weight:700;line-height:1.2;margin:2px 0 var(--space-3)">{{ profit }}</div>
+          <div style="border-top:1px solid var(--rule)">
+            <div style="display:flex;justify-content:space-between;min-height:40px;align-items:center;padding:6px 0;border-bottom:1px solid var(--rule);font-size:15px"><span style="color:var(--text-secondary)">Net sales</span><span class="tabular" style="font-weight:600;color:var(--money-in)">+ {{ netSales }}</span></div>
+            <div style="display:flex;justify-content:space-between;min-height:40px;align-items:center;padding:6px 0;border-bottom:1px solid var(--rule);font-size:15px"><span style="color:var(--text-secondary)">Purchase · all modes</span><span class="tabular" style="font-weight:600;color:var(--money-out)">{{ purchaseTotal }}</span></div>
+            <div style="display:flex;justify-content:space-between;min-height:40px;align-items:center;padding:6px 0;border-bottom:1px solid var(--rule);font-size:15px"><span style="color:var(--text-secondary)">Expenses · all modes</span><span class="tabular" style="font-weight:600;color:var(--money-out)">{{ expenseTotal }}</span></div>
+          </div>
+        </div>
+        <sc-if value="{{ hasWithdrawal }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+            <div style="display:flex;flex-direction:column"><span style="font-weight:500">Personal withdrawal</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">Taken from cash · not an expense · outside profit</span></div>
+            <span class="tabular" style="font-size:var(--money-row-size);font-weight:700;color:var(--money-out);flex:none">{{ withdrawalTotal }}</span>
+          </div>
+        </sc-if>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4)">
+          <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:var(--space-2)">Cash check</div>
+          <div style="display:flex;justify-content:space-between;min-height:40px;align-items:center;padding:6px 0;border-bottom:1px solid var(--rule);font-size:15px"><span style="color:var(--text-secondary)">Expected</span><span class="tabular" style="font-weight:600">{{ expected }}</span></div>
+          <div style="display:flex;justify-content:space-between;min-height:40px;align-items:center;padding:6px 0;border-bottom:1px solid var(--rule);font-size:15px"><span style="color:var(--text-secondary)">Counted</span><span class="tabular" style="font-weight:600">{{ countedText }}</span></div>
+          <div style="display:flex;justify-content:space-between;min-height:40px;align-items:center;padding:6px 0;font-size:15px"><span style="color:var(--text-secondary)">Difference</span>
+            <sc-if value="{{ diffZero }}" hint-placeholder-val="{{ false }}"><span style="font-weight:600;color:var(--money-in)">Balanced</span></sc-if>
+            <sc-if value="{{ diffNonZero }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-weight:600;color:var(--money-out)">{{ diffLine }}</span></sc-if>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-3);align-items:flex-start;background:var(--tint-indigo);border:1px solid var(--rule);border-radius:var(--radius-card);padding:var(--space-3) var(--space-4)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <div style="font-size:15px;line-height:1.45">{{ carryLine }}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card)">
+          <div style="padding:var(--space-3) var(--space-4);border-right:1px solid var(--rule)"><div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Udhar to collect</div><div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ toCollect }}</div></div>
+          <div style="padding:var(--space-3) var(--space-4)"><div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">You owe suppliers</div><div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ owed }}</div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sP1 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card)">
+          <div style="padding:var(--space-3) var(--space-4);border-right:1px solid var(--rule)"><div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Udhar to collect</div><div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ toCollect }}</div></div>
+          <div style="padding:var(--space-3) var(--space-4)"><div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">You owe suppliers</div><div class="tabular" style="font-size:var(--money-row-size);font-weight:700">{{ owed }}</div></div>
+        </div>
+        <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-top:var(--space-1)">Customers</div>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <sc-for list="{{ customers }}" as="c" hint-placeholder-count="3">
+            <button onClick="{{ c.open }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:64px;padding:var(--space-2) var(--space-3) var(--space-2) var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)">
+              <span style="flex:1;display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ c.name }}</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ c.last }}</span></span>
+              <sc-if value="{{ c.aged }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);background:var(--tint-gold);color:var(--text-primary)">31+ days</span></sc-if>
+              <span class="tabular" style="font-size:var(--money-row-size);font-weight:700;flex:none">{{ c.balance }}</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 18l6-6-6-6"></path></svg>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-top:var(--space-1)">Suppliers</div>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <sc-for list="{{ suppliers }}" as="c" hint-placeholder-count="2">
+            <button onClick="{{ c.open }}" style="width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:64px;padding:var(--space-2) var(--space-3) var(--space-2) var(--space-4);background:transparent;border:none;border-bottom:1px solid var(--rule);text-align:left;color:inherit;cursor:pointer" style-active="background:var(--surface-raised)">
+              <span style="flex:1;display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ c.name }}</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ c.last }}</span></span>
+              <sc-if value="{{ c.dueSoon }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);background:var(--tint-red);color:var(--text-primary)">Due Thu</span></sc-if>
+              <sc-if value="{{ c.aged }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);background:var(--tint-gold);color:var(--text-primary)">31+ days</span></sc-if>
+              <span class="tabular" style="font-size:var(--money-row-size);font-weight:700;flex:none">{{ c.balance }}</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 18l6-6-6-6"></path></svg>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">
+          <div>
+            <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase">{{ selBalanceLabel }}</div>
+            <div class="tabular" style="font-size:var(--money-hero-size);font-weight:700;line-height:1.2">{{ selBalance }}</div>
+          </div>
+          <sc-if value="{{ selAged }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:var(--space-2);font-size:15px;color:var(--text-secondary)"><span style="font-size:12px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);background:var(--tint-gold);color:var(--text-primary)">31+ days</span>{{ selAgedText }}</div>
+          </sc-if>
+          <sc-if value="{{ sP3 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:var(--space-2);font-size:15px;color:var(--text-secondary)">
+              <sc-if value="{{ selDue }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);background:var(--tint-red);color:var(--text-primary)">Due soon</span></sc-if>
+              {{ selDueText }}
+            </div>
+          </sc-if>
+          <sc-if value="{{ sP2 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <button onClick="{{ recordSale }}" style="min-height:var(--touch-min);background:var(--surface-card);color:var(--text-primary);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-size:var(--body-size);font-weight:500;cursor:pointer" style-active="background:var(--surface-raised)">New udhar sale</button>
+              <button onClick="{{ recordCollection }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;cursor:pointer" style-active="background:var(--action-pressed)">Record a collection</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ sP3 }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ recordPayment }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">Record a payment</button>
+          </sc-if>
+        </div>
+        <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-top:var(--space-1)">Ledger</div>
+        <div style="background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden">
+          <sc-for list="{{ ledger }}" as="l" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:var(--space-3);min-height:var(--touch-min);padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--rule)">
+              <span style="flex:1;display:flex;flex-direction:column;min-width:0"><span style="font-weight:500;font-size:15px">{{ l.kind }}</span><span style="font-size:var(--caption-size);color:var(--text-secondary)">{{ l.date }}</span></span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;flex:none">
+                <sc-if value="{{ l.isOut }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-weight:600;color:var(--money-out)">{{ l.amount }}</span></sc-if>
+                <sc-if value="{{ l.isIn }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-weight:600;color:var(--money-in)">{{ l.amount }}</span></sc-if>
+                <span class="tabular" style="font-size:var(--caption-size);color:var(--text-secondary)">Balance {{ l.balance }}</span>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ authKeypadVisible }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-4);background:var(--surface-ground);display:flex;flex-direction:column;gap:var(--space-3)">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <button onClick="{{ ak1 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">1</button>
+          <button onClick="{{ ak2 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">2</button>
+          <button onClick="{{ ak3 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">3</button>
+          <button onClick="{{ ak4 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">4</button>
+          <button onClick="{{ ak5 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">5</button>
+          <button onClick="{{ ak6 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">6</button>
+          <button onClick="{{ ak7 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">7</button>
+          <button onClick="{{ ak8 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">8</button>
+          <button onClick="{{ ak9 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">9</button>
+          <span></span>
+          <button onClick="{{ ak0 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">0</button>
+          <button onClick="{{ akBack }}" aria-label="Delete digit" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center" style-active="background:var(--surface-raised)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13V5z"></path><path d="M12 9l6 6M18 9l-6 6"></path></svg></button>
+        </div>
+        <sc-if value="{{ sA3 }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ sendCode }}" style="{{ sendCodeBtnStyle }}">Send code</button>
+          <a href="#" onClick="{{ changeNumberLink }}" style="text-align:center;font-size:15px;font-weight:500;color:var(--brand-soft)">I changed my number.</a>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ recoveryKeypadVisible }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-4);background:var(--surface-ground);display:flex;flex-direction:column;gap:var(--space-3)">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <button onClick="{{ rk1 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">1</button>
+          <button onClick="{{ rk2 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">2</button>
+          <button onClick="{{ rk3 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">3</button>
+          <button onClick="{{ rk4 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">4</button>
+          <button onClick="{{ rk5 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">5</button>
+          <button onClick="{{ rk6 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">6</button>
+          <button onClick="{{ rk7 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">7</button>
+          <button onClick="{{ rk8 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">8</button>
+          <button onClick="{{ rk9 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">9</button>
+          <span></span>
+          <button onClick="{{ rk0 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">0</button>
+          <button onClick="{{ rkBack }}" aria-label="Delete digit" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center" style-active="background:var(--surface-raised)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13V5z"></path><path d="M12 9l6 6M18 9l-6 6"></path></svg></button>
+        </div>
+        <sc-if value="{{ recOldPhone }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ recoverySendOld }}" style="{{ recoverySendOldBtnStyle }}">Send code</button>
+        </sc-if>
+        <sc-if value="{{ recNewPhone }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ recoverySendNew }}" style="{{ recoverySendNewBtnStyle }}">Send code</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ lockKeypadVisible }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-4);background:var(--surface-ground);display:flex;flex-direction:column;gap:var(--space-3)">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <button onClick="{{ lk1 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">1</button>
+          <button onClick="{{ lk2 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">2</button>
+          <button onClick="{{ lk3 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">3</button>
+          <button onClick="{{ lk4 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">4</button>
+          <button onClick="{{ lk5 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">5</button>
+          <button onClick="{{ lk6 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">6</button>
+          <button onClick="{{ lk7 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">7</button>
+          <button onClick="{{ lk8 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">8</button>
+          <button onClick="{{ lk9 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">9</button>
+          <span></span>
+          <button onClick="{{ lk0 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">0</button>
+          <button onClick="{{ lkBack }}" aria-label="Delete digit" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center" style-active="background:var(--surface-raised)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13V5z"></path><path d="M12 9l6 6M18 9l-6 6"></path></svg></button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showTotalBar }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;display:flex;justify-content:space-between;align-items:center;padding:var(--space-2) var(--space-4);background:var(--surface-raised);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:15px">
+        <span style="color:var(--text-secondary)">{{ sectionName }} · {{ lineCount }}</span>
+        <span class="tabular" style="font-weight:700;font-size:var(--money-row-size)">{{ sectionTotal }}</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showKeypad }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-4);background:var(--surface-ground);display:flex;flex-direction:column;gap:var(--space-3)">
+
+        <sc-if value="{{ showMode }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Received as</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              <button onClick="{{ setCash }}" style="{{ modeCashStyle }}">Cash</button>
+              <button onClick="{{ setUpi }}" style="{{ modeUpiStyle }}">UPI</button>
+              <button onClick="{{ setOther }}" style="{{ modeOtherStyle }}">Other</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sFormC }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center">
+              <button onClick="{{ setCash }}" style="{{ modeCashStyle }}">Cash</button>
+              <span style="font-size:var(--caption-size);color:var(--text-secondary);line-height:1.35">Paid from the box. Changes your cash.</span>
+            </div>
+            <div style="{{ nonCashGridStyle }}">
+              <button onClick="{{ setUpi }}" style="{{ modeUpiStyle }}">UPI</button>
+              <button onClick="{{ setOther }}" style="{{ modeOtherStyle }}">Other</button>
+              <button onClick="{{ setUdhar }}" style="{{ modeUdharStyle }}">Udhar</button>
+              <sc-if value="{{ showStockMode }}" hint-placeholder-val="{{ false }}"><button onClick="{{ setStock }}" style="{{ modeStockStyle }}">Shop stock</button></sc-if>
+            </div>
+            <div style="font-size:var(--caption-size);color:var(--text-secondary)">These four don't change your cash. All modes count toward total {{ sectionNameLower }}.</div>
+          </div>
+          <sc-if value="{{ showDue }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Due · optional</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+                <button onClick="{{ setDue7 }}" style="{{ due7Style }}">7 days</button>
+                <button onClick="{{ setDue15 }}" style="{{ due15Style }}">15 days</button>
+                <button onClick="{{ setDue30 }}" style="{{ due30Style }}">30 days</button>
+                <button onClick="{{ setDuePick }}" style="{{ duePickStyle }}">Pick date</button>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ showAmount }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">{{ amountLabel }}</div>
+            <div style="display:flex;align-items:center;gap:var(--space-2);min-height:64px;padding:0 var(--space-4);border:2px solid var(--focus-ring);border-radius:var(--radius-control);background:var(--surface-card)">
+              <span style="font-size:var(--money-row-size);color:var(--text-muted)">₹</span>
+              <sc-if value="{{ amountEmpty }}" hint-placeholder-val="{{ true }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;color:var(--text-disabled);line-height:1">0</span></sc-if>
+              <sc-if value="{{ hasAmount }}" hint-placeholder-val="{{ false }}"><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;line-height:1">{{ amountText }}</span></sc-if>
+              <span style="width:2px;height:34px;background:var(--focus-ring);animation:caret 1s step-end infinite"></span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sFormD }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+            <button onClick="{{ focusWdCash }}" style="{{ wdCashBoxStyle }}">
+              <span style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">Cash</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="color:var(--text-muted);font-size:var(--body-size)">₹</span><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;line-height:1">{{ wdCashText }}</span></span>
+            </button>
+            <button onClick="{{ focusWdUpi }}" style="{{ wdUpiBoxStyle }}">
+              <span style="font-size:var(--label-size);font-weight:500;color:var(--text-secondary)">UPI</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="color:var(--text-muted);font-size:var(--body-size)">₹</span><span class="tabular" style="font-size:var(--money-hero-size);font-weight:700;line-height:1">{{ wdUpiText }}</span></span>
+            </button>
+          </div>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <button onClick="{{ k1 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">1</button>
+          <button onClick="{{ k2 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">2</button>
+          <button onClick="{{ k3 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">3</button>
+          <button onClick="{{ k4 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">4</button>
+          <button onClick="{{ k5 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">5</button>
+          <button onClick="{{ k6 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">6</button>
+          <button onClick="{{ k7 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">7</button>
+          <button onClick="{{ k8 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">8</button>
+          <button onClick="{{ k9 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">9</button>
+          <button onClick="{{ k00 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">00</button>
+          <button onClick="{{ k0 }}" class="tabular" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);font-size:24px;font-weight:500;color:var(--text-primary);cursor:pointer" style-active="background:var(--surface-raised)">0</button>
+          <button onClick="{{ kBack }}" aria-label="Delete digit" style="min-height:52px;background:var(--surface-card);border:1px solid var(--rule);border-radius:var(--radius-control);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center" style-active="background:var(--surface-raised)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13V5z"></path><path d="M12 9l6 6M18 9l-6 6"></path></svg></button>
+        </div>
+
+        <sc-if value="{{ isForm }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+            <button onClick="{{ onSecondary }}" style="{{ secondaryBtnStyle }}">{{ secondaryLabel }}</button>
+            <button onClick="{{ onPrimary }}" style="{{ primaryBtnStyle }}">{{ primaryLabel }}</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sT6 }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ openingSave }}" style="{{ openingBtnStyle }}">Save opening cash</button>
+        </sc-if>
+        <sc-if value="{{ sT11 }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ commitCount }}" style="{{ countBtnStyle }}">Check against the book</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sT5 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ nextAction }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-size:var(--body-size);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%" style-active="background:var(--action-pressed)">{{ nextLabel }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sT12 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ closeAction }}" style="{{ closeBtnStyle }}">Close the day</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sT13 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ closeAction }}" style="{{ closeBtnStyle }}">Close the day</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sT14 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ goToday }}" style="{{ doneBtnStyle }}">Done</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sX1 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ obFinish }}" style="{{ obFinishStyle }}">Start the day</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sS2 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ saveShop }}" style="{{ doneBtnStyle }}">Save</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sS3 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ saveOwner }}" style="{{ doneBtnStyle }}">Save</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sS8 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ doExport }}" style="{{ doneBtnStyle }}">Export</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sS9B }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:var(--space-2)">
+        <button onClick="{{ deleteAccountGo }}" style="{{ deleteBtnStyle }}">Delete my account</button>
+        <a href="#" onClick="{{ goS1 }}" style="text-align:center;font-size:15px;font-weight:500;color:var(--brand-soft)">Cancel</a>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sY2 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;padding:var(--space-3) var(--space-4) var(--space-5);background:var(--surface-ground);border-top:1px solid var(--rule)">
+        <button onClick="{{ goUpdate }}" style="{{ doneBtnStyle }}">Update</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:none;display:grid;grid-template-columns:{{ navCols }};background:var(--surface-card);border-top:1px solid var(--rule)">
+        <button onClick="{{ goToday }}" style="{{ navTodayStyle }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path></svg>
+          <span>Today</span>
+        </button>
+        <button onClick="{{ goParties }}" style="{{ navPartiesStyle }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"></path><circle cx="18" cy="9" r="2.5"></circle><path d="M16.5 13c2.6.4 4.5 2.4 4.5 5"></path></svg>
+          <span>Parties</span>
+        </button>
+        <sc-if value="{{ showReportsTab }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ goReports }}" style="{{ navReportsStyle }}">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M9 15v-4M14 17v-8M19 12v5"></path></svg>
+            <span>Reports</span>
+          </button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:var(--space-4);right:var(--space-4);bottom:96px;background:var(--brand);color:var(--on-brand);border-radius:var(--radius-control);padding:var(--space-3) var(--space-4);font-size:15px;box-shadow:var(--elevation-sheet);animation:rise 220ms var(--easing) both">{{ toastText }}</div>
+    </sc-if>
+
+    <sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;background:rgba(19,24,31,.45);display:flex;align-items:flex-end;z-index:5">
+        <div style="width:100%;background:var(--surface-card);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--elevation-sheet);padding:var(--space-5) var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">
+          <sc-if value="{{ confirmDiscard }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:var(--title-size);font-weight:600">Discard this entry?</div>
+            <p style="margin:0;color:var(--text-secondary)">What you typed hasn't been saved.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <button onClick="{{ confirmKeep }}" style="min-height:var(--touch-min);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-weight:500;cursor:pointer;color:var(--text-primary)">Keep editing</button>
+              <button onClick="{{ confirmDiscardGo }}" style="min-height:var(--touch-min);background:var(--tint-red);color:var(--text-primary);border:none;border-radius:var(--radius-control);font-weight:600;cursor:pointer">Discard</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ confirmDelete }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:var(--title-size);font-weight:600">Delete this line?</div>
+            <p style="margin:0;color:var(--text-secondary)">This removes it from today's book.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <button onClick="{{ confirmKeep }}" style="min-height:var(--touch-min);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-weight:500;cursor:pointer;color:var(--text-primary)">Cancel</button>
+              <button onClick="{{ confirmDeleteGo }}" style="min-height:var(--touch-min);background:var(--tint-red);color:var(--text-primary);border:none;border-radius:var(--radius-control);font-weight:600;cursor:pointer">Delete</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ confirmClose }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:var(--title-size);font-weight:600">Close Tuesday 15 July?</div>
+            <p style="margin:0;color:var(--text-secondary)">{{ carryLine }}</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <button onClick="{{ confirmKeep }}" style="min-height:var(--touch-min);background:var(--surface-card);border:1px solid var(--text-muted);border-radius:var(--radius-control);font-weight:500;cursor:pointer;color:var(--text-primary)">Not yet</button>
+              <button onClick="{{ confirmCloseGo }}" style="min-height:var(--touch-min);background:var(--action);color:var(--on-action);border:none;border-radius:var(--radius-control);font-weight:600;cursor:pointer">Close the day</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:900},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfort&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;comfort&quot;,&quot;focus&quot;]}}">
+class Component extends DCLogic {
+  componentDidMount() {
+    this.unsub = window.SwaftoStore.subscribe(() => this.forceUpdate());
+  }
+  componentWillUnmount() {
+    if (this.unsub) this.unsub();
+  }
+  renderVals() {
+    const v = window.SwaftoStore.vals();
+    const mode = this.props.mode === 'focus' ? 'focus' : 'comfort';
+    return Object.assign({}, v, {
+      dataMode: mode,
+      modeName: mode === 'focus' ? 'Focus (dark)' : 'Comfort (light)',
+    });
+  }
+}
+</script>
+</body>
+</html>

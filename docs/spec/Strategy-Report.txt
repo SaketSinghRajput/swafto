@@ -1,0 +1,245 @@
+SWAFTO -- Resourcing & AI Strategy
+
+ Why we're building lean and phased in year one -- and why that is the strongest path to
+ the AI-helper vision, not a detour from it
+
+ To: Rajanikanta Garnaik, Founder & Product Owner
+ From: Saket Singh, Chief Technical Associate
+ Date: 23 July 2026
+
+Purpose
+
+ This memo lays out the resourcing and AI-infrastructure strategy for SWAFTO's first year, and the evidence
+ behind it. It accompanies three companion documents already in the project folder -- the AI Infrastructure
+ ADR, the Architecture Debt Prevention Plan, and the Enhanced Architecture diagram -- and pulls the
+ reasoning for all three into one place, with outside evidence, so the recommendation can be evaluated on its
+ merits rather than taken on faith.
+
+Problem Statement
+
+ SWAFTO's ambition is large: a trustworthy daily closing tool for MSME shop owners today, growing into a full
+ AI helper for MSME owners, with a possible future deeptech position. The natural instinct is to build toward
+ the full architecture -- private AI infrastructure, autonomous operations tooling, multi-shop support, formal
+ compliance -- as early as possible. That instinct is understandable but, based on how comparable startups
+ actually succeed or fail, it is the wrong sequence for a team this size at this stage. The risk is not ambition --
+ it's spending scarce capital and a nine-person team's attention on infrastructure the product doesn't need yet,
+ before the core hypothesis (will an MSME shop owner trust SWAFTO over their paper register?) is proven.
+
+Goals of This Strategy
+
+· Prove the core hypothesis -- MSME owners trust SWAFTO's daily closing over the paper register -- with
+
+     the fastest, cheapest path that can prove it.
+
+· Preserve capital for the moment it has the highest leverage: after real usage data exists, not before.
+· Build a technical foundation that will not need to be rewritten as the company scales (multi-tenant
+
+     schema, immutable transactions, RBAC, audit logging -- see Architecture Debt Prevention Plan).
+
+· Keep the AI-helper and deeptech ambitions fully intact as later phases, funded by evidence rather than by
+
+     plan.
+
+Non-Goals for Year One
+
+· Private LLM / GPU infrastructure now -- the real constraint on building a proprietary model is usage
+
+     data, not compute or cash; that data only exists after real users are live. See ADR-001.
+
+· Layer 11 (Autonomous AI Ops) -- internal engineering tooling, not customer-facing product value;
+
+     needs real production incident history to be useful at all.
+· Chasing AI feature parity -- Dukaan AI already ships free, offline, 24-language voice billing and AI bill
+
+     scanning. Matching that feature-for-feature is not winnable with this team size, and is not where
+     SWAFTO's real differentiation lives.
+
+· Formal deeptech positioning immediately -- the ambition is legitimate and there is now a real
+
+     government pathway for it (see Evidence, below) -- but it should be earned with real technical depth, not
+     claimed before it exists.
+The Evidence Base -- Why This Is Necessary, Not Just Cautious
+
+This is not a generic "move slow" argument. It is grounded in what is currently happening in the market, in
+how comparable AI and deeptech startups actually succeed or fail, and in what SWAFTO's own direct
+competitors have already done.
+
+1. The industry itself is moving toward buying, not building
+
+The share of enterprises building their own AI systems dropped from 47% in 2024 to 24% in 2025, as mature
+commercial models made in-house builds unnecessary for most use cases. Venture investors have shifted
+their evaluation question from "do you use AI" to "where does your advantage live without the model" --
+durability now matters more than visible AI usage. The practical playbook recommended across current
+build-vs-buy guidance is exactly the one used in ADR-001: start with commercial APIs, add an abstraction
+layer from day one, collect production data systematically, and evaluate fine-tuning after real usage exists.
+
+2. Fine-tuning is cheap; training your own foundation model is not, and nobody does
+the latter
+
+Fine-tuning a small open-source model (7­14B parameters) on your own data costs roughly $500­$5,000 in
+compute today, versus $78­100 million to train a frontier model from scratch. This confirms what ADR-001
+already concluded: the GPU/hardware cost was never the real blocker to "owning our own model" --
+proprietary data is. Buying dedicated infrastructure now doesn't shorten that timeline; only real users do.
+
+3. Deeptech specifically punishes premature infrastructure investment
+
+Across high-growth startup failures, premature scaling is the primary cause in roughly 74% of cases.
+Deeptech ventures are especially exposed: the common failure pattern is technology-push without market
+validation -- building sophisticated infrastructure before the market need is proven, then running out of
+capital before proving it. Theranos is the best-known cautionary example: premature technical claims without
+rigorous product validation. The lesson directly applicable to SWAFTO is sequencing, not ambition --
+validate first, then invest in depth.
+
+4. The vertical-AI companies that actually won did it in this order -- API first, proprietary
+workflow data second
+
+Harvey AI is the clearest comparable case. It is built entirely on top of OpenAI, Anthropic, and Google models
+via API -- it does not train its own foundation model. Its moat came from embedding directly into legal
+workflows (partnering with firms like Allen & Overy) and accumulating proprietary process data that no public
+dataset replicates. That combination -- hosted models plus proprietary workflow data -- took Harvey to an
+$11 billion valuation and roughly $190 million in ARR within about three years. Tellingly, general-purpose
+models have now caught up to specialized legal models on standard benchmarks, which means Harvey's
+durable advantage was never the model -- it was the workflow data and trust built on top of it. That is
+precisely the argument for treating SWAFTO's Formula/Score Engine, not the AI layer, as the real moat.
+
+5. The MSME digital-ledger market is real, proven, and already crowded -- which
+changes what winning requires
+
+Company    Funding raised             Notable detail
+
+Khatabook  $200M+ (Series C at $600M  10M+ monthly active accounts, 40M+ registered
+           valuation)                 merchants
+
+OkCredit   $84.9M                     Backed by Tiger Global, Lightspeed, Y
+                                      Combinator
+Company    Funding raised  Notable detail
+Vyapar     $35.68M
+                           FY22 revenue ~s20 crore, but losses grew over
+Dukaan AI  Not disclosed   4x in the same year
+
+                           Free, 100% offline, 24-language voice billing + AI
+                           bill scanner
+
+The category is unquestionably validated -- nobody needs convincing that MSMEs want a digital ledger. But
+Vyapar's growing losses despite real revenue show that funding and market size do not guarantee winning;
+execution and differentiation do. Against three funded incumbents and one free AI-native entrant,
+out-featuring them is not a realistic year-one strategy for a nine-person team. Out-trusting them on the one
+thing they treat as a commodity -- correctness of the daily closing -- is.
+
+6. The deeptech ambition has a real, current path in India -- it doesn't need to be
+claimed early to remain valid
+
+In February 2026, DPIIT issued a revised national framework that formally recognizes "Deep Tech Startup"
+as a distinct category for the first time, with an extended 20-year eligibility window and a raised s300 crore
+turnover cap specifically to accommodate long-gestation, research-intensive ventures. This was paired with
+the launch of Startup India Fund of Funds 2.0, a s10,000 crore corpus with an expanded deep tech focus.
+This matters directly for SWAFTO: there is now a concrete, government-recognized designation and funding
+pathway to grow into once the technical depth (proprietary vernacular NLU, models trained on real MSME
+data) actually exists. Deferring the claim doesn't mean deferring the ambition -- it means qualifying for it for
+real, at a moment when the policy environment is actively built to support exactly that move.
+The Resourcing Plan (Phased)
+
+Full detail and per-role budget lives in SWAFTO-Finalized-Resource-Plan.md in the project folder.
+Summary below.
+
+Phase 1 -- now, alongside the Simulator/MVP build
+
+Resource                        Approx. cost       Why it's P0
+
+CTO (founder)                   s20k­30k/month     Owns backend, infra, UX, and the Formula Engine
+                                                   -- the product's core
+
+4 Flutter developers (interns)  s20k/month         One codebase ships Android, iOS, and tablet
+                                combined           together
+
+Business analyst (intern)       s5k/month          Field-validates the Formula/Score Engine -- the
+                                                   actual trust wedge
+
+Finance/domain validator (intern) s5k/month        Checks reconciliation correctness against real
+                                                   accounting practice
+
+QA/UAT (intern)                 s5k/month          Closes the one real gap in the original plan
+
+High-end MacBook (Pro/Max)      s2.5L­3L one-time  Required for iOS builds regardless of any AI plan
+
+Minimal AWS infra               s5k­15k/month      Just enough to run a live pilot, no over-provisioning
+
+ Phase 1 total: roughly s9L­12.6L for the first year, plus the one-time hardware cost above.
+
+ Phase 2 -- post-MVP validation, once real shops are live
+· OpenAI/Anthropic + transcription API for voice entry, coaching, validation AI -- ~s1.5L­2.5L/year at pilot
+
+     scale (~500 shops).
+
+· Off-the-shelf monitoring (Sentry, CloudWatch free tiers) -- near-zero cost, standard ops hygiene.
+· Second business analyst (intern) -- ~s5k/month, once there is real usage data to analyze.
+
+ Phase 3 -- deferred until a real trigger exists
+· Private/self-hosted LLM infrastructure -- once proprietary usage data exists to justify it.
+· Layer 11 Autonomous Operations -- once there is real production incident history to automate against.
+· Formal compliance certification (SOC 2 / ISO 27001) -- once an enterprise or bank partner requires it.
+· Multi-shop/wholesaler support, predictive alerts -- once the single-shop model is proven and real
+
+     transaction data exists.
+
+· Formal deeptech positioning / DPIIT recognition -- once proprietary technical depth (Layers 4 & 10) is
+
+     real, not aspirational.
+
+ Year 1 total, directional: roughly s12L­17L, versus s30L­50L at market-rate hiring for the same plan, and
+ materially higher again if private LLM infrastructure (s3L­7.3L/year in GPU rental alone) were added on top.
+
+How We'll Know This Strategy Is Working
+
+ Leading indicators (weeks)
+· Pilot shop owners complete a full daily closing without abandoning mid-flow.
+· Formula/Score Engine outputs match what shop owners independently verify against their own records.
+· Engineering stays on the Phase 1 architecture checklist (multi-tenant schema, RBAC, audit logging,
+
+     tested Formula Engine) without shortcuts.
+
+ Lagging indicators (months)
+· Daily-active usage retention among pilot shops beats or matches free incumbents' reported engagement.
+· Cost stays within the s12L­17L Year 1 band -- a material overrun is the signal to revisit this plan, not
+
+     silently absorb it.
+
+· A concrete Phase 2 trigger appears (meaningful pilot data volume, or a specific customer/partner asking
+
+     for a Phase 3 capability) before that phase is funded.
+
+Open Questions for Us to Decide Together
+
+· Are the 4 developer hires Flutter specialists (needed for the iOS/tablet targets in the architecture) or native
+
+     Android -- this changes who we hire next. [Owner: Saket]
+
+· What's an acceptable ceiling on intern turnover risk for the BA/finance-validator roles, given they carry the
+
+     trust-differentiation work -- do we want at least one continuous, accountable reviewer even part-time?
+     [Owner: Rajanikanta]
+
+· What's the real trigger we'll agree constitutes "enough usage data" to open Phase 2 spending? [Owner:
+
+     both]
+
+· Do we want to start tracking toward DPIIT Deep Tech Startup recognition as a formal milestone once
+
+     Phase 3 begins? [Owner: Rajanikanta]
+
+Timeline
+
+· Now: Simulator/Formula Engine build, architecture foundations, Phase 1 hiring.
+· Post-MVP validation: Phase 2 -- voice AI via API, monitoring tooling, second BA.
+· Once real triggers exist: Phase 3 -- self-hosted/fine-tuned models, Layer 11, certification, multi-shop,
+
+     formal deeptech track.
+
+ Companion documents (in the project folder)
+· ADR-001-AI-Infrastructure-Strategy.md -- the full build-vs-buy decision record
+· Architecture-Debt-Prevention-Plan.md -- what to build right now vs. what to defer, and why
+· SWAFTO-Finalized-Resource-Plan.md -- full per-role budget detail
+· SWAFTO-Enhanced-Architecture.svg -- the phased, functionally-grouped architecture diagram
+
+ Prepared by Saket Singh for review with Rajanikanta Garnaik.
+
