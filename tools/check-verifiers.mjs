@@ -151,10 +151,15 @@ export const VERIFIERS = [
     claims:
       'ADR-003 all four clauses: no money arithmetic outside the audited helpers, no float coercion of money, no decimal literals in the engine, formatting only at the render boundary.',
     benchmarks: ['B12'],
+    // §5.12.5 names this plant: a float-arithmetic violation. That is clause 1 -
+    // arithmetic on a money identifier outside the audited helpers - rather than the
+    // easier clause-3 decimal literal, because clause 1 is what constraint 6 is
+    // actually about.
     defect: {
-      file: 'packages/formula-engine/src/intelligence.ts',
-      find: 'export ',
-      replace: 'const PLANTED_RATE = 0.18;\nexport ',
+      file: 'packages/formula-engine/src/operational.ts',
+      find: 'const totalOf = (entries: readonly Entry[]): Paise => sum(entries.map((e) => e.amount));',
+      replace:
+        'const totalOf = (entries: readonly Entry[]): Paise =>\n  sum(entries.map((e) => e.amount * 1.0));',
     },
   },
   {

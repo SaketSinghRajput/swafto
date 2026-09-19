@@ -216,22 +216,31 @@ testable offline, and everything else is a projection of it.
 
 ## RESUME
 
-**Everything below is committed and green.** `npm run check:all` runs ten checks,
-`npx vitest run` is 231 passed / 0 skipped, `npm run typecheck` is clean, and
-`npm run test:vectors:diff` reports no Node/Hermes divergence.
+**Everything below is committed and green.** `npm run check:all` runs eleven checks,
+`npx vitest run` is 303 passed / 0 skipped, `npm run typecheck` is clean,
+`npm run prove:verifiers` shows all twelve plantable verifiers failing on their
+planted defect, and `npm run test:vectors:diff` reports no Node/Hermes divergence.
 
-Pick up at **the DC-003 compensating control** - what absorbs an L7 flood before it
+Two benchmarks are recorded as MISSED in `BENCHMARKS-RESULTS.md`, honestly and with
+thresholds untouched: **B1** at 63 vectors of 70, and **B3** at 85.71% branch coverage
+of 100%. Both are attempt 1 of 3 and both close at G7/G8, where the scenarios that
+would cover them actually exist.
+
+**30 of 40 benchmarks still have no instrument.** `npm run check:verifiers` prints
+the list on every run. Two of them - B13 and B39 - *lost* theirs when
+`check:traceability` was removed at iteration 15, and that must be rebuilt before G19
+can be claimed.
+
+Pick up at **the DC-003 compensating control**: what absorbs an L7 flood before it
 reaches the API now that AD-008 took Cloudflare out of the data path, whether
-unauthenticated endpoints get a cheaper pre-database limit, and how the API sheds
-load when the limiter itself is saturated. Injection 08's section C sets the terms;
-SECURITY-AUDIT S-08 is the row it lands in and already reads OPEN.
+unauthenticated endpoints get a cheaper pre-database limit, and how the API sheds load
+when the limiter itself is saturated. Injection 08 section C sets the terms;
+SECURITY-AUDIT S-08 is the row and already reads OPEN.
 
-Then **B.3-B.5 the OTP service** on top of the limiter built at iteration 17, then
-**G6**, then **G7 and G8 with rejects.json grown alongside them** (8 api-layer
-rejection cases are PENDING a layer, and the vector count is 63 against B1's 70 -
-injection 08 section D says add them where the scenarios are in front of you, never
-to raise the count). Then the two fixtures, then **G10** starting with the four form
+Then **B.3-B.5 the OTP service** on the limiter built at iteration 17, then **G6**,
+then **G7 and G8 with rejects.json grown alongside them** (8 api-layer cases are
+PENDING a layer). Then the two fixtures, then **G10** starting with the four form
 archetypes and the Today screen LAST.
 
-One thing genuinely needs the repo owner and blocks nothing: **H11**, permission for
-an `eslint.config.mjs`. The enforcement it would carry already runs in CI.
+One thing genuinely needs the repo owner and blocks nothing: **H11**, permission for an
+`eslint.config.mjs`. The enforcement it would carry already runs in CI.
