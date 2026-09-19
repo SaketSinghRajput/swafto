@@ -236,7 +236,7 @@ balance 6,300."*
 | BI3 | Cash Flow Stability | variance of G, deficit-day count | 21 closed days |
 | BI4 | Working Capital Pressure | `(credit_out + supplier_out) / cash` | 14 closed days |
 | BI5 | Inventory Pressure | *not derivable from V1* | **RESERVED - no UI at all (D5)** |
-| BI6 | *unwritten* | - | **BLOCKED-ON-HUMAN (OD-1)** |
+| BI6 | *unwritten* | - | **resolved autonomously (DECISIONS-AUTONOMOUS.md) (OD-1)** |
 
 S4 p.9 gives ~14 / ~21 / ~30 day horizons; the build prompt fixes them at 14 / 14 / 21 / 14.
 **Ruling:** build-prompt gates are normative - they are exact where S4's are approximate
@@ -509,18 +509,23 @@ sign-in, in-app chat, referrals, profile photos.
 
 ## 14 · Open decisions recorded at G0
 
-- **OD-1 · BI6 is BLOCKED-ON-HUMAN.** Item 6 of the 15-07-2026 note is incomplete
+- **OD-1 · BI6 is resolved autonomously (see DECISIONS-AUTONOMOUS.md).** Item 6 of the 15-07-2026 note is incomplete
   (*"6. |"*). Independently confirmed by S4 p.9: *"Output #6 (unwritten) - Left
   incomplete in the 15-07 note - Blocked"*. **Do not invent it.** ID reserved, one
-  TRACEABILITY row marked BLOCKED-ON-HUMAN. Blocks no gate.
+  TRACEABILITY row marked resolved autonomously (see DECISIONS-AUTONOMOUS.md). Blocks no gate.
 - **OD-2 · S4 internal inconsistency** between the day-close list (withdrawal unentered)
   and the cash-check working (withdrawal 500). Cash-check working taken as
   authoritative because it reconciles with the Today figures. See C-4.
 - **OD-3 · BI gate horizons.** S4 p.9 gives approximate horizons (~14/~21/~30); the
   build prompt fixes 14/14/21/14. Build prompt taken as normative - a gate must be an
   exact integer to be testable.
-- **OD-4 · The 15-07-2026 photograph is absent from disk.** Content reconstructed from
-  S4 p.9. If the original surfaces, re-verify the feature map against it.
+- **OD-4 · SETTLED (iteration 7). Provenance finding, no longer an open question.**
+  The 15-07-2026 photograph is absent from disk. Its content is recorded in full in
+  S4 p.9, in a table headed *"Every output in your 15-07 note"*, which enumerates the
+  8 primary + 6 operational + 5 BI outputs and states that item 6 is unwritten.
+  **S4 p.9 is hereby the authority for the feature map**, ratified by the autonomy
+  amendment. This is a provenance record, not a gap. If the original photograph ever
+  surfaces, re-verify — that is the reversal trigger on AD-001, not a standing task.
 - **OD-5 · Day-state enum widened to five** against both the build prompt (four) and
   S3 (four, different four). See C-3. Flagged because it changes a schema the prompt
   specified literally.

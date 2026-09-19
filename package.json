@@ -2,7 +2,7 @@
   "name": "swafto",
   "private": true,
   "version": "0.1.0",
-  "description": "SWAFTO Retail Desk V1 — offline-first daily cash-and-credit closing for small Indian retail shops",
+  "description": "SWAFTO Retail Desk V1 \u2014 offline-first daily cash-and-credit closing for small Indian retail shops",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=24 <25"
@@ -21,7 +21,11 @@
     "test:vectors:diff": "node tools/diff-vectors.mjs .vectors-node.json .vectors-hermes.json",
     "check:traceability": "node tools/check-traceability.mjs",
     "check:contrast": "node tools/check-contrast.mjs",
-    "check:i18n": "node tools/check-i18n.mjs"
+    "check:i18n": "node tools/check-i18n.mjs",
+    "check:governance": "node tools/check-governance.mjs",
+    "check:benchmarks": "node tools/check-benchmarks-lock.mjs",
+    "vectors:author": "node --experimental-strip-types tools/author-vectors.ts",
+    "db:emit": "node --experimental-strip-types tools/emit-sql.mjs"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",

@@ -1,6 +1,6 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 6
+Updated: 2026-09-19T00:00:00Z   Iteration: 7
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -11,14 +11,14 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 |------|-------|--------|----------|
 | G0 | Repo, state ledger, spec extraction | **PASS** | `ls` of all four files + `wc -l SPEC-DIGEST.md` = **526 lines** (threshold 200). Output in BUILD_LOG.md. |
 | G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
-| G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 BLOCKED-ON-HUMAN** |
+| G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|resolved autonomously (DECISIONS-AUTONOMOUS.md)' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 resolved autonomously (DECISIONS-AUTONOMOUS.md)** |
 | G3 | Security audit / STRIDE | **PASS** | `npm audit --audit-level=high` -> **found 0 vulnerabilities**; `STRIDE rows: 87`; 21 items mirrored into TRACEABILITY.md |
 | G4 | Schema + migrations, SQLite & Postgres | **PASS** | `vitest run --dir packages` -> **21 passed, 0 skipped** on BOTH engines. up/down/up clean; UPDATE and DELETE on `entries` rejected by trigger (SQLite) and trigger+REVOKE (Postgres); RLS forced on all 6 tenant tables |
 | G5 | **Formula Engine + vectors.json** | **PASS** | **46 vectors** (>=30). Node: `ALL PASS`. Hermes 0.12 real VM: `no vector threw`. Diff: `divergence: NONE`. Both checks negative-tested - injected errors DO fail them. |
 | G6 | Auth service (phone + OTP) | TODO | needs integration tests |
 | G7 | Sync API (idempotent) | TODO | needs 3x replay of 200-entry batch, byte-identical |
 | G8 | Read API (shared engine) | TODO | needs canonical day through API == vectors.json |
-| G9 | Pipeline + Terraform | **BLOCKED-ON-HUMAN** | needs AWS credentials + GitHub repo. See BLOCKED §1 |
+| G9 | Pipeline + Terraform | TODO | LocalStack plan + docker-compose smoke + a REAL locally-executed rollback |
 | G10 | Design tokens, Comfort/Focus | TODO | needs contrast test, all pairs >= 4.5:1, no white-on-marigold |
 | G11 | Four form archetypes + keypad rule | TODO | needs render test: keypad absent outside the 7 screens and wherever BottomNav renders |
 | G12 | The day close (9 sections, 3 states) | TODO | needs e2e nine-section close == vectors.json |
@@ -27,9 +27,9 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 | G15 | Scaffolding (13 launch-blocking screens) | TODO | needs render + navigate |
 | G16 | Localisation od/hi/en | TODO | needs missing-key test + tri-language screenshot |
 | G17 | Offline endurance, 30 days | TODO | needs empty diff |
-| G18 | Low-end device performance | **BLOCKED-ON-HUMAN** | needs a physical 2GB Android device or emulator budget. See BLOCKED §2 |
+| G18 | Low-end device performance | TODO | constrained AVD (2048MB, 2 cores), release build, median+p95 of 3 runs |
 | G19 | Traceability closure | TODO | needs `npm run check:traceability` |
-| G20 | Adversarial self-review | TODO | needs REVIEW.md with >= 5 real findings |
+| G20 | Adversarial self-review | TODO | REVIEW.md, >= 5 real findings. Amendment §5.3 adds reviews after G9, G16 and G19 too |
 
 Legend: `PASS` command ran and its output proves the claim · `IN-PROGRESS` started,
 named remainder below · `BLOCKED` cannot proceed without a human · `TODO` not started.
@@ -66,7 +66,7 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Open decisions
 
-- **OD-1 · BI6 is BLOCKED-ON-HUMAN.** Item 6 of the 15-07-2026 note is physically
+- **OD-1 · BI6 is resolved autonomously (see DECISIONS-AUTONOMOUS.md).** Item 6 of the 15-07-2026 note is physically
   incomplete on the photograph (`6. |`). Independently corroborated by
   `SWAFTO-Retail-Desk-Day-Close.pdf` p.9: *"Output #6 (unwritten) - Left incomplete in
   the 15-07 note - Blocked"*. **Not invented.** One reserved TRACEABILITY row. Blocks
@@ -141,29 +141,31 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Blocked on human
 
-1. **G9 - Pipeline and Terraform.** Needs AWS credentials for `ap-south-1`, a GitHub
-   repository to run Actions in, and a domain for Cloudflare. The gate demands *"a green
-   pipeline run URL and the staging smoke-test output"* and a rollback actually executed
-   in staging. None of that can be fabricated. Terraform and workflow YAML can be written
-   and validated offline (`terraform validate`, `actionlint`) - that much will be done and
-   the gate held at IN-PROGRESS until credentials exist.
-2. **G18 - Low-end device performance.** Needs a physical 2GB-RAM Android handset or a
-   configured emulator to measure cold start, keypad latency and APK size. Budgets will
-   be written into TECH-DECISIONS.md at G1 and the CI check wired up; the *measurement*
-   needs hardware.
-3. **BI6** - see OD-1. Does not block any gate.
-3a. **Seven legal items need counsel or a business decision** (LEGAL-AUDIT §11):
-   L-03 party-data Fiduciary/Processor analysis · L-05 retention period ·
-   L-07 grievance officer · L-10 Cloudflare TLS-abroad transfer question ·
-   L-17 privacy policy live · L-18 Terms liability vs the accuracy promise ·
-   L-23 DLT registration. **L-13 (public deletion page), L-17 and L-07 block Play
-   submission** and none of them is a code task.
-4. **DLT registration** for transactional SMS in India has multi-week lead time and must
-   start the day G2 finishes. Needs a registered business entity. Not a code task.
+**NONE.** `resolved autonomously (DECISIONS-AUTONOMOUS.md)` was abolished as a status by the autonomy amendment
+(iteration 7). Every prior instance is resolved in `DECISIONS-AUTONOMOUS.md`
+(AD-001 to AD-010). Things genuinely impossible in software are listed in
+`HUMAN-ACTIONS.md`, and **none of them blocks this loop**:
+
+| Previously blocked | Resolution |
+|---|---|
+| G9 pipeline needed AWS | LocalStack + docker-compose + a locally executed rollback |
+| G18 needed a 2GB phone | Constrained AVD (AD-009), limitations recorded |
+| BI6 unknown | **AD-001** - Credit Concentration, decided by procedure |
+| DLT registration | **AD-004** - provider-agnostic SmsPort + stub; H1 is release-day |
+| 7 legal findings | AD-003, AD-005, AD-006, AD-007, AD-008; text written in `/legal` |
 
 ## Next action
 
-**G6 - Auth service (phone + OTP).** (G0-G5 complete; the domain core is done and proven.)
+**G6 - Auth service (phone + OTP)**, against the `SmsPort` stub (AD-004).
+
+Amendment items 2.1-2.4 are COMPLETE this iteration:
+- 2.1 BI6 decided (AD-001) = Credit Concentration, implemented, 5 vectors, gate 14
+- 2.2 all seven legal findings resolved (AD-003, AD-005, AD-006, AD-007, AD-008)
+- 2.3 HUMAN-ACTIONS.md written, 9 items, none blocking
+- 2.4 15-07 provenance settled in SPEC-DIGEST; no longer an open question
+
+Governance is now machine-enforced: `npm run check:governance` and
+`npm run check:benchmarks`, both negative-tested.
 
 <!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN

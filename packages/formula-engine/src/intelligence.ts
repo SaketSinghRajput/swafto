@@ -1,5 +1,5 @@
 /**
- * BI1-BI4 with their gates. BI5 reserved. BI6 blocked.
+ * BI1-BI4 with their gates. BI5 reserved (D5). BI6 decided autonomously (AD-001).
  *
  * Every one of these is GATED ON CLOSED-DAY COUNT and never shown as an empty chart.
  * The unavailable branch carries both the requirement and the progress so the
@@ -17,15 +17,26 @@
  *   data D5 forbids. Recorded as OD-10.
  */
 
-import { divideMoney, meanMoney, ratio, stdevMoney, sum, type Paise, type Ratio } from './money.ts';
+import {
+  divideMoney,
+  meanMoney,
+  medianMoney,
+  ratio,
+  stdevMoney,
+  sum,
+  type Paise,
+  type Ratio,
+} from './money.ts';
 import { gate } from './types.ts';
 import type {
   BusinessIntelligence,
   CashFlowStability,
   ClosedDaySummary,
+  CreditConcentration,
   Gated,
   ProfitTrend,
 } from './types.ts';
+import type { OpenCustomerCredit } from './operational.ts';
 
 /**
  * Gate thresholds, in CLOSED days.
@@ -40,6 +51,8 @@ export const BI_GATES = {
   bi2SalesConsistency: 14,
   bi3CashFlowStability: 21,
   bi4WorkingCapitalPressure: 14,
+  /** BI6 - decided autonomously, see AD-001. 14 to match the other trend gates. */
+  bi6CreditConcentration: 14,
 } as const;
 
 /**
@@ -130,11 +143,101 @@ export function meanDailyProfit(closed: readonly ClosedDaySummary[]): Paise | nu
   return divideMoney(sum(closed.map((d) => d.profit)), closed.length, 'half-away-from-zero');
 }
 
+
+/* ------------------------------------------------------------------ *
+ * BI6 · Credit Concentration - DECIDED AUTONOMOUSLY (AD-001)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Concentration of outstanding udhar across customers, ungated.
+ *
+ * Pure ranking and division - no inference, no prediction, no scoring of a customer.
+ * It reports a share he could compute himself from his own ledger, which is exactly
+ * the standard every other output in this product meets.
+ *
+ * Ties are broken by partyId so the result is deterministic across runtimes.
+ */
+export function creditConcentration(
+  credits: readonly OpenCustomerCredit[],
+  baselineTop3BasisPoints: number | null = null,
+): CreditConcentration {
+  // Collapse to one balance per party - a customer may hold several open lines.
+  const byParty = new Map<string, Paise>();
+  for (const c of credits) {
+    byParty.set(c.partyId, sum([byParty.get(c.partyId) ?? 0, c.amount]));
+  }
+
+  const ranked = [...byParty.entries()]
+    .filter(([, amount]) => amount > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  const totalOutstanding = sum(ranked.map(([, a]) => a));
+  const topShare = ratio(ranked.length > 0 ? ranked[0]![1] : 0, totalOutstanding);
+  const top3Share = ratio(sum(ranked.slice(0, 3).map(([, a]) => a)), totalOutstanding);
+
+  let direction: CreditConcentration['direction'];
+  if (baselineTop3BasisPoints === null || top3Share.basisPoints === null) {
+    direction = 'no_baseline';
+  } else if (top3Share.basisPoints > baselineTop3BasisPoints) {
+    direction = 'worsening';
+  } else if (top3Share.basisPoints < baselineTop3BasisPoints) {
+    direction = 'improving';
+  } else {
+    direction = 'stable';
+  }
+
+  return {
+    totalOutstanding,
+    customerCount: ranked.length,
+    topPartyId: ranked.length > 0 ? ranked[0]![0] : null,
+    topShare,
+    top3Share,
+    direction,
+    baselineTop3BasisPoints,
+  };
+}
+
+/**
+ * BI6 · Credit Concentration - gate 14 closed days.
+ *
+ * DECIDED AUTONOMOUSLY. Item 6 of the 15-07-2026 note is physically cut off, so no
+ * document settles this. Chosen by the amendment's procedure: of the questions
+ * answerable from Entries/Days/Parties/section_skips alone, not already answered by
+ * P1-P8 or OP1-OP6, and needing a multi-week window, this is the one where a wrong
+ * answer costs the most money.
+ *
+ * P7 tells him he is owed 18,240. It does not tell him that 11,000 of it is owed by
+ * one man. Those are the same number and completely different risks, and OP6 covers
+ * only the money he OWES - nothing in the set covers the money owed TO him being
+ * dangerously concentrated.
+ *
+ * REVERSAL TRIGGER: if the original 15-07-2026 note is recovered and item 6 says
+ * something else, delete this and implement that. See AD-001.
+ *
+ * `priorTop3BasisPoints` is the trailing series of the same measure, recomputed from
+ * entries by the caller - never stored (architecture §06).
+ */
+export function creditConcentrationTrend(
+  closed: readonly ClosedDaySummary[],
+  credits: readonly OpenCustomerCredit[],
+  priorTop3BasisPoints: readonly number[] = [],
+): Gated<CreditConcentration> {
+  return gate(BI_GATES.bi6CreditConcentration, closed.length, () => {
+    const baseline =
+      priorTop3BasisPoints.length === 0
+        ? null
+        : medianMoney(priorTop3BasisPoints.map((b) => Math.round(b)));
+    return creditConcentration(credits, baseline);
+  });
+}
+
 export function computeIntelligence(
   closed: readonly ClosedDaySummary[],
   creditOutstanding: Paise,
   supplierOutstanding: Paise,
   cashOnHand: Paise,
+  openCustomerCredit: readonly OpenCustomerCredit[] = [],
+  priorTop3BasisPoints: readonly number[] = [],
 ): BusinessIntelligence {
   return {
     bi1ProfitTrend: profitTrend(closed),
@@ -161,16 +264,19 @@ export function computeIntelligence(
     bi5InventoryPressure: null,
 
     /**
-     * BI6 - BLOCKED-ON-HUMAN.
+     * BI6 · Credit Concentration - DECIDED AUTONOMOUSLY (AD-001).
      *
-     * Item 6 of the 15-07-2026 note is physically incomplete on the photograph
-     * ("6. |"). Independently corroborated by Day-Close p.9: "Output #6 (unwritten)
-     * - Left incomplete in the 15-07 note - Blocked".
+     * Item 6 of the 15-07-2026 note is cut off and the photograph is not on disk, so
+     * no document settles it. Chosen by the amendment's decision procedure as the
+     * highest-money-cost gap in the output set. Behind CREDIT_CONCENTRATION_ENABLED,
+     * default ON.
      *
-     * DO NOT INVENT IT. A plausible guess that gets built, tested and shipped is far
-     * more expensive than a blank row. When the intent is recovered it drops in as
-     * one TRACEABILITY row and one function here.
+     * REVERSAL TRIGGER: the original note surfaces and item 6 says something else.
      */
-    bi6Reserved: null,
+    bi6CreditConcentration: creditConcentrationTrend(
+      closed,
+      openCustomerCredit,
+      priorTop3BasisPoints,
+    ),
   };
 }

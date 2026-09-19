@@ -286,14 +286,12 @@ export interface BusinessIntelligence {
    */
   readonly bi5InventoryPressure: null;
   /**
-   * BI6 - BLOCKED-ON-HUMAN. Item 6 of the 15-07-2026 note is physically incomplete
-   * on the photograph ("6. |"), corroborated by the Day-Close doc p.9: "Output #6
-   * (unwritten) - Left incomplete in the 15-07 note - Blocked".
-   *
-   * DO NOT INVENT IT. A plausible guess that gets built, tested and shipped is far
-   * more expensive than a blank row.
+   * BI6 · Credit Concentration - DECIDED AUTONOMOUSLY (AD-001), gate 14.
+   * Item 6 of the note is cut off; chosen by the decision procedure as the
+   * highest-money-cost gap in the output set. Reversal trigger recorded in
+   * DECISIONS-AUTONOMOUS.md.
    */
-  readonly bi6Reserved: null;
+  readonly bi6CreditConcentration: Gated<CreditConcentration>;
 }
 
 /** Everything the engine produces for one day. */
@@ -307,4 +305,38 @@ export interface DayComputation {
   /** Cash check unlocks only when all eight sections are entered or skipped (D8). */
   readonly cashCheckUnlocked: boolean;
   readonly sectionStates: Readonly<Record<Section, 'entered' | 'skipped' | 'untouched'>>;
+}
+
+/* ------------------------------------------------------------------ *
+ * BI6 - Credit Concentration. Decided autonomously; see AD-001.
+ * ------------------------------------------------------------------ */
+
+/**
+ * BI6 · Credit Concentration.
+ *
+ * "OP6 warns him about money he owes; nothing in the set warns him about money owed
+ * to him being dangerously concentrated in one person."
+ *
+ * What share of his outstanding udhar sits with his largest customer, and with his
+ * largest three - and whether that share is getting worse. A shop with INR 18,000 of
+ * receivables spread over 38 customers has a collection problem; the same INR 18,000
+ * with INR 11,000 owed by one man has a solvency problem, and P7 reports the same
+ * number for both.
+ */
+export interface CreditConcentration {
+  readonly totalOutstanding: Paise;
+  readonly customerCount: number;
+  /** The single largest debtor. Null when nothing is outstanding. */
+  readonly topPartyId: string | null;
+  /** Largest single customer's share of total outstanding. */
+  readonly topShare: Ratio;
+  /** Largest three customers' combined share. */
+  readonly top3Share: Ratio;
+  /**
+   * Direction of the top-3 share against the baseline median of the window.
+   * 'no_baseline' when there is no history to compare - never 'stable', because
+   * "we cannot tell yet" and "it has not moved" are different statements.
+   */
+  readonly direction: 'worsening' | 'improving' | 'stable' | 'no_baseline';
+  readonly baselineTop3BasisPoints: number | null;
 }

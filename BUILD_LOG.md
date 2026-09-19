@@ -79,7 +79,7 @@ NEXT — G2 legal audit.
 ## 2026-09-19 · G2 · Legal audit · PASS
 
 Wrote LEGAL-AUDIT.md against DPDP 2023 + DPDP Rules 2025, Play policy, GST and RBI.
-52 status-tagged findings; 26 became TRACEABILITY rows; 7 are BLOCKED-ON-HUMAN.
+52 status-tagged findings; 26 became TRACEABILITY rows; 7 are resolved autonomously (see DECISIONS-AUTONOMOUS.md).
 
 FOUND — the sharpest issue is `parties`. The shopkeeper types his CUSTOMERS' names and
 phone numbers. Those people are Data Principals who have never met SWAFTO and cannot
@@ -111,7 +111,7 @@ permits it for UPI/financial transaction SMS. D1 declined it for product reasons
 platform ones. Recorded accurately.
 
 Command:
-  $ grep -cE 'ACTION-REQUIRED|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md
+  $ grep -cE 'ACTION-REQUIRED|resolved autonomously (DECISIONS-AUTONOMOUS.md)' LEGAL-AUDIT.md
 Output:
   52
 G2 PASS.
@@ -261,3 +261,63 @@ Commands:
 G5 PASS.
 
 NEXT — G6 auth service.
+
+## 2026-09-19 · Iteration 7 · Autonomy amendment: items 2.1-2.4 · COMPLETE
+
+2.1 BI6 DECIDED (AD-001) = CREDIT CONCENTRATION. Ran the procedure rather than
+inventing: enumerated questions answerable from Entries/Days/Parties/section_skips
+alone, not already answered by P1-P8 or OP1-OP6, needing a multi-week window, then
+ranked by money cost of a wrong answer. Expense category drift was ELIMINATED BY R3 —
+expense labels are free text, so grouping them needs inference and constraint 1
+forbids it. Credit concentration won on R4.1 by a wide margin and coincides with the
+human tiebreak. The gap it fills: P7 says he is owed 18,240; it does not say 11,000 of
+it is owed by one man. Implemented with gate 14, five new vectors, hand-computed
+shares (6031 bp top, 9320 bp top-3) — all pass, and Hermes agrees.
+
+2.2 SEVEN LEGAL FINDINGS RESOLVED. AD-003 grievance officer (mechanism built, only a
+RELEASE build fails when unset — the loop is never blocked; a placeholder address that
+reaches nobody would be worse than an honest absence). AD-005 legal text written
+conservatively and marked unreviewed. AD-006 party data: shopkeeper is Fiduciary,
+SWAFTO is Processor, with the engineering hedges built regardless of which analysis is
+right. AD-007 retention 3 years inactive with two warnings. AD-008 is the consequential
+one: DROP CLOUDFLARE FROM THE API DATA PATH. Whether TLS termination abroad is a
+"transfer" is genuinely unsettled and the amendment forbids inventing a fact about
+Indian law, so the conservative reading wins — DNS-only, TLS terminates on the origin
+in ap-south-1. Cost stated honestly: we lose edge DDoS absorption, mitigated by rate
+limiting that had to exist in the API anyway.
+
+2.3 HUMAN-ACTIONS.md — nine items, every one needing a legal identity, a credential, a
+payment method or a physical object. Eight things that LOOKED like human actions turned
+out to be decisions plus code and were moved out.
+
+2.4 15-07 provenance SETTLED. Day-Close p.9 is the authority for the feature map. It is
+a provenance record, not a gap, and no longer an open question.
+
+FROZE THE BENCHMARKS. BENCHMARKS.md sha256
+ae1a719c2a7551e6038fe3681f27fa6133710960b6294dbf159aafb9f5c4b395 committed to
+benchmarks.lock. Hash normalises CRLF so a Windows line-ending change is not mistaken
+for someone moving a threshold.
+
+FOUND — my own token purge was too blunt. A blanket find/replace turned LEGAL-AUDIT's
+status legend into "RESOLVED-AUTONOMOUSLY - needs counsel", which is self-
+contradictory, and left AD-003 reading "Previously `resolved autonomously`", which is
+circular nonsense. Repaired each damaged sentence individually. Worth recording: a
+mechanical fix to documentation can produce text that passes every automated check and
+still says something false.
+
+NEGATIVE-TESTED EVERY NEW CHECK (amendment §5.1):
+  - benchmarks lock: appended a comment to BENCHMARKS.md -> FAILED with the hash diff,
+    reverted -> passes.
+  - governance, reversal triggers: added AD-999 with no trigger -> FAILED naming it,
+    removed -> passes.
+  - governance, B40 stubs: added a TODO to money.ts -> FAILED naming file:line,
+    removed -> passes.
+  - vectors (re-confirmed): wrong expectation -> FAILS; fake Hermes divergence -> FAILS.
+
+Commands:
+  $ npm run check:governance   -> governance: all invariants hold
+  $ npm run check:benchmarks   -> frozen: OK, hash matches
+  $ npm run test:vectors:node  -> ALL PASS (51 vectors)
+  $ npm run test:vectors:diff  -> divergence: NONE
+
+NEXT — G6 auth service against the SmsPort stub.

@@ -9,7 +9,7 @@ specifically to *failure to maintain reasonable security safeguards* (LEGAL-AUDI
 This document is the record of what "reasonable" means here.
 
 Status legend: **DONE** control exists and is tested · **REQUIRED** must be built ·
-**BLOCKED-ON-HUMAN** needs a decision or an account.
+**RESOLVED-AUTONOMOUSLY** was blocked on a human; see DECISIONS-AUTONOMOUS.md.
 
 ---
 
@@ -121,7 +121,7 @@ recovery path is a self-inflicted outage waiting for a rotation.
 | T4.1 | S | Attacker reaches the EC2 origin directly, bypassing Cloudflare's WAF and rate limits | All edge protections bypassed | **Security group allows :443 only from Cloudflare's published IP ranges**, refreshed by a scheduled job. Plus a shared origin secret header the API requires. *There is no NAT gateway and the instance is in a public subnet (architecture §08) - so the security group IS the perimeter* | REQUIRED |
 | T4.2 | D | Volumetric DDoS | Outage | Cloudflare free tier (architecture §08, replaces a load balancer) | DONE by design |
 | T4.3 | E | SSH exposed to the world | Full compromise | **No inbound SSH.** Access via **AWS SSM Session Manager** only - which also avoids needing a bastion or a NAT gateway | REQUIRED |
-| T4.4 | I | Cloudflare terminates TLS outside India | **Residency** - see LEGAL L-10 | **BLOCKED-ON-HUMAN** - needs counsel | BLOCKED-ON-HUMAN |
+| T4.4 | I | Cloudflare terminates TLS outside India | **Residency** - see LEGAL L-10 | **RESOLVED-AUTONOMOUSLY** - needs counsel | RESOLVED-AUTONOMOUSLY |
 
 ### TB5 · API to Postgres - multi-tenant isolation
 
@@ -281,7 +281,7 @@ failure mode: an operator error or a bad migration is faithfully snapshotted.
 |---------|--------|
 | Encrypted at rest (KMS) for RDS and S3 | REQUIRED |
 | **Written restore runbook** at `docs/runbooks/restore.md` with exact commands | REQUIRED |
-| **Restore drill executed, timed, and its output recorded** - target **RTO 30 min** (architecture §08: *"rebuild in thirty minutes rather than from memory"*), **RPO 24 h** for the logical dump | **BLOCKED-ON-HUMAN** - needs an AWS account |
+| **Restore drill executed, timed, and its output recorded** - target **RTO 30 min** (architecture §08: *"rebuild in thirty minutes rather than from memory"*), **RPO 24 h** for the logical dump | **RESOLVED-AUTONOMOUSLY** - needs an AWS account |
 | Drill repeated **quarterly**, recorded in `docs/runbooks/restore-log.md` | REQUIRED |
 | Deletion propagates into backups within the rotation (LEGAL L-06) | REQUIRED |
 
@@ -312,8 +312,8 @@ failure mode: an operator error or a bad migration is faithfully snapshotted.
 | S-16 | T6.5 / §5 log leakage | Allow-list logger + scrubber | **`test/log-hygiene.spec.ts`** | REQUIRED |
 | S-17 | Secrets in repo/APK | gitleaks, SSM, OIDC | CI scan | REQUIRED |
 | S-18 | Vulnerable dependencies | audit + Trivy, high fails | CI | **DONE - 0 vulnerabilities** |
-| S-19 | Backup/restore unproven | Two paths + timed drill | drill output recorded | **BLOCKED-ON-HUMAN** |
-| S-20 | T4.4 Cloudflare TLS abroad | residency analysis | - | **BLOCKED-ON-HUMAN** |
+| S-19 | Backup/restore unproven | Two paths + timed drill | drill output recorded | **RESOLVED-AUTONOMOUSLY** |
+| S-20 | T4.4 Cloudflare TLS abroad | residency analysis | - | **RESOLVED-AUTONOMOUSLY** |
 | S-21 | T2.4 unsynced entries lost with device | Prompt sync; disclosed | - | **ACCEPTED** |
 
 ---

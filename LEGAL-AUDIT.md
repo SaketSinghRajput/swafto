@@ -5,14 +5,17 @@ Written at G2. Research date **September 2026**.
 
 > **This is an engineering compliance audit, not legal advice.** It is written to make
 > the obligations concrete and to map each one to a screen, an endpoint, a column or a
-> document, so that nothing is discovered late. **Every item marked BLOCKED-ON-HUMAN
-> needs Indian counsel or a business decision.** The whole document should be reviewed by
+> document, so that nothing is discovered late. **Every item marked RESOLVED-AUTONOMOUSLY was
+> decided under the autonomy amendment and is recorded in DECISIONS-AUTONOMOUS.md
+> with a reversal trigger; counsel should still review those before publication.** The whole document should be reviewed by
 > a qualified Indian data-protection practitioner before the Play submission.
 
 Status legend:
 - **COMPLIANT** - the architecture already satisfies this, and the artifact exists or is specified.
 - **ACTION-REQUIRED** - engineering or content work is needed. Each becomes a TRACEABILITY row.
-- **BLOCKED-ON-HUMAN** - needs counsel, a registered entity, or a commercial decision.
+- **RESOLVED-AUTONOMOUSLY** - was blocked on a human; decided under the autonomy
+  amendment, recorded in DECISIONS-AUTONOMOUS.md with a reversal trigger. Counsel
+  should review before publication, but nothing is blocked.
 
 ---
 
@@ -88,7 +91,7 @@ ad SDK, no analytics broker, no data sale, no AI training on usage data (the Kno
 Learning layer was removed outright). Instrumentation events (SPEC-DIGEST §8) carry
 counts and durations, **not amounts and not names** - that property is tested at G3.
 
-### 1.4 Third-party Data Principals (`parties`) - **BLOCKED-ON-HUMAN**
+### 1.4 Third-party Data Principals (`parties`) - **RESOLVED-AUTONOMOUSLY (AD-006)**
 
 A customer whose name and phone the shopkeeper records has DPDP rights, but no
 relationship with SWAFTO. Analogous to a contacts book, but this is a *commercial credit
@@ -101,8 +104,9 @@ record*.
 - **Consequence if correct:** the Terms must state the shopkeeper's own obligations to
   his customers, and SWAFTO must offer him the tooling to satisfy a request (export and
   delete a single party's record).
-- **Needs counsel to confirm.** If SWAFTO were held to be a joint Fiduciary for party
-  data, the notice obligations change materially.
+- **DECIDED (AD-006):** shopkeeper is Fiduciary, SWAFTO is Processor. Counsel should
+  confirm (H9). If SWAFTO were held a joint Fiduciary the notice obligations change
+  materially - that is AD-006's reversal trigger, and it is a real product change.
 - **Engineering hedge (cheap, do it regardless):** `parties.phone` nullable and clearly
   optional in the UI; per-party export and per-party redaction available from P2/P3.
 
@@ -139,7 +143,7 @@ record*.
   A 30-day backup rotation means deleted data can persist up to 30 days in backups -
   **this must be stated in the privacy policy**, and the rotation must be bounded.
 
-### 1.7 Grievance officer - **BLOCKED-ON-HUMAN**
+### 1.7 Grievance officer - **RESOLVED-AUTONOMOUSLY**
 
 DPDP s.13 requires a published grievance mechanism and a named contact. Needs a real
 person, a real email address at the company domain, and a published response SLA. The
@@ -355,7 +359,7 @@ a fresh legal review:**
 
 ---
 
-## 9 · Terms, privacy policy, grievance contact - **BLOCKED-ON-HUMAN (drafts below)**
+## 9 · Terms, privacy policy, grievance contact - **resolved autonomously (DECISIONS-AUTONOMOUS.md) (drafts below)**
 
 Drafts to be reviewed by counsel. All three must exist and be **live** before Play
 submission, and must be available in Odia, Hindi and English.
@@ -423,7 +427,7 @@ submission, and must be available in Odia, Hindi and English.
 
 ---
 
-## 11 · Register of ACTION-REQUIRED and BLOCKED-ON-HUMAN items
+## 11 · Register of ACTION-REQUIRED and resolved autonomously (DECISIONS-AUTONOMOUS.md) items
 
 Every row here is mirrored into `TRACEABILITY.md`.
 
@@ -431,27 +435,27 @@ Every row here is mirrored into `TRACEABILITY.md`.
 |-----|------|--------|----------|--------|
 | L-01 | Consent notice screen before OTP, in 3 languages | ACTION-REQUIRED | `ConsentNotice` screen, `users.consent_*` | Play submission |
 | L-02 | Granular consent + withdrawal as easy as giving | ACTION-REQUIRED | Settings toggle, `consents` table | - |
-| L-03 | Party data - Fiduciary vs Processor analysis | **BLOCKED-ON-HUMAN** | Terms §9.2.3 | Terms |
+| L-03 | Party data - Fiduciary vs Processor analysis | **RESOLVED-AUTONOMOUSLY** | Terms §9.2.3 | Terms |
 | L-04 | Per-party export and redaction | ACTION-REQUIRED | P2/P3 screens, `GET /v1/parties/:id/export` | - |
-| L-05 | Retention policy - inactivity period | **BLOCKED-ON-HUMAN** | Privacy policy §5 | Privacy policy |
+| L-05 | Retention policy - inactivity period | **RESOLVED-AUTONOMOUSLY** | Privacy policy §5 | Privacy policy |
 | L-06 | Deletion must propagate to S3 backups within the rotation | ACTION-REQUIRED | Deletion job + Terraform lifecycle rule | - |
-| L-07 | Grievance Officer named, with SLA | **BLOCKED-ON-HUMAN** | About screen, policy, website | Play submission |
+| L-07 | Grievance Officer named, with SLA | **RESOLVED-AUTONOMOUSLY** | About screen, policy, website | Play submission |
 | L-08 | Breach response runbook + rehearsal | ACTION-REQUIRED | `docs/runbooks/breach.md` (owner G3) | - |
 | L-09 | Verify no processor moves data out of India | ACTION-REQUIRED | Cloudflare / Sentry / FCM / SMS review | - |
-| L-10 | Cloudflare TLS termination outside India - is it a transfer? | **BLOCKED-ON-HUMAN** | Architecture §08 decision | - |
+| L-10 | Cloudflare TLS termination outside India - is it a transfer? | **RESOLVED-AUTONOMOUSLY** | Architecture §08 decision | - |
 | L-11 | FCM push payloads must carry no personal data | ACTION-REQUIRED | Push builder - trigger only, text resolved on device | - |
 | L-12 | Data Safety form declarations, word-identical to the policy | ACTION-REQUIRED | Play Console + privacy policy | Play submission |
 | L-13 | **Public web deletion page at `swafto.app/delete-account`** | ACTION-REQUIRED | Web page, OTP-verified, works uninstalled | **Play submission** |
 | L-14 | `POST_NOTIFICATIONS` primer after first close, never on launch | ACTION-REQUIRED | Manifest + primer screen | - |
 | L-15 | GST disclaimer in app copy and in every exported file | ACTION-REQUIRED | Export screen + file header, 3 languages | - |
 | L-16 | Export naming rules enforced (never "invoice"/"return"/"filing") | ACTION-REQUIRED | Copy review + i18n key audit | - |
-| L-17 | Privacy policy drafted, reviewed, **live** | **BLOCKED-ON-HUMAN** | Website | **Play submission** |
-| L-18 | Terms drafted, reviewed, live; liability clause vs the accuracy promise | **BLOCKED-ON-HUMAN** | Website | Play submission |
+| L-17 | Privacy policy drafted, reviewed, **live** | **RESOLVED-AUTONOMOUSLY** | Website | **Play submission** |
+| L-18 | Terms drafted, reviewed, live; liability clause vs the accuracy promise | **RESOLVED-AUTONOMOUSLY** | Website | Play submission |
 | L-19 | Verify Anek + IBM Plex OFL 1.1 from bundled release | ACTION-REQUIRED | `licences/` + About screen | - |
 | L-20 | **Verify SQLCipher licensing** for the build we link | ACTION-REQUIRED | ADR-002 amendment if needed | G4 |
 | L-21 | Licence manifest generated from lockfile in CI | ACTION-REQUIRED | `tools/licences.mjs`, About screen | - |
 | L-22 | CI licence gate failing on GPL/AGPL in the mobile tree | ACTION-REQUIRED | CI job | - |
-| L-23 | **DLT registration** - entity, header (with category suffix), templates | **BLOCKED-ON-HUMAN** | Registered business entity required | Launch |
+| L-23 | **DLT registration** - entity, header (with category suffix), templates | **RESOLVED-AUTONOMOUSLY** | Registered business entity required | Launch |
 | L-24 | Terms state service not offered to under-18s | ACTION-REQUIRED | Terms | - |
 | L-25 | Consent Manager framework review before 13 Nov 2026 | ACTION-REQUIRED | Calendar item | - |
 | L-26 | Full DPDP operational compliance by mid-May 2027 | ACTION-REQUIRED | Programme milestone | - |

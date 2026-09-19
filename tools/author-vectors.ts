@@ -922,11 +922,113 @@ vectors.push({
 vectors.push({
   name: 'bi5-and-bi6-are-never-available',
   proves:
-    'BI5 is RESERVED with no UI (D5) and BI6 is BLOCKED-ON-HUMAN. Even with 60 closed ' +
-    'days both stay null. Neither may ever render a card.',
+    'BI5 is RESERVED with no UI (D5). BI6 is now decided (AD-001) and gates at 14. Even with 60 closed ' +
+    'days BI5 stays null and must never render a card; BI6 is available.',
   input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
   context: ctx({ trailing: closedRun(60) }),
-  expect: { bi5: null, bi6: null },
+  expect: { bi5: null, bi6Available: true },
+});
+
+/* =================================================================== *
+ * 14b · BI6 Credit Concentration - DECIDED AUTONOMOUSLY (AD-001)
+ * =================================================================== */
+
+vectors.push({
+  name: 'bi6-credit-concentration-gate-shut-at-13',
+  proves: 'BI6 is gated at 14 closed days like the other trend outputs.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({
+    trailing: closedRun(13),
+    openCustomerCredit: [{ partyId: 'c1', amount: R(1000), since: '2026-07-01' }],
+  }),
+  expect: { bi6Available: false, bi6Required: 14, bi6SoFar: 13 },
+});
+
+vectors.push({
+  name: 'bi6-one-customer-holds-most-of-the-udhar',
+  proves:
+    'THE REASON BI6 EXISTS. P7 reports 18,240 outstanding whether it is spread over 38 ' +
+    'customers or owed almost entirely by one man. Here 11,000 of 18,240 sits with a ' +
+    'single customer - 60.31% - which is a solvency risk P7 cannot express.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({
+    trailing: closedRun(14),
+    openCustomerCredit: [
+      { partyId: 'c-big', amount: R(11000), since: '2026-06-01' },
+      { partyId: 'c-b', amount: R(4000), since: '2026-06-20' },
+      { partyId: 'c-c', amount: R(2000), since: '2026-07-01' },
+      { partyId: 'c-d', amount: R(1240), since: '2026-07-05' },
+    ],
+  }),
+  expect: {
+    bi6Available: true,
+    bi6TopPartyId: 'c-big',
+    // 1,100,000 / 1,824,000 = 0.603070... -> 6030.70 bp -> 6031
+    bi6TopShareBasisPoints: 6031,
+    // (1,100,000 + 400,000 + 200,000) / 1,824,000 = 0.932017... -> 9320
+    bi6Top3ShareBasisPoints: 9320,
+    bi6CustomerCount: 4,
+    bi6Direction: 'no_baseline',
+  },
+});
+
+vectors.push({
+  name: 'bi6-evenly-spread-udhar-is-not-a-concentration-risk',
+  proves:
+    'The same total outstanding spread over ten equal customers. Top share is 10%, ' +
+    'top-3 is 30%. Same P7, entirely different risk - which is the whole point.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({
+    trailing: closedRun(14),
+    openCustomerCredit: Array.from({ length: 10 }, (_, i) => ({
+      partyId: `c-${String(i).padStart(2, '0')}`,
+      amount: R(1824),
+      since: '2026-07-01',
+    })),
+  }),
+  expect: {
+    bi6Available: true,
+    bi6TopShareBasisPoints: 1000, // exactly 10%
+    bi6Top3ShareBasisPoints: 3000, // exactly 30%
+    bi6CustomerCount: 10,
+  },
+});
+
+vectors.push({
+  name: 'bi6-direction-worsening-against-a-baseline',
+  proves:
+    'With a trailing baseline the direction is reported. 9320 bp today against a ' +
+    'baseline median of 8000 bp is WORSENING - the debt is bunching up.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: {
+    ...ctx({
+      trailing: closedRun(14),
+      openCustomerCredit: [
+        { partyId: 'c-big', amount: R(11000), since: '2026-06-01' },
+        { partyId: 'c-b', amount: R(4000), since: '2026-06-20' },
+        { partyId: 'c-c', amount: R(2000), since: '2026-07-01' },
+        { partyId: 'c-d', amount: R(1240), since: '2026-07-05' },
+      ],
+    }),
+    priorTop3BasisPoints: [7800, 8000, 8200],
+  } as never,
+  expect: { bi6Available: true, bi6Direction: 'worsening', bi6Top3ShareBasisPoints: 9320 },
+});
+
+vectors.push({
+  name: 'bi6-no-outstanding-udhar-is-undefined-not-zero-risk',
+  proves:
+    'A shop owed nothing has an UNDEFINED concentration, not a 0% one. basisPoints is ' +
+    'null and the UI must say so rather than render a reassuring zero.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({ trailing: closedRun(14), openCustomerCredit: [] }),
+  expect: {
+    bi6Available: true,
+    bi6TopPartyId: null,
+    bi6TopShareBasisPoints: null,
+    bi6CustomerCount: 0,
+    bi6Direction: 'no_baseline',
+  },
 });
 
 vectors.push({

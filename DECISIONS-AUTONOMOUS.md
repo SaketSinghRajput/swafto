@@ -1,0 +1,302 @@
+# DECISIONS-AUTONOMOUS
+
+Every decision taken without a human, under the amendment's decision procedure.
+
+**Format is mandatory:** ID · question · options · deciding rule · choice ·
+**reversal trigger** · iteration and commit. A decision with no stated reversal
+trigger is not a decision, it is a guess.
+
+Deciding rules: `R1` specifications · `R2` an already-recorded decision ·
+`R3` the eight non-negotiable constraints · `R4` the priority ordering
+(money correctness > trust > reversibility > offline/weak device > simplicity > speed) ·
+`R5` narrower scope · `R6` more reversible · `R7` tie, choose and move.
+
+---
+
+## AD-001 · BI6 — what is the cut-off sixth output?
+
+**Question.** Item 6 of the 15-07-2026 note is physically incomplete on the
+photograph (`6. |`) and the photograph is not on disk. The Day-Close doc p.9
+corroborates only that it exists and is unwritten. What should BI6 be?
+
+**Options considered.** Restricted by the amendment's procedure to questions that are
+(a) answerable from Entries, Days, Parties and section_skips alone, (b) not already
+answered by P1-P8 or OP1-OP6, and (c) need a multi-week window.
+
+| Candidate | Answerable? | Already covered? | Money cost of a wrong answer |
+|---|---|---|---|
+| **Credit concentration** - share of udhar held by the largest customers, and drift | Yes, from `udhar_sales` and `udhar_collection` per `party_id` | **No.** P7 gives the total; OP4/OP6 cover only what he *owes* | **Existential.** One default on a concentrated receivable can end the shop |
+| Days-to-collect (udhar sale to collection) | Yes | Partly - OP3 gives a ratio, not a duration | High, slower-acting |
+| Expense category drift | **No** - labels are free text | - | - |
+| Close-discipline trend | Yes | Overlaps BI3's `deficitDayCount` | Medium |
+| Supplier dependency concentration | Yes | Largely covered by OP4/OP6 | Medium |
+| Weekday sales pattern | Yes | No | Low |
+
+**Deciding rule.** **R3 then R4.1.** Expense category drift was *eliminated by R3*:
+expense labels are free text, so grouping them into categories requires inference,
+and constraint 1 forbids inference anywhere near data entry. Of what remained, R4.1
+(correctness of money, and by extension the money most at risk) ranks credit
+concentration first by a wide margin.
+
+**Choice.** **BI6 = Credit Concentration.** Reports total outstanding, customer count,
+the largest single debtor's share, the largest three customers' combined share, and
+the direction of that share against a trailing baseline.
+
+The gap it fills, stated plainly: *P7 says he is owed 18,240. It does not say that
+11,000 of it is owed by one man.* Those are the same number and completely different
+risks. OP6 warns him about money he **owes**; nothing in the set warned him about
+money owed **to** him being dangerously concentrated.
+
+**Gate: 14 closed days**, matching BI1/BI2/BI4. Behind `CREDIT_CONCENTRATION_ENABLED`,
+default ON.
+
+**Why this does not violate constraint 1.** It is ranking and division over figures he
+typed himself. It makes no prediction, scores no customer, and suggests no action -
+it reports a share he could compute from his own ledger. That is the same standard
+every other output meets.
+
+**REVERSAL TRIGGER.** The original 15-07-2026 photograph surfaces and item 6 says
+something else. Then delete this and implement that - one TRACEABILITY row and one
+engine function, exactly as scoped. Secondary trigger: if field use shows shopkeepers
+cannot act on a concentration figure, demote it and promote days-to-collect, the
+runner-up.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-002 · BI4's "stock proxy" is unbuildable — confirmed as specification
+
+**Question.** The original prompt specifies BI4 as `(P7 + stock proxy) vs P8`. No
+stock data exists.
+
+**Options.** (a) Invent a stock proxy from purchase data. (b) Use the Day-Close doc's
+`(credit_out + supplier_out) / cash`. (c) Mark BI4 impossible.
+
+**Deciding rule.** **R3.** Option (a) requires inventing data D5 forbids and the
+architecture has no store for ("no input collects them, so no store holds them").
+Option (c) is unnecessary because a computable formula exists in the specifications.
+
+**Choice.** (b). **Ratified by the human amendment**, which states the substitution
+"is correct and is now the specification." Previously recorded as OD-10.
+
+**REVERSAL TRIGGER.** V2 introduces an item or stock section. Then BI4 gains the stock
+term and this row is superseded.
+
+**Iteration 6 · commit `3cd746a`**
+
+---
+
+## AD-003 · Grievance officer — the loop must never be blocked by an unnamed human
+
+**Question.** DPDP s.13 requires a named grievance officer with a real contact. No
+such person exists yet. Previously parked as blocked on a human.
+
+**Options.** (a) Block the gate. (b) Ship a placeholder that reaches nobody.
+(c) Build the whole mechanism and fail only the *release* build if unconfigured.
+
+**Deciding rule.** **R4.2 (trust) and R6 (reversibility).** Option (b) is the worst
+outcome available - a published grievance address that reaches no one is worse than an
+honest absence, because it converts a compliance gap into a broken promise to a user.
+Option (a) is forbidden by the amendment.
+
+**Choice.** (c). The config key, About-screen row, API field and policy placeholder all
+exist and are tested. A release-build assertion fails when `GRIEVANCE_OFFICER_NAME` or
+`GRIEVANCE_OFFICER_EMAIL` is unset. Development and CI builds are unaffected, so the
+loop is never blocked; only a real release is.
+
+**REVERSAL TRIGGER.** The officer is named - set the two keys and the assertion passes.
+No code change.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-004 · SMS is a provider-agnostic port with a local stub
+
+**Question.** DLT registration needs a legal entity and cannot be done in software.
+How does auth get built and tested?
+
+**Options.** (a) Block G6. (b) Hard-code a provider SDK. (c) Define an `SmsPort`
+interface with a local stub for dev/test and a real adapter selected by config.
+
+**Deciding rule.** **R6 (reversibility) and R1** - ADR-007 already anticipated this,
+recording that "the integration surface is one `sendOtp()` function behind an
+interface" and that the choice "deliberately does not block any gate."
+
+**Choice.** (c). `SmsPort { sendOtp(phone, code, templateId) }`. The stub records
+sends in memory so rate limits, throttles and failure states are all testable without
+a carrier. Registration becomes a release-day item in HUMAN-ACTIONS.md.
+
+**REVERSAL TRIGGER.** A provider is chosen and DLT-registered - write one adapter,
+change one config value. If OTP delivery on the chosen route falls below ~97%, add a
+second adapter behind the same port.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-005 · Legal text is written by the agent, conservatively, and marked as unreviewed
+
+**Question.** Privacy policy, terms, DPDP notice and consent copy need to exist. No
+lawyer is available.
+
+**Options.** (a) Block. (b) Write minimal boilerplate. (c) Write full text taking the
+conservative reading wherever the law is uncertain, and mark it prominently as
+requiring review before publication.
+
+**Deciding rule.** **R4.2 (trust)** and the amendment's explicit instruction not to
+invent facts about Indian law.
+
+**Choice.** (c). Full text in `/legal`, all three languages, matching the Play Data
+Safety declarations word for word, with a CI check that fails if the policy and the
+declarations disagree on any collected item. Every clause where the law is genuinely
+uncertain states the uncertainty in LEGAL-AUDIT.md and takes the reading that grants
+the user more rights, not fewer.
+
+A banner at the top of each document records that it is unreviewed by counsel. That is
+a fact about the document, and hiding it would be the dishonest option.
+
+**REVERSAL TRIGGER.** Counsel reviews the text. Their version replaces it wholesale.
+Also: any change to what the app collects must update the policy, the Data Safety
+declarations and this row together - the CI check enforces the first two.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-006 · The party-data question — SWAFTO is Processor, the shopkeeper is Fiduciary
+
+**Question.** The shopkeeper records his customers' names and phone numbers. Those
+customers are Data Principals who never met SWAFTO. Who is the Data Fiduciary?
+Previously parked as blocked on a human (L-03).
+
+**Options.** (a) SWAFTO is Fiduciary for party data. (b) The shopkeeper is Fiduciary
+and SWAFTO is Processor. (c) Joint fiduciaries.
+
+**Deciding rule.** **R4.2 then R6.** (b) is the standard analysis: the shopkeeper
+determines the purpose and means of recording his own customers' details, exactly as
+he would in a paper ledger; SWAFTO processes on his instruction. It is also the
+reading that most clearly places the duty with the person who actually has the
+relationship with the data subject.
+
+**Choice.** (b), **with the engineering hedges built regardless of which analysis is
+right**, because they are cheap and they help under every reading: `parties.phone` is
+nullable and visibly optional, per-party export exists, and per-party redaction exists.
+The Terms state the shopkeeper's own obligations to his customers.
+
+**REVERSAL TRIGGER.** Counsel disagrees, or the Data Protection Board issues guidance
+placing joint responsibility on the processor. Then SWAFTO must serve notice to party
+data subjects directly, which is a material product change - a screen and a
+notification path, not a config flag.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-007 · Retention — inactive accounts are erased after 3 years, with warning
+
+**Question.** DPDP requires erasure when the purpose is served. What is the inactivity
+period? Previously parked as blocked on a human (L-05).
+
+**Options.** 1 year · 2 years · 3 years · never.
+
+**Deciding rule.** **R4.2 (trust) and R5 (narrower).** Too short destroys records a
+shopkeeper may need; Indian bookkeeping practice and tax enquiry windows commonly
+reach back several years, so a 1-year purge would be actively harmful. "Never" fails
+DPDP's storage-limitation principle.
+
+**Choice.** **3 years of no sign-in**, with notice at 30 months and again at 35 months,
+each offering a full export. Erasure at 36 months. The notice-before-erasure is the
+part that matters: erasing a man's books without telling him first would be a betrayal
+regardless of its legality.
+
+**REVERSAL TRIGGER.** Counsel advises a specific statutory period, or a tax authority
+requires longer retention. Single config value; the notice schedule derives from it.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-008 · Cloudflare TLS terminating outside India — drop Cloudflare from the data path
+
+**Question.** Cloudflare terminates TLS at the nearest PoP, which may be outside India.
+Residency is stated as a legal requirement. Is that a transfer? Previously parked as blocked on a
+human (L-10).
+
+**Options.** (a) Keep Cloudflare and assume it is fine. (b) Keep it and buy India
+data-localisation. (c) Terminate TLS at the origin; keep Cloudflare DNS-only.
+
+**Deciding rule.** **R4.1/R4.2 then R6.** The amendment forbids inventing a fact about
+Indian law, and whether TLS termination constitutes a "transfer" is genuinely
+unsettled. (a) requires assuming the favourable reading of an open question about
+citizens' financial data. (b) costs money and still needs the same legal question
+answered.
+
+**Choice.** (c) - **the conservative reading.** Cloudflare stays for DNS and for the
+public marketing and deletion pages, which carry no personal data. The API terminates
+TLS on the EC2 origin in `ap-south-1`, so plaintext personal data never exists outside
+India.
+
+**What this costs, stated honestly.** We lose Cloudflare's DDoS absorption and edge
+rate limiting on the API. Mitigation: rate limiting moves into the API (it had to
+exist there anyway for the OTP limits in SECURITY-AUDIT §2 TB6), plus AWS
+security-group restrictions. At 0.25 req/s average this is an acceptable trade; at
+scale it is not, and that is the trigger below.
+
+**REVERSAL TRIGGER.** Counsel confirms TLS termination abroad is not a transfer - then
+restore Cloudflare proxying and delete the origin rate limiter. **Or** traffic grows
+enough that origin-only DDoS exposure becomes the larger risk, at which point buy
+Cloudflare India localisation rather than reverting to the global edge.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-009 · Performance measured on a constrained AVD, not a phone
+
+**Question.** No physical device is attached. B14-B25 need measurements.
+
+**Deciding rule.** Amendment §3, which rules an AVD a legitimate proxy.
+
+**Choice.** A scripted AVD: 2048 MB RAM, 2 cores, throttled storage, Android 11 floor.
+Release build, three runs, median and p95 reported. Plus `DEVICE-CHECKLIST.md` for the
+things an emulator cannot tell you: sunlight legibility, thumb reach, real SIM SMS
+delivery, battery drain.
+
+**Known limitation, recorded rather than glossed.** An AVD runs on desktop-class
+silicon with an emulated GPU. It is a reasonable proxy for *algorithmic* cost
+(B16, B19, B21) and a poor one for *rendering* cost (B23 dropped frames) and *thermal*
+behaviour. Where the AVD flatters the result, the checklist says so.
+
+**REVERSAL TRIGGER.** A physical INR 7,000 handset becomes available. Re-run
+everything; AVD figures become secondary.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## AD-010 · TECH-DECISIONS ADR-011 budgets are superseded by BENCHMARKS.md
+
+**Question.** ADR-011 set performance budgets at G1 (e.g. cold start <= 2500 ms to
+*interactive*). BENCHMARKS.md sets <= 2500 ms to *first paint* and <= 3500 ms to
+interactive. Two numbers for overlapping things.
+
+**Deciding rule.** **R2** - do not leave a settled decision in two conflicting places.
+BENCHMARKS.md is frozen and is the amendment's definition of done.
+
+**Choice.** **BENCHMARKS.md governs.** ADR-011 is annotated as superseded and its
+table kept only as the historical record of what was believed at G1. Note the
+benchmark table is *stricter* overall: it adds first-paint, p95 requirements, dropped
+frames, and a 2G outbox target that ADR-011 had no equivalent for.
+
+**REVERSAL TRIGGER.** None while BENCHMARKS.md is frozen. Unfreezing requires a human.
+
+**Iteration 7 · commit `G6-pre`**
+
+---
+
+## Open questions
+
+None. The blocked-on-a-human status is abolished entirely; anything genuinely
+impossible in software is in `HUMAN-ACTIONS.md` and blocks nothing in this loop.

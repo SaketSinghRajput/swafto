@@ -55,6 +55,10 @@ export function evaluateVector(v: VectorCase): Record<string, unknown> {
     p.p7CreditOutstanding.value,
     p.p8SupplierOutstanding.value,
     p.p3ExpectedCashBalance.value,
+    ctx.openCustomerCredit,
+    // Trailing concentration series, recomputed by the caller from entries - never
+    // stored. Empty here unless a vector supplies one.
+    (ctx as unknown as { priorTop3BasisPoints?: number[] }).priorTop3BasisPoints ?? [],
   );
 
   const aging: Record<string, string> = {};
@@ -146,7 +150,28 @@ export function evaluateVector(v: VectorCase): Record<string, unknown> {
     bi4Required: bi4.required,
     bi4SoFar: bi4.soFar,
     bi5: bi.bi5InventoryPressure,
-    bi6: bi.bi6Reserved,
+    bi6Available: bi.bi6CreditConcentration.available,
+    bi6Required: bi.bi6CreditConcentration.available
+      ? null
+      : bi.bi6CreditConcentration.requiredClosedDays,
+    bi6SoFar: bi.bi6CreditConcentration.available
+      ? null
+      : bi.bi6CreditConcentration.closedDaysSoFar,
+    bi6TopPartyId: bi.bi6CreditConcentration.available
+      ? bi.bi6CreditConcentration.value.topPartyId
+      : null,
+    bi6TopShareBasisPoints: bi.bi6CreditConcentration.available
+      ? bi.bi6CreditConcentration.value.topShare.basisPoints
+      : null,
+    bi6Top3ShareBasisPoints: bi.bi6CreditConcentration.available
+      ? bi.bi6CreditConcentration.value.top3Share.basisPoints
+      : null,
+    bi6Direction: bi.bi6CreditConcentration.available
+      ? bi.bi6CreditConcentration.value.direction
+      : null,
+    bi6CustomerCount: bi.bi6CreditConcentration.available
+      ? bi.bi6CreditConcentration.value.customerCount
+      : null,
 
     // Day lifecycle
     dayState: day.state,
