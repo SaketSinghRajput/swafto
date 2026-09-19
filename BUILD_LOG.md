@@ -208,3 +208,56 @@ Output:
 G4 PASS.
 
 NEXT — G5, the Formula Engine.
+
+## 2026-09-19 · G5 · Formula Engine + vectors · PASS
+
+The heart of the product, built before any UI and any API as instructed. Six source
+files, zero runtime dependencies, no clock, no locale, no I/O, no randomness.
+46 golden vectors (>=30 required), passing under Node AND a real Hermes VM, with an
+empty divergence diff.
+
+WROTE — money.ts (the only file allowed to do money arithmetic), dates.ts (civil
+calendar, no Date object at all), types.ts, primary.ts (P1-P8 + profit, each carrying
+its working), operational.ts (OP1-OP6), intelligence.ts (BI1-BI4 gated, BI5 reserved,
+BI6 blocked), index.ts (day state, progress ring, carry-forward).
+
+FOUND — the build prompt's BI4 formula CANNOT BE IMPLEMENTED. It says "(P7 + stock
+proxy) vs P8", but D5 removes all item and stock data and the architecture says "no
+input collects them, so no store holds them". A stock proxy would have to be invented
+from data that does not exist. Used the Day-Close doc's computable formula instead.
+Recorded as OD-10. This is the kind of thing G20 is supposed to catch; it surfaced
+early because the types forced the question.
+
+DECIDED — OP5 uses the MEDIAN (prompt) not the mean (Day-Close doc). Vector
+`op5-uses-median-not-mean` makes the stakes concrete: a series of 1,000 x4 plus one
+20,000 festival day has median 1,000 and mean 4,800. Today at 1,100 is genuinely UP
+against the median and would read DOWN against the mean. OD-11.
+
+DECIDED — OP6 "projected cash" is today's expected balance carried forward, NOT a
+forecast. Forecasting sales would be the guess this product removed. Confirmed by the
+canonical alert on Day-Close p.5 quoting today's 6,300. Pessimistic by construction,
+which is the right direction to be wrong about solvency. OD-12.
+
+FOUND — the only desktop Hermes available (hermes-engine-cli 0.12) has NO `class`
+support whatsoever. Verified directly: both class declarations and class expressions
+are rejected, while const/let/arrows/destructuring/template literals all work.
+Consequence: MoneyError became a factory function. Defensible anyway - subclassing
+Error loses the prototype chain under downleveling and `instanceof` silently stops
+working - but the constraint came from the test tool, not the target runtime. OD-13.
+Note the npm package `hermes-engine` ships ONLY hermesc (the compiler) on every
+platform; `hermes-engine-cli` is the one with an actual VM.
+
+NEGATIVE-TESTED BOTH CHECKS, because a green suite that cannot fail proves nothing:
+  - injected a wrong expectation (canonical p3 -> 999999, D3 profit -> 200000):
+    the runner failed with "expected 999999, got 630000" and "expected 200000, got
+    400000". Both engine values match the hand computation.
+  - injected a fake Hermes divergence: the diff failed with
+    "canonical-15-july.p3: node=630000 hermes=1".
+
+Commands:
+  $ npm run test:vectors:node    -> ALL PASS (46 vectors, >= 30 required)
+  $ npm run test:vectors:hermes  -> no vector threw
+  $ npm run test:vectors:diff    -> divergence: NONE
+G5 PASS.
+
+NEXT — G6 auth service.
