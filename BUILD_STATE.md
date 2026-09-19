@@ -1,6 +1,6 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 2
+Updated: 2026-09-19T00:00:00Z   Iteration: 3
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -11,7 +11,7 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 |------|-------|--------|----------|
 | G0 | Repo, state ledger, spec extraction | **PASS** | `ls` of all four files + `wc -l SPEC-DIGEST.md` = **526 lines** (threshold 200). Output in BUILD_LOG.md. |
 | G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
-| G2 | Legal audit | TODO | needs LEGAL-AUDIT.md with statuses |
+| G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 BLOCKED-ON-HUMAN** |
 | G3 | Security audit / STRIDE | TODO | needs `npm audit --audit-level=high` + STRIDE rows |
 | G4 | Schema + migrations, SQLite & Postgres | TODO | needs up/down/up on both engines + UPDATE/DELETE rejection test |
 | G5 | **Formula Engine + vectors.json** | TODO | needs `test:vectors` under Node AND Hermes, >= 30 vectors, diff empty |
@@ -109,12 +109,18 @@ sheet and the one handwritten photograph that exists on disk:
    be written into TECH-DECISIONS.md at G1 and the CI check wired up; the *measurement*
    needs hardware.
 3. **BI6** - see OD-1. Does not block any gate.
+3a. **Seven legal items need counsel or a business decision** (LEGAL-AUDIT §11):
+   L-03 party-data Fiduciary/Processor analysis · L-05 retention period ·
+   L-07 grievance officer · L-10 Cloudflare TLS-abroad transfer question ·
+   L-17 privacy policy live · L-18 Terms liability vs the accuracy promise ·
+   L-23 DLT registration. **L-13 (public deletion page), L-17 and L-07 block Play
+   submission** and none of them is a code task.
 4. **DLT registration** for transactional SMS in India has multi-week lead time and must
    start the day G2 finishes. Needs a registered business entity. Not a code task.
 
 ## Next action
 
-**G2 - Legal audit.** (G1 complete.)
+**G3 - Security audit and STRIDE threat model.** (G0-G2 complete.)
 
 <!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN

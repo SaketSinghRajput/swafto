@@ -75,3 +75,45 @@ Output:
 G1 PASS.
 
 NEXT — G2 legal audit.
+
+## 2026-09-19 · G2 · Legal audit · PASS
+
+Wrote LEGAL-AUDIT.md against DPDP 2023 + DPDP Rules 2025, Play policy, GST and RBI.
+52 status-tagged findings; 26 became TRACEABILITY rows; 7 are BLOCKED-ON-HUMAN.
+
+FOUND — the sharpest issue is `parties`. The shopkeeper types his CUSTOMERS' names and
+phone numbers. Those people are Data Principals who have never met SWAFTO and cannot
+consent to it. Probable analysis: the shopkeeper is Fiduciary for his own party ledger
+and SWAFTO is Processor. That needs counsel (L-03) and it changes what the Terms must
+say. Cheap engineering hedge applied regardless: phone nullable, per-party export and
+redaction.
+
+FOUND — a real tension between DPDP's right to CORRECTION and decision D7's append-only
+closed days. They do not actually conflict: personal data (name, phone, shop) is
+directly editable; closed ledger entries are business records corrected by a dated
+correction entry, the way every ledger in history does it. Written down explicitly so
+nobody "fixes" the immutability to satisfy a misread of s.12.
+
+FOUND — three things block Play submission and none is code: the public deletion page
+at swafto.app/delete-account (already referenced in the shipped About copy but not
+built), a live privacy policy, and a named grievance officer.
+
+FOUND — Cloudflare terminates TLS at the nearest PoP, which may be outside India. Whether
+that is a "transfer" under DPDP needs counsel (L-10). Flagged because the architecture
+puts Cloudflare in front of everything and residency is stated as a legal requirement.
+
+RECORDED — the RBI trigger list, deliberately. "Collect udhar via a UPI link" is the
+dangerous one: it looks like a small useful feature, it is the most likely release-two
+proposal, and it would make SWAFTO a payment intermediary requiring PA/PG authorisation.
+
+CORRECTED — did not repeat the common misreading that Play bans READ_SMS. It explicitly
+permits it for UPI/financial transaction SMS. D1 declined it for product reasons, not
+platform ones. Recorded accurately.
+
+Command:
+  $ grep -cE 'ACTION-REQUIRED|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md
+Output:
+  52
+G2 PASS.
+
+NEXT — G3 security audit and STRIDE.

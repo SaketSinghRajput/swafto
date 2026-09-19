@@ -74,11 +74,36 @@ Resolving it costs one row here and one engine function. Blocks no gate.
 | Correction on day N referencing closed N-3 leaves N-3 byte-identical | `vectors.json:d7-correction-leaves-source-day-identical` | TODO |
 | Skip vs empty - same total, different day state | `vectors.json:d8-skip-vs-untouched` | TODO |
 
-## Legal action items (populated at G2)
+## Legal action items (from LEGAL-AUDIT.md §11, populated at G2)
 
 | Ref | Requirement | Artifact | Owner | Status |
 |-----|-------------|----------|-------|--------|
-| - | *Populated when G2 completes. Every ACTION-REQUIRED in LEGAL-AUDIT.md becomes a row here.* | - | - | TODO |
+| L-01 | Consent notice before OTP, 3 languages | `ConsentNotice` screen, `users.consent_*` | Eng | TODO |
+| L-02 | Granular consent + easy withdrawal | Settings toggle, `consents` table | Eng | TODO |
+| L-03 | Party data Fiduciary vs Processor analysis | Terms clause | **Counsel** | BLOCKED-ON-HUMAN |
+| L-04 | Per-party export and redaction | P2/P3, `GET /v1/parties/:id/export` | Eng | TODO |
+| L-05 | Retention / inactivity period | Privacy policy | **Business** | BLOCKED-ON-HUMAN |
+| L-06 | Deletion propagates to S3 backups | Deletion job + TF lifecycle rule | Eng | TODO |
+| L-07 | Grievance Officer named with SLA | About screen, policy, website | **Business** | BLOCKED-ON-HUMAN |
+| L-08 | Breach response runbook + rehearsal | `docs/runbooks/breach.md` | Eng (G3) | TODO |
+| L-09 | No processor moves data out of India | Cloudflare/Sentry/FCM/SMS review | Eng | TODO |
+| L-10 | Cloudflare TLS termination abroad = transfer? | Architecture decision | **Counsel** | BLOCKED-ON-HUMAN |
+| L-11 | FCM payloads carry no personal data | Push builder, trigger-only | Eng | TODO |
+| L-12 | Data Safety form word-identical to policy | Play Console + policy | Eng | TODO |
+| L-13 | Public web deletion page | `swafto.app/delete-account` | Eng | TODO |
+| L-14 | POST_NOTIFICATIONS primer after first close | Manifest + primer screen | Eng | TODO |
+| L-15 | GST disclaimer in app copy and exports | Export screen + file header | Eng | TODO |
+| L-16 | Export naming rules enforced | Copy + i18n key audit | Eng | TODO |
+| L-17 | Privacy policy drafted, reviewed, live | Website | **Counsel** | BLOCKED-ON-HUMAN |
+| L-18 | Terms live; liability vs accuracy promise | Website | **Counsel** | BLOCKED-ON-HUMAN |
+| L-19 | Verify Anek + IBM Plex OFL 1.1 | `licences/` + About | Eng | TODO |
+| L-20 | Verify SQLCipher licensing | ADR-002 amendment if needed | Eng | TODO |
+| L-21 | Licence manifest generated from lockfile | `tools/licences.mjs` | Eng | TODO |
+| L-22 | CI licence gate fails on GPL/AGPL | CI job | Eng | TODO |
+| L-23 | DLT registration (entity, header, templates) | Registered business entity | **Business** | BLOCKED-ON-HUMAN |
+| L-24 | Terms state no under-18s | Terms | **Counsel** | BLOCKED-ON-HUMAN |
+| L-25 | Consent Manager review before 2026-11-13 | Calendar item | Eng | TODO |
+| L-26 | Full DPDP compliance by 2027-05-15 | Programme milestone | **Business** | TODO |
 
 ## Security action items (populated at G3)
 
