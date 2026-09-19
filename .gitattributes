@@ -1,0 +1,15 @@
+# core.autocrlf is true here, so the working tree is CRLF and the index is LF.
+# Two things in this repo are hashed, and both must survive that round trip.
+#
+# Fonts are hashed BYTE-EXACT by tools/check-font-coverage.mjs. If git ever applied
+# text conversion to a TTF it would corrupt the file and change the hash, so they are
+# declared binary explicitly rather than left to heuristics.
+*.ttf binary
+*.otf binary
+*.pdf binary
+
+# The verbatim injections are hashed by tools/check-governance.mjs invariant 6. That
+# hash is taken over LINE-ENDING-NORMALISED text, so it is portable across platforms
+# either way - this just keeps the checkout itself stable.
+INJECTIONS/*.md text eol=lf
+INJECTIONS/injections.lock text eol=lf

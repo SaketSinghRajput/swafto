@@ -146,7 +146,9 @@ if (existsSync('INJECTIONS') && existsSync(LOCK)) {
     .sort();
   const drift = [];
   for (const n of present) {
-    const sha = createHash('sha256').update(readFileSync(join('INJECTIONS', n))).digest('hex');
+    // Normalised, not raw: core.autocrlf means the same file is CRLF here and LF in
+    // CI, and a lock that only holds on one platform is not a lock.
+    const sha = createHash('sha256').update(read(join('INJECTIONS', n))).digest('hex');
     if (!pinned.has(n)) drift.push(`${n} is verbatim but not pinned in ${LOCK}`);
     else if (pinned.get(n) !== sha) drift.push(`${n} has been EDITED since it was pinned`);
   }
