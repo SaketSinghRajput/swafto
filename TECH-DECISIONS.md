@@ -494,6 +494,267 @@ ban on `Date.now`, `new Date()`, `Math.random`, `Intl` and `process` inside the 
 
 ---
 
+## ADR-013 · Text scales with the OS, uncapped where it can reflow and capped at 1.5 where it cannot
+
+**Status:** Accepted · injection 09 C.5
+
+**Context.** Users are 35-70 and many have presbyopia. A system font scale of 1.3 is
+ordinary in this group, and Android 14 offers up to 2.0. React Native's
+`allowFontScaling` defaults to true and can be turned off per `Text`.
+
+**The trap is the obvious fix.** Turning `allowFontScaling` off makes every layout safe
+immediately and **betrays the entire reason B29 exists**. B29 sets a 17sp floor because
+these users cannot read small text; overriding their own accessibility setting to
+protect our layout inverts that.
+
+**Decision. Scaling is never disabled anywhere. Not once, not "just for this label".**
+
+Two regimes, because they fail differently:
+
+1. **Scrollable content - body text, section labels, the money figures on the Today and
+   Close screens - is UNCAPPED.** It scales to whatever the OS says, and layouts reflow.
+   Text wraps, rows grow taller, the screen gets longer. A longer screen on a phone is
+   not a defect.
+2. **Fixed-height chrome - keypad keys, the bottom navigation, button labels, table
+   headers - is capped at `maxFontSizeMultiplier={1.5}`.** These live in boxes whose
+   height is set by B28's 56dp touch-target floor. Unbounded growth there does not
+   reflow; it clips the label or shrinks the tap area, and a keypad key that is hard to
+   hit is worse for this user than a key whose label stopped growing at 1.5.
+
+**Why 1.5 and not 1.3.** 1.3 is the common setting, so capping there would cap the
+typical user rather than the extreme one, which defeats the purpose. 1.5 clears the
+ordinary range and still bounds the layout.
+
+**Enforced by, at G10:**
+
+- a static rule that `allowFontScaling={false}` appears **nowhere** in the client;
+- a static rule that every `maxFontSizeMultiplier` is applied through the shared
+  typography components, so the cap cannot be sprinkled ad hoc;
+- B31 (layout overflow in any language) measured at scale **1.0, 1.3 and the OS
+  maximum**, in all three languages, on the longest-string fixture required by B.5 of
+  the screen-phase contract. Longest string AND largest scale together, because each
+  alone passes screens that the combination breaks.
+
+**Reverse it if:** a real device pass shows the 1.5 cap on chrome still clipping - in
+which case the chrome layout is wrong and the cap is hiding it, so the layout gets
+fixed rather than the cap lowered.
+
+---
+
+## ADR-014 · The amount display is a `Text`, not a `TextInput`, so no system keyboard can exist
+
+**Status:** Accepted · injection 09 C.6
+
+**Context.** C.6: the custom keypad must suppress the system keyboard, because if both
+appear the amount field is unusable - and it is the single most-used control in the
+product. The usual remedy is `showSoftInputOnFocus={false}` on a `TextInput`.
+
+**Decision. Do not suppress the keyboard. Remove the thing that summons it.**
+
+The amount is rendered as a **`Text`** inside a pressable container, with the digits
+supplied entirely by our keypad and a caret we draw ourselves. There is no focusable
+text input on the screen, so there is no state - no OEM keyboard, no accessibility
+service, no hardware keyboard attaching, no split-screen focus change - in which a
+system keyboard can appear over the amount.
+
+`showSoftInputOnFocus={false}` is a flag that has to hold on every OEM and every RN
+version. Having no input at all is not a flag.
+
+**What this costs, stated plainly.** Native text selection, copy and paste, and the
+platform's own cursor. For a field that accepts ten digit keys, a backspace and a
+clear, none of those is load-bearing. Accessibility is **not** given up: the container
+carries an `accessibilityRole`, an `accessibilityLabel` naming the field, and an
+`accessibilityValue` whose text is the formatted amount, so a screen reader announces
+the running value as it is typed.
+
+**Where the system keyboard IS correct and stays.** The expense `label` field (Form C)
+and the party-name field are real free text and use a real `TextInput`. This rule is
+about the AMOUNT - the same field constraint 1 forbids any AI from touching.
+
+**Enforced by, at G11:**
+
+- a static rule: no `TextInput` may appear in the amount component, and no `TextInput`
+  anywhere in the client may set a numeric `keyboardType` - if a number is being typed,
+  it is being typed on our keypad;
+- the render test the build prompt already requires: the keypad is present on exactly
+  the seven keypad screens and absent everywhere `BottomNav` renders.
+
+**Reverse it if:** a real device pass shows a screen reader cannot operate the custom
+field acceptably. Accessibility beats purity, and the fallback is a `TextInput` with
+`showSoftInputOnFocus={false}` plus a per-OEM test matrix.
+
+---
+
+## ADR-015 · Process death keeps every committed line and deliberately DISCARDS the half-typed amount
+
+**Status:** Accepted · injection 09 C.7
+
+**Context.** C.7: a shopkeeper takes a phone call mid-expense and Android kills the
+app. Decide what survives.
+
+**What already survives, and it is most of it.** Per constraint 2, every committed line
+is an append to local SQLite at the moment it is committed. Those are not "in memory
+pending a save" - they are durable before the phone call starts. Process death loses
+nothing that was entered as a line.
+
+**The only open question is the field being typed at the instant of death**, and the
+answer is not the obvious one.
+
+**Decision.**
+
+1. **Committed lines: restored, silently and completely.** Reopening the form shows them
+   exactly as they were. No prompt - there is nothing to ask about.
+2. **The in-progress amount: DISCARDED, and the discard is announced.** The form reopens
+   with an empty amount field and a non-blocking banner along the lines of *"3 lines
+   saved. The amount you were typing was not saved."*
+
+**Why discarding is the safe choice and restoring is the dangerous one.** A resurrected
+half-typed amount is a WRONG NUMBER THAT LOOKS LIKE A RIGHT ONE. Someone typing 450 who
+is interrupted after 45 comes back to a field reading 45 - in the right place, looking
+finished, one tap from being committed as a real expense. Silently restoring partial
+input into a money field manufactures plausible wrong figures. Losing three keystrokes
+costs three seconds; committing 45 for 450 corrupts a day's reconciliation, and the
+shopkeeper finds out at closing time when the cash does not match and he has no idea
+why.
+
+**Other state.** The section being entered, the selected party and the date are
+restored - none of them is a partial value, each is either chosen or not. Only the
+numeric field, where "partial" is indistinguishable from "complete", is dropped.
+
+**Persistence mechanism.** Form state is written to SQLite - not AsyncStorage, which has
+no transactional guarantee and is the wrong durability tier for anything adjacent to
+money - on each line commit and on every `AppState` transition away from active. The
+in-progress amount is deliberately **never** written, which also removes any need for a
+debounced per-keystroke write.
+
+**Enforced by:** a G12 test that kills the process mid-entry, relaunches, and asserts
+both halves - every committed line present, the in-progress amount empty, the banner
+shown. Restoring the amount must make that test FAIL, not pass.
+
+**Reverse it if:** field observation shows users routinely losing long amounts to
+interruptions and re-entering them wrongly. The fix then is a restored-but-clearly-
+marked value requiring an explicit confirm, never a silent restore.
+
+---
+
+## ADR-016 · Back on an entry form exits without a dialog when there is nothing to lose, and names what will be lost when there is
+
+**Status:** Accepted · injection 09 C.8
+
+**Context.** C.8: the Android back button inside a full-screen entry form. Discarding
+typed lines silently is the worst outcome available.
+
+**Decision, in three cases, decided by what is actually at risk.**
+
+1. **Nothing typed in the amount field: back exits immediately, no dialog.** Committed
+   lines are already saved, so nothing is lost and there is nothing to confirm.
+2. **Digits typed but not committed: a confirm that NAMES the value** - *"Discard the
+   amount you are typing?"* with the partly typed figure shown, and *Keep typing* as the
+   default action. Not a generic "Discard changes?", which tells the user nothing about
+   what they are about to lose.
+3. **Committed lines are never at risk in either case**, and the dialog never implies
+   they are. They are already in the ledger.
+
+**Why not confirm every time.** A dialog that appears when there is nothing to lose
+trains people to dismiss dialogs without reading them - and the one dialog in this
+product that must be read is the day-close confirmation. Spending that attention on a
+form exit is a bad trade. The dialog appears only in case 2, which is exactly when it
+carries information.
+
+**The hardware back button and the on-screen back affordance do the same thing.** Two
+paths out of a screen that behave differently is its own defect.
+
+**Enforced by, at G11:** a test on each of the seven keypad screens covering all three
+cases, **including that case 1 shows NO dialog**. A check that only ever asserts the
+dialog appears would pass an implementation that always shows it, which is the failure
+mode being guarded against.
+
+**Reverse it if:** device testing shows users reaching case 2 often and being confused
+by the confirm. The alternative is to auto-commit a complete-looking amount on back,
+which is rejected for the same reason ADR-015 discards partial input.
+
+---
+
+## ADR-017 · The client shows the OPEN DAY's date, never the device's, and a clock correction is recorded rather than applied
+
+**Status:** Accepted · injection 09 C.9 · extends ADR-004 (3) to the client
+
+**Context.** ADR-004 already ruled on the server and the data model: `day_id` is
+client-assigned, derived from device local time as a *default and never an authority*,
+the server never rewrites it, observed skew is stored, and beyond +/- 12 hours an alarm
+is raised. C.9 asks the two client questions that ruling does not answer: what the app
+SHOWS at 23:58 with a clock ten minutes fast, and what it DOES when the clock corrects
+itself after a sync.
+
+**Decision A - what is on screen at 23:58 with a fast clock.**
+
+The device says 00:08 tomorrow. Nothing happens. There is no auto-roll (ADR-004), so
+the open day is still yesterday's record, and:
+
+- **Every screen header shows the OPEN DAY's date, spelled out** - *"Tuesday 15 July"* -
+  never the device's current date and never a relative word. **A relative word is banned
+  as a date label**, in all three languages. It is the one label that can be wrong on
+  screen while being wrong in the data, and in this scenario it is precisely wrong. The
+  Today *screen* keeps its name as a destination; it does not use that word to label a
+  date.
+- The mismatch is therefore visible to the shopkeeper, who knows perfectly well what day
+  it is, at the moment it matters - before the first entry, and again on the close
+  confirmation, which already spells the date out.
+
+**Decision B - the clock corrects itself.**
+
+- **No recorded timestamp is ever rewritten.** `created_at` is what the device believed
+  at the time; it is evidence, not a measurement. Rewriting it would destroy the only
+  signal that a correction happened.
+- The correction is appended as its own device event, so the skew history stays
+  reconstructable. The server continues to record `client_created_at` against
+  `server_received_at` per ADR-004.
+- **The open day does not move.** If the correction changes what the device calls today
+  while a day is open, the open day stays open and stays its own date. Rolling it would
+  split one trading evening across two records and break the carry-forward chain, which
+  is the audit chain.
+- **If the correction lands the device inside a day that is already CLOSED**, nothing
+  special is needed, and that is the point: the SQL trigger from AD-014 already rejects
+  any entry whose `day_id` names a closed day, on both engines. D7 holds whatever the
+  clock does, because it is enforced below the clock.
+
+**Decision C - a backward correction reorders UUIDv7 ids, and that is tolerated,
+deliberately.**
+
+Entry ids are UUIDv7, which embeds a millisecond timestamp, so a backward clock jump
+produces ids that sort BEFORE ids issued earlier in real time. Anything ordering entries
+by id would interleave them wrongly for the width of the correction.
+
+**Verified before deciding, not assumed: no figure depends on entry order.** Every total
+in the engine is a `sum` over a section's entries, and sums are order-independent. The
+ordered outputs that do exist - OP6's warnings, P3's working lines, BI1's ranked
+parties - are ordered by value with a deterministic tiebreaker, never by `created_at`
+and never by id. Intra-day entry order affects the *display list only*.
+
+So the day sheet lists entries by `created_at` with `id` as tiebreak, and this is
+documented as **best-effort chronological, not a guarantee**. A backward correction can
+reorder entries within the affected window. No figure changes, no total changes, no
+reconciliation changes.
+
+**What is NOT done, and why.** A monotonic per-day local sequence column would make
+entered-order exact. It is not added: it costs a schema column and a client counter to
+fix a cosmetic reordering in a window that only opens when a device clock moves
+backwards, and idempotency already depends on the id being client-generated rather than
+ordered.
+
+**Enforced by:** the purity contract (ADR-012) already bans `Date.now()`, `new Date()`
+and `Intl` inside the engine, so it structurally cannot read a clock and cannot be wrong
+about the day - `today` is an input, and that ban is already checked. The client rules
+above are G10 checks: a static rule that no date label renders a relative word, and a
+test that the header tracks the open day rather than the device date.
+
+**Reverse it if:** an ordering guarantee is ever needed - a per-entry audit view, a
+regulator asking for entered order, or an intra-day figure that becomes order-dependent.
+Then a local monotonic sequence goes in, and it must be added **before** the data it
+would order exists.
+
+---
+
 ## Summary of what is blocked or deferred
 
 | Item | State | Why |

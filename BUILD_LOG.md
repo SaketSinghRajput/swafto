@@ -941,3 +941,91 @@ Negative tests this iteration, all confirmed to fail when they should:
 
 NEXT — C.5 OS font scaling, C.6 keypad suppressing the system keyboard, C.7 process
 death mid-entry, C.8 the Android back button, C.9 day boundary and device clock.
+
+## 2026-09-19 · Iteration 16 · C.5 through C.9 decided
+
+The injection's instruction for section C is "research each, decide it, record it in
+TECH-DECISIONS.md, and where it is checkable make it a check". C.5-C.8 concern a
+client that does not exist yet, so the deliverable is the decision and a named check
+with a gate attached. C.9 reaches the engine, so part of it became a test today.
+
+ADR-013 · C.5 FONT SCALING. Scaling is never disabled anywhere. Turning
+allowFontScaling off is the obvious fix and it betrays the entire reason B29 exists -
+a 17sp floor exists because these users cannot read small text, and overriding their
+own accessibility setting to protect our layout inverts that. Two regimes instead:
+scrollable content UNCAPPED and reflowing, fixed-height chrome capped at 1.5 because
+a 56dp touch target cannot reflow and a keypad key that is hard to hit is worse for
+this user than a label that stopped growing. 1.5 rather than 1.3 because 1.3 is the
+COMMON setting - capping there caps the typical user, not the extreme one.
+
+ADR-014 · C.6 KEYPAD AND THE SYSTEM KEYBOARD. The expected answer is
+showSoftInputOnFocus={false}. Rejected in favour of removing the thing that summons
+the keyboard: the amount is a Text inside a pressable, not a TextInput. There is no
+focusable input, so there is no OEM, no accessibility service, no hardware keyboard
+and no split-screen focus change that can raise a keyboard over the amount. A flag has
+to hold everywhere; having no input at all is not a flag. Cost stated plainly - native
+selection and cursor - and accessibility is kept via role, label and a value that
+announces the running figure. TextInput stays where text is genuinely text: the
+expense label and the party name.
+
+ADR-015 · C.7 PROCESS DEATH. Most of this is already answered by constraint 2 -
+committed lines are in SQLite before the phone call starts. The real question is the
+field being typed, and the answer is the opposite of the intuitive one:
+THE IN-PROGRESS AMOUNT IS DISCARDED, AND THE DISCARD IS ANNOUNCED.
+A resurrected half-typed amount is a wrong number that looks like a right one. Someone
+typing 450, interrupted after 45, returns to a field reading 45 - in the right place,
+looking finished, one tap from being committed. Restoring partial input into a money
+field manufactures plausible wrong figures. Three keystrokes cost three seconds; 45
+for 450 corrupts a reconciliation the shopkeeper only discovers at closing time. The
+G12 test must FAIL if the amount is restored, not pass.
+
+ADR-016 · C.8 BACK BUTTON. Three cases by what is actually at risk. Nothing typed:
+exit, no dialog. Digits typed: a confirm that NAMES the value, with "keep typing" as
+the default. Committed lines: never at risk, and the dialog never implies they are.
+No dialog when there is nothing to lose, because a dialog that fires needlessly trains
+people to dismiss dialogs - and the one dialog in this product that must be read is the
+day close. The G11 test asserts case 1 shows NO dialog, because a test that only ever
+checks the dialog appears would pass an implementation that always shows it.
+
+ADR-017 · C.9 DAY BOUNDARY AND DEVICE CLOCK. Extends ADR-004 (3) to the client rather
+than restating or contradicting it.
+  A · At 23:58 with a clock ten minutes fast, nothing happens - there is no auto-roll.
+      Every header shows THE OPEN DAY'S DATE spelled out, never the device's date and
+      never a relative word. A relative word is banned as a date label in all three
+      languages: it is the one label that can be wrong on screen while being wrong in
+      the data, and in this scenario it is precisely wrong.
+  B · A clock correction is RECORDED, never applied. No timestamp is rewritten -
+      created_at is what the device believed, which is evidence, not a measurement.
+      The open day does not move. If the correction lands inside a CLOSED day, nothing
+      special is needed: the AD-014 trigger already rejects it on both engines. D7
+      holds whatever the clock does, because it is enforced below the clock.
+  C · A BACKWARD CORRECTION REORDERS UUIDv7 IDS. Those ids embed a timestamp, so
+      post-correction ids sort before earlier ones. Tolerated - but only after
+      VERIFYING, not assuming, that no figure depends on entry order. Every engine
+      total is a sum; the ordered outputs are ordered by value with a deterministic
+      tiebreaker, never by createdAt and never by id.
+
+AND THAT VERIFICATION BECAME A TEST, because a property established by reading is a
+property a refactor silently removes. entry-order.spec.ts permutes the entries of every
+vector - reversed and seeded-shuffled - and requires byte-identical output.
+22 of 63 vectors have more than one entry and are permutable; the suite asserts that
+count is non-zero rather than passing vacuously over single-entry days.
+Negative-tested: planting an order-dependent term in primary.ts failed 6 of 23.
+
+A monotonic per-day sequence column was considered and NOT added. It would make
+entered-order exact, at the cost of a schema column and a client counter, to fix a
+cosmetic reordering in a window that only opens when a clock moves backwards. It is
+ADR-017's reversal trigger instead - and the trigger says it must go in BEFORE the data
+it would order exists.
+
+BUILD_STATE now carries a "checks owed, and where they attach" table - ten rows, each a
+decision already made whose check cannot be written until the code exists. C.3-C.9
+nearly went missing by living only in prose; these are not going to.
+
+Commands:
+  $ npx vitest run     -> 212 passed, 4 skipped (was 189)
+  $ npm run check:all  -> all pass
+  $ npm run test:vectors:diff -> divergence: NONE
+
+NEXT — persistent restart-surviving rate limits (injection 08 B.2), the DC-003
+compensating control, then the OTP service B.3-B.5.

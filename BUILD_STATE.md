@@ -162,7 +162,8 @@ item is cheap now and expensive once screens exist.
 | # | Item | State |
 |---|------|-------|
 | 1 | **C.2 bundled Odia font** | **DONE** iteration 14 - AD-015, `check:font`, DEVICE-CHECKLIST A1-A6 |
-| 2 | C.3-C.9, the remaining React Native traps | next |
+| 2 | C.3 static font instances · C.4 tabular figures | **DONE** iteration 15 - AD-016, DC-005, `check:font` |
+| 2b | C.5-C.9, decided and recorded | **DONE** iteration 16 - ADR-013..017; their checks are owed below |
 | 3 | Persistent, restart-surviving rate limits (injection 08 B.2) | owed |
 | 4 | DC-003 compensating control for origin exposure | owed, and SECURITY-AUDIT now states the exposure correctly |
 | 5 | OTP service B.3-B.5, including number-change revocation | owed |
@@ -170,6 +171,25 @@ item is cheap now and expensive once screens exist.
 | 7 | G7 and G8, with `rejects.json` grown alongside them | the 8 api-layer rejection cases get their layer here |
 | 8 | Two fixtures: canonical shop, adversarial shop | prerequisite for B.1-B.7 |
 | 9 | **G10**, beginning with the four form archetypes | Today screen LAST, per B.6 |
+
+### Checks owed, and where they attach
+
+Every row is a decision already made and recorded. The check cannot be written yet
+because the code it inspects does not exist - which is exactly how C.3-C.9 nearly went
+missing, so they are listed here rather than left in prose.
+
+| Owed at | Check | Guards |
+|---|---|---|
+| G10 | `allowFontScaling={false}` appears nowhere; `maxFontSizeMultiplier` only via shared typography | ADR-013 |
+| G10 | B31 overflow measured at scale 1.0, 1.3 and OS max, x3 languages, on the longest-string fixture | ADR-013 |
+| G10 | the money style sets `fontVariant: ['tabular-nums']` | DC-005, AD-016 |
+| G10 | no date label renders a relative word; the header tracks the OPEN DAY, not the device date | ADR-017 A |
+| G11 | no `TextInput` in the amount component; no numeric `keyboardType` anywhere | ADR-014 |
+| G11 | keypad present on exactly the seven keypad screens, absent wherever `BottomNav` renders | build prompt, ADR-014 |
+| G11 | back: all three cases per screen, **including that case 1 shows NO dialog** | ADR-016 |
+| G12 | process killed mid-entry: committed lines restored, in-progress amount empty, banner shown | ADR-015 |
+| H8 | DEVICE-CHECKLIST B4: money columns actually align on a handset | DC-005 |
+| H8 | DEVICE-CHECKLIST A4: does a real budget handset ship an Odia font | DC-004 |
 
 Amendment items 2.1-2.4 completed at iteration 7 and are recorded in
 `DECISIONS-AUTONOMOUS.md` and `BUILD_LOG.md`; they are no longer pending work.
