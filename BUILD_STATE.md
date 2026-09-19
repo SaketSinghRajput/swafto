@@ -9,8 +9,8 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 
 | Gate | Title | Status | Evidence |
 |------|-------|--------|----------|
-| G0 | Repo, state ledger, spec extraction | **PASS** | `ls` of all four files + `wc -l SPEC-DIGEST.md` = **526 lines** (threshold 200). Output in BUILD_LOG.md. |
-| G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
+| G0 | Repo, state ledger, spec extraction | **PASS** | `wc -l SPEC-DIGEST.md` -> **569** lines against a 200 threshold. Recorded as 526 until iteration 20; the file grew and the number was never re-derived (D.3). Output in BUILD_LOG.md. |
+| G1 | Technology research - ADRs | **PASS** | `grep -c '^## ADR-' TECH-DECISIONS.md` -> **17** against a minimum of 8. Recorded as 12 until iteration 20 (D.3). |
 | G2 | Legal audit | **PASS**, evidence corrected at iteration 19 | `grep -cE 'ACTION-REQUIRED or resolved autonomously' LEGAL-AUDIT.md` -> **40**. The command recorded here previously escaped its alternation as `\|` inside `grep -E`, where that means a LITERAL pipe - it matches nothing, returns 0 and exits 1, and could never have produced the 52 printed beside it. See V-1. 26 items mirrored into TRACEABILITY.md; 7 resolved autonomously. |
 | G3 | Security audit / STRIDE | **PASS**, evidence corrected at iteration 19 | `npm audit --audit-level=high` -> **found 0 vulnerabilities**. STRIDE THREAT rows re-counted: **28**. The 87 recorded here counted EVERY table row in the file - trust boundaries, the register, the rate-limit table - and labelled them STRIDE. Right number, wrong noun. See V-2. 23 items mirrored into TRACEABILITY.md |
 | G4 | Schema + migrations, SQLite & Postgres | **PASS**, REOPENED and re-earned at iteration 19 | `npx vitest run packages/schema` -> **63 passed, 0 skipped** on BOTH engines. §5.12.4 reopened it: the append-only claim had only ever been tested by updating `amount`, so narrowing the trigger to `BEFORE UPDATE OF amount` left the suite green while every other column of a ledger row became mutable on SQLite - the authoritative store. Now swept across four unconstrained columns on both engines, and that planted narrowing fails. See V-4 |
@@ -216,31 +216,37 @@ testable offline, and everything else is a projection of it.
 
 ## RESUME
 
-**Everything below is committed and green.** `npm run check:all` runs eleven checks,
-`npx vitest run` is 303 passed / 0 skipped, `npm run typecheck` is clean,
-`npm run prove:verifiers` shows all twelve plantable verifiers failing on their
-planted defect, and `npm run test:vectors:diff` reports no Node/Hermes divergence.
+**Two numbers, always together (§5.13 A.5):**
 
-Two benchmarks are recorded as MISSED in `BENCHMARKS-RESULTS.md`, honestly and with
-thresholds untouched: **B1** at 63 vectors of 70, and **B3** at 85.71% branch coverage
-of 100%. Both are attempt 1 of 3 and both close at G7/G8, where the scenarios that
-would cover them actually exist.
+> **BENCHMARKS INSTRUMENTED: 16 of 40.** 0 overdue, 24 blocked on artifacts that do
+> not exist yet.
+> **BENCHMARKS MET: 5 of the 16 measured** - B2, B5, B12, B33, B40. B1 and B3 are
+> recorded MISSED with thresholds untouched; B4/B6 are PROVISIONAL because their
+> harness sees 170 of 303 tests; B13, B24, B35, B39 are partial with the partial
+> stated.
 
-**30 of 40 benchmarks still have no instrument.** `npm run check:verifiers` prints
-the list on every run. Two of them - B13 and B39 - *lost* theirs when
-`check:traceability` was removed at iteration 15, and that must be rebuilt before G19
-can be claimed.
+`npm run check:all` runs thirteen checks, `npx vitest run` is 303 passed / 0 skipped,
+`npm run prove:verifiers` shows every plantable verifier failing on its planted
+defect, and `npm run test:vectors:diff` reports no Node/Hermes divergence.
 
-Pick up at **the DC-003 compensating control**: what absorbs an L7 flood before it
-reaches the API now that AD-008 took Cloudflare out of the data path, whether
-unauthenticated endpoints get a cheaper pre-database limit, and how the API sheds load
-when the limiter itself is saturated. Injection 08 section C sets the terms;
-SECURITY-AUDIT S-08 is the row and already reads OPEN.
+**`PROJECTION.md` was written this iteration.** Estimate: 34 iterations remain
+against 40 left, so 54 of 60 if nothing surprises - and it says plainly why it is
+probably optimistic, with a ranked cut-list ready if the ceiling closes in.
 
-Then **B.3-B.5 the OTP service** on the limiter built at iteration 17, then **G6**,
-then **G7 and G8 with rejects.json grown alongside them** (8 api-layer cases are
-PENDING a layer). Then the two fixtures, then **G10** starting with the four form
-archetypes and the Today screen LAST.
+### Owed from injection 14, not done this iteration
 
-One thing genuinely needs the repo owner and blocks nothing: **H11**, permission for an
+- **Section B, the canonical value registry.** The biggest remaining item and the one
+  that kills the TTL class outright. It needs a sweep for every number appearing in
+  two files, which is a piece of work in itself.
+- **The mutation harness.** 170 of 303 tests. B4 and B6 cannot be claimed until fixed.
+- **D.1, rejects.json before G7.** Now load-bearing for B3's remaining 14 points, not
+  only for correctness.
+- **Two owed plants named in REVIEW.md's A12 audit:** a correction whose
+  `corrects_day_id` is closed while its own day is open, and a genuine cross-tenant
+  read once routes exist.
+
+Then resume: **DC-003's compensating control**, the OTP service on the limiter, G7
+and G8, the two fixtures, then G10 with the Today screen LAST.
+
+One thing needs the repo owner and blocks nothing: **H11**, permission for an
 `eslint.config.mjs`. The enforcement it would carry already runs in CI.

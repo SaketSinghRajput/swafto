@@ -31,13 +31,16 @@ requires the command to fail, restores the file and verifies the restore.
 | `vectors-node` | `npm run test:vectors:node` | `tools/run-vectors.mjs` | Every golden vector produces its expected values under Node. | plants a defect in `packages/formula-engine/src/primary.ts` |
 | `vectors-divergence` | `npm run test:vectors:diff` | `tools/diff-vectors.mjs` | Node and Hermes agree on every value of every vector (B2). | G5, by injecting a runtime-specific divergence. A source edit cannot fake it: the mutation has to behave DIFFERENTLY on each engine, so it is not plantable from one file. |
 | `unit` | `npx vitest run` | `packages/formula-engine/test/vectors.spec.ts` | All specs pass, including the 63 golden vectors, now executed INSIDE the runner so coverage can see them. | plants a defect in `packages/schema/src/spec.ts` |
-| `coverage` | `npm run coverage` | `package.json` | Measures formula-engine statement, branch and function coverage (B3). | Proven by CORRECTING it. The first run reported 57.73% branch while the 63 vectors ran in a separate process the instrument could not see; putting them under the runner moved the same unchanged engine to 85.71%. An instrument whose reading moves 28 points when you fix the instrument has demonstrated that it measures something. |
+| `mutation` | `npm run mutation` | `stryker.config.json` | Mutation score for the formula engine (B4) and the backend (B6) - how many deliberately broken variants of the code the suite actually kills. | It IS a defect-planting harness - 145 planted mutants on money.ts alone - so proving it can fail is the thing it does on every run. What is NOT yet proven is that it sees the whole suite: its dry run finds 170 of 303 tests, so its first reading of 9.66% is a statement about the harness, not the engine. Recorded as provisional in BENCHMARKS-RESULTS.md rather than as a B4 measurement. |
+| `secrets` | `npm run check:secrets` | `tools/check-secrets.mjs` | No AWS key, private key block, provider token, JWT, remote database password or hard-coded credential anywhere in the repository (B35, repo half). | plants a defect in `REVIEW.md` |
+| `traceability` | `npm run check:traceability` | `tools/check-traceability.mjs` | Every feature ID has a row with no empty cell (B13); every engine function and vector NAMED in the matrix actually exists; no row is DONE while any artifact it names is absent (B39). | plants a defect in `TRACEABILITY.md` |
+| `coverage` | `npm run coverage` | `package.json` | Measures statement, branch and function coverage for the formula engine (B3) AND the backend (B5). | Proven by CORRECTING it. The first run reported 57.73% branch while the 63 vectors ran in a separate process the instrument could not see; putting them under the runner moved the same unchanged engine to 85.71%. An instrument whose reading moves 28 points when you fix the instrument has demonstrated that it measures something. |
 | `audit` | `npm audit --audit-level=high` | `package-lock.json` | No high or critical advisory in the dependency tree (B33). | External fact; not plantable without installing a known-vulnerable package. |
 | `detection-rate` | `node tools/detection-rate.mjs` | `tools/detection-rate.mjs` | §5.9 - for each critical invariant, what FRACTION of the suite notices when it is violated. | It is itself a defect-planting harness, and it verifies its own restore each run. |
 
 ## Benchmark coverage
 
-A benchmark with no instrument **cannot be claimed met**. 30 of
+A benchmark with no instrument **cannot be claimed met**. 24 of
 40 have none yet; each carries the gate it is owed at, in
 `tools/check-verifiers.mjs`.
 
@@ -46,16 +49,16 @@ A benchmark with no instrument **cannot be claimed met**. 30 of
 | B1 | `vectors-node` |
 | B2 | `vectors-divergence` |
 | B3 | `coverage` |
-| B4 | **none yet** |
-| B5 | **none yet** |
-| B6 | **none yet** |
+| B4 | `mutation` |
+| B5 | `coverage` |
+| B6 | `mutation` |
 | B7 | **none yet** |
 | B8 | **none yet** |
 | B9 | **none yet** |
 | B10 | `unit` |
 | B11 | `unit` |
 | B12 | `money-lint` |
-| B13 | **none yet** |
+| B13 | `traceability` |
 | B14 | **none yet** |
 | B15 | **none yet** |
 | B16 | **none yet** |
@@ -77,9 +80,9 @@ A benchmark with no instrument **cannot be claimed met**. 30 of
 | B32 | **none yet** |
 | B33 | `audit` |
 | B34 | **none yet** |
-| B35 | **none yet** |
+| B35 | `secrets` |
 | B36 | **none yet** |
 | B37 | `unit` |
 | B38 | **none yet** |
-| B39 | **none yet** |
+| B39 | `traceability` |
 | B40 | `governance` |

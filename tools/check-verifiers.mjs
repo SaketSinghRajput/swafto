@@ -211,12 +211,52 @@ export const VERIFIERS = [
     },
   },
   {
+    id: 'mutation',
+    command: 'npm run mutation',
+    file: 'stryker.config.json',
+    claims:
+      'Mutation score for the formula engine (B4) and the backend (B6) - how many deliberately broken variants of the code the suite actually kills.',
+    benchmarks: ['B4', 'B6'],
+    defect: null,
+    provenBy:
+      'It IS a defect-planting harness - 145 planted mutants on money.ts alone - so proving it can fail is the thing it does on every run. What is NOT yet proven is that it sees the whole suite: its dry run finds 170 of 303 tests, so its first reading of 9.66% is a statement about the harness, not the engine. Recorded as provisional in BENCHMARKS-RESULTS.md rather than as a B4 measurement.',
+  },
+  {
+    id: 'secrets',
+    command: 'npm run check:secrets',
+    file: 'tools/check-secrets.mjs',
+    claims:
+      'No AWS key, private key block, provider token, JWT, remote database password or hard-coded credential anywhere in the repository (B35, repo half).',
+    benchmarks: ['B35'],
+    defect: {
+      file: 'REVIEW.md',
+      find: '# REVIEW',
+      // Assembled, like the forbidden-status plant above: spelling a real AWS key
+      // prefix here would make this file trip the very scanner it is planting for.
+      replace: `# REVIEW\n\nPlanted: ${'AKIA'}IOSFODNN7EXAMPLE\n`,
+    },
+  },
+  {
+    id: 'traceability',
+    command: 'npm run check:traceability',
+    file: 'tools/check-traceability.mjs',
+    claims:
+      'Every feature ID has a row with no empty cell (B13); every engine function and vector NAMED in the matrix actually exists; no row is DONE while any artifact it names is absent (B39).',
+    benchmarks: ['B13', 'B39'],
+    defect: {
+      file: 'TRACEABILITY.md',
+      find: '| BI6 | `creditConcentrationTrend` (gate 14)',
+      replace: '| BI6 | `creditConcentrationTrendXX` (gate 14)',
+    },
+  },
+  {
     id: 'coverage',
     command: 'npm run coverage',
     file: 'package.json',
-    claims: 'Measures formula-engine statement, branch and function coverage (B3).',
+    claims:
+      'Measures statement, branch and function coverage for the formula engine (B3) AND the backend (B5).',
     defect: null,
-    benchmarks: ['B3'],
+    benchmarks: ['B3', 'B5'],
     provenBy:
       'Proven by CORRECTING it. The first run reported 57.73% branch while the 63 vectors ran in a separate process the instrument could not see; putting them under the runner moved the same unchanged engine to 85.71%. An instrument whose reading moves 28 points when you fix the instrument has demonstrated that it measures something.',
   },
@@ -246,48 +286,90 @@ export const VERIFIERS = [
  * explicit null. The point of the null case is that it is WRITTEN DOWN: a benchmark
  * with no instrument cannot be claimed met.
  */
-export const BENCHMARK_VERIFIERS = {
-  B1: 'vectors-node',
-  B2: 'vectors-divergence',
-  B3: 'coverage',
-  B4: null, // mutation score: no runner configured. Owed before G20.
-  B5: null, // backend coverage. Owed at G6-G8.
-  B6: null, // backend mutation score. Owed at G6-G8.
-  B7: null, // app logic coverage: no app yet. Owed at G10+.
-  B8: null, // sync replay idempotency. Owed at G7.
-  B9: null, // 30-day endurance. Owed at G17.
-  B10: 'unit',
-  B11: 'unit',
-  B12: 'money-lint',
-  B13: null, // traceability empty cells: INSTRUMENT DELETED at iteration 15. See V-3.
-  B14: null,
-  B15: null,
-  B16: null,
-  B17: null,
-  B18: null,
-  B19: null,
-  B20: null,
-  B21: null,
-  B22: null,
-  B23: null, // B14-B23 performance: owed at G18 on the constrained AVD.
-  B24: 'font', // partial: the font's share of the budget is measured; no APK is built yet.
-  B25: null,
-  B26: null,
-  B27: null,
-  B28: null,
-  B29: null,
-  B30: null,
-  B31: null,
-  B32: null, // B25-B32 UI and i18n: owed at G10-G16.
-  B33: 'audit',
-  B34: null, // container scan: no image yet. Owed at G9.
-  B35: null, // secret scanning: not configured. Owed at G9.
-  B36: null, // log hygiene grep: owed at G6.
-  B37: 'unit',
-  B38: null, // screens implemented: owed at G15.
-  B39: null, // traceability completeness: INSTRUMENT DELETED at iteration 15. See V-3.
-  B40: 'governance',
+/**
+ * §5.13 · THE PARTITION. Every benchmark is in exactly one of three states:
+ *
+ *   instrumented   - a verifier measures it TODAY.
+ *   measurable-now - ITS SUBJECT ALREADY EXISTS and nothing measures it. This is the
+ *                    actionable set, and §5.13 says the instrument is built in the
+ *                    iteration the subject first exists - which for these has already
+ *                    passed. They are overdue, not pending.
+ *   blocked        - the subject does not exist yet. `blockedOn` names the artifact
+ *                    whose existence unblocks it, and `gate` is where that lands.
+ *
+ * The distinction between the last two is the whole point of A.1. "30 have no
+ * instrument" reads like one backlog; it is really a small overdue set and a large
+ * genuinely-future set, and only the first is a present failure.
+ */
+export const BENCHMARKS = {
+  B1: { verifier: 'vectors-node' },
+  B2: { verifier: 'vectors-divergence' },
+  B3: { verifier: 'coverage' },
+  B4: {
+    verifier: 'mutation',
+    partial:
+      'The instrument exists and runs. Its first reading is NOT a valid measurement: the harness sees 170 of 303 tests. Fixing that comes before any number is claimed.',
+  },
+  B5: {
+    verifier: 'coverage',
+    partial:
+      'The backend is small and growing, so 91.26% today is over a small denominator. The instrument exists and moves with the subject, which is what §5.13 asks.',
+  },
+  B6: {
+    verifier: 'mutation',
+    partial: 'Same instrument and same harness shortfall as B4.',
+  },
+  B7: { state: 'blocked', blockedOn: 'any React Native app code', gate: 'G10' },
+  B8: { state: 'blocked', blockedOn: 'the sync API', gate: 'G7' },
+  B9: { state: 'blocked', blockedOn: 'the app, to run 30 days against', gate: 'G17' },
+  B10: { verifier: 'unit' },
+  B11: { verifier: 'unit' },
+  B12: { verifier: 'money-lint' },
+  B13: { verifier: 'traceability' },
+  B14: { state: 'blocked', blockedOn: 'a built app to cold-start', gate: 'G18' },
+  B15: { state: 'blocked', blockedOn: 'a built app to cold-start', gate: 'G18' },
+  B16: { state: 'blocked', blockedOn: 'the Today screen', gate: 'G18' },
+  B17: { state: 'blocked', blockedOn: 'the keypad', gate: 'G18' },
+  B18: { state: 'blocked', blockedOn: 'the entry forms', gate: 'G18' },
+  B19: { state: 'blocked', blockedOn: 'the day-close screen', gate: 'G18' },
+  B20: { state: 'blocked', blockedOn: 'the reports screen', gate: 'G18' },
+  B21: { state: 'blocked', blockedOn: 'a device database with 10,000 entries', gate: 'G18' },
+  B22: { state: 'blocked', blockedOn: 'a built app to profile', gate: 'G18' },
+  B23: { state: 'blocked', blockedOn: 'the Today screen', gate: 'G18' },
+  B24: {
+    verifier: 'font',
+    partial: 'The FONT share of the budget is measured (1.87%). The APK itself does not exist, so the benchmark as a whole is not met - only bounded from below.',
+  },
+  B25: { state: 'blocked', blockedOn: 'the outbox and a 2G network profile', gate: 'G17' },
+  B26: { state: 'blocked', blockedOn: 'the design tokens', gate: 'G10' },
+  B27: { state: 'blocked', blockedOn: 'the design tokens', gate: 'G10' },
+  B28: { state: 'blocked', blockedOn: 'rendered components', gate: 'G11' },
+  B29: { state: 'blocked', blockedOn: 'the typography scale', gate: 'G10' },
+  B30: { state: 'blocked', blockedOn: 'the i18n bundles', gate: 'G16' },
+  B31: { state: 'blocked', blockedOn: 'rendered screens in three languages', gate: 'G16' },
+  B32: { state: 'blocked', blockedOn: 'money fields on screens', gate: 'G12' },
+  B33: { verifier: 'audit' },
+  B34: { state: 'blocked', blockedOn: 'a container image', gate: 'G9' },
+  B35: {
+    verifier: 'secrets',
+    partial:
+      'The REPO half is measured and clean over 102 files. The APK half is blocked on a build (G9), and gitleaks joins this scanner there rather than replacing it.',
+  },
+  B36: { state: 'blocked', blockedOn: 'a logger and a real day close to log', gate: 'G6' },
+  B37: { verifier: 'unit' },
+  B38: { state: 'blocked', blockedOn: 'the screens themselves', gate: 'G15' },
+  B39: {
+    verifier: 'traceability',
+    partial:
+      'Measured, and the answer is 0 of 26. Every row is held back by the api and screen columns, which cannot resolve until those artifacts exist. The instrument reports WHICH column holds each row, so the number is informative rather than merely low.',
+  },
+  B40: { verifier: 'governance' },
 };
+
+/** Back-compat shape for the rest of this file: id -> verifier id or null. */
+export const BENCHMARK_VERIFIERS = Object.fromEntries(
+  Object.entries(BENCHMARKS).map(([b, v]) => [b, v.verifier ?? null]),
+);
 
 /* ------------------------------------------------------------------ */
 const failures = [];
@@ -339,6 +421,28 @@ for (const b of declared) {
 }
 const unmeasured = declared.filter((b) => !BENCHMARK_VERIFIERS[b]);
 
+/**
+ * §5.13 partition. Anything without a verifier must say which of the two states it
+ * is in and, if blocked, what unblocks it - otherwise "no instrument" is a shrug
+ * rather than a plan.
+ */
+const overdue = [];
+const blocked = [];
+for (const b of declared) {
+  const e = BENCHMARKS[b];
+  if (e.verifier) continue;
+  if (e.state === 'measurable-now') {
+    if (!e.why) failures.push(`${b} is measurable-now but does not say why its subject exists`);
+    overdue.push(b);
+  } else if (e.state === 'blocked') {
+    if (!e.blockedOn) failures.push(`${b} is blocked but does not name the artifact that unblocks it`);
+    if (!e.gate) failures.push(`${b} is blocked but does not name the gate it lands at`);
+    blocked.push(b);
+  } else {
+    failures.push(`${b} has neither a verifier nor a state - it is simply unaccounted for`);
+  }
+}
+
 /* 3 · every gate marked PASS must cite something that still runs (§5.12.4) */
 const gateRows = [...read('BUILD_STATE.md').matchAll(/^\|\s*(G\d+)\s*\|([^|]*)\|([^|]*)\|(.*)$/gm)];
 let passGates = 0;
@@ -356,12 +460,108 @@ for (const [, gid, , status, evidence] of gateRows) {
   }
 }
 
-console.log(`  verifiers inventoried         : ${VERIFIERS.length}`);
-console.log(`  benchmarks mapped             : ${declared.length}`);
-console.log(`  benchmarks WITH an instrument : ${declared.length - unmeasured.length}`);
-console.log(`  benchmarks WITHOUT one        : ${unmeasured.length}`);
-console.log(`     ${unmeasured.join(' ')}`);
-console.log(`  gates marked PASS             : ${passGates}`);
+/**
+ * §5.13 A.5 · TWO NUMBERS, ALWAYS TOGETHER. "Benchmarks met" on its own is the exact
+ * shape of claim the SHA lock was hiding: it says nothing about how many of the forty
+ * could even be measured. INSTRUMENTED comes first because it bounds MET.
+ */
+const instrumented = declared.length - unmeasured.length;
+/**
+ * D.3 · EVERY RECORDED NUMBER MUST BE RE-DERIVABLE TODAY.
+ *
+ * G2's "52" and G3's "87 STRIDE rows" shared a shape worth naming: a number written
+ * into the evidence column that nobody could regenerate. One came from a command that
+ * cannot work; the other counted something other than what it was labelled. Neither
+ * would have survived being re-run.
+ *
+ * So the cheap derivations are performed HERE, on every run, and compared with what
+ * BUILD_STATE claims. Anything expensive enough to need the test suite is left to its
+ * own verifier; this covers the counts that live in prose, which is exactly where
+ * they rot.
+ */
+const buildState = read('BUILD_STATE.md');
+const rowOf = (gid) => buildState.split('\n').find((l) => l.startsWith(`| ${gid} |`)) ?? '';
+const countMatches = (file, re) => (read(file).match(re) ?? []).length;
+
+const DERIVATIONS = [
+  {
+    gate: 'G0',
+    what: 'lines in SPEC-DIGEST.md',
+    derive: () => read('SPEC-DIGEST.md').split('\n').length - 1,
+  },
+  {
+    gate: 'G1',
+    what: 'ADR count in TECH-DECISIONS.md',
+    derive: () => countMatches('TECH-DECISIONS.md', /^## ADR-/gm),
+  },
+  {
+    gate: 'G2',
+    what: 'ACTION-REQUIRED or resolved-autonomously lines in LEGAL-AUDIT.md',
+    derive: () =>
+      read('LEGAL-AUDIT.md')
+        .split('\n')
+        .filter((l) => /ACTION-REQUIRED|resolved autonomously/.test(l)).length,
+  },
+  {
+    gate: 'G3',
+    what: 'STRIDE threat rows in SECURITY-AUDIT.md',
+    derive: () => countMatches('SECURITY-AUDIT.md', /^\| T\d+\.\d+/gm),
+  },
+  {
+    gate: 'G5',
+    what: 'vectors in vectors.json',
+    derive: () => {
+      const f = JSON.parse(read('packages/formula-engine/vectors.json'));
+      return (Array.isArray(f) ? f : f.vectors).length;
+    },
+  },
+];
+
+let stale = 0;
+for (const d of DERIVATIONS) {
+  const row = rowOf(d.gate);
+  if (!row) {
+    failures.push(`${d.gate} has no row in BUILD_STATE.md to re-derive`);
+    continue;
+  }
+  const actual = d.derive();
+  /*
+   * Bold SEGMENTS, then digits inside each - not one regex spanning from `**` to
+   * `**`, which happily matched across the gap BETWEEN two bold runs and read
+   * "iteration 19" as the recorded figure. Caught by the negative test, which is the
+   * only reason it is not still there.
+   */
+  const numbers = [...row.matchAll(/\*\*([^*]+)\*\*/g)]
+    .flatMap((m) => [...m[1].matchAll(/\d[\d,]*/g)].map((n) => n[0]))
+    .map((n) => Number(n.replace(/,/g, '')));
+  if (numbers.length === 0) {
+    failures.push(
+      `${d.gate}'s evidence records no bolded number, so nothing can be re-derived ` +
+        `against it. Expected ${d.what} = ${actual}.`,
+    );
+    continue;
+  }
+  if (!numbers.includes(actual)) {
+    stale += 1;
+    failures.push(
+      `${d.gate} records ${numbers.join('/')} but ${d.what} is ${actual} TODAY. ` +
+        'A recorded number nobody can regenerate is the G2/G3 defect (D.3).',
+    );
+  }
+}
+console.log(`  gate numbers re-derived: ${DERIVATIONS.length}, ${stale} stale`);
+
+console.log(`  verifiers inventoried  : ${VERIFIERS.length}`);
+console.log('');
+console.log(`  BENCHMARKS INSTRUMENTED: ${instrumented} of ${declared.length}`);
+console.log(`  BENCHMARKS MET         : see BENCHMARKS-RESULTS.md (a benchmark with no`);
+console.log(`                           instrument cannot be claimed met)`);
+console.log('');
+console.log(`  overdue - subject EXISTS, nothing measures it : ${overdue.length}`);
+console.log(`     ${overdue.join(' ') || 'none'}`);
+console.log(`  blocked - subject does not exist yet          : ${blocked.length}`);
+console.log(`     ${blocked.join(' ')}`);
+console.log(`  gates marked PASS      : ${passGates}`);
 for (const n of notes) console.log(`  !    ${n}`);
 
 /* ---- regenerate VERIFIERS.md ------------------------------------- */
@@ -410,6 +610,50 @@ ${declared.length} have none yet; each carries the gate it is owed at, in
 |-----------|----------|
 ${bmRows}
 `;
+  /*
+   * A.1 - the partition also lands in BENCHMARKS-RESULTS.md, between markers, so the
+   * one file a reader opens for results carries it, and it still cannot drift from
+   * the tool that computes it.
+   */
+  if (existsSync('BENCHMARKS-RESULTS.md')) {
+    const rRaw = readFileSync('BENCHMARKS-RESULTS.md', 'utf8');
+    const rCrlf = rRaw.includes('\r\n');
+    const body = rRaw.split('\r\n').join('\n');
+    const START = '<!-- PARTITION:START';
+    const END = '<!-- PARTITION:END -->';
+    const s = body.indexOf(START);
+    const e = body.indexOf(END);
+    if (s !== -1 && e !== -1) {
+      const row = (b) => {
+        const x = BENCHMARKS[b];
+        if (x.verifier) return `| ${b} | instrumented | \`${x.verifier}\` | ${x.partial ?? '-'} |`;
+        if (x.state === 'measurable-now') return `| ${b} | **OVERDUE** | - | ${x.why} |`;
+        return `| ${b} | blocked | - | needs **${x.blockedOn}**, at ${x.gate} |`;
+      };
+      const table = [
+        `${START} - generated by tools/check-verifiers.mjs --update-md -->`,
+        '',
+        '## The partition (§5.13 A.1)',
+        '',
+        `**${instrumented} of ${declared.length} instrumented. ` +
+          `${overdue.length} overdue. ${blocked.length} blocked.**`,
+        '',
+        'OVERDUE means the subject already EXISTS and nothing measures it - a present',
+        'failure under §5.13, not a future task. BLOCKED names the artifact whose',
+        'existence unblocks it, and the gate that artifact arrives at.',
+        '',
+        '| benchmark | state | instrument | note |',
+        '|---|---|---|---|',
+        ...declared.map(row),
+        '',
+        END,
+      ].join('\n');
+      const out = body.slice(0, s) + table + body.slice(e + END.length);
+      writeFileSync('BENCHMARKS-RESULTS.md', rCrlf ? out.split('\n').join('\r\n') : out);
+      console.log('  rewrote the partition in BENCHMARKS-RESULTS.md');
+    }
+  }
+
   const existing = existsSync('VERIFIERS.md') ? readFileSync('VERIFIERS.md', 'utf8') : '';
   const crlf = existing.includes('\r\n');
   writeFileSync('VERIFIERS.md', crlf ? md.split('\n').join('\r\n') : md);

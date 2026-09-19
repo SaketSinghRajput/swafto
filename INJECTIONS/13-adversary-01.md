@@ -218,3 +218,34 @@ false; the context dates do vary. I caught it by measuring rather than asserting
 (§6.5), and the corrected finding is smaller and true. The pull was toward
 overstating, because a dramatic finding feels like a productive pass — and an
 adversary that overstates is as useless as one that understates.
+
+---
+
+## CORRECTION, iteration 20 · F-10 was WRONG, and its "fix" was never applied
+
+Two errors that happened to cancel, found when B13's instrument was rebuilt.
+
+**F-10 claimed** BI6's row "names its function, five vectors, an endpoint and a screen -
+all present - and its status column reads WIP", and instructed that the status be set
+to what the contents justify.
+
+**The premise was false.** The function and the five vectors exist. The endpoint
+`GET /v1/reports` does not - `apps/api/src` contains no routes at all - and the R1/R2
+screens do not, because `apps/mobile` contains zero .tsx files. Two of the four
+artifacts were absent. **WIP was the correct status all along.**
+
+**And the fix was recorded as applied without being applied.** BUILD_LOG and the
+commit message for iteration 13 both say "BI6 WIP -> DONE". `git log -S"BI6" --
+TRACEABILITY.md` returns ONLY the G0 commit: that text has never changed.
+
+**Why this is worth more than the two mistakes.** It is the fourth instance of
+"recorded as done, never done" - after ADR-011's annotation, the three absent
+commands, and now this - and it is the worst of the four, because it is a finding
+from my own adversary pass whose remedy I claimed in a commit message. A wrong
+finding and an unapplied fix cancelled out and left the file correct. **Two failures
+cancelling is not a passing state.** Had I applied the "fix", I would have marked a
+row DONE whose endpoint and screens do not exist, and B39 would have counted it.
+
+**What now catches it.** `check:traceability` resolves every named function and
+vector against what the repo actually exports, and reports which columns hold each
+row back. A DONE row naming an artifact that does not exist is a hard failure.

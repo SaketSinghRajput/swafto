@@ -24,7 +24,7 @@
     "db:emit": "node --experimental-strip-types tools/emit-sql.mjs",
     "check:prose": "node tools/check-prose.mjs",
     "check:sms": "node tools/check-sms-templates.mjs",
-    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run typecheck && npm run check:verifiers",
+    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:verifiers",
     "check:sms:segments": "node tools/check-sms-segments.mjs",
     "check:tooling": "node tools/check-tooling.mjs",
     "detection-rate": "node tools/detection-rate.mjs",
@@ -32,11 +32,16 @@
     "check:generated": "node tools/check-generated.mjs",
     "check:font": "node tools/check-font-coverage.mjs",
     "check:money": "node tools/check-money-lint.mjs",
-    "coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='packages/formula-engine/src/**' --coverage.reporter=text --coverage.reporter=json-summary",
+    "coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='packages/formula-engine/src/**' --coverage.include='apps/api/src/**' --coverage.reporter=text --coverage.reporter=json-summary",
     "check:verifiers": "node tools/check-verifiers.mjs",
-    "prove:verifiers": "node tools/check-verifiers.mjs --prove"
+    "prove:verifiers": "node tools/check-verifiers.mjs --prove",
+    "check:traceability": "node tools/check-traceability.mjs",
+    "check:secrets": "node tools/check-secrets.mjs",
+    "mutation": "stryker run"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@types/pg": "^8.23.1",
     "@typescript-eslint/parser": "^8.70.0",
     "@vitest/coverage-v8": "^5.0.1",

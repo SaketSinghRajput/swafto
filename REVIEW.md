@@ -15,7 +15,36 @@ static font instances at 42 KB against 858 KB - an apparent 85% saving - contain
 or family names; and the near-miss on Noto, where the family name was verified and
 the licence was not.
 
-*Ask: what did I check - the label or the payload? Open the payload.* It generalises
+*Ask: what did I check - the label or the payload? Open the payload.*
+
+**A12 · THE SCOPE OF THE DEFENCE.** What is this guard scoped BY, and does the test
+data vary along THAT axis? Not "is there enough data" (A1) but "does the plant move
+in the dimension the guard is written in". Instance: the append-only trigger is
+scoped by COLUMN, and every test only ever updated `amount` - so narrowing it to one
+column left the suite green on the authoritative store.
+
+*Ask of every guard: is it scoped by column, table, path, role, entity type,
+language, platform, or environment? Then plant a defect that moves along that axis
+specifically.* The four-column sweep is the template, and the part to keep is
+choosing columns with NO CHECK constraint, so a rejection can only be the trigger. A
+plant caught by the wrong guard passes for the right reason and teaches nothing.
+
+**The scoping axis of every guard now in place**, so a future pass has somewhere to
+start rather than rediscovering them:
+
+| guard | scoped by | does a plant move along it? |
+|---|---|---|
+| append-only trigger | **column** | yes, since iteration 19 - four unconstrained columns, both engines |
+| closed-day trigger (CP-4) | **day state**, and the day named by the row | partly - planted for an entry into a closed day; NOT yet planted for a correction whose `corrects_day_id` is closed while its own `day_id` is open |
+| cross-tenant RLS | **shop_id**, per table | the policy is asserted present on all six tables; a plant that READS across tenants is owed at G8 when routes exist |
+| money lint | **file path and identifier name** | yes - planted in the engine and outside it, and on a money-named vs non-money identifier |
+| rate limiter | **rule identity and identifier value** | yes - per-rule and per-identifier plants, plus the telemetry-only rule |
+| template checker | **language** | partly - the copy-vs-constant plant is English-only, because only English states a duration today. It fires on any language the moment one gains a number |
+| font coverage | **weight**, and **codepoint block** | yes - all three weights checked, and the plant used a codepoint outside the Odia block |
+
+Two of those say **partly**, and that is the honest answer rather than a tick. Both
+are owed plants, recorded here so the gap is visible: the correction-into-closed-day
+axis, and a genuine cross-tenant read. It generalises
 well past fonts - a migration file that exists and is empty, a translation bundle
 with the right key count and English values, a screenshot of the right screen with
 stale data, a dependency at the right version from the wrong registry. Where an

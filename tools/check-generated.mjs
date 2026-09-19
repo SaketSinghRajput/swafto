@@ -20,6 +20,7 @@ const GENERATED = [
   // §5.12: the verifier inventory is generated from the same data the check reads,
   // so the table cannot drift from the thing it documents.
   { file: 'VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
+  { file: 'BENCHMARKS-RESULTS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
 ];
 
 const before = new Map(GENERATED.map((g) => [g.file, readFileSync(g.file, 'utf8')]));

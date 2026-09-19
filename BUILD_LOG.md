@@ -1353,3 +1353,124 @@ Injection 14 persisted verbatim and injections.lock RE-PINNED deliberately — t
 sanctioned reason, a new injection arriving. The lock caught the unpinned file first.
 
 NEXT — DC-003's compensating control, then the OTP service on the limiter.
+
+## 2026-09-19 · Iteration 20 · Injection 14: instruments before subjects
+
+### A.1 · THE PARTITION — "30 MISSING" WAS THE WRONG SHAPE
+
+Splitting the 30 by whether their SUBJECT EXISTS changes what the number means:
+
+  instrumented    10
+  OVERDUE          6   B4 B5 B6 B13 B35 B39 - subject exists, nothing measures it.
+                       A PRESENT FAILURE under §5.13, not a backlog item.
+  blocked         24   subject does not exist; each names the artifact and the gate.
+
+All six overdue are now closed. **16 of 40 instrumented, 0 overdue.**
+
+  B5  backend coverage - the `coverage` script existed and simply never pointed at
+      apps/api. One line. FIRST MEASUREMENT: 91.26% lines against >= 85%. MET.
+  B13 traceability empty cells - instrument rebuilt after I deleted it at iteration
+      15. 0 empty cells. MET.
+  B39 traceability completeness - 0 of 26, and the instrument says WHY: every row is
+      held back by the api and screen columns, which cannot resolve because there
+      are no routes and no components.
+  B35 secret scanning, repo half - new scanner, 102 files, 9 high-confidence rules,
+      one allowlist entry carrying its reason. 0 secrets. APK half stays blocked.
+  B4/B6 mutation score - Stryker installed and running. See the provisional note.
+
+THE TRACEABILITY INSTRUMENT FOUND SOMETHING ON ITS FIRST RUN, and it is the A11
+pattern again. The obvious implementation checks for empty cells; every cell is
+full, so that version passes. Resolving the cells against reality instead:
+**26 unresolved references - 8 engine functions and 18 vectors NAMED IN THE MATRIX
+THAT DO NOT EXIST.** parseSalesEntry, captureCountedCash, in2-purchase-modes and 23
+more. Those rows are TODO, so naming a planned artifact is a plan rather than a lie -
+but the count was invisible until something resolved it, and at G19 it would have
+been discovered as a wall rather than a list.
+
+AND A WORSE ONE, TWO ERRORS THAT CANCELLED. Adversary pass F-10 claimed BI6's four
+artifacts were "all present" and instructed that its status be promoted to DONE.
+
+  - THE PREMISE WAS FALSE. apps/api/src contains no routes at all and apps/mobile
+    contains zero .tsx files, so the endpoint and both screens did not exist. WIP
+    was correct all along.
+  - AND THE FIX WAS RECORDED AS APPLIED WITHOUT BEING APPLIED. BUILD_LOG and the
+    iteration-13 commit message both say "BI6 WIP -> DONE". Searching the history of
+    that file for BI6 returns ONLY the G0 commit.
+
+  Fourth instance of "recorded as done, never done" - and the worst, because it was
+  my own adversary finding whose remedy I claimed in a commit message. TWO FAILURES
+  CANCELLING IS NOT A PASSING STATE: had I applied the "fix", a row with an imaginary
+  endpoint and imaginary screens would now be counted toward B39. The adversary pass
+  is annotated rather than rewritten.
+
+Also fixed: TRACEABILITY's header called BI5 and BI6 "the two known reservations".
+BI6 is not reserved - it is decided, implemented and vector-covered, waiting on an
+endpoint and two screens.
+
+### A.5 · TWO NUMBERS, ALWAYS TOGETHER
+
+check:verifiers now prints INSTRUMENTED before MET, because MET is bounded by it and
+"benchmarks met" alone is the exact shape of claim the lock was hiding.
+
+### B4/B6 · THE HARNESS AGAIN, EXACTLY AS §5.13 PREDICTS
+
+Stryker runs. First reading on money.ts: **9.66%**, and it is NOT a measurement of
+B4. Its dry run reports "Ran 170 tests"; the suite has 303. It sees the five
+formula-engine and rejects specs and never sees sms-templates (84), append-only (20),
+rate-limit (15), closed-day-guard (7), postgres (6) or the lint rule (1) - so every
+mutant is judged by half a suite, and the missing half is every database guard.
+
+B3 read 57.73% and moved 28 points on an unchanged engine. B4 reads 9.66% with a
+demonstrably incomplete harness. Recorded as PROVISIONAL, not claimed, and NOT
+counted as an attempt. One thing in it is worth keeping either way: 12
+arithmetic-operator survivors inside the audited money helpers. If those survive the
+harness fix, they are a real finding about the money path.
+
+Cost accepted: Stryker brings 2 MODERATE advisories (qs, via typed-rest-client),
+dev-only and transitive. B33 is high/critical and remains 0. Precedent OD-8.
+
+### D.2 · PROJECTION.md
+
+Written now rather than at 40. 6 of 21 gates, 0 of 27 screens, 0 API routes.
+Estimate 34 iterations remaining against 40 left - 54 of 60 - with the reasons it is
+probably optimistic stated plainly: twelve of those 34 are client gates on ground
+with no code, and six injections in twenty iterations are not priced in. Ranked
+cut-list, cheapest first: the BI SCREENS but never the BI engine (gated 14-21 days,
+so it costs a new user nothing in month one), then eight non-P0 screens, then reports
+depth. Never cut: the day close, the four forms, Odia, offline, append-only, the
+money path, the 17sp floor, H8.
+
+### C · A12 · THE SCOPE OF THE DEFENCE
+
+Added, plus the retroactive audit the injection asks for: every guard now in place,
+its scoping axis, and whether a plant moves along it. Two say PARTLY and say so
+rather than ticking - the closed-day trigger has no plant for a CORRECTION whose
+corrects_day_id is closed while its own day is open, and cross-tenant isolation has
+no plant that actually reads across tenants. Both owed, both written down.
+
+### D.3 · EVERY RECORDED NUMBER MUST BE RE-DERIVABLE
+
+Five cheap derivations now run on every check:verifiers. THREE MORE STALE NUMBERS,
+after G2's and G3's:
+
+  G0 recorded 526 lines of SPEC-DIGEST - it is 569.
+  G1 recorded 12 ADRs - there are 17.
+  G5 recorded its vector count in a form nothing could re-derive.
+
+All corrected. Negative-tested by staling G1 to 99.
+
+The check itself had the bug it was hunting: one regex spanned the gap BETWEEN two
+bold runs and read "iteration 19" as a recorded figure. The negative test is the only
+reason it is not still there.
+
+Commands:
+  $ npm run check:all       -> 13 checks, all pass
+  $ npx vitest run          -> 303 passed, 0 skipped
+  $ npm run check:verifiers -> 16 of 40 instrumented, 0 overdue, 5 numbers re-derived
+  $ npm run coverage        -> engine 85.71% branch, backend 91.26% lines
+
+OWED FROM THIS INJECTION, NOT DONE: section B, the canonical value registry - the
+largest remaining item and the one that kills the TTL class outright; the mutation
+harness; D.1's rejects.json before G7. All recorded in BUILD_STATE's RESUME.
+
+NEXT - the value registry, then the mutation harness, then DC-003's control.

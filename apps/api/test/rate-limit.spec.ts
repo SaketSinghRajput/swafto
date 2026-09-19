@@ -140,7 +140,7 @@ describe('B.2 · rate limits are persistent and shared', () => {
     // The key must actually matter - a different secret gives a different bucket,
     // which is what makes the stored value unreadable to anyone without it.
     const other = new RateLimiter(runner(primary), {
-      secret: 'a-completely-different-secret',
+      secret: 'a different test key',
       now: clock.now,
     });
     expect(other.bucket(OTP_LIMITS.sendPerPhoneDaily, PHONE)).not.toBe(

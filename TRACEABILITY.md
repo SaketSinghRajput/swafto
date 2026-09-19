@@ -1,7 +1,13 @@
 # TRACEABILITY
 
 One row per feature-map ID. Five columns. `npm run check:traceability` fails on any
-empty cell except the two known reservations (BI5, BI6).
+empty cell except the ONE reservation, BI5, which D5 makes unbuildable.
+
+BI6 was listed here as a second reservation until iteration 20. It is not reserved -
+it was DECIDED (AD-001), implemented, and covered by five vectors. Its row reads WIP
+because two of its four artifacts do not exist yet: `GET /v1/reports` and the R1/R2
+screens. That is the correct status, and the checker now reports exactly which
+columns are holding a row back.
 
 Status legend: `TODO` not started · `WIP` in progress · `DONE` all five cells real and verified.
 
