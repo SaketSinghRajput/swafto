@@ -1,6 +1,6 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 5
+Updated: 2026-09-19T00:00:00Z   Iteration: 6
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -14,7 +14,7 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 | G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 BLOCKED-ON-HUMAN** |
 | G3 | Security audit / STRIDE | **PASS** | `npm audit --audit-level=high` -> **found 0 vulnerabilities**; `STRIDE rows: 87`; 21 items mirrored into TRACEABILITY.md |
 | G4 | Schema + migrations, SQLite & Postgres | **PASS** | `vitest run --dir packages` -> **21 passed, 0 skipped** on BOTH engines. up/down/up clean; UPDATE and DELETE on `entries` rejected by trigger (SQLite) and trigger+REVOKE (Postgres); RLS forced on all 6 tenant tables |
-| G5 | **Formula Engine + vectors.json** | TODO | needs `test:vectors` under Node AND Hermes, >= 30 vectors, diff empty |
+| G5 | **Formula Engine + vectors.json** | **PASS** | **46 vectors** (>=30). Node: `ALL PASS`. Hermes 0.12 real VM: `no vector threw`. Diff: `divergence: NONE`. Both checks negative-tested - injected errors DO fail them. |
 | G6 | Auth service (phone + OTP) | TODO | needs integration tests |
 | G7 | Sync API (idempotent) | TODO | needs 3x replay of 200-entry batch, byte-identical |
 | G8 | Read API (shared engine) | TODO | needs canonical day through API == vectors.json |
@@ -90,6 +90,30 @@ sheet and the one handwritten photograph that exists on disk:
   (`open|ready|closed|not_closed`); the decisions doc state machine (p.8) shows all
   five. Both shorter lists are lossy and both `not_started` and `not_closed` are
   load-bearing. **Flagged because it changes a schema the prompt specified literally.**
+- **OD-10 · BI4's "stock proxy" cannot be implemented as written.** The build prompt
+  specifies BI4 as "(P7 + stock proxy) vs P8", but D5 removes all item and stock data
+  and the architecture states "no input collects them, so no store holds them". A
+  stock proxy would have to be invented from data that does not exist. **Used the
+  Day-Close doc p.9 formula instead: (credit_out + supplier_out) / cash**, which is
+  computable from the ledger alone. Flagged because it departs from the prompt's
+  literal wording.
+- **OD-11 · OP5 uses the MEDIAN, not the mean.** The prompt says "trailing median";
+  Day-Close p.9 says "mean(B, 7d)". Took the median: one festival day would drag a
+  7-day mean far enough to tell a shopkeeper his ordinary Tuesday was a bad day.
+  Vector `op5-uses-median-not-mean` encodes the difference explicitly (median 1,000
+  vs mean 4,800 on the same series).
+- **OD-12 · OP6 "projected cash" is today's expected balance, NOT a forecast.**
+  Forecasting future sales would be exactly the guess this product removed. Confirmed
+  by the canonical example on Day-Close p.5, where the quoted "expected balance 6,300"
+  is today's P3. Pessimistic by construction, which is the right way to be wrong about
+  solvency.
+- **OD-13 · The Hermes available for desktop cross-checking is old (0.12, no `class`
+  support).** It is a REAL Hermes VM, so the numeric and JSON semantics we care about
+  diffing are genuine, but its syntax support is far behind the Hermes that ships with
+  RN 0.87. Consequence: `MoneyError` became a factory function rather than
+  `class ... extends Error`. That is defensible on its own merits (subclassing Error
+  breaks `instanceof` under downleveling), but the constraint is an artifact of the
+  test tool, not of the target runtime. **Revisit if a newer desktop Hermes appears.**
 - **OD-9 · `section_skips` is a store the architecture document never names.** D8
   requires "skipped" and "untouched" to be distinguishable, but a skip has no entry to
   record it and D2 Days has nowhere to put it. Added `section_skips (shop_id, day_id,
@@ -139,7 +163,7 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Next action
 
-**G5 - the Formula Engine.** (G0-G4 complete.) This is the heart of the product: pure TypeScript, IN1-IN7 / P1-P8 / OP1-OP6 / BI1-BI4, and >= 30 golden vectors run under Node AND Hermes with a diff that fails on any disagreement.
+**G6 - Auth service (phone + OTP).** (G0-G5 complete; the domain core is done and proven.)
 
 <!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN

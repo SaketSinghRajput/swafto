@@ -16,3 +16,6 @@ ios/Pods/
 .terraform/
 *.tfstate
 *.tfstate.*
+.vectors-node.json
+.vectors-hermes.json
+.hermes-bundle.js

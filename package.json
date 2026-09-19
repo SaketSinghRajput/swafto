@@ -25,6 +25,9 @@
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2",
+    "hermes-engine": "^0.11.0",
+    "hermes-engine-cli": "^0.12.0",
     "pg": "^8.23.0",
     "typescript": "^5.9.2",
     "vitest": "^5.0.1"

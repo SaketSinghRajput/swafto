@@ -1,0 +1,3436 @@
+{
+  "$schema": "https://swafto.app/schemas/vectors-v1.json",
+  "generatedBy": "tools/author-vectors.ts",
+  "note": "GOLDEN TEST VECTORS. Expected values are HAND-WRITTEN against the specification, never computed from the engine. Executed under Node AND Hermes; CI fails if the two runtimes disagree on any vector (ADR-012).",
+  "count": 46,
+  "vectors": [
+    {
+      "name": "canonical-15-july",
+      "proves": "Every figure on the designed screens. This is the anchor: the expected values are taken from the published design, not from the engine.",
+      "source": "SWAFTO-Retail-Desk-Day-Close.pdf p.5 (Today) and p.7 (Cash check working)",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": 605000,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000001",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 678000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000002",
+            "dayId": "2026-07-15",
+            "section": "upi_sales",
+            "amount": 312000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000003",
+            "dayId": "2026-07-15",
+            "section": "udhar_sales",
+            "amount": 155000,
+            "mode": "udhar",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000004",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 68000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000005",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 50000,
+            "mode": "shop_stock",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000006",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 320000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000007",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 240000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000008",
+            "dayId": "2026-07-15",
+            "section": "withdrawal",
+            "amount": 50000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 1909000,
+        "priorSupplierOutstanding": 2760000
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [
+          {
+            "partyId": "agarwal",
+            "amount": 1200000,
+            "purchasedOn": "2026-07-01",
+            "dueDate": "2026-07-16"
+          }
+        ],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 918000,
+        "p2": 438000,
+        "p3": 630000,
+        "p4": 1145000,
+        "p5": 320000,
+        "p6": 118000,
+        "p7": 1824000,
+        "p8": 2760000,
+        "profit": 707000,
+        "op1Difference": -25000,
+        "op1Status": "short",
+        "op1ReasonRequired": true,
+        "op6": [
+          {
+            "partyId": "agarwal",
+            "dueDate": "2026-07-16",
+            "amountDue": 1200000,
+            "projectedCash": 630000,
+            "shortfall": 570000
+          }
+        ],
+        "nextOpeningCash": null
+      }
+    },
+    {
+      "name": "zero-day",
+      "proves": "A day with no entries produces zeros, not nulls, and no division blows up.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": 150000,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 0,
+        "p2": 0,
+        "p3": 150000,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "p7": 0,
+        "p8": 0,
+        "profit": 0,
+        "op1Difference": 0,
+        "op1Status": "balanced",
+        "op1ReasonRequired": false,
+        "op2BasisPoints": null,
+        "op3BasisPoints": null
+      }
+    },
+    {
+      "name": "only-udhar",
+      "proves": "A pure-credit day moves no cash at all. P3 equals opening, P7 rises, and profit still counts the sale because a sale on credit is a sale.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000009",
+            "dayId": "2026-07-15",
+            "section": "udhar_sales",
+            "amount": 200000,
+            "mode": "udhar",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          }
+        ],
+        "priorCreditOutstanding": 50000,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 0,
+        "p2": 0,
+        "p3": 150000,
+        "p4": 200000,
+        "p6": 0,
+        "p7": 250000,
+        "profit": 200000,
+        "op1Status": "not_counted",
+        "op1Difference": null
+      }
+    },
+    {
+      "name": "only-expenses",
+      "proves": "An expenses-only day reduces cash and makes a loss.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000010",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 30000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000011",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 20000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 0,
+        "p2": 30000,
+        "p3": 120000,
+        "p4": 0,
+        "p6": 50000,
+        "profit": -50000
+      }
+    },
+    {
+      "name": "cash-shortfall",
+      "proves": "OP1 short: counted - expected, signed. A shortfall is ordinary shop life.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": 580000,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000012",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 500000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000013",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 45000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 605000,
+        "op1Difference": -25000,
+        "op1Status": "short",
+        "op1ReasonRequired": true
+      }
+    },
+    {
+      "name": "cash-surplus",
+      "proves": "OP1 extra: counted - expected, signed. A shortfall is ordinary shop life.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": 630000,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000014",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 500000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000015",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 45000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 605000,
+        "op1Difference": 25000,
+        "op1Status": "extra",
+        "op1ReasonRequired": true
+      }
+    },
+    {
+      "name": "exact-balance",
+      "proves": "OP1 balanced: counted - expected, signed. A shortfall is ordinary shop life.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": 605000,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000016",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 500000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000017",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 45000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 605000,
+        "op1Difference": 0,
+        "op1Status": "balanced",
+        "op1ReasonRequired": false
+      }
+    },
+    {
+      "name": "d8-skip-vs-untouched-all-skipped",
+      "proves": "Eight explicitly skipped sections produce the SAME totals as an empty day but a DIFFERENT day state: ready, with the cash check unlocked.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": [
+            "cash_sales",
+            "upi_sales",
+            "udhar_sales",
+            "expense",
+            "purchase",
+            "udhar_collection",
+            "party_payment",
+            "withdrawal"
+          ]
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 150000,
+        "p4": 0,
+        "cashCheckUnlocked": true,
+        "dayState": "ready",
+        "progressDone": 9,
+        "progressTotal": 10
+      }
+    },
+    {
+      "name": "d8-skip-vs-untouched-all-untouched",
+      "proves": "The identical zero totals with NOTHING skipped leave the cash check LOCKED and the day open. Same number, different meaning - the whole of D8.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 150000,
+        "p4": 0,
+        "cashCheckUnlocked": false,
+        "dayState": "open",
+        "progressDone": 1,
+        "progressTotal": 10
+      }
+    },
+    {
+      "name": "d8-one-untouched-section-locks-the-cash-check",
+      "proves": "Seven of eight is not enough. E6: one untouched section re-locks the check.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": [
+            "cash_sales",
+            "upi_sales",
+            "udhar_sales",
+            "purchase",
+            "udhar_collection",
+            "party_payment",
+            "withdrawal"
+          ]
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "cashCheckUnlocked": false,
+        "dayState": "open",
+        "progressDone": 8
+      }
+    },
+    {
+      "name": "e3-entry-unskips-a-section",
+      "proves": "E3: an entry into a section marked \"Nothing to enter\" un-skips it. The entry wins over a stale skip row.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": [
+            "expense"
+          ]
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000018",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 10000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "expenseSectionState": "entered",
+        "p6": 10000
+      }
+    },
+    {
+      "name": "d2-cash-equation-five-modes",
+      "proves": "THE most likely thing to be built wrong. All five expense modes count toward P6; ONLY the cash one reduces the cash balance. If shop stock reached P2 every expected balance would be wrong by that amount.",
+      "source": "Decisions D2; Day-Close gap 02",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000019",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 10000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000020",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 20000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000021",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 30000,
+            "mode": "other",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000022",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 40000,
+            "mode": "udhar",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000023",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 50000,
+            "mode": "shop_stock",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p6": 150000,
+        "p2": 10000,
+        "p3": 140000,
+        "profit": -150000
+      }
+    },
+    {
+      "name": "d2-purchase-modes-only-cash-moves-cash",
+      "proves": "Same rule on purchases. A udhar purchase creates a supplier due, not an outflow.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000024",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 100000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000025",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 200000,
+            "mode": "udhar",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "s1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000026",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 30000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p5": 330000,
+        "p2": 100000,
+        "p3": 50000,
+        "p8": 200000
+      }
+    },
+    {
+      "name": "d3-withdrawal-excluded-from-profit",
+      "proves": "Withdrawal reduces cash, NEVER appears in expenses, and NEVER touches profit. The sheet formula is correct precisely because withdrawal is absent from it. If this vector fails, someone \"fixed\" D3 back.",
+      "source": "Decisions D3; Day-Close gap 03",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000027",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 500000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000028",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 100000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000029",
+            "dayId": "2026-07-15",
+            "section": "withdrawal",
+            "amount": 200000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p2": 300000,
+        "p3": 350000,
+        "p6": 100000,
+        "profit": 400000
+      }
+    },
+    {
+      "name": "d3-withdrawal-upi-does-not-move-cash",
+      "proves": "A UPI withdrawal is still not an expense, and does not reduce cash in the box.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000030",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 100000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000031",
+            "dayId": "2026-07-15",
+            "section": "withdrawal",
+            "amount": 70000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p2": 0,
+        "p3": 250000,
+        "p6": 0,
+        "profit": 100000
+      }
+    },
+    {
+      "name": "collection-non-cash-reduces-debt-not-cash",
+      "proves": "A customer who settles by UPI has settled: P7 falls. But no cash entered the box, so P1 and P3 are untouched. This is why P1 uses the cash slice and P7 the total.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000032",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 100000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000033",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 50000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c2"
+          }
+        ],
+        "priorCreditOutstanding": 500000,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 50000,
+        "p3": 200000,
+        "p7": 350000
+      }
+    },
+    {
+      "name": "party-payment-non-cash-reduces-supplier-debt-only",
+      "proves": "Mirror image on the supplier side.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000034",
+            "dayId": "2026-07-15",
+            "section": "party_payment",
+            "amount": 80000,
+            "mode": "upi",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "s1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000035",
+            "dayId": "2026-07-15",
+            "section": "party_payment",
+            "amount": 20000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "s1"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 400000
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p2": 20000,
+        "p3": 130000,
+        "p8": 300000
+      }
+    },
+    {
+      "name": "d6-gap-never-interpolates",
+      "proves": "A not_closed day yields NO next opening cash. The app never invents a number to bridge a gap - it asks for a fresh count.",
+      "source": "Decisions D6",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "not_closed",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000036",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 40000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "dayState": "not_closed",
+        "nextOpeningCash": null,
+        "op1Status": "not_counted"
+      }
+    },
+    {
+      "name": "carry-forward-uses-counted-not-expected",
+      "proves": "THE AUDIT CHAIN. Tomorrow opens on what a human counted (6,050), never on what the system expected (6,300). Every later balance inherits a physically verified number.",
+      "source": "architecture DFD 4.7; Decisions D6",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "closed",
+          "openingCash": 150000,
+          "countedCash": 605000,
+          "skippedSections": [],
+          "differenceReason": "gave_change"
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000037",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 678000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000038",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 240000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000039",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 320000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000040",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 68000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000041",
+            "dayId": "2026-07-15",
+            "section": "withdrawal",
+            "amount": 50000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 630000,
+        "op1Difference": -25000,
+        "nextOpeningCash": 605000,
+        "dayState": "closed"
+      }
+    },
+    {
+      "name": "d7-correction-changes-today-only",
+      "proves": "A correction posted today carrying correctsDayId changes TODAY figures and is an ordinary entry in every other respect. The referenced day is untouched - proven at the database level in G4.",
+      "source": "Decisions D7",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000042",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 100000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000043",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 18000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "correctsDayId": "2026-07-12"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 118000,
+        "p3": 268000,
+        "p4": 118000
+      }
+    },
+    {
+      "name": "udhar-crosses-30-days",
+      "proves": "A customer at 32 days gets \"days_since\", NEVER \"overdue\" - he has no agreed term to be late against. Two vocabularies, deliberately (D4).",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 790000,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": [
+          {
+            "partyId": "c-old",
+            "amount": 500000,
+            "since": "2026-06-13"
+          },
+          {
+            "partyId": "c-new",
+            "amount": 290000,
+            "since": "2026-07-01"
+          }
+        ]
+      },
+      "expect": {
+        "agingVocabularies": {
+          "c-old": "days_since",
+          "c-new": "current"
+        }
+      }
+    },
+    {
+      "name": "supplier-overdue-only-with-a-due-date",
+      "proves": "A supplier WITH a passed due date is \"overdue\". A supplier with no due date is aged in days even at 66 days, because nothing was agreed.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 1000000
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [
+          {
+            "partyId": "s-dated",
+            "amount": 400000,
+            "purchasedOn": "2026-07-01",
+            "dueDate": "2026-07-10"
+          },
+          {
+            "partyId": "s-undated",
+            "amount": 600000,
+            "purchasedOn": "2026-05-10"
+          }
+        ],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "agingVocabularies": {
+          "s-dated": "overdue",
+          "s-undated": "days_since"
+        }
+      }
+    },
+    {
+      "name": "op6-names-party-amount-date-and-shortfall",
+      "proves": "OP6 must name ALL FOUR or it is not actionable. Also: dues are consumed in date order against a running balance, so the second and third are flagged rather than all three cleared.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000044",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 450000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [
+          {
+            "partyId": "s-a",
+            "amount": 400000,
+            "purchasedOn": "2026-07-01",
+            "dueDate": "2026-07-16"
+          },
+          {
+            "partyId": "s-b",
+            "amount": 300000,
+            "purchasedOn": "2026-07-02",
+            "dueDate": "2026-07-17"
+          },
+          {
+            "partyId": "s-c",
+            "amount": 100000,
+            "purchasedOn": "2026-07-03",
+            "dueDate": "2026-07-18"
+          }
+        ],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 600000,
+        "op6": [
+          {
+            "partyId": "s-b",
+            "dueDate": "2026-07-17",
+            "amountDue": 300000,
+            "projectedCash": 200000,
+            "shortfall": 100000
+          },
+          {
+            "partyId": "s-c",
+            "dueDate": "2026-07-18",
+            "amountDue": 100000,
+            "projectedCash": 0,
+            "shortfall": 100000
+          }
+        ]
+      }
+    },
+    {
+      "name": "op6-silent-when-cash-covers-the-dues",
+      "proves": "No warning when the projected balance covers everything in the horizon.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000045",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 2000000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [
+          {
+            "partyId": "s-a",
+            "amount": 400000,
+            "purchasedOn": "2026-07-01",
+            "dueDate": "2026-07-16"
+          }
+        ],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op6": []
+      }
+    },
+    {
+      "name": "op6-ignores-dues-beyond-the-horizon",
+      "proves": "A due 40 days out is not a warning today. Default horizon is 7 days.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [
+          {
+            "partyId": "s-far",
+            "amount": 9900000,
+            "purchasedOn": "2026-07-01",
+            "dueDate": "2026-08-24"
+          }
+        ],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op6": [],
+        "op4Count": 0
+      }
+    },
+    {
+      "name": "rounding-amounts-ending-in-1-paise",
+      "proves": "Integer paise are exact. 1-paise tails do not drift.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 1,
+          "countedCash": 3,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000046",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 1,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000047",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 1,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 2,
+        "p3": 3,
+        "op1Difference": 0,
+        "op1Status": "balanced"
+      }
+    },
+    {
+      "name": "rounding-amounts-ending-in-9-paise",
+      "proves": "Three amounts of 9 paise sum to exactly 27, not 26.999999999999996.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 0,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000048",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 9,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000049",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 9,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000050",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 9,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 27,
+        "p3": 27,
+        "p4": 27
+      }
+    },
+    {
+      "name": "op2-division-rounding-one-third",
+      "proves": "A recurring decimal is rounded HALF-AWAY-FROM-ZERO to basis points, and the exact numerator and denominator survive so the working can be re-derived.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000051",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 30000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000052",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 10000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op2BasisPoints": 3333,
+        "op2Numerator": 10000,
+        "op2Denominator": 30000
+      }
+    },
+    {
+      "name": "op2-division-rounding-half-up",
+      "proves": "An exact .5 basis point rounds AWAY FROM ZERO, not to even.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000053",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 16000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000054",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 100,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op2BasisPoints": 63
+      }
+    },
+    {
+      "name": "op3-collection-efficiency-division",
+      "proves": "collected / (opening udhar + udhar sales).",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000055",
+            "dayId": "2026-07-15",
+            "section": "udhar_sales",
+            "amount": 100000,
+            "mode": "udhar",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000056",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 75000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          }
+        ],
+        "priorCreditOutstanding": 200000,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op3BasisPoints": 2500
+      }
+    },
+    {
+      "name": "op5-uses-median-not-mean",
+      "proves": "THE OP5 CONFLICT RESOLVED. Baseline days are 1,000 / 1,000 / 1,000 / 1,000 / 20,000. Median = 1,000; mean = 4,800. Today is 1,100. Against the median the day is UP, which is true. Against the mean it would read DOWN, which would tell a shopkeeper his ordinary day was bad because of one festival last week.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000057",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 110000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 100000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": -50000,
+            "countedCash": 100000,
+            "expectedCash": 100000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 100000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": -50000,
+            "countedCash": 100000,
+            "expectedCash": 100000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 100000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": -50000,
+            "countedCash": 100000,
+            "expectedCash": 100000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 100000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": -50000,
+            "countedCash": 100000,
+            "expectedCash": 100000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 2000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 1850000,
+            "countedCash": 100000,
+            "expectedCash": 100000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op5Baseline": 100000,
+        "op5Direction": "up",
+        "op5TodayNetSales": 110000
+      }
+    },
+    {
+      "name": "op5-no-baseline-is-not-flat",
+      "proves": "No baseline and no change are different statements. With no trailing days the direction is no_baseline, never flat.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000058",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 100000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op5Direction": "no_baseline",
+        "op5Baseline": null
+      }
+    },
+    {
+      "name": "op5-median-even-count",
+      "proves": "An even-length window averages the two middle values, rounded explicitly.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000059",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 100000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 100000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": -50000,
+            "countedCash": 100,
+            "expectedCash": 100
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 200000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 50000,
+            "countedCash": 100,
+            "expectedCash": 100
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 300000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 150000,
+            "countedCash": 100,
+            "expectedCash": 100
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 400000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 250000,
+            "countedCash": 100,
+            "expectedCash": 100
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "op5Baseline": 250000,
+        "op5Direction": "down"
+      }
+    },
+    {
+      "name": "bi-gates-shut-at-13-closed-days",
+      "proves": "At 13 closed days every gate is shut and each reports its requirement AND the progress, so the GateCard can say \"after 14 closed days, 13 so far\".",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "bi1Available": false,
+        "bi1Required": 14,
+        "bi1SoFar": 13,
+        "bi2Available": false,
+        "bi3Available": false,
+        "bi3Required": 21,
+        "bi4Available": false
+      }
+    },
+    {
+      "name": "bi-gates-open-at-14-closed-days",
+      "proves": "BI1, BI2 and BI4 open at exactly 14. BI3 is still shut - its gate is 21.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "bi1Available": true,
+        "bi2Available": true,
+        "bi4Available": true,
+        "bi3Available": false,
+        "bi3Required": 21,
+        "bi3SoFar": 14
+      }
+    },
+    {
+      "name": "bi3-shut-at-20-closed-days",
+      "proves": "One day before its gate, BI3 is still shut.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-15",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-16",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-17",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-18",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-19",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-20",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "bi3Available": false,
+        "bi3SoFar": 20,
+        "bi1Available": true
+      }
+    },
+    {
+      "name": "bi3-opens-at-21-closed-days",
+      "proves": "BI3 opens at exactly 21, and all four are then available.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-15",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-16",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-17",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-18",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-19",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-20",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-21",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "bi1Available": true,
+        "bi2Available": true,
+        "bi3Available": true,
+        "bi4Available": true
+      }
+    },
+    {
+      "name": "bi5-and-bi6-are-never-available",
+      "proves": "BI5 is RESERVED with no UI (D5) and BI6 is BLOCKED-ON-HUMAN. Even with 60 closed days both stay null. Neither may ever render a card.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-15",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-16",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-17",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-18",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-19",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-20",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-21",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-22",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-23",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-24",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-25",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-26",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-27",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-28",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-29",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-30",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-31",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-32",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-33",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-34",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-35",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-36",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-37",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-38",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-39",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-40",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-41",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-42",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-43",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-44",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-45",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-46",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-47",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-48",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-49",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-50",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-51",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-52",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-53",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-54",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-55",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-56",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-57",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-58",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-59",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-60",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "bi5": null,
+        "bi6": null
+      }
+    },
+    {
+      "name": "bi2-sales-consistency-is-zero-for-a-flat-shop",
+      "proves": "Identical sales every day means a coefficient of variation of exactly 0.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [
+          {
+            "date": "2026-06-01",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-02",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-03",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-04",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-05",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-06",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-07",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-08",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-09",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-10",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-11",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-12",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-13",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          },
+          {
+            "date": "2026-06-14",
+            "netSales": 1000000,
+            "netPurchase": 100000,
+            "totalExpenses": 50000,
+            "profit": 850000,
+            "countedCash": 500000,
+            "expectedCash": 500000
+          }
+        ],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "bi2Available": true,
+        "bi2BasisPoints": 0
+      }
+    },
+    {
+      "name": "working-renders-every-line-of-the-cash-check",
+      "proves": "P3 renders as the seven lines of the paper sheet formula, in order, and the lines sum to the total. The shopkeeper must see WHICH line is wrong.",
+      "source": "Day-Close p.7",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000060",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 678000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000061",
+            "dayId": "2026-07-15",
+            "section": "udhar_collection",
+            "amount": 240000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual",
+            "partyId": "c1"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000062",
+            "dayId": "2026-07-15",
+            "section": "purchase",
+            "amount": 320000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000063",
+            "dayId": "2026-07-15",
+            "section": "expense",
+            "amount": 68000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          },
+          {
+            "id": "01890000-0000-7000-8000-000000000064",
+            "dayId": "2026-07-15",
+            "section": "withdrawal",
+            "amount": 50000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p3": 630000,
+        "p3WorkingKeys": [
+          "working.opening_cash",
+          "working.cash_sales",
+          "working.udhar_collected_cash",
+          "working.cash_purchase",
+          "working.cash_expenses",
+          "working.cash_party_payment",
+          "working.withdrawal_cash"
+        ],
+        "p3WorkingSigns": [
+          "+",
+          "+",
+          "+",
+          "-",
+          "-",
+          "-",
+          "-"
+        ]
+      }
+    },
+    {
+      "name": "progress-ring-opens-at-one-of-ten",
+      "proves": "ENDOWED PROGRESS, honestly. Carried opening cash is real work done yesterday, so the ring opens at 1 of 10 - never 0 of 9.",
+      "source": "Flow Strategy 02; Strategy 1 §05",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "progressDone": 1,
+        "progressTotal": 10
+      }
+    },
+    {
+      "name": "progress-ring-first-run-honestly-starts-at-zero",
+      "proves": "The one exception. A brand-new user has nothing carried, so the ring starts at 0. The line not to cross is advancing the ring for something he did not do.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "not_started",
+          "openingCash": null,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "progressDone": 0,
+        "progressTotal": 10,
+        "dayState": "not_started"
+      }
+    },
+    {
+      "name": "large-amounts-stay-exact",
+      "proves": "A crore of rupees is 1e9 paise, far inside MAX_SAFE_INTEGER. Integer arithmetic stays exact where floating-point rupees would not.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 1000000000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000065",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 999999999,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "p1": 999999999,
+        "p3": 1999999999
+      }
+    },
+    {
+      "name": "format-paise-uses-indian-grouping-and-latin-numerals",
+      "proves": "The render boundary groups 1,23,456.78 the Indian way, always in Latin numerals, in every language. Hand-rolled rather than Intl, so Hermes and Node agree.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "formatChecks": {
+          "0": "₹0.00",
+          "1": "₹0.01",
+          "630000": "₹6,300.00",
+          "12345678": "₹1,23,456.78",
+          "100000000": "₹10,00,000.00",
+          "-25000": "-₹250.00"
+        }
+      }
+    },
+    {
+      "name": "day-state-ready-when-all-sections-done",
+      "proves": "The day walks to ready when the eighth section is entered or skipped.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "open",
+          "openingCash": 150000,
+          "countedCash": null,
+          "skippedSections": [
+            "upi_sales",
+            "udhar_sales",
+            "expense",
+            "purchase",
+            "udhar_collection",
+            "party_payment",
+            "withdrawal"
+          ]
+        },
+        "entries": [
+          {
+            "id": "01890000-0000-7000-8000-000000000066",
+            "dayId": "2026-07-15",
+            "section": "cash_sales",
+            "amount": 10000,
+            "mode": "cash",
+            "createdAt": "2026-07-15T10:00:00.000Z",
+            "source": "manual"
+          }
+        ],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "dayState": "ready",
+        "cashCheckUnlocked": true,
+        "progressDone": 9
+      }
+    },
+    {
+      "name": "day-state-closed-is-terminal",
+      "proves": "A closed day stays closed regardless of what is derived beneath it.",
+      "input": {
+        "day": {
+          "date": "2026-07-15",
+          "state": "closed",
+          "openingCash": 150000,
+          "countedCash": 150000,
+          "skippedSections": []
+        },
+        "entries": [],
+        "priorCreditOutstanding": 0,
+        "priorSupplierOutstanding": 0
+      },
+      "context": {
+        "today": "2026-07-15",
+        "trailing": [],
+        "openSupplierDues": [],
+        "openCustomerCredit": []
+      },
+      "expect": {
+        "dayState": "closed",
+        "nextOpeningCash": 150000
+      }
+    }
+  ]
+}
