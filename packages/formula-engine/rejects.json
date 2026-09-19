@@ -1,0 +1,384 @@
+{
+  "$schema": "https://swafto.app/schemas/rejects-v1.json",
+  "generatedBy": "tools/author-rejects.ts",
+  "note": "THE REJECTION CORPUS (§5.11). vectors.json describes days that are VALID; this describes inputs that must be REFUSED, and names every layer obliged to refuse them. Cases whose only layer is `api` are pending the auth and sync work, and the runner reports them as PENDING rather than letting them pass silently.",
+  "count": 32,
+  "coverage": {
+    "engine": 9,
+    "schema": 15,
+    "api": 8
+  },
+  "cases": [
+    {
+      "name": "money-float",
+      "violates": "a fractional paisa cannot exist",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          12.5
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-tiny-float",
+      "violates": "a sub-paisa amount cannot exist",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          0.1
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-numeric-string",
+      "violates": "an amount must be a number, not a string",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          "100"
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-null",
+      "violates": "an amount is required",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          null
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-boolean",
+      "violates": "a boolean is not an amount",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          true
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-object",
+      "violates": "an object is not an amount",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          {}
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-beyond-safe-integer",
+      "violates": "beyond exact integer range",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "assertPaise",
+        "args": [
+          9007199254740992
+        ]
+      },
+      "messageMatches": "integer number of paise"
+    },
+    {
+      "name": "money-negative-entry-amount",
+      "violates": "an entry amount is never negative; the section carries the sign",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'cash_sales', -100, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "money-fractional-entry-amount",
+      "violates": "money is an integer number of paise, in the database too",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'cash_sales', 12.5, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-unknown-section",
+      "violates": "the sheet has nine sections and no others",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'tips', 1000, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-shop-stock-on-a-purchase",
+      "violates": "mode validity is per section; a purchase has four modes, not five (C-7)",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'purchase', 1000, 'shop_stock', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-shop-stock-on-a-collection",
+      "violates": "a collection has three modes; stock cannot settle a debt",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_collection', 1000, 'shop_stock', '{{party}}', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-unknown-day-state",
+      "violates": "a day has exactly five states (C-3)",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "days",
+        "columns": "shop_id, date, state, created_at",
+        "values": "'{{shop}}', '2026-01-01', 'archived', '{{now}}'"
+      }
+    },
+    {
+      "name": "enum-unknown-language",
+      "violates": "the app ships Odia, Hindi and English",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "shops",
+        "columns": "id, name, type, language, created_at",
+        "values": "'{{uuid}}', 'Test', 'kirana', 'fr', '{{now}}'"
+      }
+    },
+    {
+      "name": "time-entry-into-a-closed-day",
+      "violates": "a closed day is corrected, never added to (D7, CP-4)",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{closedDay}}', 'cash_sales', 1000, 'cash', '{{now}}', 'manual'"
+      },
+      "messageMatches": "that day is closed"
+    },
+    {
+      "name": "time-due-date-on-a-cash-expense",
+      "violates": "a due date only means anything on an udhar purchase (D4)",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, due_date, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'expense', 1000, 'cash', '2026-08-01', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "time-malformed-iso-date",
+      "violates": "a day id is an ISO calendar date",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "toEpochDay",
+        "args": [
+          "15-07-2026"
+        ]
+      },
+      "messageMatches": "Not an ISO date"
+    },
+    {
+      "name": "time-impossible-month",
+      "violates": "there is no thirteenth month",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "toEpochDay",
+        "args": [
+          "2026-13-01"
+        ]
+      },
+      "messageMatches": "Not a valid date"
+    },
+    {
+      "name": "identity-udhar-sale-without-a-party",
+      "violates": "the sheet asks for a creditor name on every udhar sale",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_sales', 1000, 'udhar', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-party-that-does-not-exist",
+      "violates": "an entry cannot reference a party that was never created",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_sales', 1000, 'udhar', '00000000-0000-7000-8000-00000000dead', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-entry-for-a-day-that-does-not-exist",
+      "violates": "an entry belongs to a day record that exists",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '1999-01-01', 'cash_sales', 1000, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-row-for-a-shop-that-does-not-exist",
+      "violates": "every row is scoped to a shop that exists (tenancy, S-11)",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "parties",
+        "columns": "id, shop_id, kind, name, created_at",
+        "values": "'{{uuid}}', '00000000-0000-7000-8000-00000000beef', 'customer', 'Nobody', '{{now}}'"
+      }
+    },
+    {
+      "name": "identity-duplicate-entry-id",
+      "violates": "a client-generated id is unique; a replay must not create a second row",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{dupe}}', '{{shop}}', '{{openDay}}', 'cash_sales', 9999, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "state-closed-day-without-a-count",
+      "violates": "a closed day carries the counted cash and the moment it froze (DFD 4.6)",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "days",
+        "columns": "shop_id, date, state, created_at",
+        "values": "'{{shop}}', '2026-03-01', 'closed', '{{now}}'"
+      }
+    },
+    {
+      "name": "text-party-name-empty",
+      "violates": "a party must have a name to be findable later",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "name"
+    },
+    {
+      "name": "text-party-name-whitespace-only",
+      "violates": "a name of spaces is not a name",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "name"
+    },
+    {
+      "name": "text-label-with-bidi-override",
+      "violates": "control and bidi-override characters can disguise a label",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "control character"
+    },
+    {
+      "name": "text-party-name-past-the-field-limit",
+      "violates": "a name past the column bound must be refused, not truncated",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "too long"
+    },
+    {
+      "name": "structure-missing-required-field",
+      "violates": "an entry without an amount is not an entry",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "amount"
+    },
+    {
+      "name": "structure-unexpected-extra-field",
+      "violates": "an unknown field is a version mismatch or an attack, never a no-op",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "unknown"
+    },
+    {
+      "name": "structure-payload-past-the-size-bound",
+      "violates": "an unbounded payload is a denial-of-service vector on a t4g.small",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "too large"
+    },
+    {
+      "name": "structure-forged-shop-id-in-the-body",
+      "violates": "shop_id comes from the session and is REJECTED in a body (S-11)",
+      "layers": [
+        "api"
+      ],
+      "messageMatches": "shop_id"
+    }
+  ]
+}

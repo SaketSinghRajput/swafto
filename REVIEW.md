@@ -136,3 +136,44 @@ instead, and only because the checker forced the contradiction into view.
 The operational rule I am taking from this: **when a question is about how two rules
 interact, treat "I can derive this" as a weak signal and go and look.** Composition is
 where derivation is least reliable, which is exactly where it feels most reliable.
+
+### R-004 · The detection-rate denominator has a floor, and comparisons need equal blast radius
+
+**Found:** by re-measuring my own `no-totals-are-stored` probe after injection 12
+supplied the poison-then-drop design.
+
+The first probe added an unused column and scored 1/64. The rewritten probe makes the
+engine **prefer a cached figure over deriving one** — the actual violation — and still
+scores 1/79. That is not a worse probe; it is a correct one, and the number is honest:
+only the test that poisons that specific field name can possibly see it, and it caught
+it precisely.
+
+**The limitation.** The denominator is the whole suite, which has a floor: no mutation
+breaks tests that never touch it. `2/59` for digit grouping and `1/79` for a cached
+read look comparable and are not. Grouping is **broad** — every money render should
+have been able to catch it and almost none could, which is a real fixture finding. A
+single cached field name is **narrow** by construction.
+
+**What I changed.** `breadth` on each mutation now describes the **mutation's blast
+radius**, not the importance of the rule, and only broad mutations are flagged LOW.
+`no-totals-are-stored` was reclassified narrow for that reason — not to turn a red
+number green, which is why the reclassification is recorded here rather than made
+quietly.
+
+**The signal that always means something is UNDETECTED (0).** That is scope-independent:
+if nothing at all notices, nothing at all is protecting the invariant. Ratios above
+zero are only comparable between mutations of similar reach.
+
+### R-005 · Rules describe intent; flows produce reality
+
+**Found:** injection 11, on my CP-4 miss.
+
+I asked whether D9 *permits* two devices on one shop, concluded no, and recorded CP-4
+as latent. The lost-phone number-change branch *produces* two devices regardless of
+what D9 permits. The rule was about concurrent editing; the flow was about a handset
+that still holds a never-expiring session.
+
+**Generalisation for every future composition pass:** when checking whether a condition
+can occur, enumerate what the system **does** — every flow, including the recovery and
+failure paths — not what the rules **allow**. Recovery flows are the likeliest source,
+because they exist precisely to handle the abnormal.

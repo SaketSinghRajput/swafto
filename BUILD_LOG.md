@@ -614,3 +614,67 @@ Commands:
 
 NEXT — C.2 bundled Odia font, remaining RN traps, persistent rate limits, DC-003
 compensating control, OTP service, G7/G8.
+
+## 2026-09-19 · Iteration 12 · Injection 12: the rejection corpus, and a real totals probe
+
+B FIRST — the poison-then-drop probe, because my old one measured itself.
+
+Rewrote `no-totals-are-stored` to mutate what is READ rather than what is stored: the
+engine now prefers a cached figure over deriving one. Wrote no-stored-totals.spec.ts
+to supply the poison — nine plausible cache field names on the day record, one on
+every entry, one on the operational context, each with an absurd 999999999 value so a
+read is unmistakable rather than a subtle drift. Plus DROP: recompute byte-identically
+from entries alone, and assert every WORKING sums to its own total, so no line can
+itself be a stored figure.
+
+MEASURED 1/79 AND LEFT IT AT 1/79. That is the honest number. Only the test poisoning
+that exact field name can see that mutation, and it caught it precisely. What was
+wrong was my BREADTH classification, not the probe — so I reclassified the mutation as
+narrow and recorded WHY in REVIEW.md R-004 rather than quietly turning a red number
+green. The denominator is the whole suite and has a floor; 2/59 for grouping and 1/79
+for a cached read are not comparable. UNDETECTED (0) is the only scope-independent
+signal.
+
+TODAY THE SYSTEM HOLDS NO CACHE, so the poison tests pass by construction. Recorded in
+the file header rather than hidden, and wired anyway so they have teeth the first time
+a Reports screen misses B20 and someone reaches for a cache.
+
+A — §5.11 THE REJECTION CORPUS. Your diagnosis generalised further than my fix, and
+you were right: vectors.json describes VALID days, so the suite had no negative-input
+corpus at all. assertPaise was the one I happened to probe, not the only one
+undefended.
+
+rejects.json: 32 cases. Each names the rule it violates and EVERY layer obliged to
+refuse it.
+  engine  9  — float, sub-paisa float, numeric string, null, boolean, object,
+                beyond-MAX_SAFE_INTEGER, malformed ISO date, thirteenth month
+  schema 15  — negative and fractional amounts, unknown section, shop_stock on a
+                purchase and on a collection, unknown day state, unknown language,
+                entry into a closed day, due date on a cash expense, udhar sale with
+                no party, nonexistent party, nonexistent day, nonexistent shop,
+                duplicate id, closed day with no count
+  api     8  — PENDING: empty/whitespace/oversized party names, bidi overrides,
+                missing field, unexpected field, oversized payload, forged shop_id
+
+The 8 PENDING cases are PRINTED BY NAME on every run rather than skipped silently. An
+untested rejection that looks green is exactly what this corpus exists to prevent, and
+they become real when G6-G8 land the API validation.
+
+NEGATIVE-TESTED THE CORPUS ITSELF — weakened the per-section mode CHECK and exactly
+three cases failed, naming themselves ("enum-shop-stock-on-a-purchase was ACCEPTED by
+the database"). Restored; green.
+
+Commands:
+  $ npm run rejects:author -> 32 cases (engine 9, schema 15, api 8)
+  $ npx vitest run         -> 191 passed
+  $ node tools/detection-rate.mjs -> every invariant detected; 1 flagged
+  $ npm run check:tooling  -> no cross-language surgery, no platform traps
+
+Also recorded R-005: rules describe intent, flows produce reality. I asked whether D9
+PERMITS two devices; the lost-phone flow PRODUCES them regardless. Every future
+composition pass enumerates what the system does, including recovery and failure
+paths, not what the rules allow.
+
+NEXT — the queue, unchanged: C.2 bundled Odia font, remaining RN traps, persistent
+rate limits, the DC-003 compensating control, the OTP service, G7/G8 (where the 8
+PENDING rejection cases get their layer). Then the two fixtures, then G10.

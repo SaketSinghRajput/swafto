@@ -94,11 +94,22 @@ const MUTATIONS = [
   },
   {
     id: 'no-totals-are-stored',
-    breadth: 'broad',
-    invariant: 'No derived total is ever persisted (architecture 06)',
-    file: 'packages/schema/src/spec.ts',
-    find: '  difference_reason  ${t.text()},',
-    replace: '  difference_reason  ${t.text()},\n  cached_net_sales_total ${paise},',
+    // Reclassified NARROW after re-measuring at 1/79. The INVARIANT is broad, but
+    // this MUTATION is narrow: it makes one function read one specific field name,
+    // so only the test poisoning that name can see it - and that test caught it
+    // precisely. Breadth describes the mutation's blast radius, not the importance
+    // of the rule. See REVIEW.md R-004 for the limitation this exposed in the metric.
+    breadth: 'narrow',
+    invariant: 'No derived total is ever READ (architecture 06)',
+    file: 'packages/formula-engine/src/primary.ts',
+    // REWRITTEN after the first version measured 1/64 - it added an unused column,
+    // which violates nothing. The invariant is about READING, so the mutation now
+    // makes the engine PREFER a cached figure over deriving one. That is the actual
+    // defect this rule exists to prevent, and `no-stored-totals.spec.ts` supplies the
+    // poisoned cache for it to find.
+    find: 'export function netSales(input: DayInput): Figure {\n  const { entries } = input;',
+    replace:
+      'export function netSales(input: DayInput): Figure {\n  const { entries } = input;\n  const cached = (input.day as unknown as Record<string, number>).cachedNetSales;\n  if (typeof cached === \'number\') {\n    return { value: cached, working: { lines: [], total: cached } };\n  }',
     suite: 'schema',
   },
 ];
