@@ -1,7 +1,9 @@
 // Enforces the autonomy amendment's structural invariants. These are the rules that
 // keep an unsupervised loop honest, so they are checked mechanically, not by memory.
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+import { isVerbatim } from './verbatim.mjs';
 
 const failures = [];
 const ok = [];
@@ -21,7 +23,10 @@ function walk(dir, out = []) {
     if (SKIP.has(n) || n.startsWith('.vectors')) continue;
     const p = join(dir, n);
     if (statSync(p).isDirectory()) walk(p, out);
-    else if (/\.(md|ts|tsx|mjs|js|json|sql|ya?ml)$/.test(n)) out.push(p);
+    // Verbatim human instructions name the forbidden statuses in order to abolish
+    // them. They are evidence, not our prose, and §5.6 forbids editing evidence to
+    // please a linter. An adversary pass we wrote carries no marker and IS checked.
+    else if (/\.(md|ts|tsx|mjs|js|json|sql|ya?ml)$/.test(n) && !isVerbatim(p)) out.push(p);
   }
   return out;
 }
@@ -110,6 +115,48 @@ if (formatOffenders.length) {
   failures.push(`C.1 money formatting: ${formatOffenders.join('; ')}`);
 } else {
   ok.push('C.1: one money-formatting path, no Intl/toLocaleString in shipped code');
+}
+
+/**
+ * 6 · Verbatim evidence must not have been edited.
+ *
+ * Invariant 1 now exempts files carrying the verbatim marker, because the human
+ * instructions name the forbidden statuses in order to abolish them. That exemption
+ * makes INJECTIONS/ the ONE place in the repository where a banned token can sit
+ * unchallenged - so those files are pinned. Any edit, including a helpful-looking one,
+ * fails here. The instructions are what this loop is measured against; a rule quietly
+ * softened after the fact is the most valuable thing an unsupervised agent could
+ * possibly forge, so it is the thing most worth making impossible.
+ *
+ * Re-pin deliberately (and say why in BUILD_LOG) only when a NEW injection arrives.
+ */
+const LOCK = 'INJECTIONS/injections.lock';
+if (existsSync('INJECTIONS') && existsSync(LOCK)) {
+  const pinned = new Map(
+    read(LOCK)
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => {
+        const [sha, name] = l.split(/\s{2,}/);
+        return [name, sha];
+      }),
+  );
+  const present = readdirSync('INJECTIONS')
+    .filter((n) => isVerbatim(join('INJECTIONS', n)))
+    .sort();
+  const drift = [];
+  for (const n of present) {
+    const sha = createHash('sha256').update(readFileSync(join('INJECTIONS', n))).digest('hex');
+    if (!pinned.has(n)) drift.push(`${n} is verbatim but not pinned in ${LOCK}`);
+    else if (pinned.get(n) !== sha) drift.push(`${n} has been EDITED since it was pinned`);
+  }
+  for (const n of pinned.keys()) {
+    if (!present.includes(n)) drift.push(`${n} is pinned but missing or no longer marked verbatim`);
+  }
+  if (drift.length) failures.push(`verbatim evidence altered: ${drift.join('; ')}`);
+  else ok.push(`${present.length} verbatim injections, all matching ${LOCK}`);
+} else if (existsSync('INJECTIONS')) {
+  failures.push(`INJECTIONS/ exists but ${LOCK} does not - verbatim evidence is unpinned`);
 }
 
 for (const o of ok) console.log(`  ok   ${o}`);

@@ -16,6 +16,7 @@
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { isVerbatim } from './verbatim.mjs';
 
 // `docs/` holds extracted third-party specification text we did not author; its
 // wording is evidence, not our prose, and must not be edited to satisfy a linter.
@@ -52,7 +53,8 @@ const UNRESOLVED_PHRASES =
   /\b(needs counsel|needs a decision|still blocked|still pending|awaiting counsel|awaiting a decision|not yet decided|to be decided)\b/i;
 
 const failures = [];
-const files = mdFiles('.');
+const files = mdFiles('.').filter((f) => !isVerbatim(f));
+const skipped = mdFiles('.').filter(isVerbatim).length;
 
 /* ---- 1 · contradictory sentences -------------------------------------- */
 let sentencesScanned = 0;
@@ -112,7 +114,7 @@ for (const [id, where] of dangling) {
   failures.push(`dangling reference to ${id}, which is not defined anywhere - ${where}`);
 }
 
-console.log(`  files scanned      : ${files.length}`);
+console.log(`  files scanned      : ${files.length} (${skipped} verbatim, not ours to edit)`);
 console.log(`  sentences scanned  : ${sentencesScanned}`);
 console.log(
   `  ids defined        : ${defined.AD.size} AD · ${defined.B.size} B · ` +

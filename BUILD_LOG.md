@@ -845,3 +845,99 @@ Commands:
   $ npx vitest run      -> 189 passed, 4 skipped (Postgres, no daemon)
 
 NEXT — C.3 through C.9, the remaining React Native traps.
+
+## 2026-09-19 · Iteration 15 · C.3 and C.4, and the injections become artifacts
+
+FIRST, A GAP THAT HAD TO BE CLOSED BEFORE ANY OF IT. C.3 through C.9 - seven React
+Native traps this build is required to resolve before G10 - existed NOWHERE in the
+repository. The list lived only in a chat transcript. Working out what C.3 said meant
+mining a .jsonl file. An instruction that cannot be re-read quietly becomes whatever
+the last iteration remembered of it, and every §6 adversary pass is supposed to audit
+work against instructions it can actually read.
+
+Every injection is now an artifact: INJECTIONS/00, 07, 08, 09, 10, 11, 12 and 13,
+verbatim and unedited, each with a header saying so.
+
+That immediately broke two checkers, correctly. The injections QUOTE the defects they
+forbid - injection 08 quotes the resolved-plus-outstanding contradiction, the autonomy
+amendment names the blocked-on-a-human status repeatedly while abolishing it. §5.6
+forbids editing evidence to satisfy a linter, so the checkers changed instead:
+tools/verbatim.mjs, one predicate, shared. Keyed on a marker in the first 400 bytes,
+not on the directory, so an adversary pass WE wrote in the same folder is still fully
+checked.
+
+THEN I NOTICED WHAT I HAD JUST BUILT. That exemption makes INJECTIONS/ the one place
+in the repository where a banned token can sit unchallenged - and the instructions are
+what this loop is measured against. A rule quietly softened after the fact is the
+single most valuable thing an unsupervised agent could forge. So the verbatim files
+are pinned by sha256 in INJECTIONS/injections.lock, and governance invariant 6 fails
+on any edit. Negative-tested three ways: planting the token in the adversary pass
+(caught - no marker), appending the marker to REVIEW.md to self-exempt (caught - the
+marker must be in the first 400 bytes), and editing a pinned injection (caught).
+
+C.3 · SHIP STATIC INSTANCES, NOT THE VARIABLE FONT. AD-016.
+
+The argument that settles it is not reliability. Core React Native on Android has no
+way to set a variation axis on a Text, so a variable font renders as its DEFAULT
+instance and nothing else - and Anek Odia's default is wght 500. The variable file
+does not give three weights that might be unreliable; it gives ONE weight, reliably.
+
+Measured, because C.3 says it interacts with B24:
+  variable AnekOdia[wdth,wght].ttf   858,180 bytes   3.27% of B24
+  three statics 400 + 500 + 700      489,820 bytes   1.87% of B24
+43% SMALLER AND three real weights instead of one. No trade-off to agonise over.
+
+THE NEAR-MISS, AND THE WHOLE ARGUMENT FOR THE CHECKER. The first statics I fetched
+were what the Google Fonts v1 API serves by DEFAULT: 42 KB each, an apparent 85%
+saving against the variable font. They contained ZERO ODIA GLYPHS - the API subsets to
+Latin unless asked. Shipping them would have produced complete tofu in the primary
+language while looking like a clever optimisation, and would have survived any review
+that read file sizes instead of file contents. check:font caught it on the first run
+against those files, before anything was committed. Re-fetched with subset=oriya,latin:
+317 codepoints, 90 in the Odia block, danda and rupee present, ory2 GSUB present.
+
+C.4 · TABULAR FIGURES - AND THIS ONE IS A REAL DEFECT, NOT A CONFIRMATION.
+
+C.4 asks for a render test comparing the width of 1111111111 against 0000000000. I did
+something stronger and cheaper: read the advance width of each digit straight out of
+hmtx. No renderer, no device, exact integers.
+
+  ANEK ODIA'S DIGITS ARE PROPORTIONAL BY DEFAULT, IN ALL THREE WEIGHTS.
+  Regular: ten different widths, 672 to 1132 units at 2000/em. The "1" is about 60%
+  the width of the "0". A money column set in the default figures DOES NOT ALIGN, and
+  no layout code fixes it. Constraint 8 is not satisfied by this font as shipped.
+
+The font does carry a tnum feature. I resolved its GSUB single-substitution lookups
+and measured the substituted glyphs: ONE width, in every weight - 1087 / 1107 / 1179.
+
+So the capability exists and the default is wrong, which is the worst combination:
+correct in a specimen, correct wherever the feature happens to be applied, silently
+ragged everywhere else - and "everywhere else" is a column of money, which is the
+product. Recorded as DC-005. It obliges: every money style sets
+fontVariant: ['tabular-nums']; a check-governance rule at G10 asserts it beside the
+existing C.1 one-formatting-path rule; and DEVICE-CHECKLIST B4, because React Native's
+fontVariant support on Android is the half no static check can settle.
+
+AD-015 ANNOTATED, NOT REWRITTEN. Its typeface choice stands; its file and its sizes
+are superseded by AD-016. F-06 was a decision recorded as done that was never done -
+silently editing a superseded decision is the same disease from the other end.
+
+Commands:
+  $ npm run check:all  -> governance (6 invariants) benchmarks prose sms sms:segments
+                          tooling generated font, all pass
+  $ npx vitest run     -> 189 passed, 4 skipped
+  $ npm run test:vectors:diff -> divergence: NONE
+
+Negative tests this iteration, all confirmed to fail when they should:
+  font · uncovered codepoint planted in a real od: string
+  font · empty corpus
+  font · one byte flipped in a pinned font
+  font · a variable font added to the bundle
+  font · tnum unable to deliver equal widths
+  governance · banned token in a non-verbatim file in INJECTIONS/
+  governance · self-exemption by appending the marker
+  governance · an edited pinned injection
+  tooling · an npm script naming a file that does not exist
+
+NEXT — C.5 OS font scaling, C.6 keypad suppressing the system keyboard, C.7 process
+death mid-entry, C.8 the Android back button, C.9 day boundary and device clock.

@@ -136,9 +136,10 @@ this at the next document pass, and H8 is where it gets settled for real.
 The kind of bug that ships because the development environment is more capable than
 the target.
 
-**Mitigation, done at iteration 14 (AD-015).** `apps/mobile/assets/fonts/AnekOdia.ttf`
-is bundled - Anek Odia v1.003, SIL OFL 1.1, 858,180 bytes, 3.27% of the B24 budget -
-and `npm run check:font` parses it rather than trusting it.
+**Mitigation, done at iteration 14 (AD-015, AD-016).** Three static instances of Anek
+Odia - Regular, Medium and Bold, SIL OFL 1.1, 489,820 bytes together, 1.87% of the B24
+budget - are bundled under `apps/mobile/assets/fonts/`, and `npm run check:font` parses
+them rather than trusting them.
 
 **The split between what is proven and what is not, because it is the whole point of
 this entry.** Coverage is mechanical and settled: every character in every Odia string
@@ -147,8 +148,16 @@ form, and the file is pinned by sha256. *Rendering* is not, and cannot be, prove
 - a font that covers everything still draws nothing if the asset pipeline drops it.
 That is `DEVICE-CHECKLIST.md` A1-A6.
 
-**What building the check found that reasoning had not.** Two of the required
-codepoints are **outside the Odia block**: the danda **U+0964**, which lives in the
+**What building the check found that reasoning had not - twice.**
+
+First, the near-miss. The static instances Google Fonts serves by default are 42 KB
+each against the variable font's 858 KB, an apparent 85% saving, and they contain
+**zero Odia glyphs**: the v1 API subsets to Latin unless asked otherwise. Shipping
+them would have produced complete tofu in the primary language while looking like a
+clever optimisation, and it would have survived any review that read file sizes rather
+than file contents. The check caught it on its first run against those files.
+
+Second, two of the required codepoints are **outside the Odia block**: the danda **U+0964**, which lives in the
 Devanagari block and ends every Odia sentence we ship, and the rupee sign **U+20B9**,
 which carries every money figure. A font subsetted "to Odia" by Unicode block drops
 both - and the tofu would appear at the end of every sentence and in front of every
@@ -160,3 +169,40 @@ measured. DEVICE-CHECKLIST A4 is the measurement, and it is the only thing that 
 this to HIGH. Note that a MEDIUM claim already justified the mitigation: the fix cost
 3.27% of the budget and the failure was launch-blocking in the primary language, so
 waiting for certainty would have been the expensive choice.
+
+---
+
+## DC-005 · Anek Odia's digits are proportional, so constraint 8 is not satisfied by the font
+
+**Confidence: HIGH** · **Check: `tools/check-font-coverage.mjs`** · Iteration 14
+
+**Derived by measuring the font we had already decided to ship**, prompted by
+injection 09 C.4.
+
+**The derivation.** Constraint 8 requires money columns to align, which requires
+tabular figures - every digit the same advance width. That property is usually
+attributed to a *style* ("use tabular-nums"), but it is a property of the *font file*,
+and it is readable directly from `hmtx` without rendering anything.
+
+Read: Anek Odia's ten digits have **nine or ten different advance widths** in every
+bundled weight. In Regular they run 672 to 1132 units at 2000/em - the "1" is about
+60% the width of the "0". A column of amounts set in these figures does not line up,
+and no layout code can make it.
+
+Resolve the `tnum` GSUB feature and measure again: **one width**, in all three
+weights (1087 / 1107 / 1179). The font can do it. It just does not do it by default.
+
+**Why this is worse than a font that simply lacked the feature.** A font with no
+tabular figures fails obviously and immediately. This one is correct in a specimen,
+correct anywhere the feature is applied, and silently wrong everywhere else - and the
+place it is wrong is a column of money, which is the entire product.
+
+**What missing it would have cost.** Every amount column in the app subtly ragged,
+noticed late, attributed to padding or letter-spacing, and "fixed" by adding
+monospace-ish hacks in a few components rather than by the one line that actually
+fixes it. C.4's own framing: you need to know this now rather than at G14.
+
+**What it obliges.** Every money style sets `fontVariant: ['tabular-nums']`; a
+`check-governance` rule at G10 asserts it, next to the existing C.1 rule that there is
+exactly one paise-to-string path; DEVICE-CHECKLIST B4 confirms React Native honours it
+on Android, which is the half no static check can reach. See AD-016.

@@ -462,6 +462,12 @@ which CP-4's deferred concurrent-edit test must be written.
 
 ## AD-015 · Bundle Anek Odia only, and prove coverage rather than assume it
 
+> **PARTLY SUPERSEDED BY AD-016, same iteration.** The *choice* stands - Anek Odia
+> only, not all three families. The *file* does not: AD-015 bundled the 858,180-byte
+> variable font, and AD-016 replaced it with three static instances totalling 489,820
+> bytes after C.3 was worked through. Every size in this entry is the variable font's.
+> Read AD-016 for what is actually in the APK.
+
 **Question.** C.2 says bundle the Odia font. The design specifies the **Anek**
 superfamily - Latin, Devanagari and Odia. Which of the three ship inside the APK?
 
@@ -521,6 +527,82 @@ font, this decision is **not** reversed - one device is not the fleet, and 3.27%
 cheap insurance against an OEM we have not seen.
 
 **Iteration 14 · C.2**
+
+---
+
+## AD-016 · Ship static instances, not the variable font, and the digits are not tabular
+
+**Question.** C.3: "Anek is a variable font. Variable font support on Android is
+version-dependent and React Native's font loading of them is unreliable. Decide now
+whether you ship static instances at the weights the design system actually uses."
+
+**The argument that settles it is not about reliability.** Core React Native on
+Android has no way to set a variation axis on a `Text`. A variable font dropped into
+`assets/fonts` therefore renders as its **default instance and nothing else** - and
+Anek Odia's default is wght 500. Shipping the variable file does not give us a family
+with three weights that might be unreliable; it gives us **one weight**, reliably. The
+design system needs at least body, emphasis and heading.
+
+**Measured, because C.3 says it interacts with B24.**
+
+| | bytes | share of B24 |
+|---|---|---|
+| variable `AnekOdia[wdth,wght].ttf` | 858,180 | 3.27% |
+| three statics, 400 + 500 + 700 | 489,820 | 1.87% |
+
+Static instances are **43% smaller AND give three real weights instead of one**. There
+is no trade-off here to agonise over.
+
+**Choice.** Three static instances at 400, 500 and 700, from the same Google Fonts
+release, Oriya and Latin subsets. The variable font is deleted rather than kept
+"just in case": an unused 858 KB font in the assets directory is something a future
+iteration will eventually reference by mistake.
+
+**The near-miss, recorded because it is the whole argument for the checker.** The
+first statics I fetched were what the Google Fonts v1 API serves by default: 42 KB
+each, an apparent **85% saving** against the variable font. They contained **zero Odia
+glyphs** - the API subsets to Latin unless asked otherwise. Shipping them would have
+produced complete tofu in the primary language while looking like a clever
+optimisation, and it would have passed any review that read the file sizes instead of
+the file contents. `check:font` caught it on the first run, before anything was
+committed.
+
+**C.4, measured in the same pass, and it is a real defect.** Anek Odia's digits are
+**PROPORTIONAL by default** in all three weights - "1" is 672 units against "0" at
+1132, roughly 60%. A money column set in the default figures does not align, and no
+layout code fixes it. The font does carry a `tnum` feature, and resolving its GSUB
+lookups collapses all ten digits to one width (1087 / 1107 / 1179 units at 2000/em).
+
+So the capability exists and **the default is wrong**, which is the worst combination:
+correct in a specimen, correct wherever the feature happens to be applied, silently
+misaligned everywhere else. Constraint 8 is not satisfied by the font alone.
+
+**What follows from that, and it is not optional.**
+
+1. Every money style **must** set `fontVariant: ['tabular-nums']`. This is not a
+   preference; without it constraint 8 is violated on every screen with a column.
+2. **Owed at G10:** a `check-governance` rule that the money style sets it, alongside
+   the existing C.1 rule that there is exactly one paise-to-string path. Those two
+   checks together are what make constraint 8 mechanical rather than aspirational.
+3. **Owed at H8:** DEVICE-CHECKLIST B4. React Native's `fontVariant` support on
+   Android is the part no static check can settle, and a silent no-op there produces
+   exactly the misalignment we are guarding against.
+
+**REVERSAL TRIGGER.** Three, any one of which reopens this.
+
+- **The design system settles on weights other than 400/500/700.** Those three were
+  chosen before the G10 tokens exist, on the ordinary body / emphasis / heading split.
+  When the tokens are written, the bundled set follows them - adding a weight costs
+  about 163 KB and dropping one saves the same.
+- **`fontVariant: ['tabular-nums']` turns out not to work on Android in the React
+  Native version we ship.** Then the digits cannot be fixed at the style layer, and
+  the options are a font build with tabular defaults or instancing `tnum` into the
+  shipped files. Finding that at G10 is cheap; finding it at G14 is not.
+- **A real APK measurement leaves under 490 KB of headroom against B24.** Then even
+  this has to be re-argued, and subsetting to the characters we actually ship is the
+  next lever.
+
+**Iteration 14 · C.3 and C.4**
 
 ---
 

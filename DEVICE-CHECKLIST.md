@@ -19,13 +19,17 @@ number is not a result (§5.4).
 ## A · Script rendering - the launch-blocking one
 
 DC-004 says a budget handset may ship **no Odia font at all**, and Odia is the app's
-primary language. The mitigation is bundled: `apps/mobile/assets/fonts/AnekOdia.ttf`,
-Anek Odia v1.003, SIL OFL 1.1, 858,180 bytes.
+primary language. The mitigation is bundled: three static instances of Anek Odia -
+Regular, Medium and Bold - under `apps/mobile/assets/fonts/`, SIL OFL 1.1, 489,820
+bytes together. AD-016 records why statics rather than the variable font: core React
+Native on Android cannot select a variation axis, so a variable file would give one
+weight, not three.
 
-`npm run check:font` already proves, on any machine, that every character in every Odia
-string we ship has a **real glyph** in that file - not merely a cmap entry, since a
-mapping to glyph 0 is a mapping to .notdef, which is tofu with extra steps. It also
-proves the font carries the `ory2` shaping script, without which conjuncts cannot form.
+`npm run check:font` already proves, on any machine and for **every** weight, that
+each character in each Odia string we ship has a **real glyph** - not merely a cmap
+entry, since a mapping to glyph 0 is a mapping to .notdef, which is tofu with extra
+steps. It also proves the `ory2` shaping script is present, that the three weights
+cover exactly the same characters, and that the digits can be made tabular.
 
 **What it cannot prove is that the device draws them.** That is A1-A6.
 
@@ -70,17 +74,15 @@ proves the font carries the `ory2` shaping script, without which conjuncts canno
   bundle Anek Devanagari too, at a measured +2.19 MB against the 25 MB B24 budget.
   _Record: renders yes/no · mismatch acceptable yes/no._
 
-- [ ] **A6 · The weight is the designed weight.** Measured, not assumed: Anek Odia's
-  variable default instance is **wght 500 (Medium)**, not 400. Text with no explicit
-  weight comes out one step heavier than a Regular specimen would suggest - everywhere,
-  and nothing in the file name says so. Does the body text look heavier than the
-  design? For these users, slightly heavier is usually **better** in sunlight; the point
-  is to decide it deliberately rather than inherit it.
-  _Record: acceptable / set explicitly to ______._
+- [ ] **A6 · All three weights load.** Regular, Medium and Bold are separate files.
+  If one fails to register, Android substitutes silently and you get the same weight
+  twice, or a synthetic faux-bold that looks coarse at 17sp. Find text in each weight
+  and confirm they are actually different.
+  _Record: 400 ___ · 500 ___ · 700 ___._
 
 ---
 
-## B · Sunlight legibility
+## B · Legibility - sunlight, contrast, and aligned columns
 
 An emulator is a bright rectangle in a dark room. A shop front at 2pm is not.
 
@@ -98,6 +100,20 @@ An emulator is a bright rectangle in a dark room. A shop front at 2pm is not.
   angles than the sRGB the maths assumed. Look specifically for **white on marigold**,
   which the design already forbids, and anything grey-on-grey.
   _Record: pairs that fail in sun: ______._
+
+- [ ] **B4 · MONEY COLUMNS ALIGN.** Measured at
+  iteration 14: Anek Odia's digits are **proportional by default** - the "1" is about
+  60% the width of the "0". Tabular figures exist in the font but only through the
+  `tnum` feature, which the app requests with `fontVariant: ['tabular-nums']`. React
+  Native's support for that on Android is the part **no static check can settle**, and
+  if it silently does nothing the failure is a subtly ragged column, not an error.
+
+  Find any screen with a column of amounts. Best case, get one containing
+  `1,11,111` above `2,00,000` - lots of 1s above lots of 0s, which is where
+  proportional digits are most obvious. **Do the decimal points and the right edges
+  line up vertically?** Hold a straight edge against the screen if you are unsure.
+  _Record: aligned / ragged. If ragged, `fontVariant` is not working and AD-016's
+  second reversal trigger has fired._
 
 ---
 
