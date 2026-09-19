@@ -35,7 +35,11 @@ export const DAY_STATES = ['not_started', 'open', 'ready', 'closed', 'not_closed
 export type DayState = (typeof DAY_STATES)[number];
 
 /** An ISO calendar date, 'YYYY-MM-DD'. Client-assigned; never rewritten (ADR-004). */
-export type IsoDate = string;
+// IsoDate is defined in dates.ts and re-exported here so this module stays the one
+// place a reader looks for the domain types. Declaring it twice made `export *` from
+// both ambiguous (TS2308) - invisible until typechecking was switched on.
+import type { IsoDate } from './dates.ts';
+export type { IsoDate };
 
 /* ------------------------------------------------------------------ *
  * IN1-IN7 - the things a shopkeeper types

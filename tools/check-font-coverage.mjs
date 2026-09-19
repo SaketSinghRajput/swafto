@@ -402,7 +402,7 @@ if (loaded.length > 1) {
 }
 
 /* ---- report ------------------------------------------------------------- */
-const total = loaded.reduce((a, f) => a + f.bytes, 0);
+const bundledBytes = loaded.reduce((a, f) => a + f.bytes, 0);
 console.log(`  odia strings       : ${sources.length}`);
 console.log(
   `  codepoints required: ${required.size} · ` +
@@ -439,12 +439,16 @@ if (needTnum.length) {
       '        fontVariant support on Android is the part no static check can settle.',
   );
 }
+// `bundledBytes`, not `total` - ADR-003's lint reserves the money vocabulary for
+// money, and these are font file sizes.
+const pct = Math.round((bundledBytes / APK_BUDGET_BYTES) * 10000) / 100;
 console.log(
-  `\n  bundled total      : ${total} bytes · ` +
-    `${((total / APK_BUDGET_BYTES) * 100).toFixed(2)}% of the B24 25 MB budget`,
+  `\n  bundled total      : ${bundledBytes} bytes · ${pct}% of the B24 25 MB budget`,
 );
 
-if (total > APK_BUDGET_BYTES) failures.push('the fonts alone exceed the B24 APK budget.');
+if (bundledBytes > APK_BUDGET_BYTES) {
+  failures.push('the fonts alone exceed the B24 APK budget.');
+}
 
 if (failures.length) {
   console.error(`\nFONT FAILURES (${failures.length}):`);

@@ -51,7 +51,13 @@ function shuffled<T>(xs: readonly T[]): T[] {
   for (let i = out.length - 1; i > 0; i -= 1) {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     const j = seed % (i + 1);
-    [out[i], out[j]] = [out[j], out[i]];
+    // Both indices are in range by construction, but a destructured swap is typed as
+    // T | undefined under noUncheckedIndexedAccess. An explicit temp is honest about
+    // it without an assertion that would also hide a real out-of-range bug.
+    const a = out[i] as T;
+    const b = out[j] as T;
+    out[i] = b;
+    out[j] = a;
   }
   return out;
 }

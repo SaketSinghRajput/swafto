@@ -92,21 +92,23 @@ export function assertSendable(req: SmsRequest): void {
   }
 
   // Variable content must be <= 40% of the message.
-  const total = renderedLength(body, req.variables);
+  // `messageChars`, not `total` - ADR-003's lint reserves the money vocabulary for
+  // money, and this is a character count.
+  const messageChars = renderedLength(body, req.variables);
   const varChars = req.variables.reduce((n, v) => n + v.length, 0);
-  const share = (varChars / total) * 100;
+  const share = (varChars / messageChars) * 100;
   if (share > DLT_LIMITS.maxVariableSharePercent) {
     throw SmsTemplateError(
-      `Variable content is ${share.toFixed(1)}% of the message; DLT caps it at ` +
+      `Variable content is ${Math.round(share * 10) / 10}% of the message; DLT caps it at ` +
         `${DLT_LIMITS.maxVariableSharePercent}%.`,
     );
   }
 
   // Cost guard: Odia and Hindi are Unicode, so a segment is 70 characters.
   const limit = segmentLimit(body);
-  if (total > limit) {
+  if (messageChars > limit) {
     throw SmsTemplateError(
-      `Rendered message is ${total} characters against a ${limit}-character segment ` +
+      `Rendered message is ${messageChars} characters against a ${limit}-character segment ` +
         `for this script - it would cost two segments on every send.`,
     );
   }

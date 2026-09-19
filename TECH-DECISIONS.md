@@ -128,6 +128,22 @@ serialisation reason, and because an object type invites accidental `+` concaten
 integer, and **must name its rounding mode at the call site**. No implicit rounding
 anywhere.
 
+> **ENFORCEMENT BUILT AT ITERATION 18, AND IT DID NOT EXIST BEFORE THEN.** From G1 to
+> iteration 17 this section described a control that was absent: ESLint was not
+> installed, there was no config, and `npm run lint` exited with "'eslint' is not
+> recognized". A non-negotiable constraint rested on a rule nobody had written. The
+> rule now exists at `tools/eslint-rules/no-money-float.mjs`, all four clauses, with
+> its own RuleTester suite covering a passing AND a failing case for each. It runs in
+> CI via `npm run check:money`, which lints 45 files, rather than through
+> `eslint.config.mjs` - a repository hook protects that filename, and working around
+> it by choosing a different extension would defeat a guard put there on purpose. The
+> editor-integration config is H11.
+>
+> Applying it found nothing wrong with the money paths and eleven places where the
+> money vocabulary was used for something else - character counts, test counts, font
+> bytes. Those were renamed rather than the rule narrowed, which is the point of
+> having the pattern be broad.
+
 **Enforcement (CI-failing).** A custom ESLint rule `swafto/no-money-float`:
 - bans `+ - * /` where either operand identifier matches `/amount|paise|total|balance|cash|sum|opening|counted|expected/i`, outside `packages/formula-engine/src/money.ts` (the audited helpers);
 - bans `parseFloat(` and `Number(` applied to anything matching that pattern;

@@ -17,7 +17,7 @@
  * appears - which it will, the first time a Reports screen misses B20.
  */
 import { describe, it, expect } from 'vitest';
-import { computeDay, computePrimary, toClosedDaySummary } from '../src/index.ts';
+import { add, computeDay, computePrimary, subtract, toClosedDaySummary } from '../src/index.ts';
 import type { DayInput, Entry } from '../src/types.ts';
 import type { OperationalContext } from '../src/operational.ts';
 
@@ -144,8 +144,15 @@ describe('DROP · removing everything but the entries reproduces the figures exa
   it('the WORKING sums to its own total, so no line can be a stored figure', () => {
     const p = computePrimary(canonical());
     for (const [name, fig] of Object.entries(p)) {
-      const summed = fig.working.lines.reduce(
-        (acc, l) => (l.sign === '+' ? acc + l.amount : acc - l.amount),
+      const lines = (fig as { working: { lines: { sign: string; amount: number }[] } })
+        .working.lines;
+      // Through the audited helpers, not bare `+`/`-`. ADR-003's lint caught this
+      // doing raw arithmetic on `amount`, and the fix is strictly better than the
+      // suppression would have been: `add` and `subtract` assert integrality, so a
+      // working line carrying a float now fails HERE as well as wherever it came
+      // from.
+      const summed = lines.reduce(
+        (acc: number, l) => (l.sign === '+' ? add(acc, l.amount) : subtract(acc, l.amount)),
         0,
       );
       expect(summed, `${name} total must equal the sum of its own lines`).toBe(fig.value);

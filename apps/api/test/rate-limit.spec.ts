@@ -32,7 +32,9 @@ const DEVICE = 'device-a';
 const IP = '203.0.113.7'; // TEST-NET-3, reserved for documentation
 
 /* ---- connect at module load, for the reason postgres.spec.ts documents ---- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Deliberately loose: `pg` is CommonJS with awkward ESM interop, and these tests
+// exercise SQL behaviour, not driver typings. Typing it properly here would couple
+// the suite to a dependency shape we do not otherwise depend on.
 type PgClient = any;
 const clients: PgClient[] = [];
 let reachable = false;

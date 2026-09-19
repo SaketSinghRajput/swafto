@@ -39,8 +39,8 @@ describe('G6 · every registered template satisfies the DLT caps', () => {
       });
 
       it(`${id}/${lang} keeps variable content under 40% of the message`, () => {
-        const total = renderedLength(body, [CODE]);
-        expect((CODE.length / total) * 100).toBeLessThanOrEqual(
+        const messageChars = renderedLength(body, [CODE]);
+        expect((CODE.length / messageChars) * 100).toBeLessThanOrEqual(
           DLT_LIMITS.maxVariableSharePercent,
         );
       });

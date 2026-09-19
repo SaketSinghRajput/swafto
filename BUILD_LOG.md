@@ -1124,3 +1124,98 @@ FOUND, NOT YET FIXED - and it is bigger than anything above:
   Next iteration.
 
 NEXT — tsconfig and a real lint, including the paise rule ADR-003 promises.
+
+## 2026-09-19 · Iteration 18 · Typechecking and the lint that constraint 6 requires
+
+Two controls this build has claimed since G1 and never had. Both found by running a
+script I had no reason to think was broken, at the end of the previous iteration.
+
+THERE WAS NO tsconfig.json ANYWHERE IN THE REPOSITORY. `npm run typecheck` had been in
+package.json since G3 and had never once executed - "error TS5083: Cannot read file
+tsconfig.json". Vitest and `node --experimental-strip-types` both ERASE types rather
+than checking them, so every test passed and nothing complained. SEVENTEEN ITERATIONS
+OF TYPESCRIPT WITH NO TYPE CHECKING, in a codebase whose central claim is that the
+money arithmetic is right.
+
+The script itself was also wrong - `tsc --build --force` needs composite project
+references this repo does not use - so it would have failed even once a config
+existed. Now `tsc --noEmit`, and in check:all.
+
+NINE ERRORS ON THE FIRST RUN. Two were real:
+
+  `source: 'imported' as 'manual'` in author-vectors.ts. A CAST THAT LIES, written
+  during adversary pass F-04 to silence a compiler that was not running. The vector
+  it produces is correct; the type said the column could only hold 'manual' while the
+  data held 'imported'. Widened to the real union. F-09's `label` had the same
+  history - added to the data, never to the type.
+
+  `IsoDate` declared identically in dates.ts AND types.ts, which made `export *` from
+  both ambiguous. Invisible until something checked.
+
+The other seven were `noUncheckedIndexedAccess` and implicit-any findings in tests.
+All fixed in the source; none suppressed.
+
+`npm run lint` HAD NEVER RUN EITHER - eslint was not installed and there was no
+config. And that one is worse, because CONSTRAINT 6 says money is integer paise
+everywhere, LINT-ENFORCED, and ADR-003 is titled "enforced by lint" and specifies the
+rule by name in four clauses. A NON-NEGOTIABLE CONSTRAINT WAS RESTING ON A CONTROL
+THAT DID NOT EXIST. Same class as F-01 and F-06, attached to something that matters
+more than either.
+
+BUILT: tools/eslint-rules/no-money-float.mjs, all four ADR-003 clauses transcribed
+rather than invented, with a RuleTester suite carrying a passing AND a failing case
+for each clause. The test caught a real bug in the rule on its first run:
+`new Intl.NumberFormat(...)` is a NewExpression, not a CallExpression, so the handler
+never saw it - and `new` is the form people actually write.
+
+WHERE IT RUNS, AND WHY NOT WHERE THE ADR ASSUMED. A repository hook refuses writes to
+eslint.config.mjs: "Fix the source code to satisfy linter/formatter rules instead of
+weakening the config." That is a good rule. It cannot tell "weakening a config" from
+"creating the first one", and I am not going to route around it by choosing a
+different file extension - that would defeat a guard put there deliberately while
+looking like compliance. So the ENFORCEMENT lives in tools/check-money-lint.mjs,
+which runs the real rule through ESLint's Linter API over 45 files and fails the
+build, and is in check:all. The editor-integration config is H11, which explicitly
+says nothing is blocked on it.
+
+WHAT THE RULE FOUND: eleven hits, and NOT ONE was a money defect. Every one was the
+money vocabulary being used for something else - `total` for a character count in the
+DLT 40% check, `total` for a count of tests in detection-rate, `total` for font bytes
+in check-font-coverage. Renamed, all of them, rather than narrowing the rule. In a
+money application those words should mean money, and the rule enforcing that is worth
+more than the eleven renames cost.
+
+  Two judgement calls, recorded because both could have gone the other way:
+  - Clause 4 bans toFixed outside formatPaise. `share.toFixed(1)` formats a
+    PERCENTAGE, not money, so a narrowing was tempting. Converting to
+    `Math.round(x * 10) / 10` costs one line, so the rule stays exactly as ADR-003
+    wrote it. Narrowing a documented rule to fit the code is the move this loop is
+    supposed to refuse, and it is much easier to justify when the alternative is
+    cheap.
+  - A test doing `acc + l.amount` now goes through `add`/`subtract` from money.ts.
+    Strictly better than the suppression would have been: those helpers assert
+    integrality, so a working line carrying a float now fails there too.
+
+ALSO REMOVED: two `// eslint-disable-next-line @typescript-eslint/no-explicit-any`
+comments. They named a rule no config has ever loaded, so they had never suppressed
+anything - ESLint reports them as errors in their own right. Cargo-culted into a repo
+with no linter.
+
+Commands:
+  $ npm run typecheck  -> clean (first successful run in the project's history)
+  $ npm run check:money -> 45 files, no violations
+  $ npm run check:all  -> 10 checks, all pass
+  $ npx vitest run     -> 231 passed, 0 skipped
+
+Negative tests, all confirmed:
+  money lint · float arithmetic planted in primary.ts   -> 2 failures
+  money lint · decimal literal planted in the engine    -> 1 failure
+  rule       · every invalid case in the RuleTester suite
+
+DRAFT eslint.config.mjs FOR H11 - registers the rule as the `swafto` plugin and adds
+ADR-012's purity bans (no-restricted-globals for Date/Intl/process/fetch,
+no-restricted-properties for Date.now and Math.random, no-restricted-syntax for
+`new Date()` and toLocaleString) scoped to packages/formula-engine/src, with tests
+exempted because several exist precisely to drive a clock the engine refuses to read.
+
+NEXT — the DC-003 compensating control, then the OTP service B.3-B.5.

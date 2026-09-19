@@ -104,6 +104,7 @@ describe('§5.11 · ENGINE layer refuses what it must', () => {
       const fns = engine as unknown as Record<string, (...a: unknown[]) => unknown>;
       const fn = fns[c.engine!.fn];
       expect(fn, `engine exports no function named ${c.engine!.fn}`).toBeTypeOf('function');
+      if (typeof fn !== 'function') throw new Error('unreachable: asserted above');
       let threw: Error | null = null;
       try {
         fn(...c.engine!.args);

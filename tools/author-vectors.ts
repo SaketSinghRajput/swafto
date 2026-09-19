@@ -39,7 +39,12 @@ interface VEntry {
   dueDate?: string;
   correctsDayId?: string;
   createdAt: string;
-  source: 'manual';
+  // The real union, not 'manual'. F-04 added an imported-source vector and silenced
+  // the mismatch with `'imported' as 'manual'` - a cast that lies, written while the
+  // typechecker was not running. D1 keeps this column so UPI import stays reversible.
+  source: 'manual' | 'imported';
+  // F-09 added expense labels; the type never learned about them.
+  label?: string;
 }
 
 let seq = 0;
@@ -1353,7 +1358,7 @@ vectors.push({
   input: {
     day: day(),
     entries: [
-      { ...e('upi_sales', R(2000), 'upi'), source: 'imported' as 'manual' },
+      { ...e('upi_sales', R(2000), 'upi'), source: 'imported' },
       e('upi_sales', R(3000), 'upi'),
     ],
     priorCreditOutstanding: 0,

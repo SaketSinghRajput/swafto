@@ -122,7 +122,7 @@ function run(cmd, args) {
   }
 }
 
-/** Returns {failed, total} for the named suite. */
+/** Returns {failed, ran} for the named suite. */
 function measure(suite) {
   if (suite === 'vectors') {
     const r = run(process.execPath, [
@@ -130,9 +130,11 @@ function measure(suite) {
       'tools/run-vectors.mjs',
       '--out=.detection-tmp.json',
     ]);
-    const total = Number(/vector count\s*:\s*(\d+)/.exec(r.out)?.[1] ?? 0);
+    // `ran`, not `total` - ADR-003's lint reserves the money vocabulary for money,
+    // and this is a count of vectors.
+    const ran = Number(/vector count\s*:\s*(\d+)/.exec(r.out)?.[1] ?? 0);
     const failed = Number(/FAILED (\d+) expectation/.exec(r.out)?.[1] ?? 0);
-    return { failed, total };
+    return { failed, ran };
   }
   const r = run(process.execPath, [
     'node_modules/vitest/vitest.mjs',
@@ -143,8 +145,8 @@ function measure(suite) {
   const m = /Tests\s+(?:(\d+) failed \| )?(\d+) passed(?:\s+\|\s+(\d+) skipped)?\s+\((\d+)\)/.exec(
     r.out,
   );
-  if (!m) return { failed: 0, total: 0, unparsed: true };
-  return { failed: Number(m[1] ?? 0), total: Number(m[4] ?? 0) };
+  if (!m) return { failed: 0, ran: 0, unparsed: true };
+  return { failed: Number(m[1] ?? 0), ran: Number(m[4] ?? 0) };
 }
 
 const results = [];
@@ -189,7 +191,7 @@ for (const r of results) {
     flagged += 1;
     continue;
   }
-  const rate = r.total ? r.failed / r.total : 0;
+  const rate = r.ran ? r.failed / r.ran : 0;
   // The denominator is the WHOLE suite. For a NARROW invariant - one only a few
   // tests can possibly exercise - a low ratio is expected and says nothing about
   // fixture diversity. The 2/59 grouping result mattered because grouping is BROAD:
@@ -198,7 +200,7 @@ for (const r of results) {
     r.failed === 0 ? 'UNDETECTED' : r.breadth === 'broad' && rate < 0.2 ? 'LOW-BROAD' : 'ok';
   if (flag !== 'ok') flagged += 1;
   console.log(
-    `  ${pad(r.id, 36)} ${pad(`${r.failed}/${r.total}`, 9)} ${pad((rate * 100).toFixed(1) + '%', 7)} ${pad(r.breadth ?? '-', 7)} ${pad(flag, 11)} ${r.invariant}`,
+    `  ${pad(r.id, 36)} ${pad(`${r.failed}/${r.ran}`, 9)} ${pad(`${Math.round(rate * 1000) / 10}%`, 7)} ${pad(r.breadth ?? '-', 7)} ${pad(flag, 11)} ${r.invariant}`,
   );
 }
 

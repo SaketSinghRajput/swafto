@@ -20,6 +20,7 @@ If yes, it does not belong here.
 | H8 | Physical device pass | 1 hour | Confidence the AVD cannot give |
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
+| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration; enforcement already runs in CI |
 
 ---
 
@@ -244,3 +245,28 @@ code. They are resolved in `DECISIONS-AUTONOMOUS.md`:
 | Pipeline proof without AWS | LocalStack + docker-compose + a locally executed rollback |
 | Performance without a phone | **AD-009** - constrained AVD, limitations recorded |
 
+---
+
+## H11 · Let an `eslint.config.mjs` be created
+
+**Why no agent can do it.** A repository hook refuses any write to
+`eslint.config.mjs`: *"Modifying eslint.config.mjs is not allowed. Fix the source
+code to satisfy linter/formatter rules instead of weakening the config."* That is a
+good rule and I am not going to route around it - creating the file under a different
+extension would defeat a guard you put there deliberately, while looking like
+compliance.
+
+**What is NOT blocked, so that this does not read as more urgent than it is.** The
+enforcement ADR-003 requires already runs. `npm run check:money` executes the real
+`swafto/no-money-float` rule over 45 files through ESLint's own `Linter` API and
+fails the build; it is in `check:all` and negative-tested. Nothing about constraint 6
+is waiting on you.
+
+**What you get by allowing it.** Editor integration - the same rule underlining the
+mistake as it is typed, rather than at commit time - plus the ADR-012 purity bans
+(`Date.now`, `new Date()`, `Math.random`, `Intl`, `process` inside the engine) which
+are expressible as stock ESLint rules and are currently unenforced.
+
+**What to do.** Disable the config-protection hook for one commit, or drop in a config
+that registers `tools/eslint-rules/no-money-float.mjs` as the `swafto` plugin. The
+content is drafted in BUILD_LOG under iteration 18.

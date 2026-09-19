@@ -34,7 +34,9 @@ const DAY = '2026-07-15';
 const ENTRY = '01890000-0000-7000-8000-00000000000a';
 const NOW = '2026-07-15T10:00:00.000Z';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Deliberately loose: `pg` is CommonJS with awkward ESM interop, and these tests
+// exercise SQL behaviour, not driver typings. Typing it properly here would couple
+// the suite to a dependency shape we do not otherwise depend on.
 let client: any;
 let reachable = false;
 
