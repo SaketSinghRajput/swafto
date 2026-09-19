@@ -1,6 +1,6 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 4
+Updated: 2026-09-19T00:00:00Z   Iteration: 5
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -13,7 +13,7 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 | G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
 | G2 | Legal audit | **PASS** | `grep -cE 'ACTION-REQUIRED\|BLOCKED-ON-HUMAN' LEGAL-AUDIT.md` -> **52**; 26 items mirrored into TRACEABILITY.md; **7 BLOCKED-ON-HUMAN** |
 | G3 | Security audit / STRIDE | **PASS** | `npm audit --audit-level=high` -> **found 0 vulnerabilities**; `STRIDE rows: 87`; 21 items mirrored into TRACEABILITY.md |
-| G4 | Schema + migrations, SQLite & Postgres | TODO | needs up/down/up on both engines + UPDATE/DELETE rejection test |
+| G4 | Schema + migrations, SQLite & Postgres | **PASS** | `vitest run --dir packages` -> **21 passed, 0 skipped** on BOTH engines. up/down/up clean; UPDATE and DELETE on `entries` rejected by trigger (SQLite) and trigger+REVOKE (Postgres); RLS forced on all 6 tenant tables |
 | G5 | **Formula Engine + vectors.json** | TODO | needs `test:vectors` under Node AND Hermes, >= 30 vectors, diff empty |
 | G6 | Auth service (phone + OTP) | TODO | needs integration tests |
 | G7 | Sync API (idempotent) | TODO | needs 3x replay of 200-entry batch, byte-identical |
@@ -90,6 +90,13 @@ sheet and the one handwritten photograph that exists on disk:
   (`open|ready|closed|not_closed`); the decisions doc state machine (p.8) shows all
   five. Both shorter lists are lossy and both `not_started` and `not_closed` are
   load-bearing. **Flagged because it changes a schema the prompt specified literally.**
+- **OD-9 · `section_skips` is a store the architecture document never names.** D8
+  requires "skipped" and "untouched" to be distinguishable, but a skip has no entry to
+  record it and D2 Days has nowhere to put it. Added `section_skips (shop_id, day_id,
+  section, skipped_at)`. **Deliberately NOT append-only** — a skip is a UI state, not a
+  financial fact, and E3 (an entry un-skips a section) and E6 (deleting the last line
+  returns a section to *untouched*, not skipped) both require it to be reversible.
+  Flagged because it adds a sixth store to an architecture that enumerates five.
 - **OD-7 · ADR-010 amended at G3: npm workspaces, not pnpm.** Every gate verifies with
   `npm run ...` / `npm audit`, so pnpm would need a shim or rewritten gates for no gain;
   npm 11 ships with Node 24. **Cost:** pnpm's strict layout would have made a phantom
@@ -132,7 +139,7 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Next action
 
-**G4 - Database schema and migrations.** (G0-G3 complete.) Then **G5, the Formula Engine** - the heart of the product.
+**G5 - the Formula Engine.** (G0-G4 complete.) This is the heart of the product: pure TypeScript, IN1-IN7 / P1-P8 / OP1-OP6 / BI1-BI4, and >= 30 golden vectors run under Node AND Hermes with a diff that fails on any disagreement.
 
 <!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN

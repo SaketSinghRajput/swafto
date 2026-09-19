@@ -1,0 +1,10 @@
+{
+  "name": "@swafto/schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/spec.ts",
+  "exports": { ".": "./src/spec.ts" },
+  "description": "Single source of truth for the SWAFTO schema. Emits SQLite and Postgres DDL from one spec.",
+  "dependencies": {}
+}

@@ -1,0 +1,149 @@
+/**
+ * G4 — the Postgres half. Same spec, same migrations, the other engine.
+ *
+ * G4 requires "identical schema and identical migrations run on SQLite (device) and
+ * Postgres (server) from one source of truth", and that UPDATE/DELETE on entries are
+ * rejected on BOTH.
+ *
+ * Postgres gets a stronger guarantee than SQLite: a trigger AND `REVOKE UPDATE, DELETE`
+ * (ADR-006, "belt and braces, because §07.04 says forever"), plus Row-Level Security
+ * for tenancy (SECURITY-AUDIT S-10).
+ *
+ * Skips cleanly when no database is reachable, so the suite stays green offline.
+ * Point it at one with:
+ *     DATABASE_URL=postgres://postgres:postgres@localhost:55432/swafto_test
+ * The throwaway container is started by `tools/pg-up.mjs`.
+ */
+import { describe, it, expect, afterAll } from 'vitest';
+import { migrationUp, migrationDown } from '../src/spec.ts';
+
+const URL = process.env.DATABASE_URL;
+
+const SHOP = '00000000-0000-7000-8000-000000000001';
+const DAY = '2026-07-15';
+const ENTRY = '01890000-0000-7000-8000-00000000000a';
+const NOW = '2026-07-15T10:00:00.000Z';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let client: any;
+let reachable = false;
+
+/**
+ * Connect at MODULE LOAD, via top-level await — deliberately, not in `beforeAll`.
+ *
+ * `maybe()` below is evaluated while Vitest is COLLECTING the suite, which happens
+ * before any `beforeAll` hook runs. Setting `reachable` in `beforeAll` would leave it
+ * false at collection time and silently skip every Postgres test even with a database
+ * right there. (It did exactly that, which is how this comment came to exist.)
+ */
+if (URL) {
+  try {
+    // `pg` is CommonJS: under an ESM dynamic import the named export can land on
+    // `.default`. Take whichever is actually there rather than assuming.
+    const mod = (await import('pg')) as unknown as Record<string, unknown>;
+    const Client = (mod.Client ?? (mod.default as Record<string, unknown>)?.Client) as
+      | (new (cfg: unknown) => { connect(): Promise<void> })
+      | undefined;
+    if (!Client) throw new Error('pg.Client not found on the module');
+    client = new Client({ connectionString: URL, connectionTimeoutMillis: 4000 });
+    await client.connect();
+    reachable = true;
+  } catch (err) {
+    reachable = false;
+    console.error('[G4/postgres] connect failed:', (err as Error).message);
+  }
+}
+
+afterAll(async () => {
+  if (client && reachable) await client.end().catch(() => {});
+});
+
+const maybe = () => (reachable ? it : it.skip);
+
+describe('G4 · Postgres migrations and append-only', () => {
+  it('reports whether a database was reachable', () => {
+    if (!reachable) {
+      console.log(
+        '\n  [G4/postgres] SKIPPED — no reachable database.' +
+          '\n  Start one with: node tools/pg-up.mjs' +
+          '\n  Then: DATABASE_URL=postgres://postgres:postgres@localhost:55432/swafto_test npm run test:unit\n',
+      );
+    }
+    expect(true).toBe(true);
+  });
+
+  maybe()('runs up -> down -> up with no residue', async () => {
+    for (const s of migrationDown('postgres')) await client.query(s); // clean slate
+    for (const s of migrationUp('postgres')) await client.query(s);
+
+    const t1 = await client.query(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema='public' ORDER BY table_name`,
+    );
+    const names = t1.rows.map((r: { table_name: string }) => r.table_name);
+    // NOTE: outbox is device-local and must NOT exist on the server (architecture D4).
+    expect(names).toEqual([
+      'days',
+      'devices',
+      'entries',
+      'parties',
+      'section_skips',
+      'shops',
+      'users',
+    ]);
+    expect(names).not.toContain('outbox');
+
+    for (const s of migrationDown('postgres')) await client.query(s);
+    const t2 = await client.query(
+      `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'`,
+    );
+    expect(t2.rows[0].n).toBe(0);
+
+    for (const s of migrationUp('postgres')) await client.query(s); // up again
+  }, 30_000);
+
+  maybe()('REJECTS UPDATE and DELETE on entries', async () => {
+    await client.query(`INSERT INTO shops (id, name, type, language, created_at)
+      VALUES ('${SHOP}', 'Test Store', 'kirana', 'en', '${NOW}') ON CONFLICT DO NOTHING`);
+    await client.query(`INSERT INTO days (shop_id, date, state, opening_cash, created_at)
+      VALUES ('${SHOP}', '${DAY}', 'open', 150000, '${NOW}') ON CONFLICT DO NOTHING`);
+    await client.query(`INSERT INTO entries (id, shop_id, day_id, section, amount, mode, created_at, source)
+      VALUES ('${ENTRY}', '${SHOP}', '${DAY}', 'cash_sales', 678000, 'cash', '${NOW}', 'manual')
+      ON CONFLICT (id) DO NOTHING`);
+
+    await expect(
+      client.query(`UPDATE entries SET amount = 1 WHERE id = '${ENTRY}'`),
+    ).rejects.toThrow(/append-only/);
+
+    await expect(client.query(`DELETE FROM entries WHERE id = '${ENTRY}'`)).rejects.toThrow(
+      /append-only/,
+    );
+
+    const still = await client.query(`SELECT amount FROM entries WHERE id = '${ENTRY}'`);
+    expect(String(still.rows[0].amount)).toBe('678000');
+  }, 20_000);
+
+  maybe()('has Row-Level Security enabled on every tenant-scoped table (S-10)', async () => {
+    const res = await client.query(
+      `SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
+       WHERE relname IN ('entries','days','parties','section_skips','devices','users')
+       ORDER BY relname`,
+    );
+    expect(res.rows.length).toBe(6);
+    for (const r of res.rows) {
+      expect(r.relrowsecurity, `${r.relname} RLS`).toBe(true);
+      expect(r.relforcerowsecurity, `${r.relname} FORCE RLS`).toBe(true);
+    }
+  }, 20_000);
+
+  maybe()('stores no totals column anywhere', async () => {
+    const res = await client.query(
+      `SELECT table_name || '.' || column_name AS col FROM information_schema.columns
+       WHERE table_schema='public'`,
+    );
+    const banned = res.rows
+      .map((r: { col: string }) => r.col)
+      .filter((c: string) => /total|balance|outstanding|sum_/i.test(c));
+    expect(banned).toEqual([]);
+  }, 20_000);
+});

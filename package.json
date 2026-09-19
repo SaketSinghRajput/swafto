@@ -24,6 +24,8 @@
     "check:i18n": "node tools/check-i18n.mjs"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.0",
     "typescript": "^5.9.2",
     "vitest": "^5.0.1"
   }
