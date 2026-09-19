@@ -1,6 +1,9 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 7
+Updated: 2026-09-19 · **Iteration: derived, not typed.**
+`npm run check:verifiers` prints it from the BUILD_LOG headings, which are appended by
+the work itself. This line said "Iteration: 7" until iteration 22 - a hand-written
+number nobody updated, which is §5.14 in miniature in the file that tracks §5.14.
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -239,24 +242,43 @@ first screen**. **AD-018 moves the server behind the screens** and records the c
 Committed: A.3 items 1-5, about eleven screens, which is A.2's target. Stretch: items
 6-8. One line from the owner reverses it.
 
-### Next, in order
+### Next, in order (injection 16 D)
 
-1. **The canonical value registry** (injection 15 D, A.6-protected) - 2
-2. **The mutation harness, then the twelve arithmetic survivors** (A.6) - 2
-3. **rejects.json and the B3 re-measurement** (A.6) - 2
+1. **The canonical value registry** - BEFORE the screens, because the screens are
+   about to multiply user-facing copy containing numbers - 2
+2. **The mutation harness, then the twelve arithmetic survivors** - a live finding on
+   the money path outranks a screen - 2
+3. **rejects.json and the B3 re-measurement** - 2
 4. **The two fixtures**, canonical and adversarial - 1
-5. **App skeleton, design tokens, i18n, the §B.6 screen harness** - 3
-6. **A.3 items 1-5**, the day close end to end - 9
+5. **App skeleton, tokens, fonts, store wiring** - 1 (expect it to be ugly)
+6. **FORM A** - 1. Chosen to be FIRST BECAUSE IT IS HARDEST: the custom keypad and
+   its keyboard suppression, money through the registry, tabular figures and DC-005,
+   bundled Anek Odia rendering, a sticky running total from the real store, and B.1's
+   fixture rule end to end. Every unknown front-loaded for ten iterations is in it.
+7. **The first contact sheet, IMMEDIATELY** - even if it is one screen and wrong. It
+   is the first artifact in this build a human can judge by looking, and the Odia
+   rendering question is answered by looking rather than by any test here.
+8. **Instrument B26-B29 straight after Form A** - contrast, white-on-marigold, touch
+   targets, text size - before ten more screens multiply whatever is wrong.
+9. **A.3 items 2-5**, the rest of the day close.
 
-**At 35: the one-page pre-stop check. At 40: stop, and produce the handover report.**
-If it finishes early it stops early - no gold-plating, no filling the budget.
+**Constraints on the scaffold, from AD-019 - read them again when writing it:**
+the outbox is IN THE WRITE PATH from the first write (the drain is what was cut); the
+shop id is a client-generated UUIDv7 from the first row; B36 is instrumented with the
+first log line, not with the server.
+
+**If screens run short, cut from the bottom of A.3 items 1-5 - never from §B.6.**
+Nine screens that each meet the full bar beat eleven that mostly do.
+
+**At 35: the one-page pre-stop check. At 40: stop and produce the handover report.**
+If it finishes early it stops early.
 
 ### Open, and named rather than buried
 
 - **V-7** - TRACEABILITY names 8 engine functions and 18 vectors that do not exist.
-  §5.14.5 requires each built or the claim removed. The only OPEN finding.
+  §5.14.5: each built or the claim removed. The only OPEN finding.
 - **Two owed plants** from REVIEW.md's A12 audit: a correction whose
   `corrects_day_id` is closed while its own day is open, and a genuine cross-tenant
-  read once routes exist (the latter now blocked by AD-018).
-- **H11** - permission for an `eslint.config.mjs`. Blocks nothing; the enforcement
-  already runs in CI.
+  read (the latter now blocked by AD-018).
+- **One STALE judgement** (§5.15): the finding severities, last stated at iteration 13.
+- **H11** - permission for an `eslint.config.mjs`. Blocks nothing.

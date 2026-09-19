@@ -16,13 +16,48 @@ full. Roughly eleven screens committed, sixteen at best.
 ## 1 · The server: sync, the read API, the OTP service, and DC-003's control
 
 **The largest cut, and the one that is mine rather than the owner's.** Recorded as
-AD-018 with its reversal trigger.
+AD-018; **confirmed by the owner in injection 16 and not to be reversed.**
+
+### Why this cut is SOUND rather than LUCKY
+
+This matters more than the cut itself, and a future reader needs it: **the deferral
+is safe because of a decision made at G0, not because the schedule got lucky.**
+
+**Constraint 2 makes the local store authoritative and every write succeed locally
+first.** The day close is therefore complete without a server BY DESIGN - the nine
+sections, the cash check, the carry-forward chain and every derived figure are
+computed on the device from the device's own SQLite. Sync is ADDITIVE: it copies a
+finished, correct day somewhere else.
+
+In almost any other product this cut would gut the app, because the server is where
+the truth lives. Here there is no truth on the server that is not already on the
+phone. **The build is not compromising its architecture to hit a ceiling; it is
+collecting on a choice made twenty-one iterations ago.**
+
+### And what is deferred is IMPLEMENTATION, not DESIGN
+
+A continuation is not starting from a blank page on any of it:
+
+- **The schema** is written and migrating on both engines, including the closed-day
+  trigger and row-level security - 63 tests.
+- **The rate limiter** is built, Postgres-backed, restart-proven and shared across
+  instances - 15 tests, AD-017.
+- **The OTP service** is specified in full: TB6's limits transcribed into code,
+  the 10-minute TTL ruled in SPEC-DIGEST C-8, device binding and revocation in AD-014.
+- **The SMS templates** are written in three languages, measured to one segment each,
+  and ready for DLT registration.
+- **The sync protocol** is decided in ADR-004: outbox, client-assigned day, idempotent
+  upsert, divergence alarm rather than overwrite.
+
+What is missing is the HTTP layer: routes, handlers, wiring. **Handing over finished
+designs with their tests is a materially cheaper thing to resume than handing over an
+intention.**
 
 | | |
 |---|---|
 | **What** | G6 the OTP/auth service · G7 the sync API · G8 the read API · DC-003's L7 compensating control |
 | **Why cut** | Eight of the twenty remaining iterations, and **none of it is walkable on an emulator with no network.** A.2's target is an offline app. Keeping it would have left four iterations for the entire screen set - a backend with no product on top of it. |
-| **What it blocks** | Sync, in full: the outbox fills and never drains. Real sign-in - the OTP screens build against `StubSmsPort`, so the code that arrives is not one a server issued. B8, B11 and B36 never get instruments, because their subjects never exist. Any multi-device story. Server-side divergence detection (architecture §07.06). |
+| **What it blocks** | Sync, in full: the outbox fills and never drains. Real sign-in - the OTP screens build against `StubSmsPort`, so the code that arrives is not one a server issued. **B8 and B11** never get instruments, because their subjects never exist. Any multi-device story. Server-side divergence detection (architecture §07.06). **NOT B36** - I listed it here in error and injection 16 A.3 corrected it: a CLIENT day close writes CLIENT logs, and crash reporting ships those off the device, which makes them a DPDP matter rather than mere hygiene. Its instrument is due the moment the first screen logs a line. |
 | **What survives** | The rate limiter (AD-017 - 15 tests, Postgres-backed, restart-proven) and the SMS port and template registry are BUILT AND TESTED. So is the entire schema, on both engines. What is missing is the HTTP layer on top: routes, handlers, wiring. |
 | **Cost to build** | 8 iterations - G6 about 2, G7 about 3, G8 about 2, DC-003 about 1. Lower than a cold start, because the hard parts (limiter, port, schema, the shared engine) are done. |
 

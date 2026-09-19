@@ -725,6 +725,64 @@ taken, not after.
 
 ---
 
+## AD-019 · Three things that stay when the server goes
+
+**Question.** AD-018 defers the server. Injection 16 A names three things that must
+NOT be deferred with it, each cheap now and expensive later. They are not separate
+work items - they are CONSTRAINTS ON HOW THE FIRST SCREENS ARE BUILT, which is
+exactly why they need recording somewhere the scaffolding iteration will read.
+
+**The shared pattern, and it is the one D1 already used twice.** The entry `id` is a
+client-generated UUIDv7 and the `source` column exists solely so UPI import stays
+reversible. Neither is used today. Both cost nothing to carry and would cost a
+migration to add later, on a device holding months of a shopkeeper's ledger.
+**Preserve the option while it is free.** All three below are that pattern again.
+
+**A.1 · THE OUTBOX IS IN THE WRITE PATH. THE DRAIN IS NOT BUILT.**
+
+Every write goes through the outbox and accumulates with its UUIDv7, exactly as it
+will when sync exists. Nothing drains it - that is the deferred part. The outbox is a
+table and one write; the drain is the eight iterations AD-018 cut.
+
+If the outbox is not in the write path now, adding sync later means retrofitting
+EVERY write site - and that is precisely the migration the client-side UUID was
+designed to avoid. Building it now costs almost nothing and makes the deferral
+reversible rather than merely postponed.
+
+*Owed test:* close a full day offline; assert the outbox holds exactly the entries
+written, in order, with ids stable across a restart.
+
+**A.2 · THE SHOP ID IS A CLIENT-GENERATED UUIDv7 FROM DAY ONE.**
+
+Sign-in is deferred, so the app creates a shop locally. Its id is generated on the
+device like an entry's. When real sign-in lands, the server ADOPTS that id rather
+than assigning one.
+
+The alternative - a placeholder id or an integer - turns the first real sign-in into
+a data migration on a device holding a shopkeeper's entire history. Identical
+insight, identical cost, identical payoff to the entry UUID.
+
+**A.3 · B36 IS INSTRUMENTED WITH THE FIRST SCREEN, NOT WITH THE SERVER.**
+
+I listed B36 beside B8 and B11 as never-instrumented when the server was deferred.
+That was right for those two and **wrong for B36**, and injection 16 corrected it.
+
+A CLIENT day close writes CLIENT logs, and crash reporting ships them OFF THE DEVICE -
+so an amount, a party name or a phone number in a log line is a DPDP matter under
+LEGAL §1, not merely untidy. §5.13 applies without qualification: the subject will
+exist the moment the first screen logs a line, so the instrument is due then.
+
+**REVERSAL TRIGGER.** A.1 reverses only if the outbox turns out to be genuinely
+expensive in React Native - which would be surprising, since it is an insert - and
+then the retrofit cost must be written into DEFERRED.md before the decision is taken,
+not after. A.2 does not reverse: there is no cheaper time to choose an id format than
+before the first row exists. A.3 reverses only if the client ships no logging at all,
+in which case B36 is vacuous rather than met, and must say so.
+
+**Iteration 22 · injection 16 A**
+
+---
+
 ## Open questions
 
 None. The blocked-on-a-human status is abolished entirely; anything genuinely

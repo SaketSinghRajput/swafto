@@ -166,7 +166,7 @@ existence unblocks it, and the gate that artifact arrives at.
 | B33 | instrumented | `audit` | - |
 | B34 | blocked | - | needs **a container image**, at G9 |
 | B35 | instrumented | `secrets` | The REPO half is measured and clean over 102 files. The APK half is blocked on a build (G9), and gitleaks joins this scanner there rather than replacing it. |
-| B36 | blocked | - | needs **a logger and a real day close to log**, at G6 |
+| B36 | blocked | - | needs **the first client log line - NOT the server**, at due at A.3 item 1, the first screen |
 | B37 | instrumented | `unit` | - |
 | B38 | **MISSED - SCOPE** | - | Requires 27 of 27. The ceiling of 40 funds about 11 committed and 16 at best (PROJECTION.md), so this cannot be met. A DECISION, not a failure - the deferred set is in DEFERRED.md and the threshold is untouched. |
 | B39 | **MISSED - SCOPE** | `traceability` | Measured: 0 of 26, and the instrument reports WHICH column holds each row. The api column is blocked by the deferred server (AD-018) and the screen column by the deferred screens, so this cannot be met inside the ceiling. A DECISION, not a failure. |

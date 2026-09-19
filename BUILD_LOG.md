@@ -1582,3 +1582,101 @@ Commands:
 NEXT — the canonical value registry, then the mutation harness and the twelve
 arithmetic survivors, then rejects.json and the B3 re-measurement. All three are
 A.6-protected and none may be traded for schedule.
+
+## 2026-09-19 · Iteration 22 · Injection 16: AD-018 confirmed, and judgements expire
+
+AD-018 confirmed by the owner and not reversed. Three things recorded so they cannot
+be deferred along with the server, plus §5.15.
+
+### WHY THE CUT IS SOUND RATHER THAN LUCKY — now in DEFERRED.md
+
+The stronger version of the argument, and a future reader needs it: **the deferral is
+safe because of a decision made at G0.** Constraint 2 makes the local store
+authoritative and every write succeed locally first, so the day close is complete
+without a server BY DESIGN - nine sections, cash check, carry-forward chain and every
+derived figure computed on the device from the device's own SQLite. Sync is ADDITIVE;
+it copies a finished, correct day somewhere else.
+
+In almost any other product this cut would gut the app, because the server is where
+the truth lives. Here there is no truth on the server that is not already on the
+phone. The build is not compromising its architecture to hit a ceiling - IT IS
+COLLECTING ON A CHOICE MADE TWENTY-ONE ITERATIONS AGO.
+
+And what defers is IMPLEMENTATION, not DESIGN: the schema migrating on both engines
+with 63 tests, the rate limiter built and restart-proven with 15, the OTP service
+specified down to TB6's limits and the C-8 TTL ruling, twelve SMS templates measured
+to one segment each, the sync protocol decided in ADR-004. What is missing is routes,
+handlers and wiring. Handing over finished designs with their tests is a materially
+cheaper thing to resume than handing over an intention.
+
+### AD-019 · THREE THINGS THAT STAY WHEN THE SERVER GOES
+
+Not separate work - CONSTRAINTS ON HOW THE FIRST SCREENS ARE BUILT, recorded where
+the scaffolding iteration will read them. All three are the pattern D1 already used
+twice: the entry UUIDv7 and the `source` column are both unused today, both cost
+nothing to carry, and both would cost a migration to add later on a device holding
+months of a shopkeeper's ledger. PRESERVE THE OPTION WHILE IT IS FREE.
+
+  A.1 THE OUTBOX IS IN THE WRITE PATH; THE DRAIN IS NOT BUILT. Every write
+      accumulates with its UUIDv7 exactly as it will when sync exists. The outbox is
+      a table and one insert; the drain is the eight iterations AD-018 cut. Without
+      it, adding sync later means retrofitting every write site - the precise
+      migration the client-side UUID was designed to avoid.
+  A.2 THE SHOP ID IS A CLIENT-GENERATED UUIDv7 FROM DAY ONE, so the server ADOPTS it
+      at first sign-in rather than assigning one. A placeholder or an integer turns
+      that first sign-in into a data migration on a device full of real history.
+  A.3 B36 IS INSTRUMENTED WITH THE FIRST SCREEN, NOT WITH THE SERVER.
+
+B36 WAS MY ERROR AND THE INJECTION CORRECTED IT. I listed it beside B8 and B11 as
+never-instrumented when the server was deferred. Right for those two, wrong for this
+one: a CLIENT day close writes CLIENT logs, and crash reporting ships them OFF THE
+DEVICE, so an amount or a party name in a log line is a DPDP matter under LEGAL §1
+rather than untidiness. Reclassified - its subject is the first screen's first log
+line, and §5.13 makes the instrument due then.
+
+### §5.15 · JUDGEMENTS EXPIRE
+
+Predicates close the hole for anything DERIVABLE. They cannot close it for a
+judgement - an estimate, a cost, a severity, a reversal trigger - and those go stale
+silently, which is F-06 in slower motion.
+
+Ten judgements now carry the iteration they were MADE in. Anything older than five is
+printed as STALE on every run. It does NOT fail the build: a stale judgement is not a
+defect, it is a thing that needs thinking about, and the failure mode being guarded
+against is silence rather than staleness.
+
+  ONE STALE ON THE FIRST RUN: the finding severities, last stated at iteration 13.
+
+THE CURRENT ITERATION IS ITSELF DERIVED, from the BUILD_LOG headings, which are
+appended by the work. It has to be: BUILD_STATE's own header read "Iteration: 7" at
+iteration 22 - a hand-written number nobody had updated, sitting in the file that
+tracks the rule about hand-written numbers. Fixed by REMOVING the number rather than
+by correcting it.
+
+### C · THE SCREEN PHASE, RECORDED BEFORE IT STARTS
+
+FORM A IS FIRST BECAUSE IT IS HARDEST. In one screen: the custom keypad and its
+keyboard suppression, money through the registry, tabular figures and DC-005's
+proportional-digit fix, bundled Anek Odia rendering, a sticky running total computed
+by the engine from the real store, and B.1's fixture rule end to end. Every unknown
+front-loaded across ten iterations is in that one screen. Two iterations budgeted,
+and the first is expected to be ugly.
+
+Then the first contact sheet IMMEDIATELY - even one screen, even wrong. It is the
+first artifact in this build a human can judge by looking, and the Odia rendering
+question is answered by looking rather than by any test in this repository.
+
+Then B26-B29 instrumented straight away, before ten more screens multiply whatever is
+wrong in the token set.
+
+Commands:
+  $ npm run check:all       -> 14 checks, all pass
+  $ npm run check:verifiers -> iteration derived · 10 judgements, 1 STALE
+  $ npx vitest run          -> 303 passed, 0 skipped
+
+check:generated caught BENCHMARKS-RESULTS.md un-regenerated after the B36
+reclassification - the partition is generated, so changing a classification without
+re-running is exactly the drift it exists to catch.
+
+NEXT — the canonical value registry, then the mutation harness and the twelve
+arithmetic survivors.

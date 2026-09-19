@@ -368,7 +368,16 @@ export const BENCHMARKS = {
     partial:
       'The REPO half is measured and clean over 102 files. The APK half is blocked on a build (G9), and gitleaks joins this scanner there rather than replacing it.',
   },
-  B36: { state: 'blocked', blockedOn: 'a logger and a real day close to log', gate: 'G6' },
+  B36: {
+    state: 'blocked',
+    blockedOn: 'the first client log line - NOT the server',
+    gate: 'due at A.3 item 1, the first screen',
+    // Listed with B8 and B11 as never-instrumented when the server was deferred.
+    // Wrong: a CLIENT day close writes CLIENT logs, and crash reporting ships them
+    // off the device, so this is a DPDP matter (LEGAL §1) rather than hygiene.
+    // Corrected by injection 16 A.3. §5.13 - the subject WILL exist, so the
+    // instrument is due with it, not after it.
+  },
   B37: { verifier: 'unit' },
   B38: {
     state: 'blocked',
@@ -488,6 +497,67 @@ for (const [, gid, , status, evidence] of gateRows) {
  */
 const instrumented = declared.length - unmeasured.length;
 /**
+ * §5.15 · JUDGEMENTS EXPIRE.
+ *
+ * Predicates close the hole for anything DERIVABLE. They cannot close it for a
+ * judgement - an estimate, a cost, a severity, a reversal trigger - and judgements go
+ * stale silently, which is the same failure as F-06 in slower motion.
+ *
+ * So every judgement carries the iteration it was MADE in, and anything older than
+ * five iterations is printed as STALE. This does NOT fail the build: a stale
+ * judgement is not a defect, it is a thing that needs thinking about. The failure
+ * mode being guarded against is silence, not staleness itself.
+ *
+ * §5.15.2 is specific that a stale judgement must be RE-STATED rather than re-read.
+ * Inheriting an old estimate without re-making it is how a projection stays
+ * optimistic while the facts underneath it move - which this one already did once.
+ *
+ * THE CURRENT ITERATION IS DERIVED, not typed. BUILD_STATE's own header said
+ * "Iteration: 7" at iteration 21, which is the whole problem in miniature: a
+ * hand-written number that nobody updates. The BUILD_LOG headings are appended by the
+ * work itself, so the highest one is the truth.
+ */
+const ITERATION = Math.max(
+  0,
+  ...[...read('BUILD_LOG.md').matchAll(/^## .*·\s*Iteration (\d+)/gm)].map((m) => Number(m[1])),
+);
+const STALE_AFTER = 5;
+
+/** Each entry is a JUDGEMENT: not derivable, and therefore perishable. */
+const JUDGEMENTS = [
+  { where: 'PROJECTION.md', what: 'every iteration estimate and the 20-iteration plan', made: 21 },
+  { where: 'PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
+  { where: 'PROJECTION.md', what: 'committed = A.3 items 1-5; stretch = items 6-8', made: 21 },
+  { where: 'DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },
+  { where: 'DECISIONS-AUTONOMOUS.md', what: "AD-018's reversal trigger", made: 21 },
+  { where: 'DECISIONS-AUTONOMOUS.md', what: "AD-019's three reversal triggers", made: 22 },
+  { where: 'BENCHMARKS-RESULTS.md', what: "B1's attempts narrative - close it at G7", made: 19 },
+  {
+    where: 'BENCHMARKS-RESULTS.md',
+    what: "B3's attempts narrative - the gap is in rejection arms",
+    made: 19,
+  },
+  { where: 'FINDINGS.md', what: 'the severity implied by each finding’s wording', made: 13 },
+  { where: 'REVIEW.md', what: "the A12 audit's two 'partly' verdicts and their owed plants", made: 20 },
+];
+
+const stale = JUDGEMENTS.filter((j) => ITERATION - j.made > STALE_AFTER);
+console.log(`  iteration (derived)    : ${ITERATION}`);
+console.log(
+  `  judgements             : ${JUDGEMENTS.length}, of which ${stale.length} STALE ` +
+    `(older than ${STALE_AFTER} iterations)`,
+);
+for (const j of stale) {
+  console.log(`  !    STALE since ${j.made}: ${j.where} - ${j.what}`);
+}
+if (stale.length) {
+  console.log('       §5.15.2: re-STATE these from current facts, do not re-read them.');
+}
+if (ITERATION >= 30) {
+  console.log('  !    §5.15.4: PROJECTION.md is due a re-statement at 30 and again at 35.');
+}
+
+/**
  * D.3 · EVERY RECORDED NUMBER MUST BE RE-DERIVABLE TODAY.
  *
  * G2's "52" and G3's "87 STRIDE rows" shared a shape worth naming: a number written
@@ -538,7 +608,7 @@ const DERIVATIONS = [
   },
 ];
 
-let stale = 0;
+let staleNumbers = 0;
 for (const d of DERIVATIONS) {
   const row = rowOf(d.gate);
   if (!row) {
@@ -563,14 +633,14 @@ for (const d of DERIVATIONS) {
     continue;
   }
   if (!numbers.includes(actual)) {
-    stale += 1;
+    staleNumbers += 1;
     failures.push(
       `${d.gate} records ${numbers.join('/')} but ${d.what} is ${actual} TODAY. ` +
         'A recorded number nobody can regenerate is the G2/G3 defect (D.3).',
     );
   }
 }
-console.log(`  gate numbers re-derived: ${DERIVATIONS.length}, ${stale} stale`);
+console.log(`  gate numbers re-derived: ${DERIVATIONS.length}, ${staleNumbers} stale`);
 
 console.log(`  verifiers inventoried  : ${VERIFIERS.length}`);
 console.log('');
