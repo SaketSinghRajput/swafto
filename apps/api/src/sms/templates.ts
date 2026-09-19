@@ -42,35 +42,35 @@ export const TEMPLATES: Readonly<Record<TemplateId, TemplateDef>> = {
     variableCount: 1,
     text: {
       en: '{#var#} is your SWAFTO code. Valid 10 min. Never share it. SWAFTO will never ask for it.',
-      hi: '{#var#} आपका SWAFTO कोड है। 10 मिनट वैध। किसी को न बताएं।',
-      od: '{#var#} ଆପଣଙ୍କ SWAFTO କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କାହାକୁ କୁହନ୍ତୁ ନାହିଁ।',
+      hi: '{#var#} SWAFTO कोड। SWAFTO इसे कभी नहीं मांगेगा। किसी को न बताएं।',
+      od: '{#var#} ଆପଣଙ୍କ SWAFTO କୋଡ୍। SWAFTO ମାଗିବ ନାହିଁ। କାହାକୁ ନ କୁହନ୍ତୁ।',
     },
   },
   otp_number_change_old: {
     id: 'otp_number_change_old',
     variableCount: 1,
     text: {
-      en: '{#var#} is your SWAFTO code to verify your current number. Valid 10 min. Never share it.',
-      hi: '{#var#} SWAFTO नंबर बदलने का कोड। 10 मिनट वैध। किसी को न बताएं।',
-      od: '{#var#} SWAFTO ନମ୍ବର ବଦଳାଇବା କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କାହାକୁ କୁହନ୍ତୁ ନାହିଁ।',
+      en: '{#var#} is your SWAFTO code to verify your current number. Never share it. SWAFTO will never ask for it.',
+      hi: '{#var#} SWAFTO पुराना नंबर जाँच कोड। किसी को न बताएं।',
+      od: '{#var#} SWAFTO ପୁରୁଣା ନମ୍ବର ଯାଞ୍ଚ କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।',
     },
   },
   otp_number_change_new: {
     id: 'otp_number_change_new',
     variableCount: 1,
     text: {
-      en: '{#var#} is your SWAFTO code to confirm your new number. Valid 10 min. Never share it.',
-      hi: '{#var#} SWAFTO नए नंबर की पुष्टि का कोड। 10 मिनट वैध। न बताएं।',
-      od: '{#var#} SWAFTO ନୂଆ ନମ୍ବର ନିଶ୍ଚିତ କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କୁହନ୍ତୁ ନାହିଁ।',
+      en: '{#var#} is your SWAFTO code to confirm your new number. Never share it. SWAFTO will never ask for it.',
+      hi: '{#var#} SWAFTO नया नंबर पुष्टि कोड। किसी को न बताएं।',
+      od: '{#var#} SWAFTO ନୂଆ ନମ୍ବର ନିଶ୍ଚିତ କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।',
     },
   },
   otp_pin_reset: {
     id: 'otp_pin_reset',
     variableCount: 1,
     text: {
-      en: '{#var#} is your SWAFTO code to reset your app lock. Valid 10 min. Never share it.',
-      hi: '{#var#} SWAFTO ऐप लॉक रीसेट कोड। 10 मिनट वैध। किसी को न बताएं।',
-      od: '{#var#} SWAFTO ଆପ୍ ଲକ୍ ରିସେଟ୍ କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କୁହନ୍ତୁ ନାହିଁ।',
+      en: '{#var#} is your SWAFTO code to reset your app lock. Never share it. SWAFTO will never ask for it.',
+      hi: '{#var#} SWAFTO ऐप लॉक रीसेट कोड। किसी को न बताएं।',
+      od: '{#var#} SWAFTO ଆପ୍ ଲକ୍ ରିସେଟ୍ କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।',
     },
   },
 };

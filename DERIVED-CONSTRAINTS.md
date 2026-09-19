@@ -1,0 +1,134 @@
+# DERIVED-CONSTRAINTS
+
+**§5.7.** Constraints that were *derived* rather than found in a source.
+
+These are the most valuable findings in this build and the most fragile. A researched
+constraint can be re-found by anyone who repeats the search. A derived one exists
+nowhere except in prose that a later iteration may not read - so each gets recorded
+here with how it was derived, what missing it would have cost, and its confidence, and
+**each one that can be mechanically checked becomes a CI check in the same iteration**
+(§5.7.2).
+
+Confidence: **HIGH** - follows from a documented standard, arithmetic, or a measurement
+we ran · **MEDIUM** - sound reasoning, one assumption unverified · **LOW** - plausible,
+needs re-testing at the next document pass (§5.7.3).
+
+---
+
+## DC-001 · An Odia or Hindi SMS segment is 70 characters, not 160
+
+**Confidence: HIGH** · **Check: `tools/check-sms-segments.mjs`** · Iteration 8
+
+**Derived, not found.** Every DLT source consulted discussed template variable caps,
+the 40% rule and the no-trailing-variable rule. **None of them stated the segment
+length**, because segment length is not a DLT rule - it is a GSM 03.38 encoding fact
+that DLT documentation assumes you already know.
+
+**The derivation.** GSM-7 packs 160 characters into a 140-byte SMS payload. Any
+character outside the GSM 03.38 alphabet forces the *entire message* to UCS-2, where
+each character is 2 bytes, so 140 bytes holds **70 characters**. Odia (U+0B00-U+0B7F)
+and Devanagari (U+0900-U+097F) are both outside GSM-7. Therefore every Hindi and Odia
+template has a 70-character budget, not 160.
+
+**What missing it would have cost.** Naively translating the 87-character English OTP
+into Hindi or Odia yields roughly 90-110 characters - **two segments**. Double the SMS
+cost on every sign-in, every number change and every PIN reset, for the entire life of
+the product, in the two languages most of these users read. Nothing would have failed;
+the bill would simply have been twice as large, permanently, and nobody would have
+known why.
+
+**Why it needed a check rather than care.** It got care, and care was not enough. The
+first table of counts was estimated by eye and was **wrong on eleven of twelve
+templates**; one sat at exactly 70/70 with zero headroom and nobody noticed. Odia
+matras and the virama are separate UTF-16 units while reading as one glyph cluster -
+the Odia for "code" looks like two shapes and is four units - so visual counting
+undercounts *systematically*, not randomly. See AD-013.
+
+**Second-order consequence.** The same byte arithmetic determines whether Android's
+SMS Retriever is viable: it needs the message plus an 11-character hash inside 140
+bytes. At 2 bytes per character that is unaffordable for the sign-in template in both
+Indian languages, which decided AD-011.
+
+---
+
+## DC-002 · Five-digit sample figures cannot detect an Indian-grouping bug
+
+**Confidence: HIGH** · **Check: owed at G10** · Iteration 9
+
+**Derived from inspection of our own test data**, prompted by injection 09 C.1.
+
+**The derivation.** Indian digit grouping is 2-2-3 from the right (`1,23,456`);
+Western grouping is 3-3-3 (`123,456`). The two conventions **produce identical output
+for every number below 100,000** - the first differing digit position is the sixth.
+
+Now inspect every money figure in the corpus: the canonical day uses
+`6,780 · 3,120 · 1,550 · 1,180 · 3,200 · 2,400 · 6,050 · 6,300 · 11,450`, and the
+Today screen adds `18,240 · 27,600 · 12,000 · 7,900`. **Every one is five digits or
+fewer.** The whole body of sample data - across the design documents, the vectors and
+every screenshot - is *structurally incapable* of detecting a wrong-locale grouping
+bug.
+
+**What missing it would cost.** A locale bug would pass every vector, every unit test
+and every screenshot review, and would first become visible to a **real shopkeeper
+looking at what he really owes a real supplier** - `INR 1,50,000` rendered as
+`INR 150,000`. The first person to see it would be the one person who must not.
+
+**Mitigation, owed at G10.** Vectors with six- and seven-digit amounts (a kirana shop
+with INR 1,50,000 of supplier dues is entirely ordinary); one money-formatting
+function with a static check banning any other paise-to-string path; and **no reliance
+on `toLocaleString('en-IN')`** - Hermes ships without full ICU in many configurations
+and falls back *silently* to Western grouping. No error, no warning, just the wrong
+comma.
+
+---
+
+## DC-003 · The security group is the entire perimeter once Cloudflare leaves the data path
+
+**Confidence: HIGH** · **Check: owed at G9 (Terraform assertion)** · Iteration 7
+
+**Derived from composing two decisions that were each sound alone.** AD-008 removed
+Cloudflare from the API data path for DPDP residency reasons. The architecture (§08)
+already specified **no NAT gateway and a public subnet** on cost grounds.
+
+Composed, those two give a `t4g.small` **directly addressable on the public internet
+with no network layer in front of it**. Neither decision is wrong; the combination
+creates an exposure that neither document mentions, because each was written without
+the other.
+
+**Compounding factor.** Injection 08 B.2 then moves rate limiting into the API - so
+the control that protects the SMS bill now runs on the same box an L7 flood lands on.
+Saturate the box and you lose the service and the rate limiter together.
+
+**What missing it would cost.** Discovering at G9, after the auth design is fixed,
+that unauthenticated OTP endpoints need a cheaper-to-evaluate pre-database limit and a
+load-shedding path. Cheap now, expensive after the endpoints exist.
+
+**Status.** Compensating control still to be decided - it is the next item in this
+iteration and will carry its own AD.
+
+---
+
+## DC-004 · Odia will render as empty boxes on budget Android devices
+
+**Confidence: MEDIUM** · **Check: owed at G10 + DEVICE-CHECKLIST** · Iteration 9
+
+**Derived from the target-device profile**, raised by injection 09 C.2 and consistent
+with what a INR 7,000 handset ships.
+
+**The derivation.** Android's bundled font set varies by OEM and by price tier. Latin
+and Devanagari are effectively universal; **Odia is not**. A device with no Odia font
+renders tofu - empty boxes - for the app's *primary* language.
+
+**Why confidence is MEDIUM, not HIGH.** We have not measured it on a real handset. The
+reasoning is sound and the mitigation is cheap either way, but the claim "many cheap
+phones ship no Odia font" is inherited, not verified here. §5.7.3 requires re-testing
+this at the next document pass, and H8 is where it gets settled for real.
+
+**What missing it would cost.** A launch-blocking defect in the primary language,
+**invisible on every emulator**, because an AVD system image carries a full font set.
+The kind of bug that ships because the development environment is more capable than
+the target.
+
+**Mitigation, owed at G10.** Bundle the Odia font rather than relying on the OS; a
+render assertion that Odia glyphs draw rather than tofu; and an explicit line in
+`DEVICE-CHECKLIST.md`.

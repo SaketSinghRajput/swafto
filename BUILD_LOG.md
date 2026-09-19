@@ -412,3 +412,70 @@ is just as clear.
 Net: four real defects found by a check that did not exist an hour ago, three of them
 in prose I had written minutes earlier while being deliberately careful. That is the
 argument for §5.6 better than any I could make.
+
+## 2026-09-19 · Iteration 9 · Injection 09 A + B: template findings, §5.7 derived constraints
+
+ALL FOUR TEMPLATE FINDINGS CONFIRMED BY MEASUREMENT. Your counts were right and mine
+were wrong. Built tools/check-sms-segments.mjs FIRST, as instructed, so the rewrite
+was measured rather than estimated. It reproduced your findings exactly:
+  - otp_number_change_old/od was at 70/70. Zero headroom, on the one I miscounted.
+  - exactly 7 of 12 exceeded 140 bytes once an 11-char hash was appended, and exactly
+    the seven you named: all four Odia plus hi T2, T3, T4.
+
+A.1 DECIDED (AD-011) — SMS USER CONSENT, not SMS Retriever. After the A.4 rewrite the
+Retriever situation actually improved to 2 of 12 over budget — but the two still over
+are otp_signin in Hindi AND Odia, the highest-volume template in the two languages
+most of these users read. Buying Retriever would mean cutting the anti-phishing
+warning to make room for a hash the user never sees. Also corrected the stale claim
+that "OTP autofill only works with the system keyboard" — on Android the mechanism is
+Retriever/User Consent and has nothing to do with the keyboard.
+
+A.2 DONE — every count in §4 is now GENERATED. `--update-md` rewrites the tables from
+measured values, so no hand count can survive an iteration. Reported columns are
+encoding, UTF-16 units, limit and headroom.
+
+A.3 FIXED, and the research changed the answer rather than confirming it. Under
+TCCCPR 2025 the operator APPENDS the category suffix automatically during DLT
+scrubbing (-T transactional). It is not part of the six characters and we do not
+register it. So `SWAFTO` was correct and my sentence was wrong — the opposite of what
+I would have guessed. Logged as R-001 in REVIEW.md: the contradiction checker
+structurally cannot see this class, because both halves are individually well-formed.
+
+A.4 RECONSIDERED AND REVERSED (AD-012). The phishing line is no longer English-only.
+Dropped the validity clause from all Hindi and Odia templates and spent the budget on
+warnings. Your asymmetry is the whole argument: the validity window is discoverable in
+the app, the phishing warning is not. A man who does not know his code expires
+requests another; a man who does not know SWAFTO will never ask can lose the cash box.
+otp_signin now carries BOTH warnings in Hindi and Odia at 64/70, 6 units spare.
+
+A.5 ADDED TO H10 — the T2/T3 Hindi drift (now "purana number jaanch" vs "naya number
+pushti", but a Hindi reader must confirm they are heard as different things), and the
+ଆପ୍ ଲକ୍ transliteration question. Also warned the reviewer that headroom is 5-6 units
+on the sign-in templates and an edit beyond that doubles the cost forever.
+
+B DONE — §5.7 adopted. DERIVED-CONSTRAINTS.md with four entries. DC-001 the segment
+limit. DC-002 the five-digit blindness. DC-003 is one I had not written down: AD-008
+and the no-NAT-gateway ruling were each sound alone, and COMPOSED they leave the
+origin directly addressable with the rate limiter on the same box. Neither document
+mentions it because each was written without the other. DC-004 Odia tofu, marked
+MEDIUM because it is inherited reasoning I have not measured.
+
+PROCESS FINDING — stopped patching JavaScript via Python string replacement. It
+corrupted escape sequences for the third time, embedding literal newlines into a
+regex and breaking the file. Rewriting whole files with the editor instead. Cheap
+lesson, recorded so I do not reach for it again.
+
+NEGATIVE-TESTED (§5.1), both paths of the new checker:
+  - padded an Odia template to 81 units -> FAILED "81 UCS-2 units against a 70-unit
+    segment -> 2 SEGMENTS"
+  - padded a Hindi template to 69/70 -> WARNED "only 1 unit(s) of headroom"
+  Both reverted; green again.
+
+Commands:
+  $ npm run check:sms:segments -> every template fits one segment
+  $ npm run check:prose        -> no contradictory sentences, no dangling IDs
+  $ npx vitest run --dir apps  -> 84 passed
+
+STILL OWED — injection 09 C (the nine React Native traps, before G10), then injection
+08's B.2 persistent rate limits, the origin-exposure control for DC-003, B.3-B.5 the
+OTP service, and the vector shortfall at 51 of 70.

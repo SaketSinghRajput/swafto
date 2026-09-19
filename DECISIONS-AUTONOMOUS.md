@@ -296,6 +296,115 @@ frames, and a 2G outbox target that ADR-011 had no equivalent for.
 
 ---
 
+## AD-011 · Android OTP autofill is SMS User Consent, not SMS Retriever
+
+**Question.** Android offers two zero-typing OTP mechanisms. SMS Retriever requires
+the message to end with an 11-character app hash and the whole message to be
+**<= 140 bytes**. SMS User Consent requires no hash and shows a one-tap dialog.
+Registering the templates freezes the choice: adding a hash later means
+re-registering all twelve.
+
+**Options.** (a) SMS Retriever - fully automatic, zero taps. (b) SMS User Consent -
+one tap. (c) Neither; the shopkeeper types six digits.
+
+**Evidence, measured not assumed.** `tools/check-sms-segments.mjs` appends an
+11-character hash and reports the wire payload. With the templates as written,
+`otp_signin` exceeds 140 bytes in **both Hindi and Odia** (152 B each) - the
+highest-volume template in the two languages most of these users read. An earlier
+draft was worse: seven of twelve were over.
+
+**Deciding rule.** **R4.4 (works on a weak device for this user) then R6.** Retriever
+is unavailable precisely where it matters most, and buying it would mean cutting real
+words from an OTP in the two primary Indian languages to make room for a hash the
+user never sees. That is a bad trade against R4.2 as well - the words being cut are
+the anti-phishing warning.
+
+**Choice.** **(b) SMS User Consent.** No app hash in any template. One tap is a fine
+experience and it works identically in all three languages.
+
+**Consequence.** Also corrects a stale claim in the run plan that "OTP autofill only
+works with the system keyboard". On Android the mechanism is Retriever or User
+Consent; it has nothing to do with which keyboard is showing. The real reason phone
+and OTP fields use the system keyboard is that the User Consent dialog and
+platform autofill hooks target native inputs - the custom keypad is for amounts.
+
+**REVERSAL TRIGGER.** The Hindi and Odia templates are ever shortened enough that a
+hash fits inside 140 bytes in **every** language, AND the one-tap dialog measurably
+costs completion in the field. Both, not either - re-registering twelve templates is
+not worth a tap on its own.
+
+**Iteration 9 · commit `G6-sms`**
+
+---
+
+## AD-012 · The phishing warning outranks the validity window in Hindi and Odia
+
+**Question.** The 70-character Unicode budget does not fit validity + "never share" +
+"SWAFTO will never ask for it". An earlier draft kept validity and dropped the
+phishing line, recording the omission honestly. Is that the right trade?
+
+**Options.** (a) Keep validity, drop the phishing line. (b) Drop validity, carry the
+phishing line. (c) Accept two segments in Hindi and Odia.
+
+**Deciding rule.** **R4.2 (trust).** The decisive asymmetry: **the validity window is
+discoverable inside the app; the phishing warning is not.** A shopkeeper who does not
+know his code expires for ten minutes loses nothing - he requests another. One who
+does not know SWAFTO will never ask for the code can lose everything in the cash box
+to a caller claiming to be support. (c) fails R4.6 and doubles the SMS bill forever
+for wording nobody reads twice.
+
+**Choice.** **(b).** Validity dropped from all Hindi and Odia templates; the app
+states it instead. `otp_signin` now carries **both** warnings in Hindi and Odia
+(64/70 each, 6 units of headroom). T2-T4 carry "never share" - simpler and broader
+for a 35-70 audience than reasoning about who is asking, and the distinct template
+already tells the user what the code is for.
+
+English keeps all three lines: its GSM-7 budget is 160 characters and the trade does
+not arise.
+
+**REVERSAL TRIGGER.** A native reviewer (H10) finds the Hindi or Odia phishing
+phrasing unclear, in which case the clearer of the two warnings wins the slot rather
+than both being crammed in. Or field evidence shows users requesting repeat codes
+because they did not know the first had expired.
+
+**Iteration 9 · commit `G6-sms`**
+
+---
+
+## AD-013 · Every derived constraint becomes a CI check in the iteration it is derived
+
+**Question.** The 70-character Unicode segment limit was not in any source. It was
+derived, it changed the design - and it was then defended by a hand count that was
+wrong on eleven of twelve templates, with one sitting at exactly 70 of 70 unnoticed.
+How are derived constraints protected?
+
+**Options.** (a) Care and review. (b) Record them in a document. (c) Record them AND
+make every mechanically-checkable one an executable check, in the same iteration.
+
+**Deciding rule.** **R4.1 and §5.1.** (a) is what just failed. (b) preserves the
+insight but not the enforcement: prose does not fail a build. The whole lesson of
+this loop is that a constraint defended only by care is not defended.
+
+**Choice.** (c), adopted as standing rule **§5.7** and applied immediately:
+`tools/check-sms-segments.mjs` computes encoding, UTF-16 units, segment count, byte
+payload and headroom for every template, fails above one segment, warns below five
+units of headroom, and **regenerates the markdown tables** so no hand count can
+survive. Recorded in `DERIVED-CONSTRAINTS.md` with derivation, cost-of-missing and
+confidence.
+
+**Why Odia specifically defeats eye-counting.** Matras and the virama are separate
+UTF-16 units while looking like part of a single glyph cluster. The Odia for "code"
+reads as two shapes and is four units. Systematic undercount, every time.
+
+**REVERSAL TRIGGER.** None foreseen; this only ever adds checks. If a derived
+constraint turns out to be mechanically uncheckable, it still gets a
+DERIVED-CONSTRAINTS entry with confidence and a re-test obligation at each §5.3
+document pass.
+
+**Iteration 9 · commit `G6-sms`**
+
+---
+
 ## Open questions
 
 None. The blocked-on-a-human status is abolished entirely; anything genuinely

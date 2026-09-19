@@ -172,13 +172,32 @@ templates clear DLT registration, a wording change means going back round the
 approval cycle.
 
 **What to do.** Read all six non-English strings in `SMS-TEMPLATES.md` §4 aloud.
-Check three things specifically:
-1. Does the "never share it" warning land with the force it has in English? It is the
+Check these specifically:
+
+1. **T2 vs T3 must stay distinguishable.** T2 verifies the number the user ALREADY
+   has; T3 confirms the NEW one. An earlier Hindi draft collapsed both into "number
+   change code", losing the distinction that makes an unexpected code noticeable.
+   The current Hindi reads "purana number jaanch" (check old number) against "naya
+   number pushti" (confirm new number) - **confirm a Hindi reader hears two different
+   things**, because the whole anti-phishing value of separate templates rests on it.
+2. **`ଆପ୍ ଲକ୍` in T4 Odia is transliterated English** ("app lock"). Ask whether a
+   60-year-old Odia speaker parses it, or whether a native construction reads better.
+   There may be no good native term, in which case keep it - but decide, do not
+   default.
+3. Does the "never share it" warning land with the force it has in English? It is the
    only defence against OTP-relay fraud at the moment it matters.
-2. Is `SWAFTO` in Latin script jarring mid-sentence, or normal? It is kept Latin
-   deliberately as a brand name.
-3. Are the Latin numerals (`10 minutes`) natural? Constraint 8 requires them, but if
-   they read badly the surrounding phrasing may need to change, not the digits.
+4. Is `SWAFTO` in Latin script jarring mid-sentence, or normal? It is kept Latin
+   deliberately as a brand name, and it now appears TWICE in the Hindi and Odia
+   sign-in template ("SWAFTO code. SWAFTO will never ask...") - check that does not
+   read as clumsy repetition.
+5. The Hindi and Odia templates **no longer state the 10-minute validity** (AD-012);
+   the app states it instead. Confirm nothing reads as if information is missing.
+
+**Headroom warning for the reviewer.** Every template has at least 5 units of spare
+budget and the sign-in templates have exactly 6. **A correction that adds more than
+that makes the message two SMS segments, doubling its cost forever.** Run
+`npm run check:sms:segments` after any edit - it fails the build rather than letting
+a longer message through.
 
 **Until then.** Every automated property is verified and every template is under one
 SMS segment. Only meaning is unverified, and it is flagged at the top of the file.
