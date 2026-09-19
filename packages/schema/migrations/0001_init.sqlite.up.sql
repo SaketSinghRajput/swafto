@@ -151,3 +151,10 @@ WHEN OLD.state = 'closed'
 BEGIN
   SELECT RAISE(ABORT, 'a closed day is immutable: post a correction on the open day (decision D7)');
 END;
+
+CREATE TRIGGER entries_no_insert_into_closed_day
+BEFORE INSERT ON entries
+WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
+BEGIN
+  SELECT RAISE(ABORT, 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)');
+END;

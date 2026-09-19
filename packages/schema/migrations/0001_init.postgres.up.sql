@@ -149,6 +149,22 @@ CREATE TRIGGER days_no_update_when_closed
 BEFORE UPDATE ON days
 FOR EACH ROW EXECUTE FUNCTION days_closed_immutable();
 
+CREATE OR REPLACE FUNCTION entries_reject_closed_day() RETURNS TRIGGER AS $$
+DECLARE day_state TEXT;
+BEGIN
+  SELECT state INTO day_state FROM days
+    WHERE shop_id = NEW.shop_id AND date = NEW.day_id;
+  IF day_state = 'closed' THEN
+    RAISE EXCEPTION 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER entries_no_insert_into_closed_day
+BEFORE INSERT ON entries
+FOR EACH ROW EXECUTE FUNCTION entries_reject_closed_day();
+
 ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE entries FORCE ROW LEVEL SECURITY;

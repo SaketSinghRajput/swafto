@@ -540,3 +540,77 @@ Commands:
 NEXT — C.2 bundled Odia font (launch-blocking for the primary language, invisible on
 an emulator), then the remaining RN traps, persistent rate limits, the DC-003
 compensating control, the OTP service, G7/G8.
+
+## 2026-09-19 · Iteration 11 · Injection 11: §5.9 detection rate, CP-4 was not latent, §5.10 mechanism
+
+§5.10 FIRST, because I had already failed it twice. tools/check-tooling.mjs now makes
+the two repeated mistakes impossible rather than discouraged: no tool may edit a
+source file by string substitution from another language, and the platform traps I
+have actually tripped over (POSIX null device as an output path, shell:true on
+Windows, reserved device-name files) fail the build. Negative-tested both.
+I then edited two JS files from JS, which is the point.
+
+CP-4 WAS NOT LATENT AND I WAS WRONG ABOUT IT. I checked whether D9 ALLOWS two devices
+and concluded no. I did not check whether our own recovery flow CREATES them. It does:
+the lost-phone branch of the number change leaves the old handset holding a session
+that by design never expires plus an outbox of unsynced entries, and weeks later a
+repair shop powers it on.
+
+  Q1 does a number change revoke the old session? -> AD-014: yes, server-side,
+     effective on next sync.
+  Q2 what happens to its outbox? -> NOT dropped, NOT silently rejected. Rejected at
+     the server, PRESERVED on the device, surfaced with the export path. Those are
+     real entries a shopkeeper made.
+  Q3 can they land in a closed day? -> NO, and it is now enforced in SQL on both
+     engines, not just the API. New trigger entries_no_insert_into_closed_day.
+  Q4 can a closed day's figures move? -> NO. Test asserts the closed day is
+     byte-identical after a rejected sync, and that a poisoned batch is rejected
+     ATOMICALLY rather than half-applied.
+
+G4 reopened and re-passed: 18 up / 12 down statements on SQLite, 38 / 11 on Postgres.
+7 new tests in closed-day-guard.spec.ts. Corrections still work - their own day_id is
+today, only corrects_day_id points at the closed day.
+
+§5.9 DETECTION RATE, built as a harness rather than done by hand. Results:
+
+  money-integer-paise               0/59    0.0%   UNDETECTED   <- REAL DEFECT
+  indian-digit-grouping             2/59    3.4%   LOW-BROAD
+  withdrawal-excluded-from-profit   2/59    3.4%   narrow, ok
+  only-cash-mode-moves-cash         3/59    5.1%   narrow, ok
+  carry-forward-uses-counted        1/59    1.7%   narrow, ok
+  entries-are-append-only           1/28    3.6%   narrow, ok
+  closed-day-cannot-receive-entries 22/28  78.6%   ok
+  no-totals-are-stored              1/28    3.6%   LOW-BROAD
+
+FOUND — money-integer-paise 0 of 59. Disabling the integer guard in assertPaise broke
+NOTHING. The guard was written, reviewed, and never once executed against a bad value,
+because every vector supplies well-formed integers. A guard that has never rejected
+anything is decoration.
+  The vectors STRUCTURALLY CANNOT cover it: they are JSON describing valid days, and a
+  float amount is valid JSON. This needed code, not data - which is §5.9.2's "add data
+  that differs in the dimension the bug lived in", where the missing dimension was
+  "inputs that should be refused". Wrote money.spec.ts: 39 assertions over floats, NaN,
+  Infinity, strings, null, unsafe integers, and the rounding symmetry.
+  RE-MEASURED: 20/64, 31.3%, ok.
+
+FIXED A FLAW IN MY OWN HARNESS that the data exposed. The denominator was the whole
+suite, so a NARROW invariant like "withdrawal excluded from profit" scored 2/59 and
+looked as alarming as the grouping bug. It is not comparable: only the handful of
+vectors containing a withdrawal can possibly catch it. Added a breadth field. The 2/59
+grouping result mattered precisely because grouping is BROAD - every money render
+should have been able to catch it and almost none could.
+
+REMAINING LOW-BROAD, both honest findings rather than noise:
+  - indian-digit-grouping 2/59: still only two vectors carry 6+ digit amounts. The
+    B.2 adversarial shop fixture is where this gets fixed properly.
+  - no-totals-are-stored 1/64: on reflection this is a WEAK PROBE, not a fixture
+    finding. Adding an unused column breaks nothing; the real violation would be
+    READING a stored total. Recorded as a probe-quality finding to sharpen later.
+
+Commands:
+  $ node tools/detection-rate.mjs  -> every invariant detected; 2 flagged
+  $ npx vitest run                 -> 148 passed
+  $ npm run check:tooling          -> no cross-language surgery, no platform traps
+
+NEXT — C.2 bundled Odia font, remaining RN traps, persistent rate limits, DC-003
+compensating control, OTP service, G7/G8.

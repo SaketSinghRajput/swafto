@@ -317,6 +317,23 @@ WHEN OLD.state = 'closed'
 BEGIN
   SELECT RAISE(ABORT, 'a closed day is immutable: post a correction on the open day (decision D7)');
 END`,
+      // CP-4 / AD-014: an entry may never LAND IN a closed day, however it arrives.
+      //
+      // The scenario that makes this necessary: the lost-phone branch of the number
+      // change puts two devices on one shop. The old handset keeps a session that by
+      // design never expires and an outbox that may hold days of unsynced entries.
+      // Weeks later a repair shop powers it on and it syncs into days that have since
+      // been closed. Without this, a closed day's figures could move - a correctness
+      // defect at priority 1.
+      //
+      // A CORRECTION is still allowed, because its own day_id is today (open); only
+      // `corrects_day_id` points at the closed day. That is the whole of D7.
+      `CREATE TRIGGER entries_no_insert_into_closed_day
+BEFORE INSERT ON entries
+WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
+BEGIN
+  SELECT RAISE(ABORT, 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)');
+END`,
     ];
   }
   return [
@@ -339,6 +356,21 @@ $$ LANGUAGE plpgsql`,
     `CREATE TRIGGER days_no_update_when_closed
 BEFORE UPDATE ON days
 FOR EACH ROW EXECUTE FUNCTION days_closed_immutable()`,
+    // CP-4 / AD-014 - see the SQLite branch above for why this exists.
+    `CREATE OR REPLACE FUNCTION entries_reject_closed_day() RETURNS TRIGGER AS $$
+DECLARE day_state TEXT;
+BEGIN
+  SELECT state INTO day_state FROM days
+    WHERE shop_id = NEW.shop_id AND date = NEW.day_id;
+  IF day_state = 'closed' THEN
+    RAISE EXCEPTION 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql`,
+    `CREATE TRIGGER entries_no_insert_into_closed_day
+BEFORE INSERT ON entries
+FOR EACH ROW EXECUTE FUNCTION entries_reject_closed_day()`,
   ];
 }
 
@@ -392,6 +424,7 @@ export function migrationDown(d: Dialect): string[] {
       ...drops,
       'DROP FUNCTION IF EXISTS entries_append_only() CASCADE',
       'DROP FUNCTION IF EXISTS days_closed_immutable() CASCADE',
+      'DROP FUNCTION IF EXISTS entries_reject_closed_day() CASCADE',
     ];
   }
   // SQLite drops triggers with their table, but be explicit so `down` is total.
@@ -399,6 +432,7 @@ export function migrationDown(d: Dialect): string[] {
     'DROP TRIGGER IF EXISTS entries_no_update',
     'DROP TRIGGER IF EXISTS entries_no_delete',
     'DROP TRIGGER IF EXISTS days_no_update_when_closed',
+    'DROP TRIGGER IF EXISTS entries_no_insert_into_closed_day',
     ...drops,
   ];
 }

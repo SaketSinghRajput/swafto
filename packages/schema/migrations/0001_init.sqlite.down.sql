@@ -7,6 +7,8 @@ DROP TRIGGER IF EXISTS entries_no_delete;
 
 DROP TRIGGER IF EXISTS days_no_update_when_closed;
 
+DROP TRIGGER IF EXISTS entries_no_insert_into_closed_day;
+
 DROP TABLE IF EXISTS outbox;
 
 DROP TABLE IF EXISTS section_skips;

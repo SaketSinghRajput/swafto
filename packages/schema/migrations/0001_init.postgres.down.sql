@@ -20,3 +20,5 @@ DROP TABLE IF EXISTS shops CASCADE;
 DROP FUNCTION IF EXISTS entries_append_only() CASCADE;
 
 DROP FUNCTION IF EXISTS days_closed_immutable() CASCADE;
+
+DROP FUNCTION IF EXISTS entries_reject_closed_day() CASCADE;

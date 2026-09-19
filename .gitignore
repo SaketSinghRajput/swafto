@@ -21,3 +21,4 @@ ios/Pods/
 .hermes-bundle.js
 .sms-segments.json
 nul
+.detection-tmp.json

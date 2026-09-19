@@ -403,6 +403,61 @@ document pass.
 
 **Iteration 9 · commit `G6-sms`**
 
+
+## AD-014 · A revoked device's unsynced outbox is preserved and surfaced, never dropped
+
+**Question.** CP-4, re-examined after injection 11 showed it is not latent. The
+lost-phone branch of the number change puts two devices on one shop: the NEW handset
+trading normally, and the OLD one holding a session that by design never expires plus
+an outbox that may contain days of real, unsynced entries. When the old phone is
+found, sold, or powered up by a repair shop, it syncs. What happens to what it carries?
+
+**Options.** (a) Silently drop it. (b) Reject it and say nothing. (c) Accept it into
+the ledger. (d) Reject at the server, preserve it on the device, and surface it.
+
+**Deciding rule.** **R4.1 then R4.2.**
+
+- **(c) is eliminated by R4.1.** Those entries are real business facts, but the days
+  they belong to may now be CLOSED. Accepting them would move a closed day's figures -
+  a correctness defect and a direct violation of constraint 3.
+- **(a) is the worst outcome available.** It destroys a shopkeeper's real entries with
+  no trace. (b) is second worst: the same loss, with the system knowing and not saying.
+- **(d)** is the only option that keeps the ledger correct AND the entries alive.
+
+**Choice.** (d), in four parts:
+
+1. **Completing a number change revokes every other device server-side**, effective on
+   that device's next sync rather than on a token lapsing - which is exactly injection
+   08 B.4's requirement, in the one flow that most needs it.
+2. **A revoked device is marked, not deleted.** `devices.revoked_at` is set. The row
+   is the evidence that a late sync came from a handset already replaced.
+3. **The server rejects writes from a revoked device** with a distinct code, and the
+   device does NOT clear its outbox on that rejection.
+4. **The old device shows what it is holding** and offers the existing export path, so
+   the shopkeeper can re-enter anything that matters as corrections on the new phone.
+   Nothing is silently lost; nothing silently lands in a closed day.
+
+**Enforced in SQL, not only in the API.** A trigger on both engines rejects any INSERT
+whose own `day_id` names a closed day, so the guarantee holds even if a bug lets a
+revoked request through. A CORRECTION still works, because its own `day_id` is today
+and only `corrects_day_id` points at the closed day. Seven tests in
+`closed-day-guard.spec.ts`, including that a poisoned batch is rejected atomically
+rather than half-applied.
+
+**What this says about D9.** D9 states one shop, one phone. That remains the product's
+intent, but it is now recorded that **our own recovery flow transiently creates a
+second device**, and the system is built for it. D9 is a statement about concurrent
+EDITING, which still does not occur - the sequence here is strictly ordered and one
+side is revoked. Recorded so nobody reads D9 as "two devices cannot exist" and deletes
+this guard as dead code.
+
+**REVERSAL TRIGGER.** If D9 is ever relaxed to genuine multi-device use, (d) becomes
+insufficient: rejecting the second device's writes would then be wrong rather than
+protective, and real conflict resolution becomes necessary. That is also the point at
+which CP-4's deferred concurrent-edit test must be written.
+
+**Iteration 11 · commit `cp4-guard`**
+
 ---
 
 ## Open questions
