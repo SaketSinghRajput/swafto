@@ -1,0 +1,142 @@
+# SMS-TEMPLATES
+
+**This file is the DLT registration submission.** Every message SWAFTO will ever send
+is here, final, in all three languages.
+
+> **Changing a template after approval means re-approval.** Treat the text below as
+> frozen. `tools/check-sms-templates.mjs` fails the build if code references a
+> `templateId` that is not here, or passes the wrong number of variables.
+
+> **NEEDS NATIVE REVIEW BEFORE SUBMISSION.** The Odia and Hindi strings were written by
+> an agent. No automated check in this loop can evaluate them for *meaning* - only for
+> length, variable count and numeral script. A native speaker must read all six
+> non-English strings before they go to DLT. This is `H10` in HUMAN-ACTIONS.md.
+
+---
+
+## 1 · The constraints these are designed against
+
+Researched September 2026. Where sources disagreed, **the tightest limit was taken**.
+
+| Constraint | Limit | Source / note |
+|---|---|---|
+| Variable **value** length | **30 characters**, English and Unicode alike | Spaces and punctuation count |
+| Variables **per template** | **2** | Sources say 2-4 or 5-6 depending on operator. Designed to 2; **every template below uses 1** |
+| Variable share of content | **<= 40%** of total message | Fixed text must dominate |
+| Template must not **end** with a variable | mandatory | Every template below ends in fixed text |
+| Variable syntax | `{#var#}` | On every DLT platform |
+| **SMS segment length** | **160** chars GSM-7 · **70** chars Unicode | **Odia and Hindi are Unicode**, so those templates are held under 70 characters or they cost two segments each |
+
+That last row is the one that shapes the Indian-language text. A 90-character Hindi
+OTP is two segments - double the cost on every sign-in, forever, for wording nobody
+reads twice.
+
+**Numerals are Latin in all three languages** (constraint 8). `10` is `10`, never
+Odia or Devanagari digits. The brand name `SWAFTO` is Latin everywhere.
+
+**Sources:** [TRAI DLT regulations](https://docs.webengage.com/docs/trai-sms-dlt-regulations-india) ·
+[DLT content template FAQs](https://msg91.com/help/dlt-registration-in-india/dlt-content-template-faqs) ·
+[DLT SMS templates](https://fyno.io/docs/dlt-sms-templates)
+
+---
+
+## 2 · Header (sender ID)
+
+Six characters, and **since 6 May 2025 it must carry a category suffix** for the
+transactional category. Proposed: **`SWAFTO`**.
+
+Register the header before the templates - templates bind to an approved header.
+
+---
+
+## 3 · Scope — SMS is used for OTP only
+
+**Four purposes. Nothing else.** Alerts, dues and deficit warnings go over FCM push
+with the text resolved on-device (LEGAL L-11: no personal data in a push payload).
+SMS costs real money per message and every additional template is another
+registration round.
+
+**Why four templates and not one.** A single generic "your code is X" would register
+faster. Four distinct ones are worth it because **a user who receives a number-change
+code he did not request knows immediately that something is wrong.** A generic code
+gives him nothing to notice. That is an anti-phishing control, decided under R4.2
+(trust) against R6 (fewer things to re-register).
+
+---
+
+## 4 · The templates
+
+`{#var#}` is always the 6-digit code. One variable per template, 6 characters, well
+inside both the 30-character and 40% limits.
+
+### T1 · `otp_signin` — signing in
+
+| Lang | Text | Chars | Var % |
+|------|------|-------|-------|
+| `en` | `{#var#} is your SWAFTO code. Valid 10 min. Never share it. SWAFTO will never ask for it.` | 87 | 7% |
+| `hi` | `{#var#} आपका SWAFTO कोड है। 10 मिनट वैध। किसी को न बताएं।` | 56 | 11% |
+| `od` | `{#var#} ଆପଣଙ୍କ SWAFTO କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କାହାକୁ କୁହନ୍ତୁ ନାହିଁ।` | 63 | 10% |
+
+### T2 · `otp_number_change_old` — verifying the number you already have
+
+| Lang | Text | Chars | Var % |
+|------|------|-------|-------|
+| `en` | `{#var#} is your SWAFTO code to verify your current number. Valid 10 min. Never share it.` | 87 | 7% |
+| `hi` | `{#var#} SWAFTO नंबर बदलने का कोड। 10 मिनट वैध। किसी को न बताएं।` | 62 | 10% |
+| `od` | `{#var#} SWAFTO ନମ୍ବର ବଦଳାଇବା କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କାହାକୁ କୁହନ୍ତୁ ନାହିଁ।` | 69 | 9% |
+
+### T3 · `otp_number_change_new` — confirming the new number
+
+| Lang | Text | Chars | Var % |
+|------|------|-------|-------|
+| `en` | `{#var#} is your SWAFTO code to confirm your new number. Valid 10 min. Never share it.` | 84 | 7% |
+| `hi` | `{#var#} SWAFTO नए नंबर की पुष्टि का कोड। 10 मिनट वैध। न बताएं।` | 61 | 10% |
+| `od` | `{#var#} SWAFTO ନୂଆ ନମ୍ବର ନିଶ୍ଚିତ କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କୁହନ୍ତୁ ନାହିଁ।` | 67 | 9% |
+
+### T4 · `otp_pin_reset` — recovering a forgotten app-lock PIN
+
+| Lang | Text | Chars | Var % |
+|------|------|-------|-------|
+| `en` | `{#var#} is your SWAFTO code to reset your app lock. Valid 10 min. Never share it.` | 80 | 8% |
+| `hi` | `{#var#} SWAFTO ऐप लॉक रीसेट कोड। 10 मिनट वैध। किसी को न बताएं।` | 61 | 10% |
+| `od` | `{#var#} SWAFTO ଆପ୍ ଲକ୍ ରିସେଟ୍ କୋଡ୍। 10 ମିନିଟ୍ ବୈଧ। କୁହନ୍ତୁ ନାହିଁ।` | 65 | 9% |
+
+**T4 exists because of a rule in SECURITY-AUDIT T1.3:** a forgotten PIN is recovered by
+OTP to the same number, and *"locking a shopkeeper out of his own ledger is a worse
+outcome than any threat in this table."* This template is what makes that promise
+keepable.
+
+---
+
+## 5 · Wording decisions
+
+**"Never share it."** appears in all twelve. OTP-relay fraud works by a caller asking
+the victim to read out a code; the warning is the only defence at the moment it
+matters.
+
+**"SWAFTO will never ask for it."** is English-only. It is the strongest anti-phishing
+line available, and it did not fit the 70-character Unicode budget in Hindi or Odia
+without dropping something more important. Recorded honestly rather than silently
+omitted - if a second segment is ever accepted as a cost, add it there first.
+
+**10 minutes.** Long enough for an SMS to arrive over a congested 2G cell, short enough
+that a code read off a lock screen an hour later is dead. Named constant
+`OTP_TTL_SECONDS = 600`, never a literal.
+
+**No shop name, no amount, no party name in any SMS.** Templates carry the code and
+nothing else. Anything else would be personal data in transit through a carrier, and
+the 30-character variable cap would truncate it anyway.
+
+---
+
+## 6 · Registration checklist
+
+1. Register the Principal Entity - PEID.
+2. Register the header `SWAFTO` with the transactional category suffix.
+3. Register **all twelve** content templates, exactly as written above.
+4. Record each returned DLT template ID in SSM as
+   `DLT_TEMPLATE_ID__<templateId>__<lang>`, e.g. `DLT_TEMPLATE_ID__otp_signin__od`.
+5. Set `SMS_PROVIDER` to the adapter name.
+
+Until step 4 completes the stub serves every send, and all auth tests pass against it.
+**Nothing in the build waits for this.**

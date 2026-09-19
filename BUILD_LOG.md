@@ -308,7 +308,7 @@ still says something false.
 NEGATIVE-TESTED EVERY NEW CHECK (amendment §5.1):
   - benchmarks lock: appended a comment to BENCHMARKS.md -> FAILED with the hash diff,
     reverted -> passes.
-  - governance, reversal triggers: added AD-999 with no trigger -> FAILED naming it,
+  - governance, reversal triggers: added a decision block with a deliberately absent trigger -> FAILED naming it,
     removed -> passes.
   - governance, B40 stubs: added a TODO to money.ts -> FAILED naming file:line,
     removed -> passes.
@@ -321,3 +321,70 @@ Commands:
   $ npm run test:vectors:diff  -> divergence: NONE
 
 NEXT — G6 auth service against the SmsPort stub.
+
+## 2026-09-19 · Iteration 8 · Injection 08: §5.6 prose integrity + DLT design constraint
+
+§5.6 PROSE INTEGRITY adopted as a standing rule. No blanket find-and-replace across
+prose, ever. Added tools/check-prose.mjs: contradictory sentences and dangling IDs.
+SENTENCES RE-READ THIS ITERATION: 4,839 scanned mechanically; of those I read in full
+every sentence in the three files my iteration-7 purge had touched (LEGAL-AUDIT,
+SECURITY-AUDIT, DECISIONS-AUTONOMOUS) — 61 sentences read by eye, 6 repaired.
+
+FOUND, by the new check, on its very first run — TWO REAL DEFECTS:
+  1. H10 did not exist. SMS-TEMPLATES.md referenced "this is H10 in HUMAN-ACTIONS.md"
+     and HUMAN-ACTIONS.md stopped at H9. I had invented a cross-reference to a section
+     I never wrote. Nothing else would have caught it. H10 now exists (native review
+     of the Odia and Hindi strings).
+  2. AD-999 was a dangling reference in BUILD_LOG — a deliberately fake ID from a
+     negative test, left in the record where a reader would later hunt for it.
+     Rephrased without inventing an ID.
+That is the rule paying for itself in one run.
+
+DLT IS A DESIGN CONSTRAINT. Researched the caps before writing a line of SmsPort and
+they are tighter than a naive design assumes:
+  - variable VALUE max 30 chars
+  - variables per template 2-4 depending on operator -> DESIGNED TO 2, every template
+    uses 1
+  - variable content must be <= 40% of the message
+  - a template must NOT END with a variable
+  - and the one the sources did not state: Odia and Hindi are Unicode, so an SMS
+    segment is 70 CHARACTERS, not 160. A 90-char Hindi OTP is two segments — double
+    cost on every sign-in forever. Every Indian-language template is held under 70.
+
+SmsPort takes { templateId, variables[], phone, languageTag } and NOTHING ELSE. There
+is no free-text path in any build configuration. A test asserts SmsRequest has no
+message/body/text/content key, because a free-text path in dev is how a free-text call
+site reaches production.
+
+DECIDED — four distinct templates rather than one generic OTP, costing three extra
+registrations. Reason: a user who receives a NUMBER-CHANGE code he did not request
+knows immediately that something is wrong. A generic "your code is X" gives him
+nothing to notice. Anti-phishing under R4.2, against R6.
+
+WROTE SMS-TEMPLATES.md: 12 templates (4 purposes x 3 languages), final text, ready for
+DLT submission. Flagged at the top and as H10 that the Odia and Hindi need NATIVE
+review — the checks verify length, variable count, segment cost and numeral script,
+and none of them can evaluate meaning.
+
+RECORDED HONESTLY — "SWAFTO will never ask for it" is English-only. It is the strongest
+anti-phishing line available and it did not fit the 70-char Unicode budget without
+dropping something more important. Written into §5 of the template file rather than
+silently omitted.
+
+NEGATIVE-TESTED EVERYTHING NEW (§5.1), 7 planted failures, all caught:
+  - Odia template pushed to 111 chars -> FAILED "111 chars against a 70-char segment"
+  - template ending with a variable -> FAILED
+  - Devanagari numerals in Hindi -> FAILED (constraint 8)
+  - contradictory sentence "RESOLVED but still BLOCKED" -> FAILED with the sentence
+  - dangling AD-042 and B99 -> FAILED naming both
+  - code text drifting from the submission -> FAILED showing md vs code
+  - an unregistered templateId sent -> FAILED naming file:line
+  All reverted; all green again.
+
+Commands:
+  $ npx vitest run --dir apps  -> Tests  84 passed (84)
+  $ npm run check:prose        -> no contradictory sentences, no dangling IDs
+  $ npm run check:sms          -> markdown and code agree, all ids registered
+
+NEXT — G6 continues: OTP service with persistent rate limits (B.2), then AD-011 for
+the origin-exposure control AD-008 created.

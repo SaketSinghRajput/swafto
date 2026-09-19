@@ -1,0 +1,8 @@
+{
+  "name": "@swafto/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "L7 API. Fastify. Never computes a figure the client displays.",
+  "dependencies": {}
+}

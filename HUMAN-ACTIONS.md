@@ -19,6 +19,7 @@ If yes, it does not belong here.
 | H7 | Google Play Console account | 1 hour + review | Distribution |
 | H8 | Physical device pass | 1 hour | Confidence the AVD cannot give |
 | H9 | Counsel review of the legal text | - | Legal certainty |
+| H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
 
 ---
 
@@ -154,6 +155,33 @@ including carrier latency, and **battery drain** across a working day.
 **Until then.** Everything else is measured on a constrained AVD - 2048 MB, 2 cores,
 throttled I/O - per AD-009, which also records where that proxy flatters the result
 (rendering and thermals) and where it is sound (algorithmic cost).
+
+---
+
+## H10 · Native review of the Odia and Hindi SMS templates
+
+**Why no agent can do it.** No automated check in this loop can evaluate an Odia or
+Hindi sentence for *meaning*. The checks verify length, variable count, segment cost
+and numeral script - all of which pass - but none of them can tell you whether the
+Odia reads naturally to a shopkeeper in Bhubaneswar, or whether a word choice is
+technically correct and idiomatically strange.
+
+**Why it matters more than the other items.** `SMS-TEMPLATES.md` is the one artifact
+in this build whose text cannot be changed cheaply after the fact. Once those twelve
+templates clear DLT registration, a wording change means going back round the
+approval cycle.
+
+**What to do.** Read all six non-English strings in `SMS-TEMPLATES.md` §4 aloud.
+Check three things specifically:
+1. Does the "never share it" warning land with the force it has in English? It is the
+   only defence against OTP-relay fraud at the moment it matters.
+2. Is `SWAFTO` in Latin script jarring mid-sentence, or normal? It is kept Latin
+   deliberately as a brand name.
+3. Are the Latin numerals (`10 minutes`) natural? Constraint 8 requires them, but if
+   they read badly the surrounding phrasing may need to change, not the digits.
+
+**Until then.** Every automated property is verified and every template is under one
+SMS segment. Only meaning is unverified, and it is flagged at the top of the file.
 
 ---
 

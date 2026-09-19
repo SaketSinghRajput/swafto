@@ -25,7 +25,10 @@
     "check:governance": "node tools/check-governance.mjs",
     "check:benchmarks": "node tools/check-benchmarks-lock.mjs",
     "vectors:author": "node --experimental-strip-types tools/author-vectors.ts",
-    "db:emit": "node --experimental-strip-types tools/emit-sql.mjs"
+    "db:emit": "node --experimental-strip-types tools/emit-sql.mjs",
+    "check:prose": "node tools/check-prose.mjs",
+    "check:sms": "node tools/check-sms-templates.mjs",
+    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",
