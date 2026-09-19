@@ -1,134 +1,144 @@
 # PROJECTION
 
-**Written at iteration 20 of a 60-iteration ceiling, because an early projection is
-cheap and discovering at 50 that the instruments alone need fifteen iterations is
-not.** Everything here is an estimate and is labelled as one. The only hard numbers
-are the ones already measured.
+**Repriced at iteration 20 against a hard ceiling of 40.** Replaces the 60-iteration
+version written earlier the same day; that one is in git at `8e067f5`. 20 iterations
+remain.
+
+**The short answer to A.7: sixteen screens do not fit, and cutting from the bottom of
+the A.3 list does not rescue them either. The binding constraint is not the screen
+list - it is the sixteen iterations of server work sitting in front of it.**
 
 ---
 
-## Where the build actually is
+## The arithmetic, with the queue exactly as section D writes it
 
-| | count | note |
+| # | Work | Est. |
 |---|---|---|
-| Iterations used | 20 of 60 | a ceiling, not a target |
-| Gates PASS | 6 of 21 | G0-G5 |
-| Benchmarks instrumented | **16 of 40** | was 10 this morning; **0 now overdue** |
-| Benchmarks blocked on a subject | 24 | each names the artifact and the gate |
-| Screens built | **0 of 27** | 15 of them P0 |
-| API routes | **0** | the backend is an SMS port and a rate limiter |
-| Tests | 303, 0 skipped | |
+| 1 | §5.14, FINDINGS.md, the status-derivation sweep | 1 |
+| 2 | The canonical value registry | 2 |
+| 3 | The mutation harness and the twelve survivors | 2 |
+| 4 | rejects.json and the B3 re-measurement | 2 |
+| 5 | DC-003's compensating control | 1 |
+| 6 | The OTP service, G6 | 2 |
+| 7 | G7, the sync API | 3 |
+| 8 | G8, the read API | 2 |
+| 9 | The two fixtures | 1 |
+| | **before a single screen** | **16** |
+| | **left for the A.3 screen set** | **4** |
 
-The honest summary of the first twenty iterations: **the engine and the governance
-are in good shape, and the product does not exist yet.** Everything with a screen or
-an endpoint is ahead.
+Four iterations. The A.3 set is about sixteen screens, each owing §B.6 in full - both
+fixtures, four states, three languages, longest string at maximum font scale, contrast
+and target checks, a contact sheet. **Four iterations buys three or four such
+screens**, and the first of them must also stand up a React Native project that does
+not exist, the design tokens, the i18n scaffolding and the screen-test harness.
+
+So the queue as written delivers **item 1 and perhaps item 2**: the four form
+archetypes, maybe the day-close list. **It does not close a day.** That fails A.2,
+which is the target the ceiling was set around.
+
+Cutting from the bottom of A.3 - parties detail, then sign-in, then the sync states -
+removes at most seven screens from a set I cannot reach the start of. It is the right
+rule and it is not the lever here.
 
 ---
 
-## Estimate, gate by gate
+## The lever, and my recommendation
 
-Velocity basis: iterations 14-20 delivered roughly one substantial unit each - the
-font work, the five client ADRs, the rate limiter, typecheck and lint, the verifier
-inventory, the instruments. I am estimating in those units, and I expect the client
-gates to run worse than the backend ones because none of that ground has been touched.
+**A.2's target is an OFFLINE app.** Items 5 through 8 of the queue - DC-003's control,
+the OTP service, G7 and G8 - are server-side. They deliver nothing a user can walk
+through on an emulator with no network. They are eight of the sixteen iterations.
 
-| Gate | Work | Est. |
+**Recommendation: move the server block behind the screens, and record it in
+DEFERRED.md.** That gives:
+
+| # | Work | Est. |
 |---|---|---|
-| G6 | Auth service on the limiter: OTP issue/verify, device binding, revocation | 3 |
-| G7 | Sync API, idempotent, 3x replay byte-identical. **Carries B1, B8** | 3 |
-| G8 | Read API through the shared engine. **Carries B5, B6 properly** | 2 |
-| G9 | Pipeline, Terraform, the DC-003 control, container scan. **Carries B34** | 3 |
-| G10 | Design tokens, Comfort/Focus. **Carries B26, B27, B29** | 2 |
-| G11 | Four form archetypes and the keypad rule. **Carries B17, B28** | 3 |
-| G12 | The day close - nine sections, three states. **Carries B19, B32** | 3 |
-| G13 | The ending, four screens | 2 |
-| G14 | Today, parties, reports. **Carries B16, B20, B23** | 3 |
-| G15 | Scaffolding, 13 launch-blocking screens. **Carries B38** | 3 |
-| G16 | Localisation od/hi/en. **Carries B30, B31** | 2 |
-| G17 | 30-day offline endurance. **Carries B9, B25** | 1 |
-| G18 | Low-end device performance on the AVD. **Carries B14-B23** | 2 |
-| G19 | Traceability closure - instrument already rebuilt | 1 |
-| G20 | Adversarial self-review | 1 |
-| | **subtotal** | **34** |
+| 1 | §5.14, FINDINGS.md, the status sweep | 1 |
+| 2 | The canonical value registry | 2 |
+| 3 | The mutation harness and the twelve survivors | 2 |
+| 4 | rejects.json and the B3 re-measurement | 2 |
+| 5 | The two fixtures | 1 |
+| | **subtotal - everything A.6 protects, plus the fixtures** | **8** |
+| 6 | App skeleton, design tokens, i18n, the §B.6 screen harness | 3 |
+| 7 | The A.3 screen set | 9 |
+| | **total** | **20** |
 
-**20 used + 34 = 54 of 60.** Six iterations of slack, about ten percent.
+Nothing in A.6 is touched. Nothing in §5.1, §5.9, §5.12, §5.13 or §6 is touched. The
+thresholds stay frozen. **What is cut is features, and the feature cut is the server.**
 
-### Why I distrust that number, in both directions
+### What deferring the server actually costs, stated plainly
 
-**It is probably optimistic.** Twelve of the 34 are client gates on ground with no
-code at all - not one component exists. Every estimate in this build that involved
-unfamiliar ground has been wrong low: the font work was meant to be "bundle a file"
-and became three iterations across two injections. Fourteen iterations for 27 screens
-plus their instruments is under half an iteration per screen.
+- **No sync.** The outbox fills and never drains. A.3 item 8 becomes *offline states
+  and a visible outbox*, with the thing behind it unimplemented. That is a real
+  reduction from what item 8 asks for, and it goes in DEFERRED.md.
+- **No real sign-in.** Item 7's screens can be built and benchmarked against the
+  existing `StubSmsPort`, which is what it was built for - but the code that arrives is
+  not a code a server issued. The owner's own note anticipates this: *"you would stub
+  past sign-in for testing."*
+- **B8, B11 and B36 stay uninstrumented**, because their subjects never come to exist
+  inside this ceiling. Their rows say so.
+- **The rate limiter and the SMS port stay built and tested.** That work is done and is
+  not discarded; only the routes on top of them are deferred.
 
-**It ignores injections, and it should not.** Six have arrived in twenty iterations,
-costing between half an iteration and three each. At that rate, add 6-10 - which puts
-the total past 60.
+### Why this and not the alternative
 
-**§5.13 does NOT add 24 iterations for the 24 blocked instruments**, and that is the
-genuinely reassuring part. Each is built in the iteration its subject first exists, as
-part of that gate rather than after it, and the estimates above already include them.
-The rule converts a fifteen-iteration backlog into a per-gate tax of perhaps 20%.
+The alternative is to keep the server and ship four screens: a backend with no product
+on top, failing the sentence the ceiling exists to protect - *a correct, offline,
+three-language app that closes a day end to end.* Between a working day close with no
+sync, and sync with no day close, **the day close is the product.** D2, D7 and the
+whole nine-section sheet live there.
 
-**Realistic read: 54 if nothing surprises, past 60 once injections and the client
-unknowns are priced in.** The ceiling is no longer comfortable. It is reachable if
-scope gives, and scope is the human's decision, not mine.
-
----
-
-## What I would cut, in the order I would cut it
-
-Ranked by how little it costs the shopkeeper. **I am cutting none of this now** - this
-is the list to reach for when the ceiling gets close, so the decision is made
-deliberately rather than by running out of iterations.
-
-**1 · The BI screens, not the BI engine.** BI1-BI4 and BI6 are gated at 14 to 21
-closed days. A shopkeeper who installs on day one cannot see any of them for three
-weeks. The engine functions and their vectors are written and tested already; what
-would be cut is the Reports GateCard UI. Cost to the user in their first month:
-**nothing**. The cheapest real cut available, and it buys 2-3 iterations.
-
-**2 · Eight of the twelve non-P0 screens.** The inventory is 27 with 15 marked P0.
-The P0 set is the product. Deferring most of the remainder buys 2 iterations and
-costs polish, not function.
-
-**3 · Reports depth.** Ship the day summary and the party ledger; defer trend views.
-About 1 iteration.
-
-**4 · Anything that creeps toward UPI import.** D1 keeps UPI manual in V1 and `source`
-exists only to keep that reversal cheap. Nothing to cut yet - this is a watch item.
-
-### What must not be cut, at any point
-
-- **The day close and the four form archetypes.** This is the product. A shopkeeper
-  who cannot close his day has nothing.
-- **Odia.** The primary language, not a localisation nice-to-have.
-- **Offline-first and the append-only ledger.** The two promises. Break either and the
-  app is untrustworthy, and trust is priority 2.
-- **The money path** - integer paise, one formatting function, tabular figures. A
-  wrong rupee figure is the one defect this product cannot survive.
-- **The keypad and the 17sp floor.** For users aged 35-70 on a INR 7,000 handset these
-  ARE the product's accessibility, not decoration on it.
-- **H8, the physical device pass.** One hour with a real handset is worth more than
-  any number of AVD runs, and DC-004 stays MEDIUM until it happens.
+**This is a scope decision inside the owner's ceiling, not a change to it. Recorded as
+AD-018 with its reversal trigger: if sync matters more than the day close, one line
+reverses this and the screen set drops to item 1 and part of item 2.**
 
 ---
 
-## The three things most likely to break this projection
+## What I commit to, and what is stretch
 
-1. **The client gates, G10-G16.** Twelve of 34 iterations on ground with zero code.
-   The nine C-traps were front-loaded precisely to de-risk this and it does help - but
-   front-loading decisions is not the same as having built anything.
-2. **The mutation harness.** It sees 170 of 303 tests, so B4 and B6 cannot be claimed
-   until that is fixed, and I do not yet know whether the cause is cheap.
-3. **Further injections.** Historically the largest single cost and entirely outside
-   my control. They have also produced the build's best findings, so this is an
-   observation about the budget, not a complaint.
+Even at twelve iterations for screens I am not confident of sixteen, and the estimate
+history in this build runs optimistic - the font work was "bundle a file" and became
+three iterations across two injections.
+
+**COMMITTED - A.3 items 1 to 5, about eleven screens.** The day close end to end: the
+four form archetypes, the nine-section list with its three row states, the cash check
+with counting, difference, balanced and the closed-day summary, opening cash and first
+run, and Today in its open, closed and gap states. **This alone satisfies A.2.**
+
+**STRETCH - A.3 items 6 to 8, about five screens.** Parties list and the two detail
+screens, sign-in, the offline and sync states. Cut in reverse order if the budget
+tightens, exactly as A.7 directs: item 8 first, then item 7, then parties detail before
+parties list.
+
+**Not negotiable at any point:** every screen that ships meets §B.6 in full. Half a
+screen is not a screen, and eleven benchmarked screens beat sixteen unbenchmarked ones.
 
 ---
 
-## When to revise this
+## B38 and B39 will be MISSED, and that is the correct outcome
 
-Re-read at **G9** - backend complete, client not started - and again at **G12**, the
-first honest read on screen velocity. **If G10 and G11 together take more than six
-iterations, cut item 1 immediately** rather than waiting for the ceiling to force it.
+B38 requires 27 of 27 screens. Eleven committed, sixteen at best. **The threshold is
+not being touched and "screen" is not being redefined.** Both are reported as
+`MISSED - SCOPE` with the measured count and a pointer to DEFERRED.md, and
+BENCHMARKS-RESULTS.md now carries a reason code so a scope miss cannot be mistaken for
+a performance miss. One is a decision the owner made; the other would be a failure.
+
+---
+
+## The three things most likely to break even this plan
+
+1. **Screen velocity is unmeasured.** Zero React Native code exists. Nine iterations
+   for eleven-to-sixteen screens rests on an estimate with no evidence under it. The
+   first real read comes at the end of A.3 item 1, and if the four form archetypes take
+   more than three iterations the stretch set goes immediately.
+2. **The twelve arithmetic survivors.** A.6 protects them and rightly so. If they are
+   real once the harness is fixed, that is a priority-1 money-path finding that
+   outranks every screen - and it could cost two or three iterations this plan does not
+   have spare.
+3. **Further injections.** Six in twenty iterations. At that rate three more arrive
+   before 40, and none of them is priced here.
+
+## When to revise
+
+At the end of A.3 item 1 - the first honest read on screen velocity - and again at 35,
+where the injection requires a one-page pre-stop check anyway.

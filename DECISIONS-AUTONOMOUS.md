@@ -677,6 +677,54 @@ look are R-006 and R-007 in REVIEW.md, raised rather than quietly implemented.
 
 ---
 
+## AD-018 · The server block moves behind the screens
+
+**Question.** Injection 15 sets a hard ceiling of 40 and A.7 orders a reprice. The
+arithmetic came out badly: section D's queue puts sixteen iterations of work before
+the first screen, leaving four of the twenty for a sixteen-screen set. Four iterations
+delivers three or four screens and does not close a day - which fails A.2, the
+sentence the ceiling exists to protect.
+
+**Options.** (a) Keep the queue; ship four screens. (b) Move the server block -
+DC-003's control, the OTP service, G7, G8 - behind the screens. (c) Cut rigour.
+
+**Deciding rule.** **R1** - the constraint is the stated target, and A.2 is explicit:
+*a correct, offline, three-language app that closes a day end to end on an emulator.*
+
+- **(c) is not a candidate.** A.1 forbids it in terms, and it is the thing twenty
+  iterations have been spent defending.
+- **(a)** produces a backend with no product on it. Nothing in the server block is
+  walkable on an emulator with no network, so eight of those sixteen iterations buy
+  nothing against A.2.
+- **(b)** frees eight iterations. Every item A.6 protects stays ahead of the screens;
+  only features move.
+
+**Choice.** (b). Between a working day close with no sync and sync with no day close,
+the day close is the product - D2, D7 and the entire nine-section sheet live there.
+
+**What it costs, recorded rather than glossed.** No sync: the outbox fills and never
+drains, so A.3 item 8 becomes offline states plus a visible outbox with nothing behind
+it. No real sign-in: item 7 builds against `StubSmsPort`, which is what that port was
+for, and the injection's own note anticipates stubbing past sign-in. B8, B11 and B36
+stay uninstrumented because their subjects never come to exist inside this ceiling.
+The rate limiter and the SMS port are already built and tested and are NOT discarded -
+only the routes on top of them defer.
+
+**Why this is not a ceiling change.** The ceiling is the owner's and is final. This is
+a scope decision inside it, of exactly the kind A.7 asks for - A.7 names the screen
+list as the lever, and the reprice found the real lever one layer down. Said plainly
+in PROJECTION.md so it can be overruled in one line.
+
+**REVERSAL TRIGGER.** The owner says sync matters more than the day close. Then this
+inverts: the server block returns to its queue position and the screen set drops to
+A.3 item 1 and part of item 2 - four form archetypes and a partial day-close list,
+with no ending. PROJECTION.md states that outcome so the trade is visible before it is
+taken, not after.
+
+**Iteration 21 · injection 15 A.7**
+
+---
+
 ## Open questions
 
 None. The blocked-on-a-human status is abolished entirely; anything genuinely

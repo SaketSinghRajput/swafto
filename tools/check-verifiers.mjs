@@ -222,6 +222,19 @@ export const VERIFIERS = [
       'It IS a defect-planting harness - 145 planted mutants on money.ts alone - so proving it can fail is the thing it does on every run. What is NOT yet proven is that it sees the whole suite: its dry run finds 170 of 303 tests, so its first reading of 9.66% is a statement about the harness, not the engine. Recorded as provisional in BENCHMARKS-RESULTS.md rather than as a B4 measurement.',
   },
   {
+    id: 'findings',
+    command: 'npm run check:findings',
+    file: 'tools/check-findings.mjs',
+    claims:
+      '§5.14 - every adversary finding’s status is DERIVED from a predicate against the repository, never asserted. A finding that does not verify as fixed and carries no explanation fails the build.',
+    benchmarks: [],
+    defect: {
+      file: 'TECH-DECISIONS.md',
+      find: 'SUPERSEDED by BENCHMARKS.md',
+      replace: 'superseded-ish by BENCHMARKS.md',
+    },
+  },
+  {
     id: 'secrets',
     command: 'npm run check:secrets',
     file: 'tools/check-secrets.mjs',
@@ -357,11 +370,19 @@ export const BENCHMARKS = {
   },
   B36: { state: 'blocked', blockedOn: 'a logger and a real day close to log', gate: 'G6' },
   B37: { verifier: 'unit' },
-  B38: { state: 'blocked', blockedOn: 'the screens themselves', gate: 'G15' },
+  B38: {
+    state: 'blocked',
+    blockedOn: 'the screens themselves',
+    gate: 'G15',
+    outcome: 'MISSED - SCOPE',
+    outcomeWhy:
+      'Requires 27 of 27. The ceiling of 40 funds about 11 committed and 16 at best (PROJECTION.md), so this cannot be met. A DECISION, not a failure - the deferred set is in DEFERRED.md and the threshold is untouched.',
+  },
   B39: {
     verifier: 'traceability',
+    outcome: 'MISSED - SCOPE',
     partial:
-      'Measured, and the answer is 0 of 26. Every row is held back by the api and screen columns, which cannot resolve until those artifacts exist. The instrument reports WHICH column holds each row, so the number is informative rather than merely low.',
+      'Measured: 0 of 26, and the instrument reports WHICH column holds each row. The api column is blocked by the deferred server (AD-018) and the screen column by the deferred screens, so this cannot be met inside the ceiling. A DECISION, not a failure.',
   },
   B40: { verifier: 'governance' },
 };
@@ -561,6 +582,17 @@ console.log(`  overdue - subject EXISTS, nothing measures it : ${overdue.length}
 console.log(`     ${overdue.join(' ') || 'none'}`);
 console.log(`  blocked - subject does not exist yet          : ${blocked.length}`);
 console.log(`     ${blocked.join(' ')}`);
+const scopeMisses = declared.filter((b) => BENCHMARKS[b].outcome === 'MISSED - SCOPE');
+for (const b of declared) {
+  const x = BENCHMARKS[b];
+  if (x.outcome && !x.outcomeWhy && !x.partial) {
+    failures.push(`${b} records an outcome of "${x.outcome}" with no reason attached (A.5)`);
+  }
+}
+console.log(
+  `  known MISSED - SCOPE   : ${scopeMisses.length} · ${scopeMisses.join(' ') || 'none'}`,
+);
+console.log('     a scope miss is a DECISION; a performance miss is a FAILURE. Never merged.');
 console.log(`  gates marked PASS      : ${passGates}`);
 for (const n of notes) console.log(`  !    ${n}`);
 
@@ -626,8 +658,12 @@ ${bmRows}
     if (s !== -1 && e !== -1) {
       const row = (b) => {
         const x = BENCHMARKS[b];
-        if (x.verifier) return `| ${b} | instrumented | \`${x.verifier}\` | ${x.partial ?? '-'} |`;
+        const state = x.outcome ? `**${x.outcome}**` : 'instrumented';
+        if (x.verifier) return `| ${b} | ${state} | \`${x.verifier}\` | ${x.partial ?? '-'} |`;
         if (x.state === 'measurable-now') return `| ${b} | **OVERDUE** | - | ${x.why} |`;
+        // A known outcome outranks "blocked": B38 is blocked on screens AND already
+        // known to be a scope miss, and the second fact is the one a reader needs.
+        if (x.outcome) return `| ${b} | **${x.outcome}** | - | ${x.outcomeWhy ?? x.partial} |`;
         return `| ${b} | blocked | - | needs **${x.blockedOn}**, at ${x.gate} |`;
       };
       const table = [

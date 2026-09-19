@@ -21,6 +21,7 @@ const GENERATED = [
   // so the table cannot drift from the thing it documents.
   { file: 'VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
   { file: 'BENCHMARKS-RESULTS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
+  { file: 'FINDINGS.md', by: ['tools/check-findings.mjs', '--update-md'] },
 ];
 
 const before = new Map(GENERATED.map((g) => [g.file, readFileSync(g.file, 'utf8')]));

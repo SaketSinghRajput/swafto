@@ -446,7 +446,26 @@ practice — i.e. if a phantom-dependency import ever reaches main.
 
 ## ADR-011 · Performance budgets for the 2GB Android profile, enforced in CI
 
-**Status:** Accepted · **measurement blocked on hardware (G18)**
+**Status:** **SUPERSEDED by BENCHMARKS.md** for every threshold · context retained ·
+measurement blocked on hardware (G18)
+
+> **SUPERSEDED, AND THIS ANNOTATION IS THE FIFTH INSTANCE OF ITS OWN FAILURE MODE.**
+>
+> Every performance threshold below is superseded by `BENCHMARKS.md`, which is
+> SHA-locked and is the only definition of done (AD-010). Where the two disagree,
+> BENCHMARKS.md wins; nothing here may be cited as a target.
+>
+> The history is worth keeping. AD-010 asserted "ADR-011 is annotated as superseded"
+> when it was not. Adversary pass F-06 found that and instructed the annotation. **The
+> annotation was then recorded as applied in BUILD_LOG and in a commit message, and
+> was never applied either** - `git log -S"SUPERSEDED by BENCHMARKS" -- TECH-DECISIONS.md`
+> returned nothing until iteration 21. So the finding ABOUT unapplied fixes had its own
+> fix go unapplied, twice over, and both times a document said otherwise.
+>
+> It is written down here rather than quietly fixed because it is the clearest
+> argument in the build for §5.14: a status is not true because a file says so. The
+> numbers below are kept as CONTEXT - the reasoning for each budget - and are no
+> longer thresholds.
 
 **Context.** The target is a INR 7,000 Android handset, ~2GB RAM, often 2G or no signal.
 Budgets set now, before the code exists, so they constrain design rather than

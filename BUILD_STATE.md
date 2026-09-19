@@ -216,37 +216,47 @@ testable offline, and everything else is a projection of it.
 
 ## RESUME
 
-**Two numbers, always together (§5.13 A.5):**
+**CEILING IS 40, NOT 60.** Injection 15, owner's decision, final. At iteration 21,
+**19 iterations remain**. That is a 40% scope cut and it has been taken as scope -
+never as rigour. §5.1, §5.9, §5.12, §5.13, §5.14 and §6 all stand unreduced, and
+every benchmark threshold is untouched.
 
-> **BENCHMARKS INSTRUMENTED: 16 of 40.** 0 overdue, 24 blocked on artifacts that do
-> not exist yet.
-> **BENCHMARKS MET: 5 of the 16 measured** - B2, B5, B12, B33, B40. B1 and B3 are
-> recorded MISSED with thresholds untouched; B4/B6 are PROVISIONAL because their
-> harness sees 170 of 303 tests; B13, B24, B35, B39 are partial with the partial
-> stated.
+**Two numbers (§5.13 A.5):**
 
-`npm run check:all` runs thirteen checks, `npx vitest run` is 303 passed / 0 skipped,
-`npm run prove:verifiers` shows every plantable verifier failing on its planted
-defect, and `npm run test:vectors:diff` reports no Node/Hermes divergence.
+> **INSTRUMENTED: 16 of 40.** 0 overdue, 24 blocked on artifacts that will not exist.
+> **MET: 5 of the 16 measured** - B2, B5, B12, B33, B40. B1 and B3 MISSED with
+> thresholds untouched. B4/B6 PROVISIONAL (harness sees 170 of 303 tests).
+> **B38 and B39: MISSED - SCOPE**, a decision rather than a failure, reason codes in
+> BENCHMARKS-RESULTS.md and the deferred set in DEFERRED.md.
 
-**`PROJECTION.md` was written this iteration.** Estimate: 34 iterations remain
-against 40 left, so 54 of 60 if nothing surprises - and it says plainly why it is
-probably optimistic, with a ranked cut-list ready if the ceiling closes in.
+`npm run check:all` runs fourteen checks. `npx vitest run` is 303 passed / 0 skipped.
 
-### Owed from injection 14, not done this iteration
+### The plan, repriced (PROJECTION.md)
 
-- **Section B, the canonical value registry.** The biggest remaining item and the one
-  that kills the TTL class outright. It needs a sweep for every number appearing in
-  two files, which is a piece of work in itself.
-- **The mutation harness.** 170 of 303 tests. B4 and B6 cannot be claimed until fixed.
-- **D.1, rejects.json before G7.** Now load-bearing for B3's remaining 14 points, not
-  only for correctness.
-- **Two owed plants named in REVIEW.md's A12 audit:** a correction whose
+Sixteen screens do not fit, and cutting the bottom of the A.3 list does not rescue
+them - the binding constraint was **sixteen iterations of server work in front of the
+first screen**. **AD-018 moves the server behind the screens** and records the cost.
+Committed: A.3 items 1-5, about eleven screens, which is A.2's target. Stretch: items
+6-8. One line from the owner reverses it.
+
+### Next, in order
+
+1. **The canonical value registry** (injection 15 D, A.6-protected) - 2
+2. **The mutation harness, then the twelve arithmetic survivors** (A.6) - 2
+3. **rejects.json and the B3 re-measurement** (A.6) - 2
+4. **The two fixtures**, canonical and adversarial - 1
+5. **App skeleton, design tokens, i18n, the §B.6 screen harness** - 3
+6. **A.3 items 1-5**, the day close end to end - 9
+
+**At 35: the one-page pre-stop check. At 40: stop, and produce the handover report.**
+If it finishes early it stops early - no gold-plating, no filling the budget.
+
+### Open, and named rather than buried
+
+- **V-7** - TRACEABILITY names 8 engine functions and 18 vectors that do not exist.
+  §5.14.5 requires each built or the claim removed. The only OPEN finding.
+- **Two owed plants** from REVIEW.md's A12 audit: a correction whose
   `corrects_day_id` is closed while its own day is open, and a genuine cross-tenant
-  read once routes exist.
-
-Then resume: **DC-003's compensating control**, the OTP service on the limiter, G7
-and G8, the two fixtures, then G10 with the Today screen LAST.
-
-One thing needs the repo owner and blocks nothing: **H11**, permission for an
-`eslint.config.mjs`. The enforcement it would carry already runs in CI.
+  read once routes exist (the latter now blocked by AD-018).
+- **H11** - permission for an `eslint.config.mjs`. Blocks nothing; the enforcement
+  already runs in CI.

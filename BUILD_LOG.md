@@ -1474,3 +1474,111 @@ largest remaining item and the one that kills the TTL class outright; the mutati
 harness; D.1's rejects.json before G7. All recorded in BUILD_STATE's RESUME.
 
 NEXT - the value registry, then the mutation harness, then DC-003's control.
+
+## 2026-09-19 · Iteration 21 · Injection 15: hard stop at 40
+
+Ceiling 40, not 60. Owner's decision, final. 19 iterations remain. A.7 and §5.14
+first, as the queue directs.
+
+### A.7 · THE REPRICE — AND THE ANSWER IS NO
+
+With section D's queue exactly as written:
+
+  §5.14 1 · value registry 2 · mutation harness 2 · rejects.json + B3 2 ·
+  DC-003 1 · OTP service 2 · G7 3 · G8 2 · fixtures 1   =  16
+  LEFT FOR SIXTEEN SCREENS                              =   4
+
+Four iterations buys three or four screens at full §B.6 - and the first of them also
+has to stand up a React Native project that does not exist, the design tokens, the
+i18n scaffolding and the screen-test harness. The queue as written delivers the four
+form archetypes and perhaps the day-close list. IT DOES NOT CLOSE A DAY, which fails
+A.2, the sentence the ceiling was set around.
+
+A.7 says cut from the bottom of A.3. I did the arithmetic and the bottom of A.3 is
+not the lever: removing parties detail, sign-in and the sync states takes seven
+screens off a set I cannot reach the start of.
+
+THE LEVER IS ONE LAYER DOWN. A.2's target is an OFFLINE app. DC-003's control, the
+OTP service, G7 and G8 are server-side, none of it is walkable on an emulator with no
+network, and they are EIGHT of the sixteen iterations. AD-018 moves the server block
+behind the screens. Every item A.6 protects stays in front of them. Nothing in §5.1,
+§5.9, §5.12, §5.13 or §6 is touched and no threshold moves. What is cut is features,
+and the feature cut is the server.
+
+  What it costs, written down rather than glossed: no sync, so the outbox fills and
+  never drains; no real sign-in, so item 7 builds against StubSmsPort, which is what
+  that port was built for; B8, B11 and B36 never get instruments. The rate limiter
+  and the SMS port stay built and tested - only the routes on top of them defer.
+
+COMMITTED: A.3 items 1-5, about eleven screens - the four forms, the nine-section
+list with its three row states, the cash check with counting, difference, balanced
+and the closed-day summary, opening cash and first run, and Today in three states.
+That alone satisfies A.2. STRETCH: items 6-8, cut in reverse order.
+
+Between a working day close with no sync and sync with no day close, the day close is
+the product. D2, D7 and the whole nine-section sheet live there. One line from the
+owner reverses it, and PROJECTION.md states the alternative outcome so the trade is
+visible before it is taken rather than after.
+
+### §5.14 · STATUS IS DERIVED, NEVER ASSERTED — AND IT FOUND A FIFTH INSTANCE
+
+Writing the predicate for F-06 turned up that F-06'S OWN FIX WAS ALSO NEVER APPLIED.
+ADR-011's status line still read "Accepted, measurement blocked on hardware (G18)".
+Searching the file's history for the supersession text returned NOTHING.
+
+So the chain is: AD-010 asserted ADR-011 was annotated as superseded. It was not.
+Adversary pass F-06 found that and instructed the annotation. THAT FIX WAS THEN
+RECORDED AS APPLIED IN BUILD_LOG AND IN A COMMIT MESSAGE, AND WAS NEVER APPLIED
+EITHER. The finding ABOUT unapplied fixes had its own fix go unapplied, for eight
+iterations, with two documents saying otherwise. Annotated for real at iteration 21,
+at the third attempt, and the history is written into the annotation because it is
+the clearest argument in this build for the rule.
+
+FINDINGS.md now holds all 17 findings and NOT ONE carries a status word. Each owns a
+PREDICATE evaluated against the repository on every run, and the status column is
+whatever that predicate returned. A finding cannot be marked fixed - it can only BE
+fixed.
+
+  15 FIXED (derived) · 1 OPEN · 1 WITHDRAWN.
+
+  WITHDRAWN is F-10, and the distinction matters: its premise was FALSE, so it is not
+  fixed and never needed fixing. Calling it fixed would stack a second untruth on the
+  first. Its predicate now holds the repository to that reading.
+
+  OPEN is V-7, the 26 unresolved traceability references. §5.14.5 requires each built
+  or the claim removed. Not started, and it fails loudly rather than sitting quiet.
+
+THE CHECK CAUGHT ITSELF ON ITS FIRST RUN: V-1's predicate looked for "literal pipe"
+where BUILD_STATE says "LITERAL pipe", so V-1 came out OPEN. The predicate was wrong,
+not the fix - and it FAILED CLOSED, refusing to call something fixed that it could
+not confirm, which is exactly the behaviour the rule wants from a predicate that is
+unsure.
+
+Negative-tested by reverting F-06's annotation - precisely what history had already
+done once by accident. Caught, named, and reported with the right diagnosis.
+
+### A.4 · DEFERRED.md — a deliverable, not a note
+
+Four cuts, each with what it is, why it went, what it blocks and what it costs: the
+server (8 iterations to restore), Reports and every BI screen (2-3, and THE ENGINE
+STAYS - BI1-BI4 and BI6 built, tested, 87% covered), the Play Store set (2, and PLAY
+SUBMISSION IS BLOCKED WITHOUT IT), Settings and the support surface (4-5, with the
+app lock first back at about 1).
+
+### A.5 · B38 AND B39 REPORTED AS MISSED — SCOPE
+
+B38 needs 27 of 27 screens; the ceiling funds about 11. The threshold is untouched
+and "screen" is not redefined. Both carry a reason code in the generated partition,
+and check:verifiers prints "a scope miss is a DECISION; a performance miss is a
+FAILURE. Never merged." A build reporting 16 of 27 with the reason attached is worth
+more than one that reaches 27 by changing what the word means.
+
+Commands:
+  $ npm run check:all       -> 14 checks, all pass
+  $ npm run check:findings  -> 15 fixed, 1 open, 1 withdrawn, every status derived
+  $ npx vitest run          -> 303 passed, 0 skipped
+  $ npm run check:verifiers -> 16 of 40 instrumented, 0 overdue, 2 MISSED - SCOPE
+
+NEXT — the canonical value registry, then the mutation harness and the twelve
+arithmetic survivors, then rejects.json and the B3 re-measurement. All three are
+A.6-protected and none may be traded for schedule.
