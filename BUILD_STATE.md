@@ -1,6 +1,6 @@
 # BUILD STATE
 
-Updated: 2026-09-19T00:00:00Z   Iteration: 1
+Updated: 2026-09-19T00:00:00Z   Iteration: 2
 
 Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 `CLOUD=AWS ap-south-1` · `MONEY=integer paise` · Node v24.15.0 · npm 11.12.1
@@ -10,7 +10,7 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 | Gate | Title | Status | Evidence |
 |------|-------|--------|----------|
 | G0 | Repo, state ledger, spec extraction | **PASS** | `ls` of all four files + `wc -l SPEC-DIGEST.md` = **526 lines** (threshold 200). Output in BUILD_LOG.md. |
-| G1 | Technology research - ADRs | TODO | needs `grep -c '^## ADR-' TECH-DECISIONS.md >= 8` |
+| G1 | Technology research - ADRs | **PASS** | `test $(grep -c '^## ADR-' TECH-DECISIONS.md) -ge 8` -> `OK`, count **12** |
 | G2 | Legal audit | TODO | needs LEGAL-AUDIT.md with statuses |
 | G3 | Security audit / STRIDE | TODO | needs `npm audit --audit-level=high` + STRIDE rows |
 | G4 | Schema + migrations, SQLite & Postgres | TODO | needs up/down/up on both engines + UPDATE/DELETE rejection test |
@@ -114,6 +114,9 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Next action
 
+**G2 - Legal audit.** (G1 complete.)
+
+<!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN
 on-device SQLite (op-sqlite vs expo-sqlite vs WatermelonDB, benchmarked not blog-quoted),
 sync protocol + clock-skew/day-boundary policy, backend framework on t4g.small, Postgres
@@ -124,3 +127,4 @@ package manager / Node LTS / RN version / New Architecture.
 Then G2, G3, and into the domain core at G4-G5. **G5 (the Formula Engine) is the heart
 of the product and is the single most valuable gate in this list** - it is pure, fully
 testable offline, and everything else is a projection of it.
+-->
