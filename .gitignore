@@ -19,3 +19,4 @@ ios/Pods/
 .vectors-node.json
 .vectors-hermes.json
 .hermes-bundle.js
+.sms-segments.json
