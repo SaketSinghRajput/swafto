@@ -156,16 +156,27 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Next action
 
-**G6 - Auth service (phone + OTP)**, against the `SmsPort` stub (AD-004).
+**The pre-G10 queue, in order.** Everything here is front-loaded deliberately: each
+item is cheap now and expensive once screens exist.
 
-Amendment items 2.1-2.4 are COMPLETE this iteration:
-- 2.1 BI6 decided (AD-001) = Credit Concentration, implemented, 5 vectors, gate 14
-- 2.2 all seven legal findings resolved (AD-003, AD-005, AD-006, AD-007, AD-008)
-- 2.3 HUMAN-ACTIONS.md written, 9 items, none blocking
-- 2.4 15-07 provenance settled in SPEC-DIGEST; no longer an open question
+| # | Item | State |
+|---|------|-------|
+| 1 | **C.2 bundled Odia font** | **DONE** iteration 14 - AD-015, `check:font`, DEVICE-CHECKLIST A1-A6 |
+| 2 | C.3-C.9, the remaining React Native traps | next |
+| 3 | Persistent, restart-surviving rate limits (injection 08 B.2) | owed |
+| 4 | DC-003 compensating control for origin exposure | owed, and SECURITY-AUDIT now states the exposure correctly |
+| 5 | OTP service B.3-B.5, including number-change revocation | owed |
+| 6 | **G6** auth service against the `SmsPort` stub (AD-004) | blocked on 3-5 |
+| 7 | G7 and G8, with `rejects.json` grown alongside them | the 8 api-layer rejection cases get their layer here |
+| 8 | Two fixtures: canonical shop, adversarial shop | prerequisite for B.1-B.7 |
+| 9 | **G10**, beginning with the four form archetypes | Today screen LAST, per B.6 |
 
-Governance is now machine-enforced: `npm run check:governance` and
-`npm run check:benchmarks`, both negative-tested.
+Amendment items 2.1-2.4 completed at iteration 7 and are recorded in
+`DECISIONS-AUTONOMOUS.md` and `BUILD_LOG.md`; they are no longer pending work.
+
+Governance is machine-enforced and every check is negative-tested:
+`check:governance`, `check:benchmarks`, `check:prose`, `check:sms`,
+`check:sms:segments`, `check:tooling`, `check:generated`, `check:font`.
 
 <!-- superseded next action:
 **G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN

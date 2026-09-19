@@ -101,6 +101,29 @@ for (const name of ['nul', 'NUL', 'con', 'aux', 'prn']) {
 }
 if (stray === 0) ok.push('no Windows reserved-name files in the tree');
 
+/* ---- 4 · every npm script must reference a file that exists ------------ */
+// §5.10 again. F-06 was a decision recorded as done that was never done; this is the
+// same shape one level down - `check:traceability`, `check:contrast`, `check:i18n`
+// and `test:vectors` all named tools that do not exist. Nothing failed, because
+// nobody ran them; they simply sat in package.json looking like coverage. A named
+// check that cannot run is worse than an absent one, because it is counted.
+const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts ?? {};
+let dead = 0;
+for (const [name, cmd] of Object.entries(scripts)) {
+  for (const m of cmd.matchAll(/(?:^|\s)((?:tools|scripts)\/[\w.-]+\.(?:mjs|js|ts|cjs))/g)) {
+    if (!existsSync(m[1])) {
+      dead += 1;
+      failures.push(
+        `npm script "${name}" runs ${m[1]}, which does not exist. A check that has ` +
+          `never executed is not coverage, it is the appearance of coverage (§5.10.4).`,
+      );
+    }
+  }
+}
+if (dead === 0) {
+  ok.push(`all ${Object.keys(scripts).length} npm scripts reference files that exist`);
+}
+
 console.log(`  tooling files scanned : ${all.length}`);
 for (const o of ok) console.log(`  ok   ${o}`);
 if (failures.length) {

@@ -752,3 +752,96 @@ Commands:
 NEXT — the queue: C.2 bundled Odia font, remaining RN traps, persistent rate limits,
 the DC-003 compensating control (now correctly described in SECURITY-AUDIT as open),
 the OTP service, G7/G8.
+
+## 2026-09-19 · Iteration 14 · C.2, the bundled Odia font
+
+C.2 DONE. The launch-blocking one: Odia is the PRIMARY language, a budget handset may
+ship no Odia font, and the failure is invisible on every emulator because an AVD
+system image carries a full font set. The development environment is strictly more
+capable than the target, which is how this class of bug ships.
+
+NEARLY SHIPPED THE WRONG TYPEFACE. I downloaded Noto Sans Oriya, verified it, wrote
+the checker against it, and only then read LEGAL-AUDIT §10, which lists **Anek**
+(Latin/Devanagari/Odia) as the design's typeface. Switching families on a whim would
+have been a silent change to an earlier decision. Re-pointed at Anek Odia and threw
+the Noto file away. The near-miss is worth recording: I was one document away from
+"verified" meaning "verified the wrong thing", and what caught it was reading the
+legal register before committing, not any check.
+
+BUNDLED · apps/mobile/assets/fonts/AnekOdia.ttf, Anek Odia v1.003, SIL OFL 1.1,
+858,180 bytes = 3.27% of the 25 MB B24 budget. Upstream OFL.txt committed beside it.
+AD-015 records why Odia only and not all three Anek families: measured, all three
+would be 3,453,592 bytes = 13.2% of B24, and the other two-thirds buys typeface
+consistency, which is a preference, not a correctness property. Two reversal triggers,
+one of which is a DEVICE-CHECKLIST line rather than a hypothetical.
+
+CHECK · tools/check-font-coverage.mjs, wired into check:all. It parses the TTF rather
+than trusting it, because a bundled font that does not cover what we render is DC-004
+with an extra step. It requires a NON-ZERO glyph id for every character - a cmap entry
+pointing at glyph 0 is a mapping to .notdef, which is coverage on paper and tofu on
+screen.
+
+THREE THINGS THE CHECK FOUND THAT REASONING HAD NOT:
+
+  1. TWO REQUIRED CODEPOINTS ARE OUTSIDE THE ODIA BLOCK. The danda U+0964 lives in the
+     Devanagari block and ends every Odia sentence we ship. The rupee sign U+20B9
+     carries every money figure. A font subsetted "to Odia" by Unicode block - the
+     obvious optimisation, and the one anyone would reach for against a 25 MB budget -
+     drops both, and the tofu lands at the end of every sentence and in front of every
+     amount. The tool prints them on every run under "required OUTSIDE the Odia
+     block". Anek Odia covers both; measured, not assumed.
+
+  2. THE DEFAULT INSTANCE IS wght 500, NOT 400. Anek Odia is a variable font whose
+     fvar default is Medium. Unstyled text renders one step heavier than a Regular
+     specimen implies, everywhere, and nothing in the file name says so. The tool now
+     prints a NOTE whenever the default weight is not 400.
+
+  3. The family name Android resolves is "Anek Odia Medium", postscript
+     AnekOdia-Medium - which is what the RN Android font mapping has to match.
+
+Also asserts: the ory2 GSUB script is present, without which the shaper cannot form
+Odia conjuncts and text renders as letters plus dotted circles (a failure that is NOT
+empty boxes and would pass a "no tofu" eyeball); the file matches a recorded sha256;
+and the font fits B24 on its own.
+
+REFUSES TO PASS ON AN EMPTY CORPUS. If the tool finds zero Odia strings it exits 1.
+That is the assertPaise-at-0/59 failure mode - a guard that never runs, passing
+forever while proving nothing - declined in advance rather than discovered later.
+
+NEGATIVE-TESTED THREE WAYS (§5.1):
+  planted U+0915 into a real od: template -> caught, named the template
+  renamed the od: key so the corpus was empty -> caught, refused to pass vacuously
+  flipped one byte of the font                -> caught by hash
+
+WHAT THIS CANNOT PROVE is that a device draws the glyphs; a font that covers
+everything still draws nothing if the asset pipeline drops it. DEVICE-CHECKLIST.md now
+exists - it was a dangling reference in four artifacts - with sections A-F. A1-A6 are
+the font items, including A4, which is the only thing that can move DC-004 from MEDIUM
+to HIGH: install without the bundled font and see whether the handset has Odia at all.
+DC-004 now separates what is mechanical (coverage, settled) from what is not
+(rendering, owed to H8).
+
+FOUND WHILE WIRING THE SCRIPT · FOUR npm SCRIPTS NAMED TOOLS THAT DO NOT EXIST:
+check:traceability, check:contrast, check:i18n, test:vectors. Nothing ever failed
+because nobody ran them; they sat in package.json looking like coverage. A named check
+that cannot run is worse than an absent one, because it gets counted. Removed. This is
+the same shape as F-06 - a thing recorded as done that was never done - so per §5.10.4
+it became a mechanism: check-tooling.mjs section 4 asserts every npm script references
+a file that exists. Negative-tested by planting check:ghost.
+
+ON STALE DOCUMENTS, THE THIRD INSTANCE. F-01 (SECURITY-AUDIT describing a topology
+removed three iterations earlier), F-06 (ADR-011 recorded as annotated, never
+annotated), and now BUILD_STATE's "Next action", which still described amendment items
+completed at iteration 7. §5.10 says a lesson recorded twice becomes a mechanism, and
+I considered writing one. I am not going to fabricate a weak check for this: document
+staleness is semantic and the one thing that has actually caught it is the adversary
+pass reading artifacts before rationale (§6.2), which found two of the three. The
+mechanism exists and works. BUILD_STATE's next action is now the real queue, as a
+table, with C.2 marked DONE.
+
+Commands:
+  $ npm run check:all   -> governance benchmarks prose sms sms:segments tooling
+                           generated font, all pass
+  $ npx vitest run      -> 189 passed, 4 skipped (Postgres, no daemon)
+
+NEXT — C.3 through C.9, the remaining React Native traps.

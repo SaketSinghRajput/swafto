@@ -460,6 +460,70 @@ which CP-4's deferred concurrent-edit test must be written.
 
 ---
 
+## AD-015 · Bundle Anek Odia only, and prove coverage rather than assume it
+
+**Question.** C.2 says bundle the Odia font. The design specifies the **Anek**
+superfamily - Latin, Devanagari and Odia. Which of the three ship inside the APK?
+
+**Measured first, because the sizes decide it.** From the upstream Google Fonts
+release: Anek Odia 858,180 bytes, Anek Latin 404,880, Anek Devanagari 2,190,532. All
+three is 3,453,592 bytes, **13.2% of the 25 MB B24 budget**, before a line of React
+Native ships.
+
+**Options.** (a) All three. (b) Odia only. (c) Nothing, trust the OS.
+
+**Deciding rule.** **R2** - the constraint that exists is DC-004, and it is about Odia
+specifically. Latin and Devanagari were never the exposure.
+
+- **(c) is eliminated outright.** It is the defect DC-004 describes, and it is
+  invisible on every emulator.
+- **(a) spends 13.2% of the download budget to solve a problem we have evidence for in
+  one script.** The other two-thirds buys typeface *consistency*, which is a design
+  preference, not a correctness property.
+- **(b)** covers the exposure for 3.27%. And it is better than it looks: Anek Odia
+  carries Latin as well - **measured, 347 codepoints with real glyphs, including the
+  digits, the comma, the danda U+0964 and the rupee sign U+20B9** - so an Odia screen
+  is internally consistent without Anek Latin beside it.
+
+**Choice.** (b). Hindi renders in the OS Devanagari font until a real device says
+otherwise.
+
+**Two things this decision turns from assumption into measurement.**
+
+1. **The two codepoints that matter most are not in the Odia block.** The danda U+0964
+   lives in the Devanagari block and ends every Odia sentence we ship; the rupee sign
+   U+20B9 is Latin-adjacent and carries every money figure. A font subsetted "to Odia"
+   by block would drop both, and the failure would appear in the two places it would be
+   worst - the end of every sentence, and every amount. `check-font-coverage.mjs`
+   prints them explicitly under "required OUTSIDE the Odia block".
+2. **The family's default instance is wght 500, not 400.** Anek Odia is a variable font
+   whose `fvar` default is Medium. Unstyled text renders one step heavier than a
+   Regular specimen implies, everywhere, and nothing in the file name says so.
+
+**Why a checker and not care.** A bundled font that does not cover what we render is
+DC-004 with an extra step, and a cmap entry pointing at glyph 0 is a mapping to .notdef
+- coverage on paper, tofu on screen. `npm run check:font` parses the TTF, requires a
+NON-ZERO glyph for every character in every Odia string we ship plus the
+constraint-8 Latin-and-rupee set, requires the `ory2` GSUB script without which
+conjuncts cannot form, pins the file by sha256, and **refuses to pass on an empty
+corpus** - the assertPaise-at-0/59 failure mode, declined in advance.
+
+**REVERSAL TRIGGER.** Two, either one suffices.
+
+- **DEVICE-CHECKLIST A5.** If the typeface mismatch between a Hindi screen and an Odia
+  one reads as broken rather than merely different on a real handset, Anek Devanagari
+  gets bundled at a measured +2.19 MB and this decision becomes (a).
+- **B24.** If a real APK measurement leaves less than 2.19 MB of headroom under 25 MB,
+  (a) stops being available at all and that must be known before the design assumes it.
+
+Conversely, if DEVICE-CHECKLIST A4 finds every target handset already ships an Odia
+font, this decision is **not** reversed - one device is not the fleet, and 3.27% is
+cheap insurance against an OEM we have not seen.
+
+**Iteration 14 · C.2**
+
+---
+
 ## Open questions
 
 None. The blocked-on-a-human status is abolished entirely; anything genuinely

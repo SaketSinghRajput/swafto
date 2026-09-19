@@ -407,7 +407,8 @@ submission, and must be available in Odia, Hindi and English.
 
 | Asset | Licence | Status | Obligation |
 |-------|---------|--------|-----------|
-| **Anek** (Latin/Devanagari/Odia) | **SIL Open Font License 1.1** | **ACTION-REQUIRED - verify** | Confirm from the upstream `OFL.txt` in the release actually bundled. OFL permits embedding in an app; **reserved font names must not be reused** if modified |
+| **Anek Odia** - the one actually bundled | **SIL Open Font License 1.1** | **COMPLIANT (verified iteration 14)** | `OFL-AnekOdia.txt` is the upstream licence file, fetched from the same Google Fonts release as the TTF and committed beside it. Copyright 2021 The Anek Project Authors (Ek Type). OFL permits embedding in an application, including a commercial one, with no attribution requirement in the UI. The font is **bundled unmodified**, so the reserved-font-name clause is not engaged - it binds only derivative works. Obligation that remains: include the licence text in the Open-source licences screen |
+| **Anek Latin / Anek Devanagari** | **SIL Open Font License 1.1** | not bundled - see AD-015 | Same terms if AD-015 is ever reversed. Verify from that release's own `OFL.txt`, not by assuming it matches Odia's |
 | **IBM Plex** | **SIL Open Font License 1.1** | **ACTION-REQUIRED - verify** | Same. IBM Plex moved to OFL 1.1 |
 | React Native, Fastify, Drizzle | MIT / Apache-2.0 expected | **ACTION-REQUIRED** | Generate the full dependency licence manifest |
 | op-sqlite | MIT expected | **ACTION-REQUIRED** | Verify, and separately verify **SQLCipher** - the community edition is BSD-style, but **check whether the intended build requires a commercial licence** |

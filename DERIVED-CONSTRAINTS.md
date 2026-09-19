@@ -117,7 +117,7 @@ iteration and will carry its own AD.
 
 ## DC-004 · Odia will render as empty boxes on budget Android devices
 
-**Confidence: MEDIUM** · **Check: owed at G10 + DEVICE-CHECKLIST** · Iteration 9
+**Confidence: MEDIUM** · **Check: `tools/check-font-coverage.mjs` (coverage) + `DEVICE-CHECKLIST.md` A1-A6 (rendering)** · Iteration 9, mitigated iteration 14
 
 **Derived from the target-device profile**, raised by injection 09 C.2 and consistent
 with what a INR 7,000 handset ships.
@@ -136,6 +136,27 @@ this at the next document pass, and H8 is where it gets settled for real.
 The kind of bug that ships because the development environment is more capable than
 the target.
 
-**Mitigation, owed at G10.** Bundle the Odia font rather than relying on the OS; a
-render assertion that Odia glyphs draw rather than tofu; and an explicit line in
-`DEVICE-CHECKLIST.md`.
+**Mitigation, done at iteration 14 (AD-015).** `apps/mobile/assets/fonts/AnekOdia.ttf`
+is bundled - Anek Odia v1.003, SIL OFL 1.1, 858,180 bytes, 3.27% of the B24 budget -
+and `npm run check:font` parses it rather than trusting it.
+
+**The split between what is proven and what is not, because it is the whole point of
+this entry.** Coverage is mechanical and settled: every character in every Odia string
+we ship has a **non-zero** glyph id, the `ory2` GSUB script is present so conjuncts can
+form, and the file is pinned by sha256. *Rendering* is not, and cannot be, proven here
+- a font that covers everything still draws nothing if the asset pipeline drops it.
+That is `DEVICE-CHECKLIST.md` A1-A6.
+
+**What building the check found that reasoning had not.** Two of the required
+codepoints are **outside the Odia block**: the danda **U+0964**, which lives in the
+Devanagari block and ends every Odia sentence we ship, and the rupee sign **U+20B9**,
+which carries every money figure. A font subsetted "to Odia" by Unicode block drops
+both - and the tofu would appear at the end of every sentence and in front of every
+amount. The tool prints them on every run so the fact cannot quietly decay.
+
+**Why confidence stays MEDIUM.** Bundling removes the dependency, but the underlying
+claim - that cheap handsets ship no Odia font - is still inherited rather than
+measured. DEVICE-CHECKLIST A4 is the measurement, and it is the only thing that moves
+this to HIGH. Note that a MEDIUM claim already justified the mitigation: the fix cost
+3.27% of the budget and the failure was launch-blocking in the primary language, so
+waiting for certainty would have been the expensive choice.
