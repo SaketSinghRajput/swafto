@@ -164,7 +164,8 @@ item is cheap now and expensive once screens exist.
 | 1 | **C.2 bundled Odia font** | **DONE** iteration 14 - AD-015, `check:font`, DEVICE-CHECKLIST A1-A6 |
 | 2 | C.3 static font instances · C.4 tabular figures | **DONE** iteration 15 - AD-016, DC-005, `check:font` |
 | 2b | C.5-C.9, decided and recorded | **DONE** iteration 16 - ADR-013..017; their checks are owed below |
-| 3 | Persistent, restart-surviving rate limits (injection 08 B.2) | owed |
+| 3 | Persistent, restart-surviving rate limits (injection 08 B.2) | **DONE** iteration 17 - AD-017, `rate_events`, 14 tests |
+| 3b | Typechecking and the ADR-003 money lint | **DONE** iteration 18 - neither had ever run |
 | 4 | DC-003 compensating control for origin exposure | owed, and SECURITY-AUDIT now states the exposure correctly |
 | 5 | OTP service B.3-B.5, including number-change revocation | owed |
 | 6 | **G6** auth service against the `SmsPort` stub (AD-004) | blocked on 3-5 |
@@ -210,3 +211,27 @@ Then G2, G3, and into the domain core at G4-G5. **G5 (the Formula Engine) is the
 of the product and is the single most valuable gate in this list** - it is pure, fully
 testable offline, and everything else is a projection of it.
 -->
+
+---
+
+## RESUME
+
+**Everything below is committed and green.** `npm run check:all` runs ten checks,
+`npx vitest run` is 231 passed / 0 skipped, `npm run typecheck` is clean, and
+`npm run test:vectors:diff` reports no Node/Hermes divergence.
+
+Pick up at **the DC-003 compensating control** - what absorbs an L7 flood before it
+reaches the API now that AD-008 took Cloudflare out of the data path, whether
+unauthenticated endpoints get a cheaper pre-database limit, and how the API sheds
+load when the limiter itself is saturated. Injection 08's section C sets the terms;
+SECURITY-AUDIT S-08 is the row it lands in and already reads OPEN.
+
+Then **B.3-B.5 the OTP service** on top of the limiter built at iteration 17, then
+**G6**, then **G7 and G8 with rejects.json grown alongside them** (8 api-layer
+rejection cases are PENDING a layer, and the vector count is 63 against B1's 70 -
+injection 08 section D says add them where the scenarios are in front of you, never
+to raise the count). Then the two fixtures, then **G10** starting with the four form
+archetypes and the Today screen LAST.
+
+One thing genuinely needs the repo owner and blocks nothing: **H11**, permission for
+an `eslint.config.mjs`. The enforcement it would carry already runs in CI.
