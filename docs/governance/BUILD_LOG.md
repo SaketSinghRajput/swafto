@@ -2682,3 +2682,36 @@ instead of importing.
 
 `tools/pin-injections.mjs` now does it, importing the predicate. 21 files pinned as
 human evidence; 2 - both adversary passes - are our prose and fully checked.
+
+---
+
+## 2026-09-20 · Iteration 34 · P-004 and P-005 · the two fixture shops
+
+`@swafto/fixtures`. Both predicates TRUE, 14 new tests, suite 358.
+
+**Neither fixture stores a figure the engine owns.** Not one total is typed. The
+closed canonical day takes its counted-cash figure from `expectedCashBalance()`, and
+the adversarial difference is an OFFSET from that figure rather than a literal - so it
+stays a difference of exactly that size whatever the expected total becomes. A literal
+would have agreed with the engine today and diverged silently the first time the cash
+formula changed, with the fixture looking authoritative because it is what the
+screenshots were taken from.
+
+**The shops assert themselves**, and on properties rather than figures. A screen test
+asserts the screen, not the shop, so nothing would stop someone tidying away the
+property a benchmark depends on. `fixtures.spec.ts` holds each shop to what it claims:
+the canonical one balances and has an entry in every section a real Thursday has; the
+adversarial one crosses the lakh threshold where DC-002 says Indian grouping diverges,
+carries a one-paisa amount, has NO opening cash because the day before was a gap the
+app refuses to guess about, a correction against a closed day (D7), a skipped section
+that is not an untouched one (D8), an imported entry (the path F-04 found
+unexercised), and an overdue supplier date.
+
+**Found while building:** `expectedCashBalance` returns `{ value, working }`, not a
+bare figure - every P value carries its derivation, because the cash-check screen
+shows the working rather than a verdict. Two of my assertions compared the wrapper to
+a number and failed loudly, which is the right behaviour.
+
+**Also caught by the mechanism:** adding ADR-018 made `check:verifiers` fail - G1
+recorded 17 ADRs and there were 18. Re-derived. The 3.1 product-pass proof was taken
+and printed BEFORE ADR-018 was written, so that claim is unaffected.

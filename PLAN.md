@@ -522,7 +522,7 @@ b948d3599473c459  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 52c5a4dbb0c94bd1  humanActions  docs/handover/HUMAN-ACTIONS.md
 71bae6e9b226bc2c  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
-0fa730ff4c3229ee  techDecisions  docs/spec/TECH-DECISIONS.md
+726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md
 1352e51ba2027971  derivedConstraints  docs/governance/DERIVED-CONSTRAINTS.md
 bc240b2330764c0b  projection  docs/governance/PROJECTION.md
 731391dfd0488fa3  prose  tools/plan-prose.md

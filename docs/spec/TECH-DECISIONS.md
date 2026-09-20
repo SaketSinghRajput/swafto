@@ -808,3 +808,67 @@ would order exists.
 | DLT registration | **Start now** | Needs a registered business entity; ~1-2 weeks with document prep |
 | ADR-011 measurements | **Blocked** | Needs a physical 2GB device or configured emulator |
 | op-sqlite benchmark | Owed at G18 | Blog claims are not evidence for our workload |
+
+## ADR-018 · The React Native stack, and how Odia digits are made to line up
+
+**Decided at iteration 33**, before `P-006` scaffolds anything, because the scaffold
+blocks 101 of 124 tasks and getting it wrong is the most expensive mistake available.
+
+### Decision
+
+**Expo with development builds, New Architecture, Hermes.** Not managed-without-native
+and not bare.
+
+- The New Architecture has been the default since RN 0.76 and is what Meta ships on.
+- Development builds give full native-module access, so the one thing bare was for is
+  no longer a reason to take bare's maintenance cost.
+- Hermes is Expo's default, which matters here more than usual: **B2 runs the golden
+  vectors under real Hermes and requires zero divergence.** A stack that did not use
+  Hermes would make a passing benchmark meaningless.
+
+**SQLite: `op-sqlite`.** JSI, synchronous, no bridge serialisation. The existing
+migrations are plain SQL and run unchanged. `expo-sqlite` would also work; op-sqlite
+is chosen for the write path, since every entry is written through the outbox in the
+same transaction and a ₹7,000 device is where serialisation overhead shows.
+
+**This is a decision on published claims, not on measurement.** The op-sqlite
+benchmark is already owed at G18 in the table above, and it stays owed. If the
+measurement contradicts the claim, the reversal trigger below applies.
+
+### Why this needed a decision rather than a default: DC-005
+
+DC-005 records that **Anek Odia's digits are proportional by default** — a column of
+money figures does not line up unless the `tnum` OpenType feature is switched on. In a
+cash app, a column of rupee figures that does not align is not a cosmetic problem: it
+is the screen where he checks the arithmetic he came here to trust.
+
+React Native exposes this as `fontVariant: ['tabular-nums']`, which maps to
+`fontFeatureSettings="tnum"` on Android. So it is solvable — **and it is solvable one
+`<Text>` at a time, which is the danger.** A money figure rendered by a bare `<Text>`
+is silently mis-aligned, and it will be found on screen six after it has been copied
+into five others.
+
+**Therefore: money is never rendered by a bare `<Text>`.** It goes through a single
+`<Money>` component that applies the font variant and the render-boundary formatter.
+That is one component, one place, and a check that no money value reaches a bare
+`<Text>` — the same shape as ADR-003's rule that money arithmetic lives only in the
+audited helpers.
+
+### Alternatives rejected
+
+| option | why not |
+|---|---|
+| bare React Native | development builds closed the gap; bare's cost is ongoing and buys nothing we need |
+| managed Expo, no native modules | op-sqlite and the bundled fonts both need native |
+| `expo-sqlite` | fine, and would work; op-sqlite's JSI path is the better fit for a synchronous write-plus-outbox transaction on a slow device |
+| setting `tnum` per screen | this is the defect, not the fix |
+
+### REVERSAL TRIGGER
+
+Reverse to `expo-sqlite` if the G18 benchmark shows op-sqlite's advantage is under the
+noise floor on the target device, or if op-sqlite lags a New Architecture release by
+more than one minor version — a database driver that blocks an RN upgrade is worse
+than a slower one.
+
+Reverse the `<Money>` rule never: if a second component needs to render a figure, it
+composes `<Money>`.

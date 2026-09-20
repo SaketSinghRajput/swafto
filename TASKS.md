@@ -14,11 +14,11 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 
 ---
 
-**NEXT:** `P-004` — Build the canonical fixture shop
+**NEXT:** `P-006` — Scaffold the React Native project with design tokens and the bundled fonts
 
-**READY NOW:** 6 — `P-004` `P-005` `P-006` `P-008` `Z-001` `Z-002`
+**READY NOW:** 4 — `P-006` `P-008` `Z-001` `Z-002`
 
-**BLOCKED:** 95, and the one blocking the most others is `P-006` — 101 downstream
+**BLOCKED:** 96, and the one blocking the most others is `P-006` — 102 downstream
 
 ---
 
@@ -29,11 +29,12 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 | 001 | `P-001` | [x] Grow rejects.json to cover the rejection arms the corpus cannot reach | Shape 1 of the B3 gap. Without it the invalid-input branches are never executed at all. | NONE | 1 | DONE | B3 | 1 (made at 29) |
 | 002 | `P-002` | [x] Re-measure B3 and name the shape of every remaining uncovered line | The gap is a defect surface, not a ledger. Each uncovered line is shape 1, 2 or 3. | `P-001` | - | DONE | B3 | 1 (made at 29) |
 | 003 | `P-003` | [x] Add n=0, n=1 and n>=2 cases for every aggregate in the engine | stdevMoney was invisible at n<=1 by construction. That is a property of aggregates, not a quirk. | NONE | - | DONE | B4 | 1 (made at 29) |
-| 016 | `P-004` | [ ] Build the canonical fixture shop | Every screen renders against it. Without it no screen test can assert a figure. | NONE | - | READY | - | 1 (made at 29) |
-| 017 | `P-005` | [ ] Build the adversarial fixture shop | Longest party names, lakh-scale figures, a gap day, a correction against a closed day. | NONE | - | READY | - | 1 (made at 29) |
-| 018 | `P-006` | [ ] Scaffold the React Native project with design tokens and the bundled fonts | Nothing renders until this exists, and ten screens on an unchecked token set is ten screens to redo. | NONE | 81 | READY | B24 | 1 (made at 29) |
+| 016 | `P-004` | [x] Build the canonical fixture shop | Every screen renders against it. Without it no screen test can assert a figure. | NONE | - | DONE | - | 1 (made at 29) |
+| 017 | `P-005` | [x] Build the adversarial fixture shop | Longest party names, lakh-scale figures, a gap day, a correction against a closed day. | NONE | - | DONE | - | 1 (made at 29) |
+| 018 | `P-006` | [ ] Scaffold the React Native project with design tokens and the bundled fonts | Nothing renders until this exists, and ten screens on an unchecked token set is ten screens to redo. | NONE | 82 | READY | B24 | 1 (made at 29) |
 | 019 | `P-007` | [ ] Wire the local store so a screen reads real entries through the engine | A screen fed a literal is a mock. Every screen wired-figure predicate depends on this. | `P-006` | 80 | BLOCKED | - | 1 (made at 29) |
 | 020 | `P-008` | [ ] Build the seven input parsers TRACEABILITY already names | V-7: TRACEABILITY names parseSalesEntry and six others, none exists. No entry screen works without them. | NONE | - | READY | B39 | 2 (made at 29) |
+| 021 | `P-009` | [ ] Build the <Money> component and a check that no bare <Text> renders a figure | DC-005: Anek Odia digits are proportional, so a money column does not line up without tnum. Solvable one Text at a time, which is the danger - ADR-018. | `P-006` | - | BLOCKED | B32 | 1 (made at 33) |
 
 ## Screens — the committed set
 
@@ -46,96 +47,96 @@ made at iteration 33.
 
 | ORDER | ID | TASK | WHY | BLOCKED BY | BLOCKS | STATE | BENCHMARKS | ESTIMATE |
 |---|---|---|---|---|---|---|---|---|
-| 021 | `S-010-A11Y` | [ ] T7 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 022 | `S-010-FIXTURES` | [ ] T7 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 023 | `S-010-I18N` | [ ] T7 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 024 | `S-010-KEYPAD` | [ ] T7 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 025 | `S-010-SHOTS` | [ ] T7 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 026 | `S-010-STATES` | [ ] T7 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 027 | `S-010-TRACE` | [x] T7 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 028 | `S-010-WIRED` | [ ] T7 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 029 | `S-010` | [ ] Build T7 — Entry · Form A | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-010-WIRED` `S-010-FIXTURES` `S-010-STATES` `S-010-I18N` `S-010-A11Y` `S-010-KEYPAD` `S-010-SHOTS` `S-010-TRACE` | 11 | BLOCKED | B38 | 1 (made at 29) |
-| 040 | `S-020-A11Y` | [ ] T1 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 041 | `S-020-FIXTURES` | [ ] T1 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 042 | `S-020-I18N` | [ ] T1 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 043 | `S-020-KEYPAD` | [ ] T1 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 044 | `S-020-SHOTS` | [ ] T1 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 045 | `S-020-STATES` | [ ] T1 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 046 | `S-020-TRACE` | [x] T1 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 047 | `S-020-WIRED` | [ ] T1 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 048 | `S-020` | [ ] Build T1 — Today · open day | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-020-WIRED` `S-020-FIXTURES` `S-020-STATES` `S-020-I18N` `S-020-A11Y` `S-020-KEYPAD` `S-020-SHOTS` `S-020-TRACE` `S-010` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 049 | `S-030-A11Y` | [ ] T8 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 050 | `S-030-FIXTURES` | [ ] T8 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 051 | `S-030-I18N` | [ ] T8 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 052 | `S-030-KEYPAD` | [ ] T8 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 053 | `S-030-SHOTS` | [ ] T8 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 054 | `S-030-STATES` | [ ] T8 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 055 | `S-030-TRACE` | [x] T8 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 056 | `S-030-WIRED` | [ ] T8 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 057 | `S-030` | [ ] Build T8 — Entry · Form B | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-030-WIRED` `S-030-FIXTURES` `S-030-STATES` `S-030-I18N` `S-030-A11Y` `S-030-KEYPAD` `S-030-SHOTS` `S-030-TRACE` `S-020` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 058 | `S-040-A11Y` | [ ] T9 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 059 | `S-040-FIXTURES` | [ ] T9 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 060 | `S-040-I18N` | [ ] T9 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 061 | `S-040-KEYPAD` | [ ] T9 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 062 | `S-040-SHOTS` | [ ] T9 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 063 | `S-040-STATES` | [ ] T9 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 064 | `S-040-TRACE` | [x] T9 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 065 | `S-040-WIRED` | [ ] T9 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 066 | `S-040` | [ ] Build T9 — Entry · Form C | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-040-WIRED` `S-040-FIXTURES` `S-040-STATES` `S-040-I18N` `S-040-A11Y` `S-040-KEYPAD` `S-040-SHOTS` `S-040-TRACE` `S-030` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 067 | `S-050-A11Y` | [ ] T10 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 068 | `S-050-FIXTURES` | [ ] T10 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 069 | `S-050-I18N` | [ ] T10 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 070 | `S-050-KEYPAD` | [ ] T10 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 071 | `S-050-SHOTS` | [ ] T10 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 072 | `S-050-STATES` | [ ] T10 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 073 | `S-050-TRACE` | [x] T10 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 074 | `S-050-WIRED` | [ ] T10 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 075 | `S-050` | [ ] Build T10 — Entry · Form D | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-050-WIRED` `S-050-FIXTURES` `S-050-STATES` `S-050-I18N` `S-050-A11Y` `S-050-KEYPAD` `S-050-SHOTS` `S-050-TRACE` `S-040` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 076 | `S-060-A11Y` | [ ] T5 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 077 | `S-060-FIXTURES` | [ ] T5 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 078 | `S-060-I18N` | [ ] T5 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 079 | `S-060-KEYPAD` | [ ] T5 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 080 | `S-060-SHOTS` | [ ] T5 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 081 | `S-060-STATES` | [ ] T5 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 082 | `S-060-TRACE` | [ ] T5 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 083 | `S-060-WIRED` | [ ] T5 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 084 | `S-060` | [ ] Build T5 — Day close list | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-060-WIRED` `S-060-FIXTURES` `S-060-STATES` `S-060-I18N` `S-060-A11Y` `S-060-KEYPAD` `S-060-SHOTS` `S-060-TRACE` `S-050` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 085 | `S-070-A11Y` | [ ] T11 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 086 | `S-070-FIXTURES` | [ ] T11 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 087 | `S-070-I18N` | [ ] T11 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 088 | `S-070-KEYPAD` | [ ] T11 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 089 | `S-070-SHOTS` | [ ] T11 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 090 | `S-070-STATES` | [ ] T11 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 091 | `S-070-TRACE` | [x] T11 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 092 | `S-070-WIRED` | [ ] T11 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 093 | `S-070` | [ ] Build T11 — Cash check · counting | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-070-WIRED` `S-070-FIXTURES` `S-070-STATES` `S-070-I18N` `S-070-A11Y` `S-070-KEYPAD` `S-070-SHOTS` `S-070-TRACE` `S-060` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 094 | `S-080-A11Y` | [ ] T12 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 095 | `S-080-FIXTURES` | [ ] T12 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 096 | `S-080-I18N` | [ ] T12 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 097 | `S-080-KEYPAD` | [ ] T12 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 098 | `S-080-SHOTS` | [ ] T12 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 099 | `S-080-STATES` | [ ] T12 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 100 | `S-080-TRACE` | [x] T12 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 101 | `S-080-WIRED` | [ ] T12 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 102 | `S-080` | [ ] Build T12 — Cash check · difference | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-080-WIRED` `S-080-FIXTURES` `S-080-STATES` `S-080-I18N` `S-080-A11Y` `S-080-KEYPAD` `S-080-SHOTS` `S-080-TRACE` `S-070` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 103 | `S-090-A11Y` | [ ] T14 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 104 | `S-090-FIXTURES` | [ ] T14 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 105 | `S-090-I18N` | [ ] T14 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 106 | `S-090-KEYPAD` | [ ] T14 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 107 | `S-090-SHOTS` | [ ] T14 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 108 | `S-090-STATES` | [ ] T14 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 109 | `S-090-TRACE` | [x] T14 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
-| 110 | `S-090-WIRED` | [ ] T14 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 111 | `S-090` | [ ] Build T14 — Day closed summary | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-090-WIRED` `S-090-FIXTURES` `S-090-STATES` `S-090-I18N` `S-090-A11Y` `S-090-KEYPAD` `S-090-SHOTS` `S-090-TRACE` `S-080` | 1 | BLOCKED | B38 | 1 (made at 29) |
-| 112 | `S-100-A11Y` | [ ] T6 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 113 | `S-100-FIXTURES` | [ ] T6 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 114 | `S-100-I18N` | [ ] T6 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 115 | `S-100-KEYPAD` | [ ] T6 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 116 | `S-100-SHOTS` | [ ] T6 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 117 | `S-100-STATES` | [ ] T6 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 118 | `S-100-TRACE` | [ ] T6 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 119 | `S-100-WIRED` | [ ] T6 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
-| 120 | `S-100` | [ ] Build T6 — Opening cash | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-100-WIRED` `S-100-FIXTURES` `S-100-STATES` `S-100-I18N` `S-100-A11Y` `S-100-KEYPAD` `S-100-SHOTS` `S-100-TRACE` `S-090` | - | BLOCKED | B38 | 1 (made at 29) |
+| 022 | `S-010-A11Y` | [ ] T7 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 023 | `S-010-FIXTURES` | [ ] T7 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 024 | `S-010-I18N` | [ ] T7 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 025 | `S-010-KEYPAD` | [ ] T7 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 026 | `S-010-SHOTS` | [ ] T7 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 027 | `S-010-STATES` | [ ] T7 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 028 | `S-010-TRACE` | [x] T7 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 029 | `S-010-WIRED` | [ ] T7 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 030 | `S-010` | [ ] Build T7 — Entry · Form A | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-010-WIRED` `S-010-FIXTURES` `S-010-STATES` `S-010-I18N` `S-010-A11Y` `S-010-KEYPAD` `S-010-SHOTS` `S-010-TRACE` | 11 | BLOCKED | B38 | 1 (made at 29) |
+| 041 | `S-020-A11Y` | [ ] T1 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 042 | `S-020-FIXTURES` | [ ] T1 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 043 | `S-020-I18N` | [ ] T1 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 044 | `S-020-KEYPAD` | [ ] T1 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 045 | `S-020-SHOTS` | [ ] T1 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 046 | `S-020-STATES` | [ ] T1 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 047 | `S-020-TRACE` | [x] T1 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 048 | `S-020-WIRED` | [ ] T1 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 049 | `S-020` | [ ] Build T1 — Today · open day | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-020-WIRED` `S-020-FIXTURES` `S-020-STATES` `S-020-I18N` `S-020-A11Y` `S-020-KEYPAD` `S-020-SHOTS` `S-020-TRACE` `S-010` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 050 | `S-030-A11Y` | [ ] T8 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 051 | `S-030-FIXTURES` | [ ] T8 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 052 | `S-030-I18N` | [ ] T8 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 053 | `S-030-KEYPAD` | [ ] T8 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 054 | `S-030-SHOTS` | [ ] T8 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 055 | `S-030-STATES` | [ ] T8 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 056 | `S-030-TRACE` | [x] T8 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 057 | `S-030-WIRED` | [ ] T8 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 058 | `S-030` | [ ] Build T8 — Entry · Form B | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-030-WIRED` `S-030-FIXTURES` `S-030-STATES` `S-030-I18N` `S-030-A11Y` `S-030-KEYPAD` `S-030-SHOTS` `S-030-TRACE` `S-020` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 059 | `S-040-A11Y` | [ ] T9 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 060 | `S-040-FIXTURES` | [ ] T9 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 061 | `S-040-I18N` | [ ] T9 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 062 | `S-040-KEYPAD` | [ ] T9 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 063 | `S-040-SHOTS` | [ ] T9 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 064 | `S-040-STATES` | [ ] T9 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 065 | `S-040-TRACE` | [x] T9 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 066 | `S-040-WIRED` | [ ] T9 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 067 | `S-040` | [ ] Build T9 — Entry · Form C | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-040-WIRED` `S-040-FIXTURES` `S-040-STATES` `S-040-I18N` `S-040-A11Y` `S-040-KEYPAD` `S-040-SHOTS` `S-040-TRACE` `S-030` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 068 | `S-050-A11Y` | [ ] T10 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 069 | `S-050-FIXTURES` | [ ] T10 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 070 | `S-050-I18N` | [ ] T10 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 071 | `S-050-KEYPAD` | [ ] T10 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 072 | `S-050-SHOTS` | [ ] T10 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 073 | `S-050-STATES` | [ ] T10 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 074 | `S-050-TRACE` | [x] T10 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 075 | `S-050-WIRED` | [ ] T10 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 076 | `S-050` | [ ] Build T10 — Entry · Form D | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-050-WIRED` `S-050-FIXTURES` `S-050-STATES` `S-050-I18N` `S-050-A11Y` `S-050-KEYPAD` `S-050-SHOTS` `S-050-TRACE` `S-040` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 077 | `S-060-A11Y` | [ ] T5 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 078 | `S-060-FIXTURES` | [ ] T5 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 079 | `S-060-I18N` | [ ] T5 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 080 | `S-060-KEYPAD` | [ ] T5 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 081 | `S-060-SHOTS` | [ ] T5 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 082 | `S-060-STATES` | [ ] T5 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 083 | `S-060-TRACE` | [ ] T5 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 084 | `S-060-WIRED` | [ ] T5 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 085 | `S-060` | [ ] Build T5 — Day close list | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-060-WIRED` `S-060-FIXTURES` `S-060-STATES` `S-060-I18N` `S-060-A11Y` `S-060-KEYPAD` `S-060-SHOTS` `S-060-TRACE` `S-050` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 086 | `S-070-A11Y` | [ ] T11 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 087 | `S-070-FIXTURES` | [ ] T11 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 088 | `S-070-I18N` | [ ] T11 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 089 | `S-070-KEYPAD` | [ ] T11 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 090 | `S-070-SHOTS` | [ ] T11 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 091 | `S-070-STATES` | [ ] T11 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 092 | `S-070-TRACE` | [x] T11 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 093 | `S-070-WIRED` | [ ] T11 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 094 | `S-070` | [ ] Build T11 — Cash check · counting | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-070-WIRED` `S-070-FIXTURES` `S-070-STATES` `S-070-I18N` `S-070-A11Y` `S-070-KEYPAD` `S-070-SHOTS` `S-070-TRACE` `S-060` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 095 | `S-080-A11Y` | [ ] T12 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 096 | `S-080-FIXTURES` | [ ] T12 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 097 | `S-080-I18N` | [ ] T12 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 098 | `S-080-KEYPAD` | [ ] T12 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 099 | `S-080-SHOTS` | [ ] T12 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 100 | `S-080-STATES` | [ ] T12 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 101 | `S-080-TRACE` | [x] T12 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 102 | `S-080-WIRED` | [ ] T12 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 103 | `S-080` | [ ] Build T12 — Cash check · difference | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-080-WIRED` `S-080-FIXTURES` `S-080-STATES` `S-080-I18N` `S-080-A11Y` `S-080-KEYPAD` `S-080-SHOTS` `S-080-TRACE` `S-070` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 104 | `S-090-A11Y` | [ ] T14 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 105 | `S-090-FIXTURES` | [ ] T14 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 106 | `S-090-I18N` | [ ] T14 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 107 | `S-090-KEYPAD` | [ ] T14 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 108 | `S-090-SHOTS` | [ ] T14 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 109 | `S-090-STATES` | [ ] T14 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 110 | `S-090-TRACE` | [x] T14 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 111 | `S-090-WIRED` | [ ] T14 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 112 | `S-090` | [ ] Build T14 — Day closed summary | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-090-WIRED` `S-090-FIXTURES` `S-090-STATES` `S-090-I18N` `S-090-A11Y` `S-090-KEYPAD` `S-090-SHOTS` `S-090-TRACE` `S-080` | 1 | BLOCKED | B38 | 1 (made at 29) |
+| 113 | `S-100-A11Y` | [ ] T6 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 114 | `S-100-FIXTURES` | [ ] T6 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 115 | `S-100-I18N` | [ ] T6 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 116 | `S-100-KEYPAD` | [ ] T6 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 117 | `S-100-SHOTS` | [ ] T6 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 118 | `S-100-STATES` | [ ] T6 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 119 | `S-100-TRACE` | [ ] T6 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 120 | `S-100-WIRED` | [ ] T6 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | BLOCKED | - | - |
+| 121 | `S-100` | [ ] Build T6 — Opening cash | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-100-WIRED` `S-100-FIXTURES` `S-100-STATES` `S-100-I18N` `S-100-A11Y` `S-100-KEYPAD` `S-100-SHOTS` `S-100-TRACE` `S-090` | - | BLOCKED | B38 | 1 (made at 29) |
 
 ## Instruments — due the moment anything renders
 
@@ -145,25 +146,25 @@ and it moves when the world provably moves (§5.16).
 
 | ORDER | ID | TASK | WHY | BLOCKED BY | BLOCKS | STATE | BENCHMARKS | ESTIMATE |
 |---|---|---|---|---|---|---|---|---|
-| 030 | `I-001` | [ ] Instrument B26 — contrast ratio on every rendered screen | §5.13: B26's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B26 | - |
-| 031 | `I-002` | [ ] Instrument B27 — white-on-marigold, the one combination that fails by default | §5.13: B27's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B27 | - |
-| 032 | `I-003` | [ ] Instrument B28 — touch target size | §5.13: B28's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B28 | - |
-| 033 | `I-004` | [ ] Instrument B29 — body text size | §5.13: B29's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B29 | - |
-| 034 | `I-005` | [ ] Instrument B30 — missing i18n keys in any of the three languages | §5.13: B30's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B30 | - |
-| 035 | `I-006` | [ ] Instrument B31 — layout overflow at maximum font scale | §5.13: B31's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B31 | - |
-| 036 | `I-007` | [ ] Instrument B32 — non-Latin numerals leaking into a money figure | §5.13: B32's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B32 | - |
-| 037 | `I-008` | [ ] Instrument B36 — amounts, names or phone numbers in client logs | §5.13: B36's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B36 | - |
-| 038 | `I-009` | [ ] Instrument B24 — APK size, once one builds | §5.13: B24's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B24 | - |
-| 039 | `I-010` | [ ] Instrument B14 — cold start on the target handset, the first of the performance set | §5.13: B14's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B14 | - |
+| 031 | `I-001` | [ ] Instrument B26 — contrast ratio on every rendered screen | §5.13: B26's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B26 | - |
+| 032 | `I-002` | [ ] Instrument B27 — white-on-marigold, the one combination that fails by default | §5.13: B27's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B27 | - |
+| 033 | `I-003` | [ ] Instrument B28 — touch target size | §5.13: B28's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B28 | - |
+| 034 | `I-004` | [ ] Instrument B29 — body text size | §5.13: B29's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B29 | - |
+| 035 | `I-005` | [ ] Instrument B30 — missing i18n keys in any of the three languages | §5.13: B30's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B30 | - |
+| 036 | `I-006` | [ ] Instrument B31 — layout overflow at maximum font scale | §5.13: B31's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B31 | - |
+| 037 | `I-007` | [ ] Instrument B32 — non-Latin numerals leaking into a money figure | §5.13: B32's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B32 | - |
+| 038 | `I-008` | [ ] Instrument B36 — amounts, names or phone numbers in client logs | §5.13: B36's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B36 | - |
+| 039 | `I-009` | [ ] Instrument B24 — APK size, once one builds | §5.13: B24's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B24 | - |
+| 040 | `I-010` | [ ] Instrument B14 — cold start on the target handset, the first of the performance set | §5.13: B14's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | BLOCKED | B14 | - |
 
 ## Verification and close-out
 
 | ORDER | ID | TASK | WHY | BLOCKED BY | BLOCKS | STATE | BENCHMARKS | ESTIMATE |
 |---|---|---|---|---|---|---|---|---|
-| 121 | `Z-001` | [ ] Run the adversary pass at its §6.1 cadence | An empty adversary pass is not reassurance; the cadence exists so it is not skipped when busy. | NONE | - | READY | - | 1 (made at 29) |
-| 122 | `Z-002` | [ ] Pre-stop check at iteration 35 | The last point at which the screen set can be re-cut and the cut still mean anything. | NONE | 1 | READY | - | 1 (made at 29) |
-| 123 | `Z-003` | [ ] Final full verification: check:all, prove, responds, mutation, vectors on both runtimes | The handover claims a state. This is the command set that makes the claim checkable. | `Z-002` | 1 | BLOCKED | - | 1 (made at 29) |
-| 124 | `Z-004` | [ ] Write the handover report with its six required sections | The build stops at the ceiling regardless. This is what makes the work usable by someone else. | `Z-003` | - | BLOCKED | - | 1 (made at 29) |
+| 122 | `Z-001` | [ ] Run the adversary pass at its §6.1 cadence | An empty adversary pass is not reassurance; the cadence exists so it is not skipped when busy. | NONE | - | READY | - | 1 (made at 29) |
+| 123 | `Z-002` | [ ] Pre-stop check at iteration 35 | The last point at which the screen set can be re-cut and the cut still mean anything. | NONE | 1 | READY | - | 1 (made at 29) |
+| 124 | `Z-003` | [ ] Final full verification: check:all, prove, responds, mutation, vectors on both runtimes | The handover claims a state. This is the command set that makes the claim checkable. | `Z-002` | 1 | BLOCKED | - | 1 (made at 29) |
+| 125 | `Z-004` | [ ] Write the handover report with its six required sections | The build stops at the ceiling regardless. This is what makes the work usable by someone else. | `Z-003` | - | BLOCKED | - | 1 (made at 29) |
 
 ## Human — referenced, never duplicated
 

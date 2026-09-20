@@ -189,6 +189,15 @@ export const TASKS = [
     estimate: { iterations: 1, made: 29 },
   },
   {
+    id: 'P-009',
+    title: 'Build the <Money> component and a check that no bare <Text> renders a figure',
+    why: 'DC-005: Anek Odia digits are proportional, so a money column does not line up without tnum. Solvable one Text at a time, which is the danger - ADR-018.',
+    blockedBy: ['P-006'],
+    predicate: contains('apps/mobile/src/components/Money.tsx', 'tabular-nums'),
+    benchmarks: ['B32'],
+    estimate: { iterations: 1, made: 33 },
+  },
+  {
     id: 'P-007',
     title: 'Wire the local store so a screen reads real entries through the engine',
     why: 'A screen fed a literal is a mock. Every screen wired-figure predicate depends on this.',
