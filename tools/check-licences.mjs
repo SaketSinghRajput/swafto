@@ -180,6 +180,31 @@ const thirdParty = [...seen.values()]
 const blocking = thirdParty.filter((p) => isBlocking(p.licence));
 const unknown = thirdParty.filter((p) => p.licence === 'UNKNOWN');
 
+/* ---- L-09 · a processor is not the same question as a licence ----------- */
+
+/**
+ * WHO ELSE WOULD SEE THE DATA.
+ *
+ * L-09 asks whether any processor moves personal data out of India. Today the
+ * answer is that there is no processor at all: no crash reporter, no
+ * analytics, no error tracker, no CDN in the shipped closure. SMS goes to an
+ * Indian operator under the DLT framework and the database is in ap-south-1.
+ *
+ * That answer is only worth having if something notices when it stops being
+ * true - and the natural place is here, because this tool already walks every
+ * package that ships. A licence scan asks "may we distribute this"; this asks
+ * a different question of the same list: "would this send a shopkeeper's data
+ * to somebody".
+ *
+ * IT IS A TRIPWIRE AND NOT A PROOF, like `check:push`. A processor added under
+ * a name nobody recognised would pass, which is why the pattern is broad and
+ * the failure is loud rather than clever.
+ */
+const PROCESSOR_SIGNS =
+  /sentry|bugsnag|datadog|new-?relic|amplitude|mixpanel|segment|posthog|analytics|crashlytics|appcenter|instabug|smartlook|fullstory|logrocket|rollbar|raygun/i;
+
+const processors = thirdParty.filter((p) => PROCESSOR_SIGNS.test(p.name));
+
 /* ---- L-19 · the fonts, which no package manifest mentions ---------------- */
 
 /**
@@ -281,6 +306,24 @@ if (thirdParty.length === 0) {
   lines.push('| _none_ | - | the shipped closure has no third-party runtime dependency |');
 }
 lines.push('');
+lines.push('## Data processors (L-09)');
+lines.push('');
+lines.push(
+  '**' +
+    processors.length +
+    '** package in the shipped closure looks like a crash reporter, an analytics',
+);
+lines.push(
+  'SDK or an error tracker. That is the L-09 question - whether a processor moves',
+);
+lines.push(
+  'personal data out of India - and today it has no subject: the database is in',
+);
+lines.push(
+  'ap-south-1, SMS goes to an Indian operator under DLT, and nothing else receives',
+);
+lines.push('anything. The scan above is what notices if that changes.');
+lines.push('');
 lines.push('## Bundled assets');
 lines.push('');
 lines.push(
@@ -332,6 +375,9 @@ console.log('  undeclared imports  : ' + undeclared.length + ' (this must be zer
 console.log('  copyleft blocking   : ' + blocking.length + ' (this must be zero)');
 console.log('  unknown licence     : ' + unknown.length + ' (this must be zero)');
 console.log(
+  '  data processors     : ' + processors.length + ' in the shipped closure (this must be zero)',
+);
+console.log(
   '  bundled font files  : ' +
     fontAudit.files.length +
     ' (' +
@@ -341,6 +387,17 @@ console.log(
 console.log('  manifest            : docs/handover/LICENCES.md');
 
 const failures = [];
+for (const p of processors) {
+  failures.push(
+    p.name +
+      '@' +
+      p.version +
+      ' looks like a data processor, and L-09 asks whether any processor moves ' +
+      'personal data out of India. Answer it before shipping this: where does it ' +
+      'send what, is that India, and does the privacy policy and the Data Safety ' +
+      'form say so? Today both declare that nothing is shared with anybody.',
+  );
+}
 for (const problem of fontAudit.problems) {
   failures.push(
     problem +

@@ -283,6 +283,14 @@ licence that would condition a Play Store release (L-22).
 | `yargs-parser` | 21.1.1 | ISC |
 | `yocto-queue` | 0.1.0 | MIT |
 
+## Data processors (L-09)
+
+**0** package in the shipped closure looks like a crash reporter, an analytics
+SDK or an error tracker. That is the L-09 question - whether a processor moves
+personal data out of India - and today it has no subject: the database is in
+ap-south-1, SMS goes to an Indian operator under DLT, and nothing else receives
+anything. The scan above is what notices if that changes.
+
 ## Bundled assets
 
 The font files ship **inside the APK** and no package manifest mentions them, so

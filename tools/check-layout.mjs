@@ -87,6 +87,25 @@ async function bundle() {
   return outfile;
 }
 
+/**
+ * A MOVING SUBJECT CANNOT BE MEASURED, and one of these panels spins.
+ *
+ * `T7-loading` renders an ActivityIndicator, which the web double draws as an
+ * element with a CSS animation. Measuring it mid-transform reported a 2px
+ * overflow once, in one run of `check:all`, and then passed three times in a
+ * row - which is the worst possible behaviour for an instrument: a reading
+ * nobody can reproduce teaches everybody to re-run it until it goes green.
+ *
+ * Animations and transitions are therefore frozen before anything is measured.
+ * This is NOT a loosened threshold - no tolerance was added and nothing is
+ * ignored. It removes the nondeterminism and leaves the bar exactly where it
+ * was, which is the only acceptable way to fix a flaky measurement.
+ */
+const FREEZE =
+  '\n*,*::before,*::after{animation:none!important;transition:none!important;' +
+  'animation-duration:0s!important;transition-duration:0s!important;' +
+  'caret-color:transparent!important;}';
+
 const page = (css, body) =>
   '<!doctype html><html><head><meta charset="utf-8"><style>\n' +
   fontFaces() +
@@ -94,7 +113,9 @@ const page = (css, body) =>
   VIEWPORT.width +
   'px;height:' +
   VIEWPORT.height +
-  'px;overflow:hidden;}#root{width:100%;height:100%;display:flex;}#root > *{flex:1;}\n</style>' +
+  'px;overflow:hidden;}#root{width:100%;height:100%;display:flex;}#root > *{flex:1;}' +
+  FREEZE +
+  '\n</style>' +
   css +
   '</head><body><div id="root">' +
   body +

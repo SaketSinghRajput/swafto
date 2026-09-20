@@ -94,7 +94,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-06 | Deletion propagates to S3 backups | Deletion job + TF lifecycle rule | Eng | TODO |
 | L-07 | Grievance Officer named with SLA | About screen, policy, website | AD-003/007 | RESOLVED |
 | L-08 | Breach response runbook + rehearsal | `docs/runbooks/breach.md` - Rule 7 clocks, the two notifications, what the system can answer | Eng (G3) | WIP - written; the rehearsal has never been run |
-| L-09 | No processor moves data out of India | Cloudflare/Sentry/FCM/SMS review | Eng | TODO |
+| L-09 | No processor moves data out of India | `check:licences` processor sweep + `check:push`; no processor in the shipped closure | Eng | WIP - no subject today, and a tripwire if that changes |
 | L-10 | Cloudflare TLS termination abroad = transfer? | Architecture decision | AD-005/006 | RESOLVED |
 | L-11 | FCM payloads carry no personal data | `tools/check-push-payload.mjs` - a tripwire; V1 ships no push at all | Eng | N/A-V1 - fails the build the day an SDK appears |
 | L-12 | Data Safety form word-identical to policy | `docs/handover/DATA-SAFETY.md`, generated from the notice; `apps/web/test/legal.spec.ts` | Eng | WIP - derived; entering it in the Console is H7 |
