@@ -61,6 +61,7 @@
     "check:registry": "node tools/check-registry.mjs"
   },
   "devDependencies": {
+    "@fastify/rate-limit": "^10.3.0",
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",
     "@testing-library/react-native": "^13.2.0",
@@ -70,6 +71,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
+    "fastify": "^5.12.5",
     "hermes-engine": "^0.11.0",
     "hermes-engine-cli": "^0.12.0",
     "pg": "^8.23.0",

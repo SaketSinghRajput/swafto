@@ -228,7 +228,7 @@ every benchmark threshold is untouched.
 
 **Two numbers (§5.13 A.5):**
 
-> **INSTRUMENTED: 22 of 40.** 2 overdue, 16 blocked on artifacts that do not exist yet.
+> **INSTRUMENTED: 23 of 40.** 2 overdue, 15 blocked on artifacts that do not exist yet.
 > **OVERDUE: B4, B6** - the subject exists and nothing measures it.
 > **MET:** see BENCHMARKS-RESULTS.md. A benchmark with no instrument cannot be
 > claimed met, and none is claimed here - this block counts instruments, not

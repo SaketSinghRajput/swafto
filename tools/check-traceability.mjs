@@ -23,7 +23,7 @@
  *     lie - but the count of unresolved references is REPORTED, so the gap is visible
  *     now rather than discovered at G19.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const read = (f) => readFileSync(f, 'utf8').split('\r\n').join('\n');
@@ -46,11 +46,69 @@ const EXPECTED = [
 const RESERVED = new Set(['BI5']);
 
 /* ---- parse the matrix --------------------------------------------------- */
+
+/**
+ * SPLIT ON UNESCAPED PIPES ONLY.
+ *
+ * TRACEABILITY writes alternatives inside a cell as `a`\|`b` - IN1's api column is
+ * `POST /v1/sync/push` section=`cash_sales`\|`upi_sales`\|`udhar_sales`. Splitting
+ * on every pipe turns that one cell into four, shifts every column after it, and
+ * IN1's STATUS is then read as the string "udhar_sales". It read as neither DONE
+ * nor TODO, so the row silently sat outside both the complete set and the
+ * held-back set - invisible in both directions.
+ *
+ * check-findings already learned this and says so in its own parser; this one had
+ * not. Same defect, two files, found the moment the api column started resolving
+ * and IN1 appeared in a list it had no business being in.
+ */
+/**
+ * A backslash, spelled this way on purpose: every tool that has edited this
+ * repository so far mangles a literal one, and a silently halved escape here
+ * would change what the parser splits on without changing what it looks like.
+ */
+const BACKSLASH = String.fromCharCode(92);
+
+/**
+ * SPLIT ON UNESCAPED PIPES ONLY.
+ *
+ * TRACEABILITY writes alternatives inside a cell as an escaped pipe - IN1's api
+ * column reads `POST /v1/sync/push` section=`cash_sales`, `upi_sales`,
+ * `udhar_sales` with escaped pipes between them. Splitting on EVERY pipe turns
+ * that one cell into four, shifts every column after it, and IN1's status is then
+ * read as the string "udhar_sales". It matched neither DONE nor TODO, so the row
+ * sat outside both the complete set and the held-back set - invisible in both
+ * directions, which is the worst place for a row to be.
+ *
+ * check-findings already learned this and says so in its own parser; this one had
+ * not. The same defect in two files, found the moment the api column started
+ * resolving and IN1 turned up in a list it had no business being in.
+ */
+const splitCells = (row) => {
+  const out = [];
+  let cur = '';
+  for (let i = 0; i < row.length; i += 1) {
+    const ch = row[i];
+    if (ch === BACKSLASH && row[i + 1] === '|') {
+      cur += '|';
+      i += 1;
+      continue;
+    }
+    if (ch === '|') {
+      out.push(cur.trim());
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
+};
+
 const rows = new Map();
 for (const line of read('docs/spec/TRACEABILITY.md').split('\n')) {
   const m = /^\|\s*\*{0,2}([A-Z]{1,2}\d+)\*{0,2}\s*\|(.+)\|\s*$/.exec(line.trim());
   if (!m) continue;
-  const cells = m[2].split('|').map((c) => c.trim());
+  const cells = splitCells(m[2]);
   if (cells.length < 5) continue;
   rows.set(m[1], {
     engine: cells[0],
@@ -145,6 +203,56 @@ for (const [id, r] of rows) {
 }
 
 /* ---- 4 · B39 · how many IDs are genuinely complete ---------------------- */
+
+/**
+ * THE API AND SCREEN COLUMNS ARE RESOLVED, NOT MERELY NON-EMPTY.
+ *
+ * Until iteration 38 a row counted as complete when all four cells had TEXT in
+ * them - the engine column was resolved against the engine's real exports and the
+ * test column against the real vectors, but "api" and "screen" only had to be
+ * non-blank. The moment the API shipped, that weakness was worth twenty-six false
+ * completions: every row names a screen, eight of the ten committed screens do not
+ * exist, and B39 would have read 26 of 26 the day the statuses were flipped.
+ *
+ * So a named route must appear in the API source, and a named screen must have a
+ * file. The count now rises as screens land, which is the only way a completion
+ * figure is worth reading.
+ */
+const apiSource = (() => {
+  try {
+    const walk = (d) =>
+      readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)],
+      );
+    return walk('apps/api/src')
+      .filter((f) => /\.ts$/.test(f))
+      .map((f) => read(f))
+      .join('\n');
+  } catch {
+    return '';
+  }
+})();
+
+/** `POST /v1/sync/push` in the matrix must be a route the API actually declares. */
+const routesResolve = (cell) =>
+  [...cell.matchAll(/`(?:GET|POST|PUT|PATCH|DELETE)\s+(\/v1\/[^`\s]+)`/g)].every((m) =>
+    apiSource.includes("'" + m[1] + "'"),
+  );
+
+/**
+ * A named screen must have a FILE, not just a name - and "named" covers every
+ * prefix the build map uses, not only T.
+ *
+ * The first version of this matched `T\d+` alone. Eight rows then resolved
+ * vacuously because they name `R1 Reports` and `R1/R2 Reports GateCard`, and a
+ * check that looks for nothing finds nothing wrong. B39 would have read 8 of 26
+ * on the strength of screens that do not exist, which is worse than reading 0.
+ */
+const screensResolve = (cell) =>
+  [...cell.matchAll(/\b([TPRX])(\d{1,2})\b/g)].every((m) =>
+    existsSync(join('apps/mobile/src/screens', m[1] + m[2] + '.tsx')),
+  );
+
 const complete = [];
 for (const [id, r] of rows) {
   if (!EXPECTED.includes(id) || RESERVED.has(id)) continue;
@@ -153,7 +261,9 @@ for (const [id, r] of rows) {
     vectorNames.has(m[1]),
   );
   const hasAll = Boolean(r.engine && r.test && r.api && r.screen);
-  if (hasAll && fnsOk && vecsOk && r.status === 'DONE') complete.push(id);
+  const apiOk = Boolean(r.api) && routesResolve(r.api);
+  const screenOk = Boolean(r.screen) && screensResolve(r.screen);
+  if (hasAll && fnsOk && vecsOk && apiOk && screenOk && r.status === 'DONE') complete.push(id);
 }
 const required = EXPECTED.filter((id) => !RESERVED.has(id));
 
@@ -201,11 +311,18 @@ for (const [id, r] of rows) {
   const vecsOk = [...r.test.matchAll(/vectors\.json:([\w-]+)/g)].every((m) =>
     vectorNames.has(m[1]),
   );
+  /*
+   * PER ROW, not "does any API exist anywhere". The coarse version of this was
+   * what would have reported twenty-six rows as held back only by a stale status
+   * while eight of the ten screens they name did not exist.
+   */
+  const apiOk = Boolean(r.api) && routesResolve(r.api);
+  const screenOk = Boolean(r.screen) && screensResolve(r.screen);
   if (!fnsOk) heldBy.engine += 1;
   if (!vecsOk) heldBy.test += 1;
-  if (!apiRoutesExist) heldBy.api += 1;
-  if (!screensExist) heldBy.screen += 1;
-  if (fnsOk && vecsOk && apiRoutesExist && screensExist && r.status !== 'DONE') {
+  if (!apiOk) heldBy.api += 1;
+  if (!screenOk) heldBy.screen += 1;
+  if (fnsOk && vecsOk && apiOk && screenOk && r.status !== 'DONE') {
     heldBy.status += 1;
     notes.push(`${id}: every artifact resolves but the status still reads ${r.status}`);
   }

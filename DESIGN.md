@@ -126,9 +126,9 @@ component.
 
 | token | references |
 |---|---|
-| `OTP_TTL_SECONDS` | 1 |
-| `OTP_DIGITS` | 1 |
-| `OTP_LIMITS` | 1 |
+| `OTP_TTL_SECONDS` | 2 |
+| `OTP_DIGITS` | 2 |
+| `OTP_LIMITS` | 2 |
 | `TOUCH_TARGET_MIN_DP` | 2 |
 | `BODY_TEXT_MIN_SP` | 2 |
 | `CHROME_FONT_SCALE_CAP` | 1 |

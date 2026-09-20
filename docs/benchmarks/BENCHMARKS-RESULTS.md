@@ -358,7 +358,7 @@ the full enumeration.
 
 ## The partition (§5.13 A.1)
 
-**22 of 40 instrumented. 2 overdue. 16 blocked.**
+**23 of 40 instrumented. 2 overdue. 15 blocked.**
 
 OVERDUE means the subject already EXISTS and nothing measures it - a present
 failure under §5.13, not a future task. BLOCKED names the artifact whose
@@ -373,10 +373,10 @@ existence unblocks it, and the gate that artifact arrives at.
 | B5 | instrumented | `coverage` | The backend is small and growing, so 91.26% today is over a small denominator. The instrument exists and moves with the subject, which is what §5.13 asks. |
 | B6 | **OVERDUE** | - | NOT INSTRUMENTED. Same harness as B4 and the same disproof. The backend has no equivalent of mutation:money, so the money helpers are the only surface in this build with a trustworthy mutation verdict. |
 | B7 | blocked | - | needs **any React Native app code**, at G10 |
-| B8 | blocked | - | needs **the sync API**, at G7 |
+| B8 | instrumented | `api` | - |
 | B9 | blocked | - | needs **the app, to run 30 days against**, at G17 |
 | B10 | instrumented | `unit` | - |
-| B11 | instrumented | `unit` | - |
+| B11 | instrumented | `api` | - |
 | B12 | instrumented | `money-lint` | - |
 | B13 | instrumented | `traceability` | - |
 | B14 | blocked | - | needs **a built app to cold-start**, at G18 |

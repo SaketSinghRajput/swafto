@@ -32,7 +32,8 @@ requires the command to fail, restores the file and verifies the restore.
 | `vectors-divergence` | `npm run test:vectors:diff` | `tools/diff-vectors.mjs` | Node and Hermes agree on every value of every vector (B2). | G5, by injecting a runtime-specific divergence. A source edit cannot fake it: the mutation has to behave DIFFERENTLY on each engine, so it is not plantable from one file. |
 | `unit` | `npx vitest run` | `packages/formula-engine/test/vectors.spec.ts` | All specs pass, including the 63 golden vectors, now executed INSIDE the runner so coverage can see them. | plants a defect in `packages/schema/src/spec.ts` |
 | `mutation` | `npm run mutation` | `stryker.config.json` | Mutation score for the formula engine (B4) and the backend (B6) - how many deliberately broken variants of the code the suite actually kills. | NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself. |
-| `crossdoc` | `npm run check:crossdoc` | `tools/check-crossdoc.mjs` | PLAN.md, TASKS.md and DESIGN.md describe the same repository. The shared facts are re-derived independently and every document must report them; a disagreement is a generator bug, never a judgement call. | plants a defect in `tools/gen-plan.mjs` |
+| `crossdoc` | `npm run check:crossdoc` | `tools/check-crossdoc.mjs` | PLAN.md, TASKS.md and DESIGN.md describe the same repository. The shared facts are re-derived independently and every document must report them; a disagreement is a generator bug, never a judgement call. | plants a defect in `PLAN.md` |
+| `api` | `npx vitest run apps/api` | `apps/api/test/api.spec.ts` | The whole API over fastify.inject: OTP sign-in never reveals whether a number is registered, a code is single-use and dies after five wrong guesses, consent is taken before an account exists, a refresh token is refused as an access token, a revoked device loses a token that is still in date. Sync is idempotent - replays are byte-identical and the ledger does not grow (B8) - the shop comes from the token so one shop cannot read another (B11), and every entry is re-validated by the same IN1-IN7 parsers the phone uses. Every read figure equals the engine figure for the same input, on both fixtures. The DPDP endpoints exist and behave: an itemised notice, withdrawal as one call, a complete export, erasure that erases. | plants a defect in `apps/api/src/db/memory.ts` |
 | `screens` | `npx vitest run apps/mobile` | `apps/mobile/test/screens.spec.tsx` | Across EVERY case in the screen registry, in three languages plus the longest-string pseudo-locale and in both display modes: no text colour fails the contrast minimum (B26), nothing draws white on the accent (B27), every interactive element asks for the registry touch target (B28), no text is under the registry floor (B29), no string is missing or untranslated in any language and no raw key reaches the screen (B30), and every digit rendered anywhere is Latin (B32). A screen joins these assertions by being in the registry, not by anybody remembering it. | plants a defect in `apps/mobile/src/theme/tokens.ts` |
 | `layout` | `npm run check:layout` | `tools/check-layout.mjs` | Every registry case, laid out by a real engine in headless Chromium at a budget-handset viewport with the shipped fonts, at three font scales: nothing runs wider than the screen, no element escapes the element containing it, and no fixed chrome sits below the fold at or under the chrome font-scale cap. Money is scaled without limit and chrome stops at the cap, which is what the device does. | plants a defect in `apps/mobile/src/screens/T7.tsx` |
 | `client-logs` | `npm run check:client-logs` | `tools/check-client-logs.mjs` | No client source file can write to logcat at all, so no amount, customer name or phone number can reach it. Stricter than B36 asks and for a reason: a rule permitting some logging requires a per-line judgement about whether THIS interpolation carries personal data, and that judgement is wrong once eventually. | plants a defect in `apps/mobile/src/store/index.ts` |
@@ -51,7 +52,7 @@ requires the command to fail, restores the file and verifies the restore.
 
 ## Benchmark coverage
 
-A benchmark with no instrument **cannot be claimed met**. 18 of
+A benchmark with no instrument **cannot be claimed met**. 17 of
 40 have none yet; each carries the gate it is owed at, in
 `tools/check-verifiers.mjs`.
 
@@ -64,10 +65,10 @@ A benchmark with no instrument **cannot be claimed met**. 18 of
 | B5 | `coverage` |
 | B6 | **none yet** |
 | B7 | **none yet** |
-| B8 | **none yet** |
+| B8 | `api` |
 | B9 | **none yet** |
 | B10 | `unit` |
-| B11 | `unit` |
+| B11 | `api` |
 | B12 | `money-lint` |
 | B13 | `traceability` |
 | B14 | **none yet** |

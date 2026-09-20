@@ -121,7 +121,7 @@ Engine functions actually present: **26 of 26** named by TRACEABILITY
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| IN1 | What did I sell today, and how much of it was cash, UPI or on credit | `parseSalesEntry` | 1 | T7 Form A, T8 Form B | engine done · no API, no screen |
+| IN1 | What did I sell today, and how much of it was cash, UPI or on credit | `parseSalesEntry` | 1 | T7 Form A, T8 Form B | **DONE** |
 | IN2 | What stock did I buy, and did I pay for it or take it on account | `parsePurchaseEntry` | - | T9 Form C | function only |
 | IN3 | What did I spend on running the shop | `parseExpenseEntry` | - | T9 Form C | function only |
 | IN4 | Which customer paid back some of what he owed me | `parseCollectionEntry` | - | T8 Form B | function only |
@@ -133,36 +133,36 @@ Engine functions actually present: **26 of 26** named by TRACEABILITY
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| P1 | How much cash came in today, from every source | `totalCashReceived` | 1 | T1 Today, T11 working | engine done · no API, no screen |
-| P2 | How much cash went out today, for every reason | `totalCashPaid` | 1 | T1 Today, T11 working | engine done · no API, no screen |
-| P3 | How much cash should be in the box right now | `expectedCashBalance` | 1 | T11 Cash check, as its working | engine done · no API, no screen |
-| P4 | What did I really sell, after returns | `netSales` | 1 | T1 Today, T14 summary | engine done · no API, no screen |
-| P5 | What did the stock really cost me | `netPurchase` | 1 | T14 summary | engine done · no API, no screen |
-| P6 | What did it cost me to keep the doors open | `totalExpenses` | 1 | T14 summary | engine done · no API, no screen |
-| P7 | How much of my money are my customers holding | `creditOutstanding` | 1 | T1 Today, P1 Parties, P2 Customer | engine done · no API, no screen |
-| P8 | How much do I owe my suppliers | `supplierOutstanding` | 1 | T1 Today, P1 Parties, P3 Supplier | engine done · no API, no screen |
+| P1 | How much cash came in today, from every source | `totalCashReceived` | 1 | T1 Today, T11 working | **DONE** |
+| P2 | How much cash went out today, for every reason | `totalCashPaid` | 1 | T1 Today, T11 working | **DONE** |
+| P3 | How much cash should be in the box right now | `expectedCashBalance` | 1 | T11 Cash check, as its working | **DONE** |
+| P4 | What did I really sell, after returns | `netSales` | 1 | T1 Today, T14 summary | **DONE** |
+| P5 | What did the stock really cost me | `netPurchase` | 1 | T14 summary | **DONE** |
+| P6 | What did it cost me to keep the doors open | `totalExpenses` | 1 | T14 summary | **DONE** |
+| P7 | How much of my money are my customers holding | `creditOutstanding` | 1 | T1 Today, P1 Parties, P2 Customer | **DONE** |
+| P8 | How much do I owe my suppliers | `supplierOutstanding` | 1 | T1 Today, P1 Parties, P3 Supplier | **DONE** |
 
 ### Operational outputs
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| OP1 | Is the drawer healthy today, or am I running thin | `dailyCashHealth` | 3 | T12 difference, T13 balanced | engine done · no API, no screen |
-| OP2 | Are my expenses eating the day | `expensePressure` | 1 | R1 Reports | engine done · no API, no screen |
-| OP3 | Of the credit I gave out, how much is coming back | `collectionEfficiency` | 1 | R1 Reports | engine done · no API, no screen |
-| OP4 | Who do I have to pay, and when | `paymentDue` | 1 | T1 Today, P3 Supplier | engine done · no API, no screen |
-| OP5 | Is the shop busier or quieter than it was | `businessMovement` | 1 | R1 Reports | engine done · no API, no screen |
-| OP6 | Am I about to run out of cash | `cashDeficitWarnings` | 1 | T1 Today AlertBanner | engine done · no API, no screen |
+| OP1 | Is the drawer healthy today, or am I running thin | `dailyCashHealth` | 3 | T12 difference, T13 balanced | **DONE** |
+| OP2 | Are my expenses eating the day | `expensePressure` | 1 | R1 Reports | **DONE** |
+| OP3 | Of the credit I gave out, how much is coming back | `collectionEfficiency` | 1 | R1 Reports | **DONE** |
+| OP4 | Who do I have to pay, and when | `paymentDue` | 1 | T1 Today, P3 Supplier | **DONE** |
+| OP5 | Is the shop busier or quieter than it was | `businessMovement` | 1 | R1 Reports | **DONE** |
+| OP6 | Am I about to run out of cash | `cashDeficitWarnings` | 1 | T1 Today AlertBanner | **DONE** |
 
 ### Intelligence outputs — gated on closed-day history
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| BI1 | Is the shop making more or less than it was | `profitTrend` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
-| BI2 | Are my sales steady, or all over the place | `salesConsistency` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
-| BI3 | Is my cash flow stable enough to plan against | `cashFlowStability` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
-| BI4 | Is my money stuck in credit instead of in the drawer | `workingCapitalPressure` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
+| BI1 | Is the shop making more or less than it was | `profitTrend` | 1 | R1/R2 Reports GateCard | **DONE** |
+| BI2 | Are my sales steady, or all over the place | `salesConsistency` | 1 | R1/R2 Reports GateCard | **DONE** |
+| BI3 | Is my cash flow stable enough to plan against | `cashFlowStability` | 1 | R1/R2 Reports GateCard | **DONE** |
+| BI4 | Is my money stuck in credit instead of in the drawer | `workingCapitalPressure` | 1 | R1/R2 Reports GateCard | **DONE** |
 | BI5 | Reserved. Not in V1 - the data model cannot answer it | - | - | **RESERVED - NO UI (D5)** | reserved, not V1 |
-| BI6 | How much of what I am owed sits with one or two customers | `creditConcentrationTrend` | 5 | R1/R2 Reports GateCard | engine done · no API, no screen |
+| BI6 | How much of what I am owed sits with one or two customers | `creditConcentrationTrend` | 5 | R1/R2 Reports GateCard | **DONE** |
 
 ---
 
@@ -519,7 +519,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 <!-- PLANHASH:START -->
 64aab2a2868cc08e  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
-63eff7dee680c88c  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
+2fbfd2c828d5a581  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 ab90001626808cb0  humanActions  docs/handover/HUMAN-ACTIONS.md

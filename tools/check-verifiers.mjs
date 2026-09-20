@@ -241,10 +241,56 @@ export const VERIFIERS = [
      * feature count and BI5 names no function, so the honest denominator is 26. Two
      * lenses counting different things, each internally consistent.
      */
+    /*
+     * A GENERATOR MISCOUNT - an off-by-one in the figure PLAN.md renders, which is
+     * the most ordinary generator bug there is and the exact class crossdoc exists
+     * to catch: one lens counting differently from the others.
+     *
+     * THE PREVIOUS PLANT HERE STOPPED PLANTING, AND THE PROVE STEP SAID SO. It set
+     * `built = named.length`, counting every named function as present. That was a
+     * real defect while functions were missing; closing V-7 made all 26 of them
+     * exist, `filter(fnOk).length` became `length`, and the plant quietly turned
+     * into a no-op. It was only caught once the prove harness was repaired and
+     * actually ran the command - the second stale plant that repair uncovered.
+     */
+    /*
+     * THE PLANT GOES IN THE DOCUMENT, NOT THE GENERATOR, AND THAT IS THE CORRECTION.
+     *
+     * Two earlier plants here were in `tools/gen-plan.mjs`, and neither could ever
+     * have worked: `check:crossdoc` READS the three documents off disk and
+     * re-derives the facts independently. It does not run a generator, so editing
+     * one changes nothing it looks at. The first version also happened to become a
+     * no-op when V-7 closed - `filter(fnOk).length` equals `length` once every
+     * named function exists - which is how it was noticed at all.
+     *
+     * What crossdoc actually detects is a DOCUMENT carrying a figure the source
+     * disagrees with, so that is what is planted: PLAN.md claiming one more engine
+     * function than the engine exports. Restored immediately afterwards, and
+     * `check:generated` would catch it independently if it were not.
+     */
     defect: {
-      file: 'tools/gen-plan.mjs',
-      find: 'const built = named.filter((f) => f.fnOk).length;',
-      replace: 'const built = named.length;',
+      file: 'PLAN.md',
+      find: 'Engine functions actually present: **26 of 26** named by TRACEABILITY',
+      replace: 'Engine functions actually present: **27 of 27** named by TRACEABILITY',
+    },
+  },
+  {
+    id: 'api',
+    command: 'npx vitest run apps/api',
+    file: 'apps/api/test/api.spec.ts',
+    claims:
+      'The whole API over fastify.inject: OTP sign-in never reveals whether a number is registered, a code is single-use and dies after five wrong guesses, consent is taken before an account exists, a refresh token is refused as an access token, a revoked device loses a token that is still in date. Sync is idempotent - replays are byte-identical and the ledger does not grow (B8) - the shop comes from the token so one shop cannot read another (B11), and every entry is re-validated by the same IN1-IN7 parsers the phone uses. Every read figure equals the engine figure for the same input, on both fixtures. The DPDP endpoints exist and behave: an itemised notice, withdrawal as one call, a complete export, erasure that erases.',
+    benchmarks: ['B8', 'B11'],
+    /*
+     * The plant makes a replayed entry look newly inserted. Nothing else changes -
+     * the data is still correct and no row is duplicated - so only the idempotency
+     * REPORT drifts, which is exactly the failure B8 is about: a phone that cannot
+     * tell whether its retry was a no-op has no safe moment to clear its outbox.
+     */
+    defect: {
+      file: 'apps/api/src/db/memory.ts',
+      find: '        return { inserted: false };',
+      replace: '        return { inserted: true };',
     },
   },
   {
@@ -522,10 +568,10 @@ export const BENCHMARKS = {
     why: 'NOT INSTRUMENTED. Same harness as B4 and the same disproof. The backend has no equivalent of mutation:money, so the money helpers are the only surface in this build with a trustworthy mutation verdict.',
   },
   B7: { state: 'blocked', blockedOn: 'any React Native app code', gate: 'G10' },
-  B8: { state: 'blocked', blockedOn: 'the sync API', gate: 'G7' },
+  B8: { verifier: 'api' },
   B9: { state: 'blocked', blockedOn: 'the app, to run 30 days against', gate: 'G17' },
   B10: { verifier: 'unit' },
-  B11: { verifier: 'unit' },
+  B11: { verifier: 'api' },
   B12: { verifier: 'money-lint' },
   B13: { verifier: 'traceability' },
   B14: { state: 'blocked', blockedOn: 'a built app to cold-start', gate: 'G18' },
@@ -718,6 +764,10 @@ function resolveCommand(command) {
  * zero, failing and tracking are different properties and both must be shown.
  */
 const RESPONSES = {
+  api: {
+    plantIsResponse:
+      'B8 is "3 replays, byte-identical" and B11 is "shop A cannot read shop B, proven" - both are zero-tolerance. The plant reports a replayed entry as newly inserted and the replay bodies stop matching, moving the count of differing replays from 0 to 1.',
+  },
   screens: {
     plantIsResponse:
       'B26-B32 are all "0 violations". The plant restores white on the marigold accent in Focus mode and three assertions move from 0 to 1 - the contrast pair, the no-white-token rule, and the per-case contrast sweep.',
