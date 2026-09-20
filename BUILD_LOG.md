@@ -1989,3 +1989,134 @@ NEXT - rejects.json and the B3 re-measurement, with injection 19 B.1-B.3 folded 
 sweep the engine for functions whose only tests hit an early return, treat the gap as a
 defect surface rather than bookkeeping, and require n=0, n=1 and n>=2 for every
 aggregate. Then the two fixtures and the RN scaffold, all inside checkpoint 1.
+
+---
+
+## 2026-09-20 · Iteration 26 · Injection 20: H12 solved, and §5.16
+
+### A · the reconciliation, and what it found
+
+Every injection was already on disk at `G:/SWAFTO/` under a different naming scheme.
+Injection 14 was **imported, not retyped** (C.3), and verified byte-identical to its
+source below the header.
+
+Reconciled all of `INJECTIONS/` against the originals **by content**, keying on a hash
+of each pasted fenced block rather than on filenames (A11). Result:
+
+- **Exactly one misnumbering**, the H12 one: `14-verify-the-verifiers.md` held
+  INJECTION 13. Renamed to `13-verifier-inventory.md`, matching both its text and its
+  source. No other file in the set is misnumbered.
+- **Two missing**: injection 14 and injection 20 itself. Both imported.
+- The three files with no `injection-NN` source — `00-build-loop-prompt.md`,
+  `07-autonomy-amendment.md`, `13-self-directing-prompt.md` — each verified against
+  their differently-named originals. All three match.
+- `13-adversary-01.md` has no pasted body because it is my own adversary pass, not a
+  human instruction. Correct to have no source.
+
+16 verbatim injections, all re-pinned.
+
+**Why `check-governance` could never have caught this.** It hashes every file in
+`INJECTIONS/` against `injections.lock`, which proves nothing has been *edited*. It has
+no knowledge of the originals, so a file pinned under the wrong number passes forever.
+The lock was pinned to the mistake.
+
+### Then the part that mattered: diffing the rule against the real text
+
+§5.13 and A12 had been running on a paraphrase for twelve iterations. The paraphrase
+was accurate on A.2, A.3 and A.4, and REVIEW.md's A12 is faithful to the original
+almost word for word.
+
+**It was soft on A.5, and softness is where a rule goes to die.** The real text says:
+
+> A.5  REPORT PROGRESS AS INSTRUMENTED / MET, two numbers, every iteration.
+
+What this build printed was one number and a pointer:
+
+    BENCHMARKS MET : see BENCHMARKS-RESULTS.md
+
+That is not two numbers. It is now derived — parsed out of the Measured table, where
+measurements actually live — and reads **MET: 4 of 6 measured (B2 B12 B33 B40), 2
+MISSED (B1 B3), 34 never measured.**
+
+The old hand-typed line in BUILD_STATE claimed **5**, including B5. B5 *was* measured
+at iteration 20, at 91.26% against a 85% threshold, and was never written into the
+Measured table — so the asserted 5 was right about B5 and unsupported by the record.
+Re-derived this iteration: **91.26% exactly, 94 of 103 lines.** Now in the table, and
+now counted.
+
+And "a benchmark with no instrument cannot be claimed met" has stopped being prose
+next to a number and become a failure condition.
+
+### B · §5.16 — an instrument must respond, not only fail
+
+    §5.1  asks: CAN this check fail?                  (binary)
+    §5.9  asks: HOW MANY tests catch a break?         (a ratio)
+    §5.16 asks: does the number MOVE when the world provably moves?
+
+Implemented as `npm run responds:verifiers`. Scope is every verifier carrying a
+benchmark reading; a verifier with no number has nothing to move and §5.1 covers it.
+
+`plantIsResponse` is an exemption and it is narrow by construction: it applies only
+where the **threshold is zero**. For "0 violations", §5.12's planted defect moves the
+count 0 → 1 in a known direction and the check fails — that IS the response test, and
+`--prove` already performs it. Where the threshold is a proportion or a count above
+zero, failing and tracking are different properties and both must be shown. Nine
+verifiers qualify for the exemption, and each states why.
+
+**`coverage` is the one that needed a real test, and it passes.** Adding a file with
+two branches nothing calls moved engine branch coverage **85.71% → 84.70%**, the right
+direction. Probe created and removed, removal verified.
+
+**`mutation` is recorded DISPROVEN**, and it is the finding that produced the rule.
+
+### The correction this iteration owes
+
+Yesterday's B3 re-statement said shape 3 was "the body below an early return, never
+executed", and claimed the row `money.ts | 97.61% | one stdevMoney guard` had been
+pointing at the defect for six iterations. **Both halves are wrong.**
+
+- The uncovered branch in `money.ts` is **line 221**, `if (rest.length)` inside
+  `formatPaise`'s Indian grouping. Nothing to do with `stdevMoney`. That row's label
+  was itself mistaken, so it was never pointing at anything.
+- **`money.ts` is 100% lines and 100% statements.** Line 179 — where the surviving
+  mutant lived — was executed by the suite all along, via `intelligence.ts`.
+
+So shape 3 is not "never executed". It is **executed and never asserted on**, which is
+strictly worse:
+
+> **Coverage cannot see shape 3, by construction.** It counts execution, not
+> assertion. The `stdevMoney` defect sat on a line at 100% coverage.
+
+So closing the B3 gap will find shapes 1 and 2 and **will not find another
+`stdevMoney`**. Only mutation testing or deliberate n-variation reaches shape 3. That
+is the real argument for why B4 having no trustworthy instrument is serious rather than
+bookkeeping, and it qualifies injection 20 C.2: reading every uncovered line as a
+candidate defect is right, and searches shapes 1 and 2 only. Shape 3 lives in the
+*covered* lines, where no coverage figure will ever point.
+
+### C.1 · A12 applies to the checks that check the checks
+
+Two rows added to REVIEW.md's scoping-axis table. `check-tooling`'s axis is the
+**directory name**, it skips every name beginning with a dot, and no plant had ever
+varied along it — which is exactly how `.stryker-tmp` survived. `check-shadow-copies`
+scopes by **tracked vs untracked** instead.
+
+Every guard in that table had its axis audited. The auditing tools did not, because
+they were doing the auditing. A12 has no such exemption, and a checker's blind spot is
+the most expensive kind: everything behind it is presumed checked.
+
+### H12 · resolved without human effort
+
+Closed. The file was on disk the whole time. Refusing to write a paraphrase into
+`INJECTIONS/` at iteration 25 cost nothing and preserved everything.
+
+Commands:
+  $ npm run check:all           -> 15 checks, all pass
+  $ npm run responds:verifiers  -> coverage 85.71 -> 84.7; mutation DISPROVEN
+  $ npm run check:verifiers     -> INSTRUMENTED 14 of 40 · MET 4 of 6 measured
+  $ npx vitest run              -> 11 files, 309 passed, 0 skipped
+
+NEXT — rejects.json and the B3 re-measurement, naming the shape of every remaining
+uncovered line, with n=0 / n=1 / n>=2 for every aggregate. Then the two fixtures and
+the RN scaffold. Checkpoint 1 is live at the end of iteration 26 and four of its five
+items are unstarted, so it will be assessed honestly rather than quietly extended.

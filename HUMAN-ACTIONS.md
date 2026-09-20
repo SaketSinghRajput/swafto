@@ -21,7 +21,7 @@ If yes, it does not belong here.
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
 | H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration; enforcement already runs in CI |
-| H12 | **Re-paste injection 14** | 1 minute | Nothing - three live mechanisms cite text nobody can re-read |
+| H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 
 ---
 
@@ -272,7 +272,15 @@ are expressible as stock ESLint rules and are currently unenforced.
 that registers `tools/eslint-rules/no-money-float.mjs` as the `swafto` plugin. The
 content is drafted in BUILD_LOG under iteration 18.
 
-## H12 · Re-paste injection 14, "instruments before subjects"
+## H12 · Re-paste injection 14 - RESOLVED, no action needed
+
+**Resolved at iteration 26 without human effort.** Injection 20 pointed out that every
+injection was already on disk at `G:/SWAFTO/` under a different naming scheme. The
+file was IMPORTED, not retyped, and verified byte-identical to its source below the
+header. What follows is the original entry, kept because the reconciliation it
+prompted found a second thing.
+
+### The original entry
 
 **Why no agent can do it.** It is not in the repository. `INJECTIONS/` holds fourteen
 verbatim files and injection 14 is not among them — `14-verify-the-verifiers.md` is

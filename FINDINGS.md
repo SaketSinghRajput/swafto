@@ -18,7 +18,7 @@ twice to findings about that very failure:
 | **F-10** | premise FALSE and fix never applied - two errors cancelling into a pass |
 | **F-06** | found an unapplied fix, then ITS OWN fix was recorded as applied and was not |
 
-**17 fixed · 1 open · 1 withdrawn**, as derived
+**19 fixed · 1 open · 1 withdrawn**, as derived
 on the last run.
 
 | id | status | finding | premise established by |
@@ -42,6 +42,8 @@ on the last run.
 | V-7 | **OPEN** | TRACEABILITY names 8 engine functions and 18 vectors that do not exist | resolved every backticked name against engine exports and vectors.json |
 | V-8 | **FIXED** | stdevMoney never had its computation tested - both existing cases returned early | planted `Math.sqrt(acc / values.length)` -> `* values.length` and the whole suite stayed green |
 | V-9 | **FIXED** | a stale Stryker sandbox was a second copy of the repo, so vitest ran every test twice and two copies of postgres.spec.ts raced the same database | vitest reported 606 tests for a 303-test suite, and .stryker-tmp/ was untracked |
+| V-10 | **FIXED** | injection 14 was missing from INJECTIONS/, so §5.13, A12 and the partition all cited text nobody could re-read | reconciled INJECTIONS/ against the originals BY CONTENT: one misnumbering (14-verify-the-verifiers.md held injection 13) and injection 14 absent entirely |
+| V-11 | **FIXED** | §5.13 A.5 requires INSTRUMENTED and MET as two numbers every iteration; one was printed and the other was a pointer to a file | diffed the rule against the verbatim injection 14 text once it was importable - the paraphrase was accurate on A.2, A.3 and A.4 and soft on A.5 |
 
 ## Notes
 

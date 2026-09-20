@@ -203,6 +203,35 @@ export const FINDINGS = [
       contains('package.json', 'npm run check:shadow &&'),
     ),
   },
+  {
+    id: 'V-10',
+    what: 'injection 14 was missing from INJECTIONS/, so §5.13, A12 and the partition all cited text nobody could re-read',
+    premise:
+      'reconciled INJECTIONS/ against the originals BY CONTENT: one misnumbering (14-verify-the-verifiers.md held injection 13) and injection 14 absent entirely',
+    fixed: all(
+      fileExists('INJECTIONS/14-instruments-before-subjects.md'),
+      contains('INJECTIONS/injections.lock', '14-instruments-before-subjects.md'),
+      // The misnumbered name is gone from the lock it was pinned under.
+      absent('INJECTIONS/injections.lock', '14-verify-the-verifiers.md'),
+    ),
+  },
+  {
+    id: 'V-11',
+    what: '§5.13 A.5 requires INSTRUMENTED and MET as two numbers every iteration; one was printed and the other was a pointer to a file',
+    premise:
+      'diffed the rule against the verbatim injection 14 text once it was importable - the paraphrase was accurate on A.2, A.3 and A.4 and soft on A.5',
+    /*
+     * Derived, not declared: MET is parsed out of the Measured table, so the
+     * predicate checks that the tool COMPUTES it rather than that someone typed it.
+     */
+    fixed: all(
+      contains('tools/check-verifiers.mjs', 'BENCHMARKS MET         : ${met.length}'),
+      contains(
+        'tools/check-verifiers.mjs',
+        'is recorded MET in BENCHMARKS-RESULTS.md but has NO INSTRUMENT',
+      ),
+    ),
+  },
 ];
 
 /* ---- derive ------------------------------------------------------------- */

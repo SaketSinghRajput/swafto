@@ -21,7 +21,8 @@ reported is a result.
 |---|---|---|---|---|
 | B1 Golden vectors | >= 70, 100% pass | **63, 100% pass** - MISSED on count | `npm run test:vectors:node` | iteration 19 |
 | B2 Node vs Hermes divergence | exactly 0 | **0** - MET | `npm run test:vectors:diff` | iteration 19 |
-| B3 Engine branch coverage | 100% | **85.71%** - MISSED | `npm run coverage` | iteration 19 |
+| B3 Engine branch coverage | 100% | **85.71%** - MISSED | `npm run coverage` | iteration 19, unchanged at 26 |
+| B5 Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET | `npm run coverage` | iteration 20, re-derived identical at 26 |
 | B12 Money float-arithmetic lint | 0 violations | **0** across 45 files - MET | `npm run check:money` | iteration 19 |
 | B33 npm audit high/critical | 0 | **0** - MET | `npm audit --audit-level=high` | iteration 19 |
 | B40 Stubs, TODOs in shipped paths | 0 | **0** - MET | `npm run check:governance` | iteration 19 |
@@ -87,26 +88,41 @@ That reading said the gap was rejection and gate-closed arms — the same shape 
 `assertPaise` 0/59 finding, arms that fire when something is WRONG, unreachable
 because the corpus describes valid days. True, and only two thirds of the story.
 
-**There is a third shape, and this table already named it.** The row reading
-`money.ts | 97.61% | one stdevMoney guard` was written six iterations ago and read as
-bookkeeping — one guard, 2.39%, tidy up later. It was not a guard that was uncovered.
-It was **the body below the guard**: `stdevMoney`'s only test passed `[]` and `[500]`,
-both of which return early, so the arithmetic on the last line had never run with a
-checked result. That is where iteration 24's real money-path defect was, and the row
-pointing at it sat in this file the whole time.
+**There is a third shape, and — corrected at iteration 26 — it is worse than the one
+described here yesterday.**
 
-So the gap has three shapes, not two:
+Yesterday's entry said the third shape was "the body below an early return, never
+executed", and claimed the row reading `money.ts | 97.61% | one stdevMoney guard` had
+been pointing at the defect for six iterations. **Both halves are wrong**, and
+re-measuring found it:
+
+- The uncovered branch in `money.ts` is **line 221**, `if (rest.length)` in
+  `formatPaise`'s Indian grouping. It has nothing to do with `stdevMoney`. The row's
+  label was itself mistaken.
+- **`money.ts` is 100% lines and 100% statements.** Line 179 — the one the surviving
+  mutant lived on — *was executed by the suite all along*, through `intelligence.ts`
+  calling `stdevMoney` with real series.
+
+So the third shape is not "never executed". It is **executed and never asserted on**:
 
 1. **rejection arms** — the corpus describes valid days, so invalid ones are unreached;
 2. **gate-closed arms** — the "not enough history yet" branches in `intelligence.ts`;
-3. **bodies below early returns** — the function is tested, the guard is tested, and
-   the code after the guard never executes with an assertion on its result.
+3. **covered but unasserted** — the line runs on every suite run, contributes to 100%
+   line coverage, and no test checks what it produced.
 
-`rejects.json` addresses the first. It does nothing for the third.
+**Coverage cannot see shape 3, by construction.** It counts execution, not assertion.
+The `stdevMoney` defect sat on a line at 100% coverage. So closing the B3 gap will find
+shapes 1 and 2 and **will not find another `stdevMoney`** — only mutation testing, or
+deliberate n-variation, reaches shape 3. That is the argument for why B4 having no
+trustworthy instrument is a serious gap rather than a bookkeeping one, and why
+`mutation:money` exists at all.
 
-**This is a defect surface, not a ledger.** One of twelve survivors was real, and it
-lived in shape 3. Treating the remaining 14.29% as tidy-up is what let it sit for six
-iterations behind a row that named it.
+It also qualifies injection 20 C.2: reading every remaining uncovered line as a
+candidate defect is right, and it is a search of shapes 1 and 2 only. Shape 3 lives in
+the *covered* lines, where no coverage figure will ever point.
+
+**This is still a defect surface, not a ledger** — one of twelve survivors was real.
+But the surface is larger than the 14.29% gap, not smaller than it.
 
 **Attempts recorded: 1 of 3.** The next attempt comes with `rejects.json`, and carries
 a sweep for shape 3 with it: every function with an early return, and whether any test

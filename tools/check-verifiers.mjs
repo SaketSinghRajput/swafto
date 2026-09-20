@@ -25,7 +25,9 @@
  * scans a corpus prints how many items it scanned, and those that can be handed an
  * empty corpus refuse to pass.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 
 const read = (f) => readFileSync(f, 'utf8').split('\r\n').join('\n');
@@ -481,6 +483,93 @@ for (const v of VERIFIERS) {
   }
 }
 
+/**
+ * §5.16 · AN INSTRUMENT MUST RESPOND, NOT ONLY FAIL.
+ *
+ *   §5.1  asks: CAN this check fail?                        (binary)
+ *   §5.9  asks: HOW MANY tests catch a break?               (a ratio)
+ *   §5.16 asks: does the number MOVE when the world provably moves?
+ *
+ * Stryker passes §5.1 and fails §5.16. It can report a kill; it simply did not notice
+ * four new tests that demonstrably kill one of its own reported survivors, and its
+ * survivor set came back unchanged mutant for mutant. That argument needs no test
+ * count, no coverage figure and no baseline - which is what makes it a better test
+ * than anything else in this file.
+ *
+ * SCOPE: every verifier that carries a benchmark reading. A verifier with no number
+ * has nothing to move, and §5.1 already covers it.
+ *
+ * `plantIsResponse` is a real exemption, not a dodge, and it applies only where the
+ * threshold is ZERO. For "0 violations", §5.12's planted defect moves the count from
+ * 0 to 1 in a known direction and the check fails - that IS the response test,
+ * performed already by --prove. Where a threshold is a proportion or a count above
+ * zero, failing and tracking are different properties and both must be shown.
+ */
+const RESPONSES = {
+  governance: { plantIsResponse: 'B40 is "0 stubs". The plant adds one; the count moves 0 -> 1.' },
+  'money-lint': { plantIsResponse: 'B12 is "0 violations". The plant adds one.' },
+  secrets: { plantIsResponse: 'B35 is "0 secrets". The plant adds one.' },
+  'vectors-divergence': { plantIsResponse: 'B2 is "exactly 0 divergences". The plant adds one.' },
+  font: { plantIsResponse: 'B24 counts glyphs with no coverage. The plant adds an uncoverable character.' },
+  audit: { plantIsResponse: 'B33 is "0 high/critical". Not plantable by us - npm audit reads the lockfile, and its count is zero-thresholded the same way.' },
+  'vectors-node': { plantIsResponse: 'B1 is "100% pass". The plant breaks one vector; passes move down.' },
+  unit: { plantIsResponse: 'B10/B11/B37 are pass/fail. The plant fails one.' },
+  traceability: { plantIsResponse: 'B13/B39 are "0 unresolved claims". The plant adds one.' },
+
+  coverage: {
+    /*
+     * A proportion, so §5.16 bites. Adding a file with two branches nothing calls must
+     * push the engine's branch percentage DOWN. Measured: 85.71% -> 84.70%.
+     */
+    probeFile: 'packages/formula-engine/src/__response-probe.ts',
+    probe:
+      'export function responseProbe(n: number): string {\n' +
+      '  if (n > 0) {\n' +
+      '    return "a";\n' +
+      '  }\n' +
+      '  return "b";\n' +
+      '}\n',
+    argv: [
+      'run',
+      '--coverage.enabled',
+      '--coverage.provider=v8',
+      '--coverage.include=packages/formula-engine/src/**',
+      '--coverage.reporter=text',
+    ],
+    // Scoped to the engine alone, so the summary row IS B3's branch figure.
+    metric: /All files\s*\|\s*[\d.]+\s*\|\s*([\d.]+)/,
+    direction: 'down',
+    why: 'two uncovered branches added to the engine must lower its branch percentage',
+  },
+
+  mutation: {
+    disproven:
+      'FAILS §5.16, and this is the finding that produced the rule. Four tests were ' +
+      'added that provably kill the stdevMoney mutant on line 179; mutation:money ' +
+      'shows it dying to two of them. Stryker re-run on a clean tree returned 9.66%, ' +
+      '145 mutants, 131 survived - identical, with that mutant still listed as ' +
+      'Survived. A number that does not move when the thing it measures provably ' +
+      'moved is not measuring. §5.16.2: this outranks whatever the number said.',
+  },
+};
+
+/* 2b · §5.16 - every benchmark-bearing verifier needs a response test */
+let responseTested = 0;
+let responseDisproven = 0;
+for (const v of VERIFIERS) {
+  if (v.benchmarks.length === 0) continue;
+  const r = RESPONSES[v.id];
+  if (!r) {
+    failures.push(
+      `${v.id} carries a benchmark reading (${v.benchmarks.join(', ')}) but has no §5.16 ` +
+        'response test. Planting proves it can fail; responding proves it can measure.',
+    );
+    continue;
+  }
+  if (r.disproven) responseDisproven += 1;
+  else responseTested += 1;
+}
+
 /* 2 · every benchmark must be accounted for (§5.12.3) */
 const declared = Object.keys(BENCHMARK_VERIFIERS);
 const inFile = [...read('BENCHMARKS.md').matchAll(/^\|\s*(B\d+)\s*\|/gm)].map((x) => x[1]);
@@ -572,14 +661,14 @@ const STALE_AFTER = 5;
 
 /** Each entry is a JUDGEMENT: not derivable, and therefore perishable. */
 const JUDGEMENTS = [
-  { where: 'PROJECTION.md', what: 'every iteration estimate and the 20-iteration plan', made: 23 },
+  { where: 'PROJECTION.md', what: 'the re-cut at checkpoint 1 and the 14-iteration plan', made: 26 },
   {
     where: 'PROJECTION.md',
-    what: 'the two checkpoints - 26 for the queue, 29 for Form A - and which one is live',
-    made: 25,
+    what: 'checkpoint 1 FAILED at 26; checkpoint 2 at 29 is unreachable, earliest is 32',
+    made: 26,
   },
   { where: 'PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
-  { where: 'PROJECTION.md', what: 'committed = A.3 items 1-5; stretch = items 6-8', made: 21 },
+  { where: 'PROJECTION.md', what: 'committed = A.3 items 1-3; items 4-5 moved to stretch', made: 26 },
   { where: 'DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },
   { where: 'DECISIONS-AUTONOMOUS.md', what: "AD-018's reversal trigger", made: 21 },
   { where: 'DECISIONS-AUTONOMOUS.md', what: "AD-019's three reversal triggers", made: 22 },
@@ -711,10 +800,58 @@ for (const d of DERIVATIONS) {
 console.log(`  gate numbers re-derived: ${DERIVATIONS.length}, ${staleNumbers} stale`);
 
 console.log(`  verifiers inventoried  : ${VERIFIERS.length}`);
+console.log(
+  `  §5.16 response-tested  : ${responseTested} of ${responseTested + responseDisproven} ` +
+    `benchmark-bearing; ${responseDisproven} DISPROVEN (its number does not move)`,
+);
 console.log('');
+/**
+ * §5.13 A.5, TO THE LETTER: "REPORT PROGRESS AS INSTRUMENTED / MET, two numbers,
+ * every iteration."
+ *
+ * This printed one number and a pointer to a file for the other, which is not two
+ * numbers. Found at iteration 26 by diffing the rule against the verbatim text of
+ * injection 14, which had never been in the repository to diff against (H12). The
+ * paraphrase this build ran on was accurate about A.2, A.3 and A.4 and quietly soft
+ * on A.5 - which is exactly why the diff had to be done rather than assumed.
+ *
+ * MET is DERIVED, never declared here: the Measured table in BENCHMARKS-RESULTS.md is
+ * where a measurement is recorded, so that is what gets parsed. A benchmark absent
+ * from that table has not been measured and is neither met nor missed.
+ */
+const measured = new Map();
+if (existsSync('BENCHMARKS-RESULTS.md')) {
+  const table = read('BENCHMARKS-RESULTS.md').split('## Measured')[1]?.split('\n---')[0] ?? '';
+  for (const m of table.matchAll(/^\|\s*(B\d+)\b[^|]*\|[^|]*\|([^|]*)\|/gm)) {
+    if (/MISSED/.test(m[2])) measured.set(m[1], 'MISSED');
+    else if (/\bMET\b/.test(m[2])) measured.set(m[1], 'MET');
+  }
+}
+const met = [...measured].filter(([, v]) => v === 'MET').map(([b]) => b);
+const missed = [...measured].filter(([, v]) => v === 'MISSED').map(([b]) => b);
+
+/*
+ * "A benchmark with no instrument cannot be claimed met" was prose sitting next to
+ * the number. Prose does not fail a build. This does.
+ */
+for (const b of met) {
+  if (!BENCHMARKS[b]) failures.push(`${b} is recorded MET but is not a declared benchmark`);
+  else if (!BENCHMARKS[b].verifier) {
+    failures.push(
+      `${b} is recorded MET in BENCHMARKS-RESULTS.md but has NO INSTRUMENT in the ` +
+        'partition. A benchmark with nothing measuring it cannot be met.',
+    );
+  }
+}
+
 console.log(`  BENCHMARKS INSTRUMENTED: ${instrumented} of ${declared.length}`);
-console.log(`  BENCHMARKS MET         : see BENCHMARKS-RESULTS.md (a benchmark with no`);
-console.log(`                           instrument cannot be claimed met)`);
+console.log(
+  `  BENCHMARKS MET         : ${met.length} of ${measured.size} measured (${met.join(' ') || 'none'})`,
+);
+console.log(
+  `                           ${missed.length} MISSED (${missed.join(' ') || 'none'}), ` +
+    `${declared.length - measured.size} never measured`,
+);
 console.log('');
 console.log(`  overdue - subject EXISTS, nothing measures it : ${overdue.length}`);
 console.log(`     ${overdue.join(' ') || 'none'}`);
@@ -879,6 +1016,69 @@ ${bmRows}
   const crlf = existing.includes('\r\n');
   writeFileSync('VERIFIERS.md', crlf ? md.split('\n').join('\r\n') : md);
   console.log('  rewrote VERIFIERS.md from the inventory');
+}
+
+/* ---- --responds: change the world, require the number to move (§5.16) --- */
+if (process.argv.includes('--responds')) {
+  console.log('\n  §5.16 - changing the world in a KNOWN direction and watching the number:\n');
+  const VITEST = join(
+    dirname(createRequire(import.meta.url).resolve('vitest/package.json')),
+    'vitest.mjs',
+  );
+  const runMetric = (argv, metric) => {
+    let out = '';
+    try {
+      out = execFileSync(process.execPath, [VITEST, ...argv], {
+        stdio: 'pipe',
+        encoding: 'utf8',
+        timeout: 900000,
+      });
+    } catch (e) {
+      out = `${e.stdout ?? ''}${e.stderr ?? ''}`;
+    }
+    const m = metric.exec(out.replace(/\[[0-9;]*m/g, ''));
+    return m ? Number(m[1]) : null;
+  };
+
+  for (const [id, r] of Object.entries(RESPONSES)) {
+    if (r.plantIsResponse) {
+      console.log(`  -    ${id.padEnd(20)} plant IS the response test: ${r.plantIsResponse}`);
+      continue;
+    }
+    if (r.disproven) {
+      console.log(`  x    ${id.padEnd(20)} DISPROVEN under §5.16`);
+      continue;
+    }
+    const before = runMetric(r.argv, r.metric);
+    if (before === null) {
+      failures.push(`${id}: could not read its number before the change, so §5.16 cannot run`);
+      continue;
+    }
+    writeFileSync(r.probeFile, r.probe);
+    let after = null;
+    try {
+      after = runMetric(r.argv, r.metric);
+    } finally {
+      rmSync(r.probeFile, { force: true });
+    }
+    if (existsSync(r.probeFile)) failures.push(`${id}: the §5.16 probe was not removed`);
+    if (after === null) {
+      failures.push(`${id}: could not read its number after the change`);
+      continue;
+    }
+    const moved = r.direction === 'down' ? after < before : after > before;
+    console.log(
+      `  ${moved ? 'ok  ' : '**  '} ${id.padEnd(20)} ${before} -> ${after} ` +
+        `(expected ${r.direction})  ${moved ? '' : 'DID NOT MOVE'}`,
+    );
+    if (!moved) {
+      failures.push(
+        `${id} FAILS §5.16: ${r.why}, and the number went ${before} -> ${after}. ` +
+          'A measurement that does not move when the thing it measures provably ' +
+          'changed is not measuring (§5.16.2). This outranks whatever it reported.',
+      );
+    }
+  }
 }
 
 /* ---- --prove: plant each defect and require a failure (§5.12.2) --- */

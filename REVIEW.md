@@ -41,6 +41,16 @@ start rather than rediscovering them:
 | rate limiter | **rule identity and identifier value** | yes - per-rule and per-identifier plants, plus the telemetry-only rule |
 | template checker | **language** | partly - the copy-vs-constant plant is English-only, because only English states a duration today. It fires on any language the moment one gains a number |
 | font coverage | **weight**, and **codepoint block** | yes - all three weights checked, and the plant used a codepoint outside the Odia block |
+| check-tooling | **directory name** | NO - and this is how `.stryker-tmp` survived. It walks `tools/` and `scripts/` and skips every name beginning with a dot, so no plant had ever moved along its axis. Closed by `check:shadow`, which scopes by *tracked-ness* instead |
+| check-shadow-copies | **tracked vs untracked** | yes - the plant is an untracked directory holding a package.json and a spec file, re-verified against the real shape under `.stryker-tmp/`, which is gitignored and still fails |
+
+**A12 APPLIES TO THE CHECKS THAT CHECK THE CHECKS.** The two rows above were added at
+iteration 26 because `check:shadow` found what `check-tooling` structurally could not.
+That is not a gap in `check-tooling`'s logic - it is its *scoping axis*, the directory
+name, and no plant had ever varied along it. Every guard in this table had its axis
+audited; the auditing tools themselves did not, because they were doing the auditing.
+A12 has no such exemption, and a checker's blind spot is the most expensive kind -
+everything behind it is presumed checked.
 
 Two of those say **partly**, and that is the honest answer rather than a tick. Both
 are owed plants, recorded here so the gap is visible: the correction-into-closed-day

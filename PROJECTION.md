@@ -189,13 +189,63 @@ plan that slips at the start and is not re-cut until two thirds through is how a
 reaches its ceiling with nine half-finished screens. The decision is cheap at 29 and
 expensive at 35.
 
-### The A.1 sweep is now inside checkpoint 1
+### CHECKPOINT 1 FIRED AT THE END OF ITERATION 26, AND IT FAILED
 
-Injection 19 put it at the head of the queue, ahead of rejects.json, and it was done
-at iteration 25. So of checkpoint 1's five items, **one is complete and four remain
-for iteration 26**: rejects.json, the B3 re-measurement, the two fixtures, and the RN
-scaffold. That is a full iteration with no slack in it, and it is the first thing that
-will say whether checkpoint 2 is reachable.
+| item | state |
+|---|---|
+| the A.1 sweep | **done**, iteration 25 |
+| rejects.json | not started |
+| the B3 re-measurement | partial - re-measured at 85.71% and the three shapes named, but not against a grown corpus |
+| the two fixtures | not started |
+| the RN project scaffolded | not started |
+
+**One of five.** The cause is not a mystery and not an excuse: injections 19 and 20
+arrived and consumed iterations 25 and 26 in full. Both were owner-issued and both
+were executed completely.
+
+I am not going to argue that this is the wrong reason for the checkpoint to fire.
+Injection 19 C warned against checkpoints firing for reorderings the owner asked for,
+and the temptation to file this under that heading is exactly why it should be
+resisted: a checkpoint that can be waived by naming a cause is not a checkpoint. It
+measures whether the work is done. It is not done. Whether to absorb the slip is the
+owner's call; the re-cut below is what the plan looks like if it is not absorbed.
+
+### The re-cut
+
+Fourteen iterations remain. What stands between here and Form A instrumented:
+
+| # | Work | Est. | Ends |
+|---|---|---|---|
+| 1 | rejects.json and the B3 re-measurement | 2 | 28 |
+| 2 | the two fixtures | 1 | 29 |
+| 3 | RN scaffold, tokens, fonts, store wiring | 1 | 30 |
+| 4 | **Form A** - the screen | 1 | 31 |
+| 5 | **the ~10 instruments Form A makes due** | 1 | 32 |
+
+**Checkpoint 2 as written is already unreachable.** It asks for Form A built and
+instrumented by 29; the earliest honest date is 32, and only if nothing else arrives.
+Compressing items 2 and 3 into one iteration buys 31, which still misses it. I am not
+going to reach 29 by redefining what "instrumented" means - §B.6 stays whole.
+
+That leaves **eight iterations after 32** for the rest of the screen set, against a
+ceiling of 40, with screen velocity still entirely unmeasured.
+
+**So the committed set is cut, from the bottom of A.3 items 1-5 as directed:**
+
+- **COMMITTED - A.3 items 1 to 3**, about eight screens: the four form archetypes, the
+  nine-section day-close list with its three row states, and the cash check with
+  counting, difference, balanced and closed-day summary. This still closes a day.
+- **MOVED TO STRETCH - A.3 items 4 and 5**: opening cash and first run, and Today in
+  its open, closed and gap states. Previously committed.
+- **STILL STRETCH - items 6 to 8**, unchanged.
+
+Nothing in §B.6 is reduced. No threshold moves. The cut is features.
+
+**The honest risk, stated once:** eight injections have arrived in thirteen iterations.
+At that rate three or four more arrive before 40, and none is priced here. Every one so
+far has been worth its cost - §5.13, §5.14, §5.15, §5.16 and the `stdevMoney` defect
+all came from them - but they are not free, and this plan has no slack left to absorb
+them from.
 
 ## When to revise
 
