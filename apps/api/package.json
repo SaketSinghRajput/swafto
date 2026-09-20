@@ -5,6 +5,11 @@
   "type": "module",
   "description": "L7 API. Fastify. Never computes a figure the client displays.",
   "dependencies": {
-    "@swafto/values": "*"
+    "@swafto/values": "*",
+    "@swafto/formula-engine": "*",
+    "@swafto/schema": "*"
+  },
+  "scripts": {
+    "start": "node src/server.ts"
   }
 }
