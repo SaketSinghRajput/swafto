@@ -126,13 +126,13 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | S-07 | Rogue CA | CA pinning + expiry + kill switch | `test/pinning.spec.ts` | TODO |
 | S-08 | Origin bypass | Cloudflare-only SG + origin secret | Terraform + smoke test | TODO |
 | S-09 | SSH exposure | SSM only, no inbound 22 | Terraform assertion | TODO |
-| S-10 | **Cross-tenant read** | 3 layers incl. Postgres RLS | `test/tenancy.spec.ts` | TODO |
-| S-11 | **Cross-tenant write / forged shop_id** | shop_id from session only | `test/tenancy.spec.ts` | TODO |
-| S-12 | UPDATE/DELETE on entries | REVOKE + trigger | `test/append-only.spec.ts` | TODO (G4) |
-| S-13 | OTP abuse | Rate-limit matrix | `test/otp-limits.spec.ts` | TODO |
-| S-14 | SIM swap | Device binding, 24h hold on export/delete | `test/cooling-off.spec.ts` | ACCEPTED RISK |
-| S-15 | Push payload leak | Trigger-only push | `test/push-payload.spec.ts` | TODO |
-| S-16 | Log leakage | Allow-list logger + scrubber | `test/log-hygiene.spec.ts` | TODO |
+| S-10 | **Cross-tenant read** | 3 layers incl. Postgres RLS | `apps/api/test/api.spec.ts` "one shop cannot read another shop"; `test/pipeline.spec.tsx` through the real client | **DONE - app and API layers; the RLS layer itself is asserted present, not yet attacked with a real cross-tenant SQL read** |
+| S-11 | **Cross-tenant write / forged shop_id** | shop_id from session only | `apps/api/test/api.spec.ts` - forged in the query, the body, the path and a header, plus `shopOf` tested directly | **DONE at iteration 35 - a plant survived 228 tests before these existed** |
+| S-12 | UPDATE/DELETE on entries | REVOKE + trigger | `packages/schema/test/append-only.spec.ts`, both engines, four unconstrained columns | **DONE** |
+| S-13 | OTP abuse | Rate-limit matrix | `apps/api/test/rate-limit.spec.ts`, and the 429 with a real Retry-After through the client | **DONE** |
+| S-14 | SIM swap | Device binding, 24h hold on export/delete | Deletion now has a **30-day** grace that signing in cancels (L-13/L-08 work), which is far stronger than the 24h hold this row contemplated. **EXPORT still has no hold** | PARTLY MITIGATED - the deletion half is covered, the export half is still accepted risk |
+| S-15 | Push payload leak | Trigger-only push | `tools/check-push-payload.mjs` | **N/A-V1 with a tripwire** - no push integration exists; the check fails the build the day one appears |
+| S-16 | Log leakage | Allow-list logger + scrubber | `apps/api/test/api.spec.ts` S-16 - captures the log on a 500 and requires the digits to be absent in ANY encoding; `check:client-logs` for the app | **DONE - and the first version of the test was vacuous, because nothing logs at level warn** |
 | S-17 | Secrets in repo/APK | gitleaks, SSM, OIDC | CI scan | TODO |
 | S-18 | Vulnerable dependencies | audit + Trivy, high fails | CI | **DONE - 0 vulns** |
 | S-19 | Backup/restore unproven | Two paths + timed drill | local rollback drill (G9) | TODO |

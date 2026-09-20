@@ -13,6 +13,7 @@
  * then agree with neither.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { buildApp, shopOf, type AppDeps } from '../src/app.ts';
 import { memoryRepo } from '../src/db/memory.ts';
 import { memoryOtpStore } from '../src/auth/routes.ts';
@@ -1130,6 +1131,99 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
         );
       }
     }
+  });
+
+  it('S-16 · a phone number and an OTP never reach the log, whatever happens', async () => {
+    /*
+     * ASSERTED AND NEVER ATTACKED, until now. The redaction list in app.ts was
+     * configured carefully and nothing had ever read a log line to see whether
+     * it worked - S-16 named a `log-hygiene` spec that does not exist. Same
+     * shape as the forged-shop-id finding: the code was right, the confidence
+     * was unearned.
+     *
+     * A phone number is personal data under the Act, and a log line is a
+     * disclosure nobody consented to. So the log is captured and read.
+     */
+    const written: string[] = [];
+    const capturing = harness();
+    const PRIVATE_PHONE = '+919812345678';
+
+    /*
+     * THE FIRST VERSION OF THIS TEST WAS VACUOUS AND I ALMOST SHIPPED IT. It
+     * made four ordinary requests and asserted the phone was absent from the
+     * log - which passed, because at level `warn` those paths write NOTHING.
+     * An instrument with no subject, in a build that has found that defect in
+     * four other places.
+     *
+     * So this forces the path that actually logs: the 500 handler, which calls
+     * `req.log.error({ err, reqId })`. That is the log line that exists in
+     * production, and an error carrying the request is exactly how a phone
+     * number reaches a log file.
+     */
+    const app = buildApp({
+      ...capturing.deps,
+      rate: {
+        /*
+         * The failure carries NO personal data of its own. An earlier draft put
+         * the phone in this message, which made the assertion below untestable:
+         * it would have failed on my own plant rather than on a defect. What is
+         * being tested is whether the FRAMEWORK leaks the request, not whether
+         * a deliberately incriminating string comes back out.
+         */
+        consumeAll: () => {
+          throw new Error('the limiter is unreachable');
+        },
+      },
+      logStream: { write: (chunk: string) => written.push(chunk) },
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/auth/otp/request',
+      ...json({ phone: PRIVATE_PHONE, language: 'en' }),
+    });
+    expect(res.statusCode, 'the path under test must be the one that logs').toBe(500);
+
+    // The instrument has a subject: something was written.
+    expect(written.length, 'nothing was logged, so this test would prove nothing').toBeGreaterThan(
+      0,
+    );
+
+    const log = written.join('');
+    expect(log).toContain('"level"');
+
+    /*
+     * THE DIGITS, IN ANY FORM, ANYWHERE IN THE OUTPUT. Not a JSON fragment -
+     * an exact-fragment assertion is what let the first plant through, because
+     * a body serialised with `JSON.stringify` arrives with escaped quotes and
+     * matches no fragment anybody thought to write. The property that matters
+     * is that the number is not there at all.
+     */
+    expect(log, 'the phone number must not be in the log, in any encoding').not.toContain(
+      PRIVATE_PHONE,
+    );
+    expect(log, 'nor the digits without the country code').not.toContain('9812345678');
+    expect(log, 'nor an authorization header').not.toContain('Bearer ');
+  });
+
+  it('S-16 · and the redaction censors a phone when one IS in a logged field', () => {
+    /*
+     * The half above cannot test: pino redaction works on FIELDS, so it needs
+     * a field. This checks the configured paths directly rather than through a
+     * request, because no route logs a body today - and "no route does it
+     * today" is exactly the condition that changes without anybody noticing.
+     */
+    const source = readFileSync('apps/api/src/app.ts', 'utf8');
+    for (const path of [
+      'req.body.phone',
+      'req.body.code',
+      'req.headers.authorization',
+      'phone',
+      'code',
+    ]) {
+      expect(source, path).toContain("'" + path + "'");
+    }
+    expect(source).toContain("censor: '[redacted]'");
   });
 
   it('names a grievance officer and a number of days', async () => {

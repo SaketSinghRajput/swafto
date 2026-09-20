@@ -54,6 +54,17 @@ export interface AppDeps {
   };
   /** Bodies larger than this are refused before they are parsed. */
   readonly bodyLimitBytes?: number;
+  /**
+   * Where the log goes. In production, nowhere this file decides - pino's
+   * default is stdout and the container collects it.
+   *
+   * IT IS INJECTABLE SO THE REDACTION CAN BE PROVEN. The redaction below was
+   * configured and never tested: S-16 named a `log-hygiene` spec that did not
+   * exist, which is the same shape as the S-11 finding - a defence asserted
+   * and never attacked. A test cannot read stdout, so it hands in a stream and
+   * reads what was actually written.
+   */
+  readonly logStream?: { write(chunk: string): void };
 }
 
 declare module 'fastify' {
@@ -111,6 +122,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
      */
     logger: {
       level: process.env.LOG_LEVEL ?? 'warn',
+      ...(deps.logStream ? { stream: deps.logStream } : {}),
       redact: {
         paths: [
           'req.body.phone',
