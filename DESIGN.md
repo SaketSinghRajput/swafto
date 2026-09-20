@@ -3,7 +3,7 @@
 
 # DESIGN — what the code actually does
 
-**Generated at iteration 32.** This document reports; it never proposes. The
+**Generated at iteration 33.** This document reports; it never proposes. The
 design system and the Strategy 1 spec say what the screens *should* do — this says what
 they *do*, and the difference between the two is section E.
 
@@ -36,6 +36,11 @@ partial, and the only thing that tells the truth about a layout).
 **ABSENT.** No file at `apps/mobile/src/screens/T7.tsx`.
 TRACEABILITY says it will display IN1.
 
+### T1 — Today · open day
+
+**ABSENT.** No file at `apps/mobile/src/screens/T1.tsx`.
+TRACEABILITY says it will display P1, P2, P4, P7, P8, OP4, OP6.
+
 ### T8 — Entry · Form B
 
 **ABSENT.** No file at `apps/mobile/src/screens/T8.tsx`.
@@ -64,11 +69,6 @@ TRACEABILITY says it will display IN7, P1, P2, P3.
 ### T12 — Cash check · difference
 
 **ABSENT.** No file at `apps/mobile/src/screens/T12.tsx`.
-TRACEABILITY says it will display OP1.
-
-### T13 — Cash check · balanced
-
-**ABSENT.** No file at `apps/mobile/src/screens/T13.tsx`.
 TRACEABILITY says it will display OP1.
 
 ### T14 — Day closed summary

@@ -2630,3 +2630,41 @@ F-A4 (five exported engine functions no test calls) stays open as a test-writing
   $ npm run check:all   -> 21 checks, all pass
   $ npx vitest run      -> 344 passed
   $ npm run check:divergence -> Node and Hermes agree on every value
+
+---
+
+## 2026-09-20 · Iteration 33 · Phase 3 · the product pass
+
+**The committed set had no front door.** T1, the screen the app opens on, was not in
+it; nor was T2. Built exactly as planned, the set produced an application a shopkeeper
+cannot start - every committed screen is somewhere you arrive FROM somewhere, and the
+somewhere was missing. A cut-line error, not a feature gap.
+
+**Changed, one swap, total unchanged at ten:** T13 (cash check - balanced) out, T1
+(Today - open day) in. T13 is three lines of content, T12 owns the difference case and
+T14 shows the same balanced figures. T1 is the application. Applied in
+`tools/tasks.data.mjs`, the SOURCE - the three documents regenerated from it.
+Sequence: Form A stays first as the hardest screen, T1 second so a session exists end
+to end early.
+
+**Day two: nothing in the committed set answers it.** T3 and the returning state of T1
+are both outside. The engine already computes what would bring him back - profit
+trend, collection efficiency, what he owes and when. The value is built and has
+nowhere to surface. One swap is a correction; two is a redesign, so this is recorded
+rather than acted on.
+
+**The moment of abandonment: minute 14 of day one.** He counted less than expected,
+does not know why - that is what a difference IS - and the reason list has no "I am
+not sure". His paper sheet balances because on paper he writes the counted figure and
+moves on. Correctness becomes the obstacle. Recommended, not implemented: an honest
+unknown beats a false reason in an append-only ledger.
+
+**The copy is better than most shipped products carry and the pass says so.** Two
+exceptions: "Cash short for Thursday." is a verdict using an accounting word, and the
+update gate tells him his numbers may be wrong right now. Both faults survive
+translation, which is flagged for the native reviewer - register, not only meaning.
+
+3.1 PROOF, before and after: features `713b1c89acd655d0`, benchmarks
+`52bc7216aa70d0e4`, ADRs `2aacb5ce76c9c542`, autonomous `3858002c54cede3f` - all four
+IDENTICAL. No feature added, removed or redefined; no constraint softened; no
+threshold moved.

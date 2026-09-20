@@ -40,17 +40,22 @@ export const jsonCount = (f, key, min) => () => {
  * silently shrinking the committed set.
  */
 export const COMMITTED_SCREENS = {
-  made: 29,
+  made: 33,
   from: 'PROJECTION.md "The re-cut" · ids resolved against the build map',
   ids: [
     'T7', // Form A - first, because it is the hardest
+    'T1', // Today, the open day - THE FRONT DOOR. Added by the product review at
+          //     iteration 33: the committed set had no screen that renders when the
+          //     app is opened. Second, so an end-to-end session exists early.
     'T8', // Form B
     'T9', // Form C
     'T10', // Form D
     'T5', // the nine-section day-close list
     'T11', // cash check · counting
     'T12', // cash check · difference
-    'T13', // cash check · balanced
+    // T13 (cash check - balanced) was REMOVED by the product review to keep the
+    // total at ten. Cheapest screen in the set to lose: three lines of content, T12
+    // owns the difference case, and T14 shows the same balanced figures.
     'T14', // day closed summary
     'T6', // opening cash - pulled into the committed set by injection 21
   ],
