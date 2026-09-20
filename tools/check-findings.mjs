@@ -291,6 +291,28 @@ export const FINDINGS = [
       ),
     ),
   },
+  {
+    id: 'V-12',
+    what: 'L-17 and L-18 were recorded RESOLVED-AUTONOMOUSLY against legal text that did not exist, and AD-005 promised a policy-versus-declarations check that was never built',
+    premise:
+      'looked for the artifact AD-005 names. There was no /legal directory, no privacy policy and no terms anywhere in the repository, while two audit rows and two traceability rows called them resolved. Standing since iteration 7',
+    /*
+     * Derived three ways, because the finding has three parts: the text must
+     * exist, the declarations must be generated from the notice rather than
+     * typed, and the check AD-005 promised must actually run.
+     */
+    fixed: all(
+      fileExists('apps/web/legal/privacy.html'),
+      fileExists('apps/web/legal/terms.html'),
+      fileExists('docs/handover/DATA-SAFETY.md'),
+      fileExists('apps/web/test/legal.spec.ts'),
+      // Generated, so the form cannot drift from what the software collects.
+      contains('tools/check-generated.mjs', 'docs/handover/DATA-SAFETY.md'),
+      // And the pages admit what they are, which was AD-005's other condition.
+      contains('apps/web/legal/privacy.html', 'has not been reviewed by a lawyer'),
+      contains('apps/web/legal/terms.html', 'has not been reviewed by a lawyer'),
+    ),
+  },
 ];
 
 /* ---- derive ------------------------------------------------------------- */

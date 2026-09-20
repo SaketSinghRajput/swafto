@@ -97,19 +97,19 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-09 | No processor moves data out of India | Cloudflare/Sentry/FCM/SMS review | Eng | TODO |
 | L-10 | Cloudflare TLS termination abroad = transfer? | Architecture decision | AD-005/006 | RESOLVED |
 | L-11 | FCM payloads carry no personal data | `tools/check-push-payload.mjs` - a tripwire; V1 ships no push at all | Eng | N/A-V1 - fails the build the day an SDK appears |
-| L-12 | Data Safety form word-identical to policy | Play Console + policy | Eng | TODO |
+| L-12 | Data Safety form word-identical to policy | `docs/handover/DATA-SAFETY.md`, generated from the notice; `apps/web/test/legal.spec.ts` | Eng | WIP - derived; entering it in the Console is H7 |
 | L-13 | Public web deletion page | `apps/web/delete-account/index.html`, `POST /v1/deletion/request`, `POST /v1/deletion/confirm`, `otp_account_deletion` | Eng | WIP - built and checked; the URL itself needs hosting |
 | L-14 | POST_NOTIFICATIONS primer after first close | Manifest must not declare it; the primer returns with the inbox (DEFERRED) | Eng | N/A-V1 - no notifications are requested |
 | L-15 | GST disclaimer in app copy and exports | Export screen + file header | Eng | TODO |
 | L-16 | Export naming rules enforced | Copy + i18n key audit | Eng | TODO |
-| L-17 | Privacy policy drafted, reviewed, live | Website | AD-005/006 | RESOLVED |
-| L-18 | Terms live; liability vs accuracy promise | Website | AD-005/006 | RESOLVED |
+| L-17 | Privacy policy drafted, reviewed, live | `apps/web/legal/privacy.html` | Eng | WIP - written and checked against the notice; unreviewed (H9), not yet live (H5) |
+| L-18 | Terms live; liability vs accuracy promise | `apps/web/legal/terms.html` | Eng | WIP - written; the arithmetic promise is kept and tested, unreviewed (H9) |
 | L-19 | Verify Anek + IBM Plex OFL 1.1 | `licences/` + About | Eng | TODO |
 | L-20 | Verify SQLCipher licensing | ADR-002 amendment if needed | Eng | TODO |
 | L-21 | Licence manifest generated from lockfile | `tools/licences.mjs` | Eng | TODO |
 | L-22 | CI licence gate fails on GPL/AGPL | CI job | Eng | TODO |
 | L-23 | DLT registration (entity, header, templates) | Registered business entity | AD-003/007 | RESOLVED |
-| L-24 | Terms state no under-18s | Terms | AD-005/006 | RESOLVED |
+| L-24 | Terms state no under-18s | `apps/web/legal/terms.html` section 8, with a test | Eng | DONE |
 | L-25 | Consent Manager review before 2026-11-13 | Calendar item | Eng | TODO |
 | L-26 | Full DPDP compliance by 2027-05-15 | Programme milestone | **Business** | TODO |
 

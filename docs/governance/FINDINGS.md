@@ -18,7 +18,7 @@ twice to findings about that very failure:
 | **F-10** | premise FALSE and fix never applied - two errors cancelling into a pass |
 | **F-06** | found an unapplied fix, then ITS OWN fix was recorded as applied and was not |
 
-**20 fixed · 0 open · 1 withdrawn**, as derived
+**21 fixed · 0 open · 1 withdrawn**, as derived
 on the last run.
 
 | id | status | finding | premise established by |
@@ -44,6 +44,7 @@ on the last run.
 | V-9 | **FIXED** | a stale Stryker sandbox was a second copy of the repo, so vitest ran every test twice and two copies of postgres.spec.ts raced the same database | vitest reported 606 tests for a 303-test suite, and .stryker-tmp/ was untracked |
 | V-10 | **FIXED** | injection 14 was missing from INJECTIONS/, so §5.13, A12 and the partition all cited text nobody could re-read | reconciled INJECTIONS/ against the originals BY CONTENT: one misnumbering (14-verify-the-verifiers.md held injection 13) and injection 14 absent entirely |
 | V-11 | **FIXED** | §5.13 A.5 requires INSTRUMENTED and MET as two numbers every iteration; one was printed and the other was a pointer to a file | diffed the rule against the verbatim injection 14 text once it was importable - the paraphrase was accurate on A.2, A.3 and A.4 and soft on A.5 |
+| V-12 | **FIXED** | L-17 and L-18 were recorded RESOLVED-AUTONOMOUSLY against legal text that did not exist, and AD-005 promised a policy-versus-declarations check that was never built | looked for the artifact AD-005 names. There was no /legal directory, no privacy policy and no terms anywhere in the repository, while two audit rows and two traceability rows called them resolved. Standing since iteration 7 |
 
 ## Notes
 

@@ -56,7 +56,7 @@ export { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
  * notice to list specifically what is collected and why, not to state generally
  * that data may be processed for business purposes.
  */
-const NOTICE = {
+export const NOTICE = {
   version: NOTICE_VERSION,
   reviewState: 'EN-AUTHORITATIVE · OD-HI-DRAFT-PENDING-NATIVE-REVIEW',
   fiduciary: {

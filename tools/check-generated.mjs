@@ -26,6 +26,16 @@ const GENERATED = [
   { file: 'TASKS.md', by: ['tools/gen-tasks.mjs'] },
   { file: 'DESIGN.md', by: ['tools/gen-design.mjs'] },
   { file: 'docs/governance/FINDINGS.md', by: ['tools/check-findings.mjs', '--update-md'] },
+  /*
+   * L-12 and AD-005. The Play declarations are derived from the itemised notice
+   * the API serves, so a collected item cannot reach the app without appearing
+   * on the form - and the form cannot be edited to say something the software
+   * does not do.
+   */
+  {
+    file: 'docs/handover/DATA-SAFETY.md',
+    by: ['--experimental-strip-types', 'tools/gen-data-safety.mjs'],
+  },
 ];
 
 const before = new Map(GENERATED.map((g) => [g.file, readFileSync(g.file, 'utf8')]));
