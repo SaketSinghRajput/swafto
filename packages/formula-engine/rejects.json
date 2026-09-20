@@ -2,10 +2,10 @@
   "$schema": "https://swafto.app/schemas/rejects-v1.json",
   "generatedBy": "tools/author-rejects.ts",
   "note": "THE REJECTION CORPUS (§5.11). vectors.json describes days that are VALID; this describes inputs that must be REFUSED, and names every layer obliged to refuse them. Cases whose only layer is `api` are pending the auth and sync work, and the runner reports them as PENDING rather than letting them pass silently.",
-  "count": 35,
+  "count": 69,
   "coverage": {
-    "engine": 11,
-    "schema": 16,
+    "engine": 23,
+    "schema": 38,
     "api": 8
   },
   "cases": [
@@ -441,6 +441,432 @@
         "api"
       ],
       "messageMatches": "shop_id"
+    },
+    {
+      "name": "money-divide-by-zero",
+      "violates": "divideMoney refuses a divisor that is not a non-zero finite number",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "divideMoney",
+        "args": [
+          100000,
+          0
+        ]
+      },
+      "messageMatches": "non-zero finite"
+    },
+    {
+      "name": "money-divide-by-not-a-number",
+      "violates": "divideMoney refuses a divisor that is not a non-zero finite number",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "divideMoney",
+        "args": [
+          100000,
+          null
+        ]
+      },
+      "messageMatches": "non-zero finite"
+    },
+    {
+      "name": "money-divide-by-infinite",
+      "violates": "divideMoney refuses a divisor that is not a non-zero finite number",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "divideMoney",
+        "args": [
+          100000,
+          null
+        ]
+      },
+      "messageMatches": "non-zero finite"
+    },
+    {
+      "name": "time-day-zero",
+      "violates": "a month has no zeroth day",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026-01-00"
+        ]
+      }
+    },
+    {
+      "name": "time-month-thirteen",
+      "violates": "a year has twelve months",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026-13-01"
+        ]
+      }
+    },
+    {
+      "name": "time-february-thirty",
+      "violates": "February never has thirty days",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026-02-30"
+        ]
+      }
+    },
+    {
+      "name": "time-february-twentynine-common-year",
+      "violates": "this year is not a leap year",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026-02-29"
+        ]
+      }
+    },
+    {
+      "name": "time-letters-for-digits",
+      "violates": "the format is numeric",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026-JAN-15"
+        ]
+      }
+    },
+    {
+      "name": "time-slash-separators",
+      "violates": "the separator is a hyphen",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026/01/15"
+        ]
+      }
+    },
+    {
+      "name": "time-two-digit-year",
+      "violates": "the year is four digits",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "26-01-15"
+        ]
+      }
+    },
+    {
+      "name": "time-trailing-time",
+      "violates": "a date is not a timestamp",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          "2026-01-15T00:00:00Z"
+        ]
+      }
+    },
+    {
+      "name": "time-empty-string",
+      "violates": "a date is required",
+      "layers": [
+        "engine"
+      ],
+      "engine": {
+        "fn": "parseIsoDate",
+        "args": [
+          ""
+        ]
+      }
+    },
+    {
+      "name": "enum-upi-mode-on-a-cash-sales-row",
+      "violates": "a cash_sales row cannot be paid by upi",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'cash_sales', 1000, 'upi', NULL, '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-cash-mode-on-a-upi-sales-row",
+      "violates": "a upi_sales row cannot be paid by cash",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'upi_sales', 1000, 'cash', NULL, '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-cash-mode-on-a-udhar-sales-row",
+      "violates": "a udhar_sales row cannot be paid by cash",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_sales', 1000, 'cash', '{{party}}', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-shop_stock-mode-on-a-withdrawal-row",
+      "violates": "a withdrawal row cannot be paid by shop_stock",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'withdrawal', 1000, 'shop_stock', NULL, '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "enum-udhar-mode-on-a-udhar-collection-row",
+      "violates": "a udhar_collection row cannot be paid by udhar",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_collection', 1000, 'udhar', '{{party}}', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "time-due-date-on-a-cash-purchase",
+      "violates": "only a purchase taken on credit carries a due date",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, due_date, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'purchase', 1000, 'cash', NULL, '2026-08-01', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "time-due-date-on-a-udhar-udhar-sales",
+      "violates": "only a purchase taken on credit carries a due date",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, due_date, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_sales', 1000, 'udhar', '{{party}}', '2026-08-01', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "time-due-date-on-a-cash-expense",
+      "violates": "only a purchase taken on credit carries a due date",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, due_date, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'expense', 1000, 'cash', NULL, '2026-08-01', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-party-on-a-cash-sales",
+      "violates": "a cash_sales row names no party",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'cash_sales', 1000, 'cash', '{{party}}', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-party-on-a-expense",
+      "violates": "a expense row names no party",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'expense', 1000, 'cash', '{{party}}', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-party-on-a-withdrawal",
+      "violates": "a withdrawal row names no party",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, party_id, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'withdrawal', 1000, 'cash', '{{party}}', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-udhar-collection-without-a-party",
+      "violates": "a udhar_collection row must name the party it moves money with",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'udhar_collection', 1000, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "identity-party-payment-without-a-party",
+      "violates": "a party_payment row must name the party it moves money with",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "entries",
+        "columns": "id, shop_id, day_id, section, amount, mode, created_at, source",
+        "values": "'{{uuid}}', '{{shop}}', '{{openDay}}', 'party_payment', 1000, 'cash', '{{now}}', 'manual'"
+      }
+    },
+    {
+      "name": "money-opening-cash-fractional",
+      "violates": "opening cash is an integer number of paise, never a fraction",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "days",
+        "columns": "shop_id, date, state, opening_cash, created_at",
+        "values": "'{{shop}}', '2026-09-09', 'open', 5000.5, '{{now}}'"
+      }
+    },
+    {
+      "name": "money-opening-cash-negative",
+      "violates": "opening cash cannot be negative",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "days",
+        "columns": "shop_id, date, state, opening_cash, created_at",
+        "values": "'{{shop}}', '2026-09-09', 'open', -1, '{{now}}'"
+      }
+    },
+    {
+      "name": "money-counted-cash-fractional",
+      "violates": "counted cash is an integer number of paise, never a fraction",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "days",
+        "columns": "shop_id, date, state, counted_cash, created_at",
+        "values": "'{{shop}}', '2026-09-09', 'open', 1500.5, '{{now}}'"
+      }
+    },
+    {
+      "name": "money-counted-cash-negative",
+      "violates": "counted cash cannot be negative",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "days",
+        "columns": "shop_id, date, state, counted_cash, created_at",
+        "values": "'{{shop}}', '2026-09-09', 'open', -1, '{{now}}'"
+      }
+    },
+    {
+      "name": "enum-unknown-party-kind",
+      "violates": "a party is a customer or a supplier and nothing else",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "parties",
+        "columns": "id, shop_id, kind, name, created_at",
+        "values": "'{{uuid}}', '{{shop}}', 'vendor', 'Test Party', '{{now}}'"
+      }
+    },
+    {
+      "name": "time-party-due-days-negative",
+      "violates": "a due window cannot run backwards",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "parties",
+        "columns": "id, shop_id, kind, name, default_due_days, created_at",
+        "values": "'{{uuid}}', '{{shop}}', 'customer', 'Test Party', -1, '{{now}}'"
+      }
+    },
+    {
+      "name": "time-party-due-days-beyond-a-year",
+      "violates": "a due window longer than a year is a data-entry error",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "parties",
+        "columns": "id, shop_id, kind, name, default_due_days, created_at",
+        "values": "'{{uuid}}', '{{shop}}', 'customer', 'Test Party', 366, '{{now}}'"
+      }
+    },
+    {
+      "name": "identity-phone-too-short",
+      "violates": "a phone number shorter than the window cannot be real",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "users",
+        "columns": "id, shop_id, phone, created_at",
+        "values": "'{{uuid}}', '{{shop}}', '1234567', '{{now}}'"
+      }
+    },
+    {
+      "name": "identity-phone-too-long",
+      "violates": "a phone number longer than the window cannot be real",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "users",
+        "columns": "id, shop_id, phone, created_at",
+        "values": "'{{uuid}}', '{{shop}}', '12345678901234567', '{{now}}'"
+      }
     }
   ]
 }

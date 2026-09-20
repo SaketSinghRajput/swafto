@@ -2516,3 +2516,34 @@ Commands:
   $ npx vitest run        -> 309 passed, 0 skipped
 
 NEXT — TASKS.md's NEXT line: `P-001`, grow rejects.json.
+
+---
+
+## 2026-09-20 · Iteration 31 · P-001 · the rejection corpus reaches the arms it could not
+
+69 cases, up from 35. Every one names a specific constraint or guard rather than a
+category: `divideMoney`'s divisor guard, nine date-parser arms, five `entries_mode_ck`
+combinations, three due-date arms, five party arms, four cash-type arms, party kind,
+the due-days window at both ends, and the phone window at both ends.
+
+**The corpus immediately found a real engine defect.** `parseIsoDate` range-checked
+the day as `1..31` without reference to the month, so **2026-02-30, 2026-04-31 and
+2026-02-29 in a common year all parsed cleanly.** `toEpochDay` would then convert a
+date that does not exist, and an aging bucket or a supplier due date computed from it
+would be silently wrong. A phantom date is worse than a rejected one because it keeps
+working. Fixed leap-aware, and the three cases that found it are now in the corpus.
+
+**Two cases were removed rather than left failing, and the reason is recorded in the
+authoring script.** A numeric string in an INTEGER column is NOT refused by
+`CHECK (typeof(amount) = 'integer')`: SQLite affinity converts it before the constraint is
+evaluated, so the stored value is correct. The guard cannot stop a string and does
+not need to; what it stops is a REAL, which the fractional cases cover. A corpus
+entry describing something the system correctly accepts is a wrong expectation, not
+a rejection case.
+
+Not added, and said in the file: the four append-only triggers fire on UPDATE and
+DELETE, and the runner only builds INSERTs. Those arms live in append-only.spec.ts.
+
+  $ npm run rejects:author -> 69 cases (engine 23, schema 38, api 8)
+  $ npx vitest run         -> 343 passed, 0 skipped (was 309)
+  $ npm run check:all      -> 18 checks, all pass

@@ -21,7 +21,23 @@ export function parseIsoDate(d: IsoDate): { y: number; m: number; d: number } {
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const da = Number(m[3]);
-  if (mo < 1 || mo > 12 || da < 1 || da > 31) throw new Error(`Not a valid date: ${d}`);
+  if (mo < 1 || mo > 12 || da < 1) throw new Error(`Not a valid date: ${d}`);
+  /*
+   * THE DAY IS CHECKED AGAINST ITS OWN MONTH, not against 31.
+   *
+   * Until iteration 31 this read `da > 31`, so 2026-02-30, 2026-04-31 and 2026-02-29
+   * in a common year all parsed cleanly. Found by P-001, which added the rejection
+   * cases the corpus could not reach - the corpus described valid days, and no valid
+   * day is the thirtieth of February.
+   *
+   * It matters beyond tidiness: toEpochDay would convert a date that does not exist,
+   * so an aging bucket or a supplier due date computed from it would be wrong with
+   * nothing to show for it. A phantom date is worse than a rejected one, because it
+   * keeps working.
+   */
+  const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const lengths = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (da > lengths[mo - 1]!) throw new Error(`Not a valid date: ${d}`);
   return { y, m: mo, d: da };
 }
 

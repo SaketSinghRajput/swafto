@@ -365,6 +365,205 @@ const names = cases.map((c) => c.name);
 const dupes = names.filter((n, i) => names.indexOf(n) !== i);
 if (dupes.length) throw new Error(`Duplicate reject case names: ${dupes.join(', ')}`);
 
+/* ================================================================== *
+ * P-001 · THE ARMS THE CORPUS COULD NOT REACH
+ *
+ * Added at iteration 31. Shape 1 of the B3 gap: branches that fire when something is
+ * WRONG, unreachable from a corpus that describes valid days. Each case names a
+ * specific constraint or guard by the rule it violates, not by a category.
+ *
+ * NOT ADDED, and worth saying why: the four append-only triggers fire on UPDATE and
+ * DELETE, and every schema case here is an INSERT - the runner builds
+ * `INSERT INTO <table> (<columns>) VALUES (<values>)` and nothing else. Those arms
+ * are covered by append-only.spec.ts's four-column sweep instead. Writing cases the
+ * runner cannot execute would grow the count and test nothing.
+ * ================================================================== */
+
+/* ---- divideMoney's divisor guard: an engine arm with no case ---- */
+for (const [n, d] of [
+  ['zero', 0],
+  ['not-a-number', Number.NaN],
+  ['infinite', Number.POSITIVE_INFINITY],
+] as const) {
+  cases.push({
+    name: `money-divide-by-${n}`,
+    violates: 'divideMoney refuses a divisor that is not a non-zero finite number',
+    layers: ['engine'],
+    engine: { fn: 'divideMoney', args: [100000, d] },
+    messageMatches: 'non-zero finite',
+  });
+}
+
+/* ---- the date parser, which had two cases between all its arms ---- */
+for (const [n, d, why] of [
+  ['day-zero', '2026-01-00', 'a month has no zeroth day'],
+  ['month-thirteen', '2026-13-01', 'a year has twelve months'],
+  ['february-thirty', '2026-02-30', 'February never has thirty days'],
+  ['february-twentynine-common-year', '2026-02-29', 'this year is not a leap year'],
+  ['letters-for-digits', '2026-JAN-15', 'the format is numeric'],
+  ['slash-separators', '2026/01/15', 'the separator is a hyphen'],
+  ['two-digit-year', '26-01-15', 'the year is four digits'],
+  ['trailing-time', '2026-01-15T00:00:00Z', 'a date is not a timestamp'],
+  ['empty-string', '', 'a date is required'],
+] as const) {
+  cases.push({
+    name: `time-${n}`,
+    violates: why,
+    layers: ['engine'],
+    engine: { fn: 'parseIsoDate', args: [d] },
+  });
+}
+
+/* ---- entries_mode_ck: the mode a section is allowed to carry ---- */
+for (const [section, mode] of [
+  ['cash_sales', 'upi'],
+  ['upi_sales', 'cash'],
+  ['udhar_sales', 'cash'],
+  ['withdrawal', 'shop_stock'],
+  ['udhar_collection', 'udhar'],
+] as const) {
+  cases.push({
+    name: `enum-${mode}-mode-on-a-${section.replace(/_/g, '-')}-row`,
+    violates: `a ${section} row cannot be paid by ${mode}`,
+    layers: ['schema'],
+    schema: {
+      table: 'entries',
+      columns: 'id, shop_id, day_id, section, amount, mode, party_id, created_at, source',
+      values: `'{{uuid}}', '{{shop}}', '{{openDay}}', '${section}', 1000, '${mode}', ${
+        section === 'udhar_sales' || section === 'udhar_collection' ? "'{{party}}'" : 'NULL'
+      }, '{{now}}', 'manual'`,
+    },
+  });
+}
+
+/* ---- entries_due_ck: a due date belongs only to a purchase on credit ---- */
+for (const [section, mode] of [
+  ['purchase', 'cash'],
+  ['udhar_sales', 'udhar'],
+  ['expense', 'cash'],
+] as const) {
+  cases.push({
+    name: `time-due-date-on-a-${mode}-${section.replace(/_/g, '-')}`,
+    violates: 'only a purchase taken on credit carries a due date',
+    layers: ['schema'],
+    schema: {
+      table: 'entries',
+      columns:
+        'id, shop_id, day_id, section, amount, mode, party_id, due_date, created_at, source',
+      values: `'{{uuid}}', '{{shop}}', '{{openDay}}', '${section}', 1000, '${mode}', ${
+        section === 'udhar_sales' ? "'{{party}}'" : 'NULL'
+      }, '2026-08-01', '{{now}}', 'manual'`,
+    },
+  });
+}
+
+/* ---- entries_party_ck, from both sides ---- */
+for (const section of ['cash_sales', 'expense', 'withdrawal'] as const) {
+  cases.push({
+    name: `identity-party-on-a-${section.replace(/_/g, '-')}`,
+    violates: `a ${section} row names no party`,
+    layers: ['schema'],
+    schema: {
+      table: 'entries',
+      columns: 'id, shop_id, day_id, section, amount, mode, party_id, created_at, source',
+      values: `'{{uuid}}', '{{shop}}', '{{openDay}}', '${section}', 1000, 'cash', '{{party}}', '{{now}}', 'manual'`,
+    },
+  });
+}
+for (const section of ['udhar_collection', 'party_payment'] as const) {
+  cases.push({
+    name: `identity-${section.replace(/_/g, '-')}-without-a-party`,
+    violates: `a ${section} row must name the party it moves money with`,
+    layers: ['schema'],
+    schema: {
+      table: 'entries',
+      columns: 'id, shop_id, day_id, section, amount, mode, created_at, source',
+      values: `'{{uuid}}', '{{shop}}', '{{openDay}}', '${section}', 1000, 'cash', '{{now}}', 'manual'`,
+    },
+  });
+}
+
+/*
+ * A NUMERIC STRING IS NOT A REJECTION CASE, AND FINDING THAT OUT WAS WORTH THE TRY.
+ *
+ * `'1000'` inserted into an INTEGER column is not refused by
+ * `CHECK (typeof(amount) = 'integer')`. SQLite's column affinity converts the string
+ * to the integer 1000 BEFORE the constraint is evaluated, so typeof() sees an
+ * integer and the row is stored with the correct value.
+ *
+ * So the guard is weaker than it looks - it cannot stop a string - and it does not
+ * need to, because affinity has already produced the right value. What it DOES stop
+ * is a REAL: '1500.5' keeps REAL affinity, typeof() sees 'real', and the row is
+ * refused. That is the case worth having, and it is below.
+ *
+ * Two cases asserting the string form were written and removed rather than left to
+ * fail: a corpus entry that describes something the system correctly accepts is not
+ * a rejection case, it is a wrong expectation.
+ */
+
+/* ---- days_opening_ck and days_counted_ck ---- */
+for (const [label, col, bad, why] of [
+  ['opening-cash-fractional', 'opening_cash', '5000.5', 'opening cash is an integer number of paise, never a fraction'],
+  ['opening-cash-negative', 'opening_cash', '-1', 'opening cash cannot be negative'],
+  ['counted-cash-fractional', 'counted_cash', '1500.5', 'counted cash is an integer number of paise, never a fraction'],
+  ['counted-cash-negative', 'counted_cash', '-1', 'counted cash cannot be negative'],
+] as const) {
+  cases.push({
+    name: `money-${label}`,
+    violates: why,
+    layers: ['schema'],
+    schema: {
+      table: 'days',
+      columns: `shop_id, date, state, ${col}, created_at`,
+      values: `'{{shop}}', '2026-09-09', 'open', ${bad}, '{{now}}'`,
+    },
+  });
+}
+
+/* ---- parties: kind, and the due-days window at both ends ---- */
+cases.push({
+  name: 'enum-unknown-party-kind',
+  violates: 'a party is a customer or a supplier and nothing else',
+  layers: ['schema'],
+  schema: {
+    table: 'parties',
+    columns: 'id, shop_id, kind, name, created_at',
+    values: "'{{uuid}}', '{{shop}}', 'vendor', 'Test Party', '{{now}}'",
+  },
+});
+for (const [n, v, why] of [
+  ['negative', '-1', 'a due window cannot run backwards'],
+  ['beyond-a-year', '366', 'a due window longer than a year is a data-entry error'],
+] as const) {
+  cases.push({
+    name: `time-party-due-days-${n}`,
+    violates: why,
+    layers: ['schema'],
+    schema: {
+      table: 'parties',
+      columns: 'id, shop_id, kind, name, default_due_days, created_at',
+      values: `'{{uuid}}', '{{shop}}', 'customer', 'Test Party', ${v}, '{{now}}'`,
+    },
+  });
+}
+
+/* ---- users_phone_ck, at both ends of the window ---- */
+for (const [n, phone, why] of [
+  ['too-short', '1234567', 'a phone number shorter than the window cannot be real'],
+  ['too-long', '12345678901234567', 'a phone number longer than the window cannot be real'],
+] as const) {
+  cases.push({
+    name: `identity-phone-${n}`,
+    violates: why,
+    layers: ['schema'],
+    schema: {
+      table: 'users',
+      columns: 'id, shop_id, phone, created_at',
+      values: `'{{uuid}}', '{{shop}}', '${phone}', '{{now}}'`,
+    },
+  });
+}
+
 const byLayer = (l: Layer) => cases.filter((c) => c.layers.includes(l)).length;
 
 const out = {
