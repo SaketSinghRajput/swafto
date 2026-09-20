@@ -326,23 +326,23 @@ export const VERIFIERS = [
      * runs off the side of the screen at a large scale, which is exactly the defect
      * this tool found on its first run.
      *
-     * AN EARLIER PLANT HERE STOPPED WORKING AND SAID SO. It removed `minHeight: 0`
-     * from the list, which had put the keypad below the fold. Stepping the keypad
-     * label down one size gave the layout enough room that the same plant no longer
-     * overflowed anything, so the plant passed and the prove step failed - which is
-     * the prove step doing its job. A plant that stops planting is a finding.
+     * AN EARLIER PLANT HERE STOPPED WORKING AND SAID SO, TWICE.
+     *
+     * First it removed `minHeight: 0` from the list, which had put the keypad below
+     * the fold. Stepping the keypad label down one size gave the layout enough room
+     * that the same plant no longer overflowed anything, so the plant passed and the
+     * prove step failed - the prove step doing its job.
+     *
+     * Then the ANCHOR ITSELF VANISHED. T7 had inlined its draft row; the four forms
+     * were later refactored onto the shared `EntryForm`, which is where that row now
+     * lives. The plant pointed into a file that no longer contained its subject, and
+     * the harness reported ANCHOR MISSING rather than quietly passing. A plant that
+     * stops planting is a finding, and this is the third one it has produced.
      */
     defect: {
-      file: 'apps/mobile/src/screens/T7.tsx',
-      find:
-        "        testID=\"t7-draft\"\n        style={{\n          flexDirection: 'row',\n" +
-        "          alignItems: 'center',\n          justifyContent: 'space-between',\n" +
-        '          // Money is uncapped by design, so at a large system font scale the label and the\n' +
-        '          // figure wrap onto two lines rather than running off the side of the screen.\n' +
-        "          flexWrap: 'wrap',",
-      replace:
-        "        testID=\"t7-draft\"\n        style={{\n          flexDirection: 'row',\n" +
-        "          alignItems: 'center',\n          justifyContent: 'space-between',",
+      file: 'apps/mobile/src/components/EntryForm.tsx',
+      find: "              justifyContent: 'space-between',\n              flexWrap: 'wrap',",
+      replace: "              justifyContent: 'space-between',",
     },
   },
   {
@@ -356,6 +356,22 @@ export const VERIFIERS = [
       file: 'apps/mobile/src/store/index.ts',
       find: '  get revision(): number {',
       replace: '  get revision(): number {\n    console.log(this.#state.entries);',
+    },
+  },
+  {
+    id: 'export-naming',
+    command: 'npm run check:naming',
+    file: 'tools/check-export-naming.mjs',
+    claims:
+      'No copy anywhere in the product calls its output an invoice, a GST return, a filing or a tax document - in Latin script, in any of the three language columns. LEGAL-AUDIT section 7: a GST tax invoice has mandatory Rule 46 particulars SWAFTO captures none of, so telling a shopkeeper he is holding one puts the consequence on him. It does NOT cover the same words written in Devanagari or Odia script; that is H13.',
+    benchmarks: [],
+    defect: {
+      file: 'apps/mobile/src/i18n/strings.ts',
+      find: "  'consent.on': { en: 'Yes',",
+      replace:
+        "  'plant.export': { en: 'Your GST invoice', hi: 'GST invoice', or: 'GST invoice' }," +
+        String.fromCharCode(10) +
+        "  'consent.on': { en: 'Yes',",
     },
   },
   {
@@ -806,6 +822,10 @@ const RESPONSES = {
      */
     plantIsResponse:
       'B31 is "0 overflow". The plant removes the style that lets the list give up its space and the keypad lands below the fold. Beyond the plant, the instrument has already tracked a moving subject: 18 overflows on its first run, then 7, then 1, then 0, as each underlying defect was fixed.',
+  },
+  'export-naming': {
+    plantIsResponse:
+      'The rule is "0 forbidden terms in copy". The plant adds one string calling an export a GST invoice, in all three language columns, and the count moves 0 -> 3 - three because the term appears in each column and each is a thing somebody reads. Verified both directions before the verifier was registered: exit 1 planted, exit 0 restored.',
   },
   'client-logs': {
     plantIsResponse:
