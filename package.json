@@ -41,6 +41,7 @@
     "design": "node tools/gen-design.mjs",
     "check:design": "node tools/gen-design.mjs --check",
     "check:crossdoc": "node tools/check-crossdoc.mjs",
+    "pin": "node tools/pin-injections.mjs",
     "design:prove": "node tools/gen-design.mjs --prove",
     "check:shadow:prove": "node tools/check-shadow-copies.mjs --prove",
     "coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='packages/formula-engine/src/**' --coverage.include='apps/api/src/**' --coverage.reporter=text --coverage.reporter=json-summary",

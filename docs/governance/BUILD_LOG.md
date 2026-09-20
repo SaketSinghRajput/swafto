@@ -2668,3 +2668,17 @@ translation, which is flagged for the native reviewer - register, not only meani
 `52bc7216aa70d0e4`, ADRs `2aacb5ce76c9c542`, autonomous `3858002c54cede3f` - all four
 IDENTICAL. No feature added, removed or redefined; no constraint softened; no
 threshold moved.
+
+**Correction, same iteration.** `check:governance` refused the audit commit: I had
+pinned `26-audit-02.md` as verbatim evidence. My ad-hoc pinning one-liner tested for
+the substring `VERBATIM`; the real predicate in `tools/verbatim.mjs` tests for the
+full marker the extractor writes, and my file opens "VERBATIM-EQUIVALENT".
+
+Pinning it would have **exempted my own adversary pass from check-prose**, because the
+same predicate decides what is evidence and what is our prose. `verbatim.mjs` warned
+about exactly this in its own header: "the SECOND checker to need it is the point at
+which two copies start drifting apart." I was the second checker and I reimplemented
+instead of importing.
+
+`tools/pin-injections.mjs` now does it, importing the predicate. 21 files pinned as
+human evidence; 2 - both adversary passes - are our prose and fully checked.
