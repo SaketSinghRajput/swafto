@@ -20,8 +20,9 @@ If yes, it does not belong here.
 | H8 | Physical device pass | 1 hour | Confidence the AVD cannot give |
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
-| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration; enforcement already runs in CI |
+| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration only. The rule itself already runs, programmatically, inside `check:money` - there is no CI in this repository, so the old "already runs in CI" on this row was false |
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
+| H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
 
 ---
 
@@ -308,3 +309,33 @@ remembered of it, which is the exact failure the directory was created to preven
 `INJECTIONS/14-instruments-before-subjects.md`, renaming the existing
 `14-verify-the-verifiers.md` to `13b-` so the numbering stops lying, and re-pin the
 lock.
+
+---
+
+## H13 · Native review of the Odia and Hindi screen copy
+
+**Why no agent can do it.** The same reason as H10, applied to a larger surface. The
+screen strings in `apps/mobile/src/i18n/strings.ts` were drafted by this loop and
+carry `COPY_REVIEW_STATE = 'DRAFT-PENDING-NATIVE-REVIEW'` in the data, not only in a
+comment, so nothing here can claim they are approved. Every automated check they
+pass - they render, they fit, they use Latin numerals, the longest-string mode does
+not break the layout - is a check about SHAPE. None of them can tell you whether
+`ଖାଲି କରନ୍ତୁ` is what an Odia speaker expects on a key that clears a number, or
+whether `ଏପର୍ଯ୍ୟନ୍ତ ମୋଟ` reads as "total so far" rather than as something stranger.
+
+**What to look at, in order of how much a mistake costs.**
+
+1. The three payment modes - `ନଗଦ`, `UPI`, `ଉଧାର`. These label the buttons that
+   decide which section an entry lands in. A wrong word here misfiles money.
+2. `ଏପର୍ଯ୍ୟନ୍ତ ମୋଟ`, the running total, because it is the figure he is watching.
+3. The error line, which promises nothing was lost. If that promise does not read as
+   a promise, he will re-enter the day.
+4. The keypad keys and the empty state, which are the least costly to get wrong.
+
+**The artifact to review it against is the contact sheet**, not this file:
+`docs/contact-sheet/index.html` shows the strings in place, at the size and in the
+typeface they ship in. A word that reads fine in a list can still be wrong on a key.
+
+**Until this is done** the app has copy that renders correctly and means something
+nobody here has verified. That is a launch blocker for an Odia-language release and
+is recorded as one.

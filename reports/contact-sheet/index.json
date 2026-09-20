@@ -1,0 +1,32 @@
+[
+  {
+    "id": "T7-canonical",
+    "caption": "T7 Form A - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T7-canonical.html"
+  },
+  {
+    "id": "T7-adversarial",
+    "caption": "T7 Form A - adversarial shop, Odia, Comfort. The panel the Odia question is answered by.",
+    "file": "reports\\contact-sheet\\T7-adversarial.html"
+  },
+  {
+    "id": "T7-adversarial-focus",
+    "caption": "T7 Form A - adversarial shop, Odia, Focus mode",
+    "file": "reports\\contact-sheet\\T7-adversarial-focus.html"
+  },
+  {
+    "id": "T7-longest",
+    "caption": "T7 Form A - longest-string pseudo-locale, the layout upper bound",
+    "file": "reports\\contact-sheet\\T7-longest.html"
+  },
+  {
+    "id": "T7-empty",
+    "caption": "T7 Form A - a shop first morning, nothing entered yet",
+    "file": "reports\\contact-sheet\\T7-empty.html"
+  },
+  {
+    "id": "T7-error",
+    "caption": "T7 Form A - the day could not be opened",
+    "file": "reports\\contact-sheet\\T7-error.html"
+  }
+]

@@ -24,9 +24,17 @@ export type Mode = 'comfort' | 'focus';
 
 /**
  * Colour. Marigold is the brand accent and the reason B27 exists: white text on it
- * fails the contrast minimum. So `onAccent` is ink in Comfort, and there is no token
- * anywhere that pairs white with marigold - the safest way to never ship that pair
- * is for it not to be expressible.
+ * fails the contrast minimum. So `onAccent` is ink in BOTH modes, and no token pairs
+ * white with marigold - the safest way never to ship that pair is for it not to be
+ * expressible.
+ *
+ * IT WAS EXPRESSIBLE UNTIL ITERATION 37, AND THIS COMMENT SAID OTHERWISE. Focus mode
+ * carried onAccent: white over accent #B87214, which measures 3.85:1 against a 4.5
+ * minimum - in the mode that exists specifically for the hardest reading conditions.
+ * The claim above was written first and the palette drifted out from under it; the
+ * comment kept asserting an invariant nobody was checking. Every token pair in every
+ * mode is now measured by a test rather than promised here, which is the only reason
+ * to believe the sentence this time.
  */
 const palette = {
   comfort: {
@@ -46,7 +54,7 @@ const palette = {
     ink: '#000000',
     inkMuted: '#3A3A3A',
     accent: '#B87214',
-    onAccent: '#FFFFFF',
+    onAccent: '#000000',
     positive: '#0E4F28',
     negative: '#7A140E',
     border: '#000000',
@@ -86,9 +94,32 @@ export const tokens = (mode: Mode = 'comfort') =>
     type: type[mode],
     /** Every interactive element is at least this. The value is the registry's. */
     touchTarget: TOUCH_TARGET_MIN_DP,
+    /**
+     * LINE HEIGHT, SIZED FOR INDIC INK RATHER THAN LATIN.
+     *
+     * Measured on the shipped AnekOdia-Medium at 24px: the font declares an ascent
+     * of 24 and a descent of 17, but Odia ink reaches 26 ABOVE the baseline -
+     * above-base matras exceed the font's own declared ascent. Latin ink in the
+     * same face reaches 16 and never comes close. So a line box derived from the
+     * font metrics is correct for English and clips Odia, which is DC-005 again in
+     * a different costume: the default is fine until the language changes, and the
+     * language it breaks on is the one nobody here can proofread.
+     *
+     * 1.8 rather than a tighter figure because the measurement is of the strings
+     * this product happens to use today. A conjunct nobody has typed yet can stack
+     * higher, and the cost of the headroom is a few dp while the cost of being
+     * wrong is a clipped vowel that changes what a word says.
+     */
+    leading: (sizeSp: number) => Math.round(sizeSp * 1.8),
     /** Chrome stops growing here, so navigation cannot eat the content. */
     maxFontScale: CHROME_FONT_SCALE_CAP,
     radius: { sm: 4, md: 8, lg: 12 },
+    /**
+     * The one rule weight in the product. A separator is a hairline or it is not a
+     * separator, and giving it a scale invites a screen to draw a heavier line to
+     * mean "more important" - which is a job for space and weight, not for a border.
+     */
+    hairline: 1,
     /**
      * The bundled family. The app ships Anek because a budget Android handset may
      * carry no Odia font at all (DC-004), and a missing glyph is not a degraded

@@ -77,6 +77,7 @@ export function Money({
       style={{
         fontFamily: t.font.medium,
         fontSize: t.type[size],
+        lineHeight: t.leading(t.type[size]),
         color,
         // DC-005. Without this the column does not line up, in any language.
         fontVariant: ['tabular-nums'],

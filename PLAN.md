@@ -480,8 +480,9 @@ DLT registration and a live privacy policy cannot be compressed by building fast
 | H8 | Physical device pass | 1 hour | Confidence the AVD cannot give |
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
-| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration; enforcement already runs in CI |
+| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration only. The rule itself already runs, programmatically, inside `check:money` - there is no CI in this repository, so the old "already runs in CI" on this row was false |
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
+| H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
 
 ---
 
@@ -520,7 +521,7 @@ e0f36bb9d5baab8d  traceability  docs/spec/TRACEABILITY.md
 d6d5d152198da4bc  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 2e96d515acdc85e0  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
-52c5a4dbb0c94bd1  humanActions  docs/handover/HUMAN-ACTIONS.md
+ab90001626808cb0  humanActions  docs/handover/HUMAN-ACTIONS.md
 71bae6e9b226bc2c  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md

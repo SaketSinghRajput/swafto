@@ -11,15 +11,7 @@ Every fact is labelled **STATIC** (read from the source: cheap, complete, blind 
 anything computed at runtime) or **MEASURED** (render and instrument output: expensive,
 partial, and the only thing that tells the truth about a layout).
 
-> ## THIS DOCUMENT IS NEARLY EMPTY, AND THAT IS THE CORRECT OUTPUT
->
-> **10 committed screens, 0 implemented.** There is no
-> React Native source in this repository yet — `apps/mobile` holds bundled fonts and
-> nothing else. Every screen below reads ABSENT.
->
-> The generator exists now so that it fills as screens land, which makes it a record
-> of what was built rather than what was meant to be built. An honest empty document
-> is useful; one that hides its emptiness behind prose is not.
+**10 committed screens, 1 implemented.**
 
 > **No measured data.** `reports/design/measured.json` does not exist, so every MEASURED cell
 > reads `-`. The screen instruments that would produce it are tasks `I-001` through
@@ -33,8 +25,25 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T7 — Entry · Form A
 
-**ABSENT.** No file at `apps/mobile/src/screens/T7.tsx`.
-TRACEABILITY says it will display IN1.
+`apps\mobile\src\screens\T7.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | IN1 | - |
+| components composed | ActivityIndicator, Keypad, Money, Pressable, SalesSection, ScrollView, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [x] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T1 — Today · open day
 
@@ -88,12 +97,14 @@ TRACEABILITY says it will display no feature yet recorded.
 
 | component | file | used by | tokens | raw values |
 |---|---|---|---|---|
-| `Money` | apps\mobile\src\components\Money.tsx | **nothing** | 0 | 0 |
+| `Keypad` | apps\mobile\src\components\Keypad.tsx | T7 | 0 | 0 |
+| `Money` | apps\mobile\src\components\Money.tsx | T7 | 0 | 0 |
 
 **USED ONCE** — built as shared, used by a single screen. Not necessarily wrong, but a
 component with one caller is usually a screen section that got promoted for no reason.
 
-*none*
+- `Keypad` — only T7
+- `Money` — only T7
 
 **DUPLICATED** — near-identical component trees in more than one screen with no shared
 component.
@@ -118,9 +129,10 @@ component.
 | `OTP_TTL_SECONDS` | 1 |
 | `OTP_DIGITS` | 1 |
 | `OTP_LIMITS` | 1 |
-| `TOUCH_TARGET_MIN_DP` | 1 |
-| `BODY_TEXT_MIN_SP` | 1 |
+| `TOUCH_TARGET_MIN_DP` | 2 |
+| `BODY_TEXT_MIN_SP` | 2 |
 | `CHROME_FONT_SCALE_CAP` | 1 |
+| `CONTRAST_MIN_RATIO` | 1 |
 
 ### D.2 · defined, and never referenced by `apps/` or `packages/`
 
@@ -134,7 +146,6 @@ done by hand that a token already does. Both are worth knowing; **do not delete
 anything on this evidence alone.**
 
 - `APP_LOCK_PIN_DIGITS`
-- `CONTRAST_MIN_RATIO`
 - `DLT_VARIABLE_MAX_CHARS`
 - `DLT_MAX_VARIABLE_SHARE_PCT`
 - `GSM_SEGMENT_CHARS`
@@ -157,12 +168,9 @@ Every place the code disagrees with its specification. **ENFORCED** rows fail
 `check:design`; **REPORTED** rows need judgement, and a check that fails on judgement
 gets disabled.
 
-*Empty — because there is no screen code to disagree with anything.*
-
-An empty drift table **once screens exist** would be surprising, and should be treated
-as an empty adversary pass: run it again, harder, on a different slice. The first
-screen is where the most drift is created, because that is where every pattern gets
-invented.
+| what the spec says | where | what the code does | where | severity |
+|---|---|---|---|---|
+| T7 displays IN1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T7.tsx | REPORTED |
 
 ---
 

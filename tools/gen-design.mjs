@@ -63,7 +63,7 @@ function walk(dir, out = []) {
 
 /** Style properties whose numeric literal is a design value rather than an index. */
 const NUMERIC_PROPS =
-  /\b(fontSize|lineHeight|letterSpacing|padding|paddingTop|paddingBottom|paddingLeft|paddingRight|paddingHorizontal|paddingVertical|margin|marginTop|marginBottom|marginLeft|marginRight|marginHorizontal|marginVertical|width|height|minWidth|minHeight|maxWidth|maxHeight|borderRadius|borderWidth|gap|rowGap|columnGap|elevation)\s*:\s*(-?\d+(?:\.\d+)?)/g;
+  /\b(fontSize|lineHeight|letterSpacing|padding|paddingTop|paddingBottom|paddingLeft|paddingRight|paddingHorizontal|paddingVertical|margin|marginTop|marginBottom|marginLeft|marginRight|marginHorizontal|marginVertical|width|height|minWidth|minHeight|maxWidth|maxHeight|borderRadius|borderWidth|borderTopWidth|borderBottomWidth|borderLeftWidth|borderRightWidth|borderStartWidth|borderEndWidth|top|bottom|left|right|flexBasis|gap|rowGap|columnGap|elevation)\s*:\s*(-?\d+(?:\.\d+)?)/g;
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const FUNC_COLOR = /\b(?:rgba?|hsla?)\([^)]*\)/g;
 const NAMED_COLOR =
