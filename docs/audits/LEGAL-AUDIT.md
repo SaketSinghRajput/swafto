@@ -447,7 +447,7 @@ Every row here is mirrored into `TRACEABILITY.md`.
 | L-05 | Retention policy - inactivity period | **RESOLVED-AUTONOMOUSLY** | Privacy policy §5 | Privacy policy |
 | L-06 | Deletion must propagate to S3 backups within the rotation | ACTION-REQUIRED | Deletion job + Terraform lifecycle rule | - |
 | L-07 | Grievance Officer named, with SLA | **RESOLVED-AUTONOMOUSLY** | About screen, policy, website | Play submission |
-| L-08 | Breach response runbook + rehearsal | ACTION-REQUIRED | `docs/runbooks/breach.md` (owner G3) | - |
+| L-08 | Breach response runbook + rehearsal | **RUNBOOK WRITTEN - never rehearsed** | `docs/runbooks/breach.md`, transcribed from Rule 7 with sources. The rehearsal in its section 7 has not been run, which the file states as a gap rather than hiding. | - |
 | L-09 | Verify no processor moves data out of India | ACTION-REQUIRED | Cloudflare / Sentry / FCM / SMS review | - |
 | L-10 | Cloudflare TLS termination outside India - is it a transfer? | **RESOLVED-AUTONOMOUSLY** | Architecture §08 decision | - |
 | L-11 | FCM push payloads must carry no personal data | **NOT APPLICABLE IN V1, with a tripwire** | There is no push integration at all, and the notification inbox and its permission primer are cut (DEFERRED). `check:push` fails the build the day an SDK appears, and says what must be true before it is rewritten. | - |

@@ -93,7 +93,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-05 | Retention / inactivity period | Privacy policy | AD-003/007 | RESOLVED |
 | L-06 | Deletion propagates to S3 backups | Deletion job + TF lifecycle rule | Eng | TODO |
 | L-07 | Grievance Officer named with SLA | About screen, policy, website | AD-003/007 | RESOLVED |
-| L-08 | Breach response runbook + rehearsal | `docs/runbooks/breach.md` | Eng (G3) | TODO |
+| L-08 | Breach response runbook + rehearsal | `docs/runbooks/breach.md` - Rule 7 clocks, the two notifications, what the system can answer | Eng (G3) | WIP - written; the rehearsal has never been run |
 | L-09 | No processor moves data out of India | Cloudflare/Sentry/FCM/SMS review | Eng | TODO |
 | L-10 | Cloudflare TLS termination abroad = transfer? | Architecture decision | AD-005/006 | RESOLVED |
 | L-11 | FCM payloads carry no personal data | `tools/check-push-payload.mjs` - a tripwire; V1 ships no push at all | Eng | N/A-V1 - fails the build the day an SDK appears |
