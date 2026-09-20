@@ -63,6 +63,14 @@ nothing reads the other.
 The lesson is the one A12 keeps teaching: *the policy is asserted present* is not a
 test, and a defence nobody has tried to defeat is a belief.
 
+**And the fix taught a second lesson.** Hardening the read routes with
+`additionalProperties: false` on the querystring - so a forged parameter is REFUSED
+rather than ignored - moved the failure earlier than `shopOf`, and the route cases
+stopped being able to see a defect inside it. A guard whose only tests go through
+something that refuses first is a guard nobody is testing any more. `shopOf` now has
+a case that calls it directly, with the query, the body, the path and a header all
+pointing at somebody else's shop, and that case is what kills the plant.
+
 **FINDING 2 - A CHECKER SCOPED BY A HAND-WRITTEN LIST.** `check:naming` read four
 named files. Its plant only ever moved along the TERM axis - a forbidden word in a
 file already on the list - so on the FILE axis it was blind, and the newest code in

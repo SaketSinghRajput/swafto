@@ -99,6 +99,10 @@ export function registerSyncRoutes(app: FastifyInstance, deps: AppDeps): void {
     '/v1/sync/push',
     {
       schema: {
+        // It takes no query parameters. Saying so refuses a forged `shopId`
+        // at the schema rather than ignoring it - see `shopOf` and the
+        // iteration-35 adversary pass.
+        querystring: { type: 'object', additionalProperties: false, properties: {} },
         body: {
           type: 'object',
           additionalProperties: false,

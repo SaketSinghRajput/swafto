@@ -13,7 +13,7 @@
  * then agree with neither.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { buildApp, type AppDeps } from '../src/app.ts';
+import { buildApp, shopOf, type AppDeps } from '../src/app.ts';
 import { memoryRepo } from '../src/db/memory.ts';
 import { memoryOtpStore } from '../src/auth/routes.ts';
 import { memorySql } from '../src/rate-limit/memory-sql.ts';
@@ -563,9 +563,14 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
         '/v1/days/' + CANONICAL_DATE + '/summary?shopId=' + encodeURIComponent(session.shopId!),
       headers: auth(other.accessToken!),
     });
-    // Either refused outright or answered for HIS OWN shop. Never the other one.
-    if (forged.statusCode === 200) expect(JSON.parse(forged.body).entryCount).toBe(0);
-    else expect(forged.statusCode).toBeGreaterThanOrEqual(400);
+    /*
+     * REFUSED, not ignored. Both are safe - the claims were always what
+     * decided - but only a refusal tells a client that it is wrong, and a
+     * client sending somebody else's shop id is wrong in a way worth saying
+     * out loud. `additionalProperties: false` on the querystring schema is
+     * what makes it a 400.
+     */
+    expect(forged.statusCode).toBe(400);
   });
 
   it('a shopId in the BODY is refused outright, not quietly stripped', async () => {
@@ -600,6 +605,35 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).entryCount).toBe(0);
+  });
+
+  it('SHOPOF ITSELF reads the claims and nothing else, whatever the request carries', () => {
+    /*
+     * The guard tested at its own level, and it needs to be.
+     *
+     * The route cases above now get a 400 from the querystring schema before
+     * `shopOf` is reached, which is the right posture and ALSO means they
+     * stopped being able to see a defect inside this function. A guard whose
+     * only tests go through something that refuses first is a guard nobody is
+     * testing. This one calls it directly, with every request-controlled
+     * surface pointing at somebody else's shop.
+     */
+    const forged = {
+      claims: { sub: 'u', shop: 'shop-MINE', dev: 'd', typ: 'access' },
+      query: { shopId: 'shop-THEIRS' },
+      body: { shopId: 'shop-THEIRS' },
+      params: { shopId: 'shop-THEIRS' },
+      headers: { 'x-shop-id': 'shop-THEIRS' },
+    } as unknown as Parameters<typeof shopOf>[0];
+
+    expect(shopOf(forged)).toBe('shop-MINE');
+  });
+
+  it('and refuses outright when there are no claims, rather than guessing', () => {
+    const anonymous = { query: { shopId: 'shop-THEIRS' } } as unknown as Parameters<
+      typeof shopOf
+    >[0];
+    expect(() => shopOf(anonymous)).toThrow(/unauthenticated/);
   });
 
   it('and the same forgery cannot WRITE into another shop either', async () => {

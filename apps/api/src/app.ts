@@ -210,6 +210,21 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 }
 
 /** The authenticated shop, or a refusal. Every handler that touches a ledger uses it. */
+/**
+ * WHICH SHOP A REQUEST IS ABOUT. The session decides. Nothing else may.
+ *
+ * THIS FUNCTION IS THE WHOLE OF S-11. Every route asks it, and if it ever
+ * consults the query string, the body, a header or a path parameter, a
+ * shopkeeper can read and write another shop's ledger by typing an id.
+ *
+ * The iteration-35 adversary pass planted exactly that - a version preferring
+ * `query.shopId` - and 228 tests passed. The routes now refuse an unknown
+ * query parameter at the schema, which is defence in depth and ALSO moved the
+ * failure earlier than this function, so the plant stopped being reachable
+ * through a route. That is why `app.spec`'s case calls this directly: a guard
+ * whose only tests go through something that now refuses first is a guard
+ * nobody is testing any more.
+ */
 export function shopOf(req: FastifyRequest): string {
   if (!req.claims) throw new Error('shopOf called on an unauthenticated request');
   return req.claims.shop;

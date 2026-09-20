@@ -94,7 +94,10 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
    * short by three hundred rupees needs to see the lines that built the
    * expectation, because the number on its own is an accusation he cannot check.
    */
-  app.get('/v1/days/:date/summary', async (req, reply) => {
+  app.get('/v1/days/:date/summary', {
+    // Takes no query parameters at all, and says so rather than ignoring them.
+    schema: { querystring: { type: 'object', additionalProperties: false, properties: {} } },
+  }, async (req, reply) => {
     const shopId = shopOf(req);
     const { date } = req.params as { date: string };
     try {
@@ -127,8 +130,26 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
     });
   });
 
-  /** Who owes the shop, and who the shop owes. */
-  app.get('/v1/parties/outstanding', async (req, reply) => {
+  /**
+   * Who owes the shop, and who the shop owes.
+   *
+   * THE QUERY IS SCHEMA'D FOR THE SAME REASON THE BODY IS. The adversary pass
+   * at iteration 35 planted a `shopOf` that preferred a `shopId` from the query
+   * string, and the whole suite passed. The claims were always what decided, so
+   * nothing was ever exploitable - but a forged parameter being silently
+   * IGNORED and a forged parameter being REFUSED are different postures, and
+   * only the second one tells a client it is wrong. `additionalProperties:
+   * false` makes it the second.
+   */
+  app.get('/v1/parties/outstanding', {
+    schema: {
+      querystring: {
+        type: 'object',
+        additionalProperties: false,
+        properties: { asOf: { type: 'string', minLength: 10, maxLength: 10 } },
+      },
+    },
+  }, async (req, reply) => {
     const shopId = shopOf(req);
     const { asOf } = req.query as { asOf?: string };
     const date = asOf ?? deps.now().slice(0, 10);
@@ -183,7 +204,9 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
   });
 
   /** The operational alerts. A figure with nothing behind it reports null, not zero. */
-  app.get('/v1/alerts', async (req, reply) => {
+  app.get('/v1/alerts', {
+    schema: { querystring: { type: 'object', additionalProperties: false, properties: {} } },
+  }, async (req, reply) => {
     const shopId = shopOf(req);
     const today = deps.now().slice(0, 10) as IsoDate;
     const input = await dayInputFor(deps.repo, shopId, today);
@@ -307,7 +330,18 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
     },
   );
   /** The reports screen's data. Figures only; the phone decides how to draw them. */
-  app.get('/v1/reports', async (req, reply) => {
+  app.get('/v1/reports', {
+    schema: {
+      querystring: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          from: { type: 'string', minLength: 10, maxLength: 10 },
+          to: { type: 'string', minLength: 10, maxLength: 10 },
+        },
+      },
+    },
+  }, async (req, reply) => {
     const shopId = shopOf(req);
     const { from, to } = req.query as { from?: string; to?: string };
     const end = to ?? deps.now().slice(0, 10);
