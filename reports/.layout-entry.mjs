@@ -9831,6 +9831,29 @@ var Store = class {
     return this.isSkipped(section) ? "skipped" : "untouched";
   }
   /**
+   * The opening figure, typed once on the first morning or after a gap.
+   *
+   * REFUSED ON A CLOSED DAY, and refused if one is already set. The opening cash
+   * is the first term of the cash check: changing it after entries exist moves
+   * the expected figure under a shopkeeper who has already started counting
+   * against it. If it is genuinely wrong, the correction is an entry, like every
+   * other correction in this product.
+   */
+  setOpeningCash(amount) {
+    if (this.#state.day.state === "closed") {
+      throw new DayClosedViolation(this.#state.day.date);
+    }
+    if (this.#state.day.openingCash !== null && this.#state.day.openingCash !== void 0) {
+      throw new AppendOnlyViolation(
+        "the opening cash for " + this.#state.day.date + " is already set"
+      );
+    }
+    const day = { ...this.#state.day, openingCash: assertPaise(amount, "openingCash") };
+    this.#port.putDay(day);
+    this.#state = { ...this.#state, day };
+    this.#revision += 1;
+  }
+  /**
    * Append an entry and its outbox row, together.
    *
    * Refuses a duplicate id, and refuses any entry dated into a closed day.
