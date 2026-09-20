@@ -36,7 +36,7 @@ start rather than rediscovering them:
 |---|---|---|
 | append-only trigger | **column** | yes, since iteration 19 - four unconstrained columns, both engines |
 | closed-day trigger (CP-4) | **day state**, and the day named by the row | **yes, since iteration 35** - the guard was re-pointed at `corrects_day_id` instead of `day_id`, which is the exact column swap the axis is about. Six tests failed, in both directions: the correction was wrongly rejected AND the entry into the closed day was wrongly allowed |
-| cross-tenant RLS | **shop_id**, per table, and **where the shop id comes from** | **yes, since iteration 35, and the debt paid off** - see the finding below. The policy was asserted present on all six tables and the READ plant was owed until routes existed. When it was finally run it SURVIVED 228 tests |
+| cross-tenant RLS | **shop_id**, per table; **where the shop id comes from**; and **who the database connection is** | **yes, all three, iteration 35** - the route half survived 228 tests when first planted (finding below). The DATABASE half is now attacked directly in `packages/schema/test/tenancy.spec.ts`: a non-superuser role that OWNS the tables, two shops, and a cross-tenant read that returns nothing. Weakening the policy to `true` fails 7 cases; removing `FORCE ROW LEVEL SECURITY` fails the same 7 |
 | money lint | **file path and identifier name** | yes - planted in the engine and outside it, and on a money-named vs non-money identifier |
 | rate limiter | **rule identity and identifier value** | yes - per-rule and per-identifier plants, plus the telemetry-only rule |
 | template checker | **language** | partly - the copy-vs-constant plant is English-only, because only English states a duration today. It fires on any language the moment one gains a number |
@@ -87,6 +87,22 @@ same sentence.
 scoped by a list of known SDK names, which is the list that will not contain the
 SDK somebody reaches for next year. A dependency-name sweep was added and probed
 with three unlisted names - all flagged - and one unrelated package, which was not.
+
+**DISCHARGED - the cross-tenant READ plant, owed since iteration 19.** It could not
+be run until routes and a database existed together; both do now. Two things it
+taught while being written:
+
+*Every other Postgres test in this repository connects as `postgres`, a SUPERUSER,
+and superusers bypass RLS entirely.* An RLS test written the ordinary way would
+have passed with no policies at all. It needed a role of its own.
+
+*And the first version of the FORCE plant did not fire.* Removing `FORCE ROW LEVEL
+SECURITY` left the suite green, because plain `ENABLE` already applies to a role
+that does not own the table - and the probe did not. FORCE protects the case where
+the application connects AS THE OWNER, which is the ordinary deployment, so the
+probe was made the owner. Now both plants fail it. A plant that does not move the
+result means the test is aimed slightly beside the guard, which is worth more than
+the plant that fires.
 
 **DISCHARGED - the correction-into-closed-day plant.** Owed since iteration 19 and
 now run: the trigger was re-pointed at `corrects_day_id`, and six tests failed in

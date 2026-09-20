@@ -126,7 +126,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | S-07 | Rogue CA | CA pinning + expiry + kill switch | `test/pinning.spec.ts` | TODO |
 | S-08 | Origin bypass | Cloudflare-only SG + origin secret | Terraform + smoke test | TODO |
 | S-09 | SSH exposure | SSM only, no inbound 22 | Terraform assertion | TODO |
-| S-10 | **Cross-tenant read** | 3 layers incl. Postgres RLS | `apps/api/test/api.spec.ts` "one shop cannot read another shop"; `test/pipeline.spec.tsx` through the real client | **DONE - app and API layers; the RLS layer itself is asserted present, not yet attacked with a real cross-tenant SQL read** |
+| S-10 | **Cross-tenant read** | 3 layers incl. Postgres RLS | `packages/schema/test/tenancy.spec.ts` - a non-superuser role owning the tables, attacking across tenants in SQL; `apps/api/test/api.spec.ts`; `test/pipeline.spec.tsx` through the real client | **DONE - all three layers, each attacked rather than asserted** |
 | S-11 | **Cross-tenant write / forged shop_id** | shop_id from session only | `apps/api/test/api.spec.ts` - forged in the query, the body, the path and a header, plus `shopOf` tested directly | **DONE at iteration 35 - a plant survived 228 tests before these existed** |
 | S-12 | UPDATE/DELETE on entries | REVOKE + trigger | `packages/schema/test/append-only.spec.ts`, both engines, four unconstrained columns | **DONE** |
 | S-13 | OTP abuse | Rate-limit matrix | `apps/api/test/rate-limit.spec.ts`, and the 429 with a real Retry-After through the client | **DONE** |
