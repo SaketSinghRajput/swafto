@@ -454,8 +454,8 @@ Every row here is mirrored into `TRACEABILITY.md`.
 | L-18 | Terms drafted, reviewed, live; liability clause vs the accuracy promise | **RESOLVED-AUTONOMOUSLY** | Website | Play submission |
 | L-19 | Verify Anek + IBM Plex OFL 1.1 from bundled release | ACTION-REQUIRED | `licences/` + About screen | - |
 | L-20 | **Verify SQLCipher licensing** for the build we link | ACTION-REQUIRED | ADR-002 amendment if needed | G4 |
-| L-21 | Licence manifest generated from lockfile in CI | ACTION-REQUIRED | `tools/licences.mjs`, About screen | - |
-| L-22 | CI licence gate failing on GPL/AGPL in the mobile tree | ACTION-REQUIRED | CI job | - |
+| L-21 | Licence manifest generated from the installed tree in CI | **DONE at iteration 38** | `tools/check-licences.mjs` -> `docs/handover/LICENCES.md`, in `check:all` and CI | - |
+| L-22 | CI licence gate failing on GPL/AGPL in the mobile tree | **DONE at iteration 38** | `check:licences`, 271 runtime packages scanned, 0 copyleft | - |
 | L-23 | **DLT registration** - entity, header (with category suffix), templates | **RESOLVED-AUTONOMOUSLY** | Registered business entity required | Launch |
 | L-24 | Terms state service not offered to under-18s | ACTION-REQUIRED | Terms | - |
 | L-25 | Consent Manager framework review before 13 Nov 2026 | ACTION-REQUIRED | Calendar item | - |

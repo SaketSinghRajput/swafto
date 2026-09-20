@@ -1,0 +1,121 @@
+# THE PIPELINE.
+#
+# WHY A DATABASE SERVICE IS THE FIRST THING HERE. Two suites in this repository -
+# the rate limiter and the Postgres schema guards - skip themselves when no
+# database is listening, and they have been skipping on every developer machine
+# since they were written. A suite that usually skips is a suite nobody is
+# watching, and the append-only triggers and the closed-day guard are exactly the
+# rules that must not quietly stop working. CI is where they always run.
+#
+# THE GATES ARE THE REPOSITORY'S OWN. This file invents no quality bar. It runs
+# `check:all` - twenty-four checks that already fail the build locally - plus the
+# test suite, the golden vectors on both runtimes, and the planted-defect proof. A
+# pipeline with its own weaker rules is a second opinion nobody asked for.
+#
+# `--prove` RUNS IN CI ON PURPOSE. It plants a real defect in each verifier and
+# requires the verifier to fail. It is the only step that can catch an instrument
+# which has quietly stopped instrumenting, and this build has now found four of
+# those - two of them only because the prove harness itself was repaired.
+
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+# A run that has been superseded is a run nobody will read.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Read-only by default. A workflow that can write to the repository is a supply
+# chain risk with no upside for a check suite.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: swafto_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # A throwaway credential for a throwaway container. Nothing here is secret,
+      # and check:secrets reads this file like every other. The suites apply their
+      # own migrations from spec.ts - migrationDown then migrationUp - so there is
+      # no schema step here, and no second copy of the schema to drift from it.
+      # tools/pg-up.mjs is NOT used: it starts its own Docker container on another
+      # port, which is right for a laptop and wrong beside a service container.
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/swafto_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The engines field says >=24 <25. CI honours it rather than guessing.
+          node-version: '24'
+          cache: npm
+
+      - name: Install exactly what the lockfile says
+        run: npm ci
+
+      # check:layout measures a real layout in a real engine, so it needs a real
+      # browser. Chromium only: the product ships to Android, and the question is
+      # whether Odia text fits, not whether three engines agree with each other.
+      - name: Install the browser the layout check measures in
+        run: npx playwright install --with-deps chromium
+
+      # Everything below fails the build. None of it warns.
+      - name: check:all
+        run: npm run check:all
+
+      - name: The whole test suite
+        run: npx vitest run
+
+      - name: Golden vectors, on both runtimes, and the divergence between them
+        run: |
+          npm run test:vectors:node
+          npm run test:vectors:hermes
+          npm run check:divergence
+
+      # B33. High and critical only: a moderate advisory in build tooling is
+      # something to fix on a Tuesday, not something to block a release on.
+      - name: Dependency advisories
+        run: npm audit --audit-level=high
+
+      - name: Prove every verifier still fails on a planted defect
+        run: npm run prove:verifiers
+
+      - name: Coverage
+        run: npm run coverage
+
+      # Kept because the contact sheet is the only artifact a human can judge by
+      # looking, and the Odia rendering question is answered by looking.
+      - name: Contact sheet
+        run: npm run shots
+
+      - name: Keep what a human needs to read
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            reports/
+            docs/contact-sheet/
+          retention-days: 14

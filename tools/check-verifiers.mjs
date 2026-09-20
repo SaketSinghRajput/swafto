@@ -460,6 +460,26 @@ export const VERIFIERS = [
     },
   },
   {
+    id: 'licences',
+    command: 'npm run check:licences',
+    file: 'tools/check-licences.mjs',
+    claims:
+      'Every third-party package in the RUNTIME closure of the shipped app is enumerated from the installed tree and its licence read; nothing in that closure is GPL, AGPL, SSPL, BUSL or non-commercial Creative Commons, which would condition a Play Store release (L-22); no licence is unreadable; and no shipped workspace imports a package it has not declared. The manifest is generated rather than maintained (L-21).',
+    benchmarks: [],
+    /*
+     * The plant is the defect the tool found in its own first run: `apps/mobile`
+     * imported react-native through the UI seam and declared neither it nor react,
+     * so the closure came back as four packages and the gate reported a clean
+     * result over almost nothing. Removing the declaration again reproduces that
+     * exactly, and the check now refuses instead of congratulating itself.
+     */
+    defect: {
+      file: 'apps/mobile/package.json',
+      find: '"react-native": "^0.81.4"',
+      replace: '"react-native-unused": "^0.81.4"',
+    },
+  },
+  {
     id: 'secrets',
     command: 'npm run check:secrets',
     file: 'tools/check-secrets.mjs',

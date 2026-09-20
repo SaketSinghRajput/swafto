@@ -481,7 +481,7 @@ DLT registration and a live privacy policy cannot be compressed by building fast
 | H8 | Physical device pass | 1 hour | Confidence the AVD cannot give |
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
-| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration only. The rule itself already runs, programmatically, inside `check:money` - there is no CI in this repository, so the old "already runs in CI" on this row was false |
+| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration and the `npm run lint` script, which cannot run without it. The money rule itself already runs programmatically inside `check:money`, which CI runs |
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 | H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
 
@@ -522,8 +522,8 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 2fbfd2c828d5a581  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
-ab90001626808cb0  humanActions  docs/handover/HUMAN-ACTIONS.md
-71bae6e9b226bc2c  legal  docs/audits/LEGAL-AUDIT.md
+059e6c297859c6e6  humanActions  docs/handover/HUMAN-ACTIONS.md
+4bbcb54411b3c520  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md
 1352e51ba2027971  derivedConstraints  docs/governance/DERIVED-CONSTRAINTS.md

@@ -20,7 +20,7 @@ If yes, it does not belong here.
 | H8 | Physical device pass | 1 hour | Confidence the AVD cannot give |
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
-| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration only. The rule itself already runs, programmatically, inside `check:money` - there is no CI in this repository, so the old "already runs in CI" on this row was false |
+| H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration and the `npm run lint` script, which cannot run without it. The money rule itself already runs programmatically inside `check:money`, which CI runs |
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 | H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
 
