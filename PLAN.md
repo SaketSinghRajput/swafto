@@ -401,7 +401,7 @@ be moved to meet a result.
 |---|---|---|---|
 | B1 | Golden vectors | >= 70, 100% pass | **63, 100% pass** - MISSED on count |
 | B2 | Node vs Hermes divergence | exactly 0 | **0** - MET |
-| B3 | Engine branch coverage | 100% | **85.71%** - MISSED |
+| B3 | Engine branch coverage | 100% | **86.62%** - MISSED |
 | B5 | Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET |
 | B12 | Money float-arithmetic lint | 0 violations | **0** across 45 files - MET |
 | B33 | npm audit high/critical | 0 | **0** - MET |
@@ -515,7 +515,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 <!-- PLANHASH:START -->
 409b86c2d96ec65b  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
-1051a19ac4655fc1  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
+b948d3599473c459  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 6550657f0bec3444  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 52c5a4dbb0c94bd1  humanActions  docs/handover/HUMAN-ACTIONS.md

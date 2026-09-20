@@ -21,14 +21,14 @@ reported is a result.
 |---|---|---|---|---|
 | B1 Golden vectors | >= 70, 100% pass | **63, 100% pass** - MISSED on count | `npm run test:vectors:node` | iteration 19 |
 | B2 Node vs Hermes divergence | exactly 0 | **0** - MET | `npm run test:vectors:diff` | iteration 19 |
-| B3 Engine branch coverage | 100% | **85.71%** - MISSED | `npm run coverage` | iteration 19, unchanged at 26 |
+| B3 Engine branch coverage | 100% | **86.62%** - MISSED | `npm run coverage` | iteration 19, re-measured at 32 |
 | B5 Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET | `npm run coverage` | iteration 20, re-derived identical at 26 |
 | B12 Money float-arithmetic lint | 0 violations | **0** across 45 files - MET | `npm run check:money` | iteration 19 |
 | B33 npm audit high/critical | 0 | **0** - MET | `npm audit --audit-level=high` | iteration 19 |
 | B40 Stubs, TODOs in shipped paths | 0 | **0** - MET | `npm run check:governance` | iteration 19 |
 
-Full coverage reading: statements 91.72%, branches 85.71%, functions 90.32%, lines
-92.18%, over `packages/formula-engine/src/**`.
+Full coverage reading at iteration 32: statements 91.80%, branches 86.62%, functions
+90.32%, lines 92.27%, over `packages/formula-engine/src/**`.
 
 ---
 
@@ -71,7 +71,10 @@ runner moved the same unchanged engine to **85.71%**. An instrument that cannot 
 the work is not measuring the thing it names, and 28 points of the apparent shortfall
 were the instrument, not the engine.
 
-**Where the remaining gap is**, by file:
+**Where the gap was at iteration 19**, by file. Superseded by the P-002 table below,
+and kept because one of its labels was wrong in a way worth remembering - the
+`money.ts` row said "one stdevMoney guard" and the uncovered branch was in
+`formatPaise`:
 
 | file | branch | what is uncovered |
 |---|---|---|
@@ -124,7 +127,63 @@ the *covered* lines, where no coverage figure will ever point.
 **This is still a defect surface, not a ledger** — one of twelve survivors was real.
 But the surface is larger than the 14.29% gap, not smaller than it.
 
-**Attempts recorded: 1 of 3.** The next attempt comes with `rejects.json`, and carries
+### P-002 · re-measured at iteration 32, with the shape of every remaining uncovered line
+
+**Engine branch coverage: 85.71% → 86.62%.** The corpus moved it, which is also a
+§5.16 response: the instrument tracked a known change in the right direction.
+
+`money.ts` is now at **100% branch** and has left the table entirely — see the
+unreachable-branch finding below.
+
+| uncovered | what it is | shape | closing it is |
+|---|---|---|---|
+| `dates.ts` 60-73 | `fromEpochDay` | **4 — exported, never called by any test** | a test to write |
+| `dates.ts` 82-88 | `addDays`, `compareIsoDate` | **4** | a test to write |
+| `intelligence.ts` 142-143 | `meanDailyProfit` | **4** | a test to write |
+| `intelligence.ts` 183-186 | the `worsening` / `improving` / `stable` arms of credit-concentration direction | a data-variety gap: the line runs, the other arms need three different baselines | three tests to write |
+| `operational.ts` 135 | `trailingExpensePressure` | **4** | a test to write |
+
+**None of it is unreachable.** Every remaining uncovered line is a test somebody has
+not written, not a branch no input can take.
+
+### A fourth shape, which the earlier three did not name
+
+Shapes 1 and 2 — rejection arms and gate-closed arms — are about branches inside
+functions the tests DO call. Shape 3 is covered-but-unasserted. **Everything left in
+the engine is shape 4: an exported function no test calls at all.** Five of them.
+
+Coverage sees shape 4 perfectly; that is what a 0% function is. It is the easiest of
+the four to close and the easiest to overlook, because the file-level percentage stays
+respectable while a whole function goes unexercised — `dates.ts` reads 75% branch with
+three of its seven functions never invoked.
+
+### Shape 3 is absent from this measurement BY CONSTRUCTION, and that is the warning
+
+**A clean coverage figure does not imply a clean engine.** Shape 3 — executed and
+never asserted on — cannot appear in a coverage report, because coverage counts
+execution. `stdevMoney`'s defect sat on a line at 100% coverage. So closing every row
+in the table above would take the engine toward 100% branch and would say nothing
+whatever about shape 3.
+
+Only mutation testing reaches shape 3, and `mutation:money` covers one file.
+
+### An unreachable branch makes a FROZEN benchmark unachievable
+
+`money.ts` line 221 read `if (rest.length)`. The loop above it runs while
+`rest.length > 2` and the block is entered only for rupee strings longer than three
+digits, so `rest` ends at exactly one or two characters — verified for every digit
+length up to eighteen. **The false arm could not be taken by any input.**
+
+That is not cosmetic. **B3's threshold is 100% branch coverage**, so a single
+unreachable branch makes a frozen benchmark permanently unmeetable no matter how many
+tests are written. The condition was removed — behaviour is identical, since it was
+always true — and `money.ts` went to 100% branch.
+
+Worth carrying: before B3 can be met, the engine must contain **no unreachable
+branches at all**. That is a stronger property than "well tested", and nothing was
+checking for it.
+
+**Attempts recorded: 2 of 3.** The next attempt comes with `rejects.json`, and carries
 a sweep for shape 3 with it: every function with an early return, and whether any test
 reaches past every guard with an assertion on the result — not "is the function
 tested", but "is the code after the guard tested". Plus, for every aggregate whose

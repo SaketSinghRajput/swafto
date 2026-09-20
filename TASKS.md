@@ -14,9 +14,9 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 
 ---
 
-**NEXT:** `P-002` — Re-measure B3 and name the shape of every remaining uncovered line
+**NEXT:** `P-004` — Build the canonical fixture shop
 
-**READY NOW:** 7 — `P-002` `P-004` `P-005` `P-006` `P-008` `Z-001` `Z-002`
+**READY NOW:** 6 — `P-004` `P-005` `P-006` `P-008` `Z-001` `Z-002`
 
 **BLOCKED:** 95, and the one blocking the most others is `P-006` — 101 downstream
 
@@ -27,7 +27,7 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 | ORDER | ID | TASK | WHY | BLOCKED BY | BLOCKS | STATE | BENCHMARKS | ESTIMATE |
 |---|---|---|---|---|---|---|---|---|
 | 001 | `P-001` | [x] Grow rejects.json to cover the rejection arms the corpus cannot reach | Shape 1 of the B3 gap. Without it the invalid-input branches are never executed at all. | NONE | 1 | DONE | B3 | 1 (made at 29) |
-| 002 | `P-002` | [ ] Re-measure B3 and name the shape of every remaining uncovered line | The gap is a defect surface, not a ledger. Each uncovered line is shape 1, 2 or 3. | `P-001` | - | READY | B3 | 1 (made at 29) |
+| 002 | `P-002` | [x] Re-measure B3 and name the shape of every remaining uncovered line | The gap is a defect surface, not a ledger. Each uncovered line is shape 1, 2 or 3. | `P-001` | - | DONE | B3 | 1 (made at 29) |
 | 003 | `P-003` | [x] Add n=0, n=1 and n>=2 cases for every aggregate in the engine | stdevMoney was invisible at n<=1 by construction. That is a property of aggregates, not a quirk. | NONE | - | DONE | B4 | 1 (made at 29) |
 | 016 | `P-004` | [ ] Build the canonical fixture shop | Every screen renders against it. Without it no screen test can assert a figure. | NONE | - | READY | - | 1 (made at 29) |
 | 017 | `P-005` | [ ] Build the adversarial fixture shop | Longest party names, lakh-scale figures, a gap day, a correction against a closed day. | NONE | - | READY | - | 1 (made at 29) |

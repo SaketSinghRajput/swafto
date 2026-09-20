@@ -218,7 +218,19 @@ export function formatPaise(
       parts.unshift(rest.slice(-2));
       rest = rest.slice(0, -2);
     }
-    if (rest.length) parts.unshift(rest);
+    /*
+     * UNCONDITIONAL, because the condition it replaced could never be false.
+     *
+     * The loop above runs while `rest.length > 2`, and this block is entered only
+     * when the rupee string is longer than three digits, so `rest` starts at one
+     * character or more and ends at exactly one or two. It is never empty - verified
+     * for every digit length up to eighteen.
+     *
+     * `if (rest.length)` therefore had an arm no input could take, and an unreachable
+     * branch is not cosmetic here: B3's threshold is 100% branch coverage, so every
+     * dead branch makes a FROZEN benchmark permanently unachievable. Found by P-002.
+     */
+    parts.unshift(rest);
     grouped = `${parts.join(',')},${last3}`;
   }
 

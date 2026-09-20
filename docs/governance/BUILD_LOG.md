@@ -2547,3 +2547,40 @@ DELETE, and the runner only builds INSERTs. Those arms live in append-only.spec.
   $ npm run rejects:author -> 69 cases (engine 23, schema 38, api 8)
   $ npx vitest run         -> 343 passed, 0 skipped (was 309)
   $ npm run check:all      -> 18 checks, all pass
+
+---
+
+## 2026-09-20 · Iteration 32 · P-002 · B3 re-measured, with every uncovered line named
+
+**85.71% -> 86.62% engine branch.** The corpus moved it, which doubles as a 5.16
+response: the instrument tracked a known change in the right direction.
+
+**A FOURTH SHAPE.** Everything still uncovered in the engine is an exported function
+no test calls at all - `fromEpochDay`, `addDays`, `compareIsoDate`, `meanDailyProfit`,
+`trailingExpensePressure`. Shapes 1 and 2 are branches inside functions the tests do
+call; shape 3 is covered-but-unasserted. Shape 4 is the easiest to close and the
+easiest to miss, because the file percentage stays respectable while a whole function
+goes unexercised: `dates.ts` reads 75% branch with three of its seven functions never
+invoked. **None of the remaining lines is unreachable** - every one is a test nobody
+has written.
+
+**AN UNREACHABLE BRANCH MAKES A FROZEN BENCHMARK UNACHIEVABLE.** `money.ts` line 221
+read `if (rest.length)`, and the false arm could not be taken by any input - the loop
+above leaves `rest` at exactly one or two characters, verified for every digit length
+up to eighteen. B3 demands 100% branch coverage, so one dead branch made a frozen
+benchmark permanently unmeetable however many tests were written. Removed; behaviour
+identical; `money.ts` went to 100% branch. Before B3 can ever be met the engine must
+contain NO unreachable branches, which is a stronger property than "well tested" and
+nothing was checking for it.
+
+**Shape 3 is absent from this measurement by construction, and the entry says so** -
+closing every row would take the engine toward 100% and say nothing about
+executed-but-unasserted code. A clean coverage figure does not imply a clean engine.
+
+Also corrected: two stale figures in the same file, the summary reading and the
+iteration-19 per-file table, the latter kept and marked because its `money.ts` label
+was wrong in a way worth remembering.
+
+  $ npm run coverage  -> engine 86.62% branch, money.ts 100%
+  $ npx vitest run    -> 343 passed
+  $ npm run check:all -> 18 checks, all pass
