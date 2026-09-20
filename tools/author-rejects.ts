@@ -564,6 +564,27 @@ for (const [n, phone, why] of [
   });
 }
 
+/*
+ * F-A3 · skips_section_ck, the one named constraint with no case.
+ *
+ * Found by audit-02: fifteen named CHECK constraints, fourteen with a case aimed at
+ * them, this one with none. `section_skips` records that the shopkeeper deliberately
+ * marked a section as having nothing in it - which the product distinguishes from
+ * never having opened it. An unguarded enum there lets a skip be recorded against a
+ * section the sheet does not have, and the day-close list would then show a state
+ * for a section that does not exist.
+ */
+cases.push({
+  name: 'enum-skip-of-a-section-that-does-not-exist',
+  violates: 'a section can only be skipped if it is one of the nine on the sheet',
+  layers: ['schema'],
+  schema: {
+    table: 'section_skips',
+    columns: 'shop_id, day_id, section, skipped_at',
+    values: "'{{shop}}', '{{openDay}}', 'tips', '{{now}}'",
+  },
+});
+
 const byLayer = (l: Layer) => cases.filter((c) => c.layers.includes(l)).length;
 
 const out = {

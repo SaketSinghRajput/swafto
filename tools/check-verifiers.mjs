@@ -226,6 +226,28 @@ export const VERIFIERS = [
       'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
   },
   {
+    id: 'crossdoc',
+    command: 'npm run check:crossdoc',
+    file: 'tools/check-crossdoc.mjs',
+    claims:
+      'PLAN.md, TASKS.md and DESIGN.md describe the same repository. The shared facts are re-derived independently and every document must report them; a disagreement is a generator bug, never a judgement call.',
+    benchmarks: [],
+    /*
+     * The plant breaks a GENERATOR, not a document - which is the whole point. It
+     * makes gen-plan count every named function as present, so PLAN.md renders a
+     * number DESIGN and the source disagree with.
+     *
+     * It found a real one on its first run: PLAN said "18 of 27" where 27 was the
+     * feature count and BI5 names no function, so the honest denominator is 26. Two
+     * lenses counting different things, each internally consistent.
+     */
+    defect: {
+      file: 'tools/gen-plan.mjs',
+      find: 'const built = named.filter((f) => f.fnOk).length;',
+      replace: 'const built = named.length;',
+    },
+  },
+  {
     id: 'design',
     command: 'npm run check:design',
     file: 'tools/gen-design.mjs',
@@ -688,6 +710,31 @@ let passGates = 0;
 for (const [, gid, , status, evidence] of gateRows) {
   const isPass = /PASS/.test(status);
   if (isPass) passGates += 1;
+  /*
+   * F-A1 · EVERY FILE A GATE CITES MUST STILL BE THERE.
+   *
+   * This loop checked that `npm run X` resolves and never looked at the file paths
+   * beside it. The iteration-27 layout move relocated every document and left twenty
+   * bare filenames in this table, so G0's evidence - `wc -l SPEC-DIGEST.md` - failed
+   * outright while G0 stayed marked PASS and this check stayed green.
+   *
+   * The numbers were still correct against the real paths. That is the point: the
+   * gates were CORRECT AND UNVERIFIABLE, which §5.14.5 forbids, and the only way to
+   * catch it was to look at what a reader would actually copy and run.
+   *
+   * Paths, not the whole command: executing arbitrary shell from a markdown table
+   * would be a worse idea than the problem it solves.
+   */
+  for (const m of evidence.matchAll(/\b((?:docs|tools|packages|apps|infra)\/[\w./-]+|[A-Z][\w-]*\.md)\b/g)) {
+    if (existsSync(m[1])) continue;
+    const msg = `${gid} cites the file "${m[1]}", which does not exist`;
+    if (isPass) {
+      failures.push(
+        `${msg} - and ${gid} is marked PASS, so its evidence cannot be re-run. A gate ` +
+          'that is correct and unverifiable is the state §5.14.5 exists to forbid.',
+      );
+    } else notes.push(msg);
+  }
   for (const m of evidence.matchAll(/npm run ([\w:-]+)/g)) {
     if (scripts[m[1]] !== undefined) continue;
     const msg = `${gid} cites "npm run ${m[1]}", which does not exist`;

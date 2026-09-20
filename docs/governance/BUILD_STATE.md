@@ -12,12 +12,12 @@ Config: `TARGET_STACK=react-native` · `BACKEND_LANGUAGE=typescript` ·
 
 | Gate | Title | Status | Evidence |
 |------|-------|--------|----------|
-| G0 | Repo, state ledger, spec extraction | **PASS** | `wc -l SPEC-DIGEST.md` -> **569** lines against a 200 threshold. Recorded as 526 until iteration 20; the file grew and the number was never re-derived (D.3). Output in BUILD_LOG.md. |
-| G1 | Technology research - ADRs | **PASS** | `grep -c '^## ADR-' TECH-DECISIONS.md` -> **17** against a minimum of 8. Recorded as 12 until iteration 20 (D.3). |
-| G2 | Legal audit | **PASS**, evidence corrected at iteration 19 | `grep -cE 'ACTION-REQUIRED or resolved autonomously' LEGAL-AUDIT.md` -> **40**. The command recorded here previously escaped its alternation as `\|` inside `grep -E`, where that means a LITERAL pipe - it matches nothing, returns 0 and exits 1, and could never have produced the 52 printed beside it. See V-1. 26 items mirrored into TRACEABILITY.md; 7 resolved autonomously. |
-| G3 | Security audit / STRIDE | **PASS**, evidence corrected at iteration 19 | `npm audit --audit-level=high` -> **found 0 vulnerabilities**. STRIDE THREAT rows re-counted: **28**. The 87 recorded here counted EVERY table row in the file - trust boundaries, the register, the rate-limit table - and labelled them STRIDE. Right number, wrong noun. See V-2. 23 items mirrored into TRACEABILITY.md |
+| G0 | Repo, state ledger, spec extraction | **PASS** | `wc -l docs/spec/SPEC-DIGEST.md` -> **569** lines against a 200 threshold. Recorded as 526 until iteration 20; the file grew and the number was never re-derived (D.3). Output in docs/governance/BUILD_LOG.md. |
+| G1 | Technology research - ADRs | **PASS** | `grep -c '^## ADR-' docs/spec/TECH-DECISIONS.md` -> **17** against a minimum of 8. Recorded as 12 until iteration 20 (D.3). |
+| G2 | Legal audit | **PASS**, evidence corrected at iteration 19 | `grep -cE 'ACTION-REQUIRED or resolved autonomously' docs/audits/LEGAL-AUDIT.md` -> **40**. The command recorded here previously escaped its alternation as `\|` inside `grep -E`, where that means a LITERAL pipe - it matches nothing, returns 0 and exits 1, and could never have produced the 52 printed beside it. See V-1. 26 items mirrored into docs/spec/TRACEABILITY.md; 7 resolved autonomously. |
+| G3 | Security audit / STRIDE | **PASS**, evidence corrected at iteration 19 | `npm audit --audit-level=high` -> **found 0 vulnerabilities**. STRIDE THREAT rows re-counted: **28**. The 87 recorded here counted EVERY table row in the file - trust boundaries, the register, the rate-limit table - and labelled them STRIDE. Right number, wrong noun. See V-2. 23 items mirrored into docs/spec/TRACEABILITY.md |
 | G4 | Schema + migrations, SQLite & Postgres | **PASS**, REOPENED and re-earned at iteration 19 | `npx vitest run packages/schema` -> **63 passed, 0 skipped** on BOTH engines. §5.12.4 reopened it: the append-only claim had only ever been tested by updating `amount`, so narrowing the trigger to `BEFORE UPDATE OF amount` left the suite green while every other column of a ledger row became mutable on SQLite - the authoritative store. Now swept across four unconstrained columns on both engines, and that planted narrowing fails. See V-4 |
-| G5 | **Formula Engine + vectors.json** | **PASS**, count refreshed at iteration 19 | **63 vectors** (gate minimum 30; B1 asks 70 - recorded as missed in BENCHMARKS-RESULTS.md). Node: `ALL PASS`. Hermes 0.12 real VM: `no vector threw`. Diff: `divergence: NONE`. Both negative-tested. The vectors now also run INSIDE vitest, so coverage can see them - which moved the first honest B3 reading from 57.73% to 85.71%. |
+| G5 | **Formula Engine + vectors.json** | **PASS**, count refreshed at iteration 19 | **63 vectors** (gate minimum 30; B1 asks 70 - recorded as missed in docs/benchmarks/BENCHMARKS-RESULTS.md). Node: `ALL PASS`. Hermes 0.12 real VM: `no vector threw`. Diff: `divergence: NONE`. Both negative-tested. The vectors now also run INSIDE vitest, so coverage can see them - which moved the first honest B3 reading from 57.73% to 85.71%. |
 | G6 | Auth service (phone + OTP) | TODO | needs integration tests |
 | G7 | Sync API (idempotent) | TODO | needs 3x replay of 200-entry batch, byte-identical |
 | G8 | Read API (shared engine) | TODO | needs canonical day through API == vectors.json |
@@ -44,10 +44,10 @@ named remainder below · `BLOCKED` cannot proceed without a human · `TODO` not 
 Command:
 
 ```
-$ ls SPEC-DIGEST.md BUILD_STATE.md BUILD_LOG.md TRACEABILITY.md && wc -l SPEC-DIGEST.md
+$ ls docs/spec/SPEC-DIGEST.md docs/governance/BUILD_STATE.md docs/governance/BUILD_LOG.md docs/spec/TRACEABILITY.md && wc -l docs/spec/SPEC-DIGEST.md
 ```
 
-Output pasted in BUILD_LOG.md at the G0 entry. `SPEC-DIGEST.md` is **526 lines**,
+Output pasted in docs/governance/BUILD_LOG.md at the G0 entry. `docs/spec/SPEC-DIGEST.md` is **526 lines**,
 comfortably over the 200-line skim threshold, and cites document + page for every rule.
 
 All six specification PDFs were read end to end via `pdftotext -layout`, plus the paper
@@ -69,7 +69,7 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Open decisions
 
-- **OD-1 · BI6 is resolved autonomously (see DECISIONS-AUTONOMOUS.md).** Item 6 of the 15-07-2026 note is physically
+- **OD-1 · BI6 is resolved autonomously (see docs/governance/DECISIONS-AUTONOMOUS.md).** Item 6 of the 15-07-2026 note is physically
   incomplete on the photograph (`6. |`). Independently corroborated by
   `SWAFTO-Retail-Desk-Day-Close.pdf` p.9: *"Output #6 (unwritten) - Left incomplete in
   the 15-07 note - Blocked"*. **Not invented.** One reserved TRACEABILITY row. Blocks
@@ -144,10 +144,10 @@ sheet and the one handwritten photograph that exists on disk:
 
 ## Blocked on human
 
-**NONE.** `resolved autonomously (DECISIONS-AUTONOMOUS.md)` was abolished as a status by the autonomy amendment
-(iteration 7). Every prior instance is resolved in `DECISIONS-AUTONOMOUS.md`
+**NONE.** `resolved autonomously (docs/governance/DECISIONS-AUTONOMOUS.md)` was abolished as a status by the autonomy amendment
+(iteration 7). Every prior instance is resolved in `docs/governance/DECISIONS-AUTONOMOUS.md`
 (AD-001 to AD-010). Things genuinely impossible in software are listed in
-`HUMAN-ACTIONS.md`, and **none of them blocks this loop**:
+`docs/handover/HUMAN-ACTIONS.md`, and **none of them blocks this loop**:
 
 | Previously blocked | Resolution |
 |---|---|
@@ -196,14 +196,14 @@ missing, so they are listed here rather than left in prose.
 | H8 | DEVICE-CHECKLIST A4: does a real budget handset ship an Odia font | DC-004 |
 
 Amendment items 2.1-2.4 completed at iteration 7 and are recorded in
-`DECISIONS-AUTONOMOUS.md` and `BUILD_LOG.md`; they are no longer pending work.
+`docs/governance/DECISIONS-AUTONOMOUS.md` and `docs/governance/BUILD_LOG.md`; they are no longer pending work.
 
 Governance is machine-enforced and every check is negative-tested:
 `check:governance`, `check:benchmarks`, `check:prose`, `check:sms`,
 `check:sms:segments`, `check:tooling`, `check:generated`, `check:font`.
 
 <!-- superseded next action:
-**G1 - Technology research.** Write `TECH-DECISIONS.md` as >= 8 ADRs covering: RN
+**G1 - Technology research.** Write `docs/spec/TECH-DECISIONS.md` as >= 8 ADRs covering: RN
 on-device SQLite (op-sqlite vs expo-sqlite vs WatermelonDB, benchmarked not blog-quoted),
 sync protocol + clock-skew/day-boundary policy, backend framework on t4g.small, Postgres
 access layer, phone+OTP auth and an Indian DLT-registered SMS provider, Android

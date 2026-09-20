@@ -2584,3 +2584,49 @@ was wrong in a way worth remembering.
   $ npm run coverage  -> engine 86.62% branch, money.ts 100%
   $ npx vitest run    -> 343 passed
   $ npm run check:all -> 18 checks, all pass
+
+---
+
+## 2026-09-20 · Iteration 33 · Audit 02, and its remediation
+
+Second full adversary pass, artifacts only, all twelve patterns worked. Written as
+`INJECTIONS/26-audit-02.md` and pinned. Six findings; four executed this iteration.
+
+**F-A1 · no gate evidence command executed.** Six gates marked PASS, and every one
+cited a bare filename the iteration-27 move had relocated. `wc -l SPEC-DIGEST.md` ->
+No such file. The NUMBERS were still true against the real paths (569 lines, 17 ADRs),
+so this was not a false PASS - it was the worse state of being **correct and
+unverifiable**, which 5.14.5 exists to forbid. Twenty references rewritten.
+
+The mechanism built for this missed it: `check:verifiers` re-derived the gate numbers
+using ITS OWN paths and never executed the command the table prints. It now asserts
+every file a gate cites exists, and negative-testing that clause found a **twenty-first**
+stale reference my rewrite had missed.
+
+**F-A2 · six of eleven benchmark-bearing verifiers were outside `check:all`.** Most
+deliberately - mutation and coverage are slow. `vectors-divergence` was neither, and it
+had silently stopped working: the move redirected the vector output and nothing
+regenerated the Hermes side, so B2 - recorded MET - could not run at all. A Node/Hermes
+divergence is the one defect the dual-runtime design exists to catch and its guard was
+unreachable for five iterations. Now `check:divergence`, self-contained, in the chain.
+
+**F-A3 · `skips_section_ck` had no rejection case.** Fifteen named constraints,
+fourteen covered. Added; 70 cases.
+
+**The composition pass found the one worth acting on:** PLAN, TASKS and DESIGN agree
+by construction and nothing would fail if they stopped. `check:crossdoc` re-derives the
+shared facts independently and requires each document to report them. **It found a real
+disagreement on its first run** - PLAN said "18 of 27" where 27 was the FEATURE count
+and BI5 names no function, so the honest denominator is 26. Fixed in the generator, not
+the document.
+
+**F-A5 · `check:prose` cannot see two same-kind claims that disagree.** Left as a
+printed COUNT rather than a failure, because whether two strong labels contradict is a
+judgement and a check that fails on judgement gets disabled. It reports 2 documents
+today, including the PROJECTION instance that produced the finding.
+
+F-A4 (five exported engine functions no test calls) stays open as a test-writing task.
+
+  $ npm run check:all   -> 21 checks, all pass
+  $ npx vitest run      -> 344 passed
+  $ npm run check:divergence -> Node and Hermes agree on every value

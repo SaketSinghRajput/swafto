@@ -114,7 +114,8 @@ copied**: the engine function is looked up in the engine source, the vectors in
 reading NOT BUILT says so because the artifact is absent today, not because a column
 somewhere says TODO.
 
-Engine functions actually present: **18 of 27**.
+Engine functions actually present: **18 of 26** named by TRACEABILITY
+(BI5 is reserved and names none, so the denominator is not the feature count).
 
 ### Inputs — what he types
 

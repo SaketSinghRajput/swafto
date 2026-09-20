@@ -147,7 +147,38 @@ for (const [id, where] of dangling) {
 }
 
 console.log(`  files scanned      : ${files.length} (${skipped} verbatim, not ours to edit)`);
+/**
+ * F-A5 · TWO CONFIDENT CLAIMS THAT DISAGREE ARE INVISIBLE TO THE RULE ABOVE.
+ *
+ * The contradiction rule pairs a RESOLVED word with an UNRESOLVED one. PROJECTION
+ * carried two paragraphs both labelled COMMITTED, naming different screen sets, three
+ * iterations apart, and this check stayed green for all three. That is a scoping-axis
+ * gap in A12's sense: nothing had ever varied along the axis of two same-KIND claims.
+ *
+ * COUNTED, NOT FAILED. Whether two occurrences of a strong label contradict each
+ * other or merely appear twice is a judgement, and a check that fails on judgement
+ * gets disabled - which is worse than a number nobody acts on. So this prints how
+ * many documents repeat a commitment label, and a rise is the visible form of the
+ * hazard, exactly like the quotation-exemption counter.
+ */
+const STRONG = /\*\*(COMMITTED|DEFERRED|CUT|MISSED - SCOPE|NOT INSTRUMENTED)\b/g;
+let repeated = 0;
+const repeatedIn = [];
+for (const f of files) {
+  const counts = new Map();
+  for (const m of read(f).matchAll(STRONG)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
+  const dupes = [...counts].filter(([, n]) => n > 1);
+  if (dupes.length) {
+    repeated += 1;
+    repeatedIn.push(`${f} (${dupes.map(([k, n]) => `${k}x${n}`).join(', ')})`);
+  }
+}
+
 console.log(`  sentences scanned  : ${sentencesScanned}`);
+console.log(
+  `  repeated strong labels : ${repeated} document(s) - a count, not a failure (F-A5)`,
+);
+for (const r of repeatedIn) console.log(`       ${r}`);
 console.log(
   `  ids defined        : ${defined.AD.size} AD · ${defined.B.size} B · ` +
     `${defined.G.size} G · ${defined.H.size} H`,

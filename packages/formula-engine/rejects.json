@@ -2,10 +2,10 @@
   "$schema": "https://swafto.app/schemas/rejects-v1.json",
   "generatedBy": "tools/author-rejects.ts",
   "note": "THE REJECTION CORPUS (§5.11). vectors.json describes days that are VALID; this describes inputs that must be REFUSED, and names every layer obliged to refuse them. Cases whose only layer is `api` are pending the auth and sync work, and the runner reports them as PENDING rather than letting them pass silently.",
-  "count": 69,
+  "count": 70,
   "coverage": {
     "engine": 23,
-    "schema": 38,
+    "schema": 39,
     "api": 8
   },
   "cases": [
@@ -866,6 +866,18 @@
         "table": "users",
         "columns": "id, shop_id, phone, created_at",
         "values": "'{{uuid}}', '{{shop}}', '12345678901234567', '{{now}}'"
+      }
+    },
+    {
+      "name": "enum-skip-of-a-section-that-does-not-exist",
+      "violates": "a section can only be skipped if it is one of the nine on the sheet",
+      "layers": [
+        "schema"
+      ],
+      "schema": {
+        "table": "section_skips",
+        "columns": "shop_id, day_id, section, skipped_at",
+        "values": "'{{shop}}', '{{openDay}}', 'tips', '{{now}}'"
       }
     }
   ]
