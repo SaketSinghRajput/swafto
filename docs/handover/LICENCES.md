@@ -285,7 +285,25 @@ licence that would condition a Play Store release (L-22).
 
 ## Bundled assets
 
-The Anek Odia font files in `apps/mobile/assets/fonts/` ship inside the APK and
-are covered by the SIL Open Font Licence 1.1. L-19 asks a human to verify that
-against the exact release bundled here; this tool reads package manifests and
-cannot read a font file, so it does not claim to have checked one.
+The font files ship **inside the APK** and no package manifest mentions them, so
+the npm scan above cannot see the single largest third-party artifact in the
+product. A12: that was this tool's scoping gap, closed at iteration 35.
+
+| File | Bytes | SHA-256 | Licence |
+|---|---:|---|---|
+| `AnekOdia-Bold.ttf` | 163620 | `4787b60dd0b162e4…` | OFL 1.1 (see the file below) |
+| `AnekOdia-Medium.ttf` | 162948 | `0a8190cd288d9cae…` | OFL 1.1 (see the file below) |
+| `AnekOdia-Regular.ttf` | 163252 | `8f3149a5fe2621ba…` | OFL 1.1 (see the file below) |
+| `OFL-AnekOdia.txt` | 4379 | `de62be758bba267e…` | the licence |
+
+**What is verified here:** every family the theme asks for is present, a licence
+file accompanies it, that file names the SIL Open Font Licence 1.1 and carries a
+copyright line, and each binary is pinned by hash so a swapped file is visible in
+a diff.
+
+**What is NOT verified, and stays with L-19:** that these bytes are the upstream
+release they claim to be. Nothing here can know that. The human step is now one
+comparison - this hash against the release - rather than a licence review.
+
+**IBM Plex is not bundled.** AD-015/AD-016 ship Anek Odia alone, so the half of
+L-19 that asks about IBM Plex has no subject.

@@ -104,7 +104,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-16 | Export naming rules enforced | Copy + i18n key audit | Eng | TODO |
 | L-17 | Privacy policy drafted, reviewed, live | `apps/web/legal/privacy.html` | Eng | WIP - written and checked against the notice; unreviewed (H9), not yet live (H5) |
 | L-18 | Terms live; liability vs accuracy promise | `apps/web/legal/terms.html` | Eng | WIP - written; the arithmetic promise is kept and tested, unreviewed (H9) |
-| L-19 | Verify Anek + IBM Plex OFL 1.1 | `licences/` + About | Eng | TODO |
+| L-19 | Verify Anek + IBM Plex OFL 1.1 | `tools/check-licences.mjs` font audit -> `docs/handover/LICENCES.md` with SHA-256 per file | Eng | WIP - licence text machine-checked; one hash comparison against upstream is human |
 | L-20 | Verify SQLCipher licensing | ADR-002 amendment if needed | Eng | TODO |
 | L-21 | Licence manifest generated from lockfile | `tools/licences.mjs` | Eng | TODO |
 | L-22 | CI licence gate fails on GPL/AGPL | CI job | Eng | TODO |
