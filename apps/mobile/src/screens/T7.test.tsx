@@ -87,11 +87,11 @@ describe('T7 renders all four states, and empty is derived rather than declared'
 describe('every figure on T7 is wired to the engine through the real store', () => {
   it('mutates the store and the running total moves with it', () => {
     const store = canonicalStore();
-    const before = text(byTestId(render(<FormA store={store} />), 't7-running-total'));
+    const before = text(byTestId(render(<FormA store={store} />), 't7-headline'));
 
     store.append(cashSale('t7-wired-1', 250000));
 
-    const after = text(byTestId(render(<FormA store={store} />), 't7-running-total'));
+    const after = text(byTestId(render(<FormA store={store} />), 't7-headline'));
     expect(after).not.toBe(before);
     // Not merely different - it is exactly what the engine says P4 now is.
     expect(after).toBe(formatPaise(store.primary().p4NetSales.value, { withSign: false }));
@@ -114,7 +114,7 @@ describe('every figure on T7 is wired to the engine through the real store', () 
     const revisionBefore = store.revision;
     store.append(cashSale('t7-wired-3', 50000));
     expect(store.revision).toBe(revisionBefore + 1);
-    expect(text(byTestId(render(<FormA store={store} />), 't7-running-total'))).toBe(
+    expect(text(byTestId(render(<FormA store={store} />), 't7-headline'))).toBe(
       formatPaise(store.primary().p4NetSales.value, { withSign: false }),
     );
   });
@@ -122,7 +122,7 @@ describe('every figure on T7 is wired to the engine through the real store', () 
   it('the running total is P4 itself, never a sum of the rows on screen', () => {
     const store = canonicalStore();
     const tree = render(<FormA store={store} />);
-    expect(text(byTestId(tree, 't7-running-total'))).toBe(
+    expect(text(byTestId(tree, 't7-headline'))).toBe(
       formatPaise(store.primary().p4NetSales.value, { withSign: false }),
     );
   });
@@ -140,7 +140,7 @@ describe('T7 renders against both fixture shops, canonical and adversarial', () 
   it('canonical: renders and shows its sales rows', () => {
     const tree = render(<FormA store={canonicalStore()} />);
     expect(byTestId(tree, 't7')).toBeTruthy();
-    expect(byTestId(tree, 't7-running-total')).toBeTruthy();
+    expect(byTestId(tree, 't7-headline')).toBeTruthy();
   });
 
   it('adversarial: renders, and a long party name is shown whole', () => {
@@ -165,7 +165,7 @@ describe('T7 renders against both fixture shops, canonical and adversarial', () 
   it('adversarial: the running total is the engine figure even past a lakh, where DC-002 bites', () => {
     const store = adversarialStore();
     const tree = render(<FormA store={store} />);
-    expect(text(byTestId(tree, 't7-running-total'))).toBe(
+    expect(text(byTestId(tree, 't7-headline'))).toBe(
       formatPaise(store.primary().p4NetSales.value, { withSign: false }),
     );
   });
@@ -221,7 +221,7 @@ describe('T7 in three languages, in longest string mode, at maximum font scale',
 
   it('chrome is capped at the maximum font scale; money is never capped', () => {
     const tree = render(<FormA store={canonicalStore()} />);
-    const money = byTestId(tree, 't7-running-total');
+    const money = byTestId(tree, 't7-headline');
     // Content grows with the reader's setting. Capping it would choose our layout
     // over his eyesight, which is the whole reason the chrome cap exists.
     expect(money.props?.maxFontSizeMultiplier).toBeUndefined();
@@ -329,7 +329,7 @@ describe('T7 is an entry screen, so it has the keypad and no bottom navigation',
     const committed: string[] = [];
     const before = store.state.entries.length;
     const tree = render(<FormA store={store} onCommit={(m) => committed.push(m)} />);
-    byTestId(tree, 't7-commit-udhar').props.onPress();
+    byTestId(tree, 't7-commit-udhar-udhar_sales').props.onPress();
     expect(committed).toEqual(['udhar']);
     // The screen does not write. Writing is the caller's, through the parsers.
     expect(store.state.entries.length).toBe(before);

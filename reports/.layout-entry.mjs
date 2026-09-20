@@ -1515,18 +1515,18 @@ var require_styleq = __commonJS({
         var className = "";
         var inlineStyle = null;
         var nextCache = disableCache ? null : cache4;
-        var styles8 = new Array(arguments.length);
+        var styles9 = new Array(arguments.length);
         for (var i = 0; i < arguments.length; i++) {
-          styles8[i] = arguments[i];
+          styles9[i] = arguments[i];
         }
-        while (styles8.length > 0) {
-          var possibleStyle = styles8.pop();
+        while (styles9.length > 0) {
+          var possibleStyle = styles9.pop();
           if (possibleStyle == null || possibleStyle === false) {
             continue;
           }
           if (Array.isArray(possibleStyle)) {
             for (var _i = 0; _i < possibleStyle.length; _i++) {
-              styles8.push(possibleStyle[_i]);
+              styles9.push(possibleStyle[_i]);
             }
             continue;
           }
@@ -3490,7 +3490,7 @@ var defaultPreprocessOptions = {
   shadow: true,
   textShadow: true
 };
-function customStyleq(styles8, options) {
+function customStyleq(styles9, options) {
   if (options === void 0) {
     options = {};
   }
@@ -3504,7 +3504,7 @@ function customStyleq(styles8, options) {
       }
       return preprocess(style, (0, import_objectSpread22.default)((0, import_objectSpread22.default)({}, defaultPreprocessOptions), preprocessOptions));
     }
-  })(styles8);
+  })(styles9);
 }
 function insertRules(compiledOrderedRules) {
   compiledOrderedRules.forEach((_ref) => {
@@ -3536,9 +3536,9 @@ var absoluteFillObject = {
 var absoluteFill = create({
   x: (0, import_objectSpread22.default)({}, absoluteFillObject)
 }).x;
-function create(styles8) {
-  Object.keys(styles8).forEach((key) => {
-    var styleObj = styles8[key];
+function create(styles9) {
+  Object.keys(styles9).forEach((key) => {
+    var styleObj = styles9[key];
     if (styleObj != null && styleObj.$$css !== true) {
       var compiledStyles;
       if (key.indexOf("$raw") > -1) {
@@ -3546,14 +3546,14 @@ function create(styles8) {
       } else {
         if (process.env.NODE_ENV !== "production") {
           validate(styleObj);
-          styles8[key] = Object.freeze(styleObj);
+          styles9[key] = Object.freeze(styleObj);
         }
         compiledStyles = compileAndInsertAtomic(styleObj);
       }
       staticStyleMap.set(styleObj, compiledStyles);
     }
   });
-  return styles8;
+  return styles9;
 }
 function compose(style1, style2) {
   if (process.env.NODE_ENV !== "production") {
@@ -3566,10 +3566,10 @@ function compose(style1, style2) {
   return [style1, style2];
 }
 function flatten() {
-  for (var _len = arguments.length, styles8 = new Array(_len), _key = 0; _key < _len; _key++) {
-    styles8[_key] = arguments[_key];
+  for (var _len = arguments.length, styles9 = new Array(_len), _key = 0; _key < _len; _key++) {
+    styles9[_key] = arguments[_key];
   }
-  var flatArray = styles8.flat(Infinity);
+  var flatArray = styles9.flat(Infinity);
   var result = {};
   for (var i = 0; i < flatArray.length; i++) {
     var style = flatArray[i];
@@ -3585,12 +3585,12 @@ function getSheet() {
     textContent: sheet.getTextContent()
   };
 }
-function StyleSheet(styles8, options) {
+function StyleSheet(styles9, options) {
   if (options === void 0) {
     options = {};
   }
   var isRTL = options.writingDirection === "rtl";
-  var styleProps2 = customStyleq(styles8, options);
+  var styleProps2 = customStyleq(styles9, options);
   if (Array.isArray(styleProps2) && styleProps2[1] != null) {
     styleProps2[1] = inline(styleProps2[1], isRTL);
   }
@@ -4124,14 +4124,14 @@ function dangerousStyleValue(name, value, isCustomProperty) {
 var dangerousStyleValue_default = dangerousStyleValue;
 
 // node_modules/react-native-web/dist/modules/setValueForStyles/index.js
-function setValueForStyles(node, styles8) {
+function setValueForStyles(node, styles9) {
   var style = node.style;
-  for (var styleName in styles8) {
-    if (!styles8.hasOwnProperty(styleName)) {
+  for (var styleName in styles9) {
+    if (!styles9.hasOwnProperty(styleName)) {
       continue;
     }
     var isCustomProperty = styleName.indexOf("--") === 0;
-    var styleValue = dangerousStyleValue_default(styleName, styles8[styleName], isCustomProperty);
+    var styleValue = dangerousStyleValue_default(styleName, styles9[styleName], isCustomProperty);
     if (styleName === "float") {
       styleName = "cssFloat";
     }
@@ -4526,7 +4526,7 @@ function mergeRefs() {
   for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
     args[_key] = arguments[_key];
   }
-  return function forwardRef7(node) {
+  return function forwardRef8(node) {
     args.forEach((ref) => {
       if (ref == null) {
         return;
@@ -7508,6 +7508,303 @@ var MemoedPressable = /* @__PURE__ */ memo(/* @__PURE__ */ forwardRef6(Pressable
 MemoedPressable.displayName = "Pressable";
 var Pressable_default = MemoedPressable;
 
+// node_modules/react-native-web/dist/exports/TextInput/index.js
+import * as React15 from "react";
+var isSelectionStale = (node, selection) => {
+  var selectionEnd = node.selectionEnd, selectionStart = node.selectionStart;
+  var start = selection.start, end = selection.end;
+  return start !== selectionStart || end !== selectionEnd;
+};
+var setSelection = (node, selection) => {
+  if (isSelectionStale(node, selection)) {
+    var start = selection.start, end = selection.end;
+    try {
+      node.setSelectionRange(start, end || start);
+    } catch (e3) {
+    }
+  }
+};
+var forwardPropsList3 = Object.assign({}, defaultProps, accessibilityProps, clickProps, focusProps, keyboardProps, mouseProps, touchProps, styleProps, {
+  autoCapitalize: true,
+  autoComplete: true,
+  autoCorrect: true,
+  autoFocus: true,
+  defaultValue: true,
+  disabled: true,
+  lang: true,
+  maxLength: true,
+  onChange: true,
+  onScroll: true,
+  placeholder: true,
+  pointerEvents: true,
+  readOnly: true,
+  rows: true,
+  spellCheck: true,
+  value: true,
+  type: true
+});
+var pickProps3 = (props) => pick(props, forwardPropsList3);
+function isEventComposing(nativeEvent) {
+  return nativeEvent.isComposing || nativeEvent.keyCode === 229;
+}
+var focusTimeout = null;
+var TextInput = /* @__PURE__ */ React15.forwardRef((props, forwardedRef) => {
+  var _props$autoCapitalize = props.autoCapitalize, autoCapitalize = _props$autoCapitalize === void 0 ? "sentences" : _props$autoCapitalize, autoComplete = props.autoComplete, autoCompleteType = props.autoCompleteType, _props$autoCorrect = props.autoCorrect, autoCorrect = _props$autoCorrect === void 0 ? true : _props$autoCorrect, blurOnSubmit = props.blurOnSubmit, caretHidden = props.caretHidden, clearTextOnFocus = props.clearTextOnFocus, dir = props.dir, editable = props.editable, enterKeyHint = props.enterKeyHint, inputMode = props.inputMode, keyboardType = props.keyboardType, _props$multiline = props.multiline, multiline = _props$multiline === void 0 ? false : _props$multiline, numberOfLines = props.numberOfLines, onBlur = props.onBlur, onChange = props.onChange, onChangeText = props.onChangeText, onContentSizeChange = props.onContentSizeChange, onFocus = props.onFocus, onKeyPress = props.onKeyPress, onLayout = props.onLayout, onMoveShouldSetResponder = props.onMoveShouldSetResponder, onMoveShouldSetResponderCapture = props.onMoveShouldSetResponderCapture, onResponderEnd = props.onResponderEnd, onResponderGrant = props.onResponderGrant, onResponderMove = props.onResponderMove, onResponderReject = props.onResponderReject, onResponderRelease = props.onResponderRelease, onResponderStart = props.onResponderStart, onResponderTerminate = props.onResponderTerminate, onResponderTerminationRequest = props.onResponderTerminationRequest, onScrollShouldSetResponder = props.onScrollShouldSetResponder, onScrollShouldSetResponderCapture = props.onScrollShouldSetResponderCapture, onSelectionChange = props.onSelectionChange, onSelectionChangeShouldSetResponder = props.onSelectionChangeShouldSetResponder, onSelectionChangeShouldSetResponderCapture = props.onSelectionChangeShouldSetResponderCapture, onStartShouldSetResponder = props.onStartShouldSetResponder, onStartShouldSetResponderCapture = props.onStartShouldSetResponderCapture, onSubmitEditing = props.onSubmitEditing, placeholderTextColor = props.placeholderTextColor, _props$readOnly = props.readOnly, readOnly = _props$readOnly === void 0 ? false : _props$readOnly, returnKeyType = props.returnKeyType, rows = props.rows, _props$secureTextEntr = props.secureTextEntry, secureTextEntry = _props$secureTextEntr === void 0 ? false : _props$secureTextEntr, selection = props.selection, selectTextOnFocus = props.selectTextOnFocus, showSoftInputOnFocus = props.showSoftInputOnFocus, spellCheck = props.spellCheck;
+  var type2;
+  var _inputMode;
+  if (inputMode != null) {
+    _inputMode = inputMode;
+    if (inputMode === "email") {
+      type2 = "email";
+    } else if (inputMode === "tel") {
+      type2 = "tel";
+    } else if (inputMode === "search") {
+      type2 = "search";
+    } else if (inputMode === "url") {
+      type2 = "url";
+    } else {
+      type2 = "text";
+    }
+  } else if (keyboardType != null) {
+    switch (keyboardType) {
+      case "email-address":
+        type2 = "email";
+        break;
+      case "number-pad":
+      case "numeric":
+        _inputMode = "numeric";
+        break;
+      case "decimal-pad":
+        _inputMode = "decimal";
+        break;
+      case "phone-pad":
+        type2 = "tel";
+        break;
+      case "search":
+      case "web-search":
+        type2 = "search";
+        break;
+      case "url":
+        type2 = "url";
+        break;
+      default:
+        type2 = "text";
+    }
+  }
+  if (secureTextEntry) {
+    type2 = "password";
+  }
+  var dimensions2 = React15.useRef({
+    height: null,
+    width: null
+  });
+  var hostRef = React15.useRef(null);
+  var prevSelection = React15.useRef(null);
+  var prevSecureTextEntry = React15.useRef(false);
+  React15.useEffect(() => {
+    if (hostRef.current && prevSelection.current) {
+      setSelection(hostRef.current, prevSelection.current);
+    }
+    prevSecureTextEntry.current = secureTextEntry;
+  }, [secureTextEntry]);
+  var handleContentSizeChange = React15.useCallback((hostNode) => {
+    if (multiline && onContentSizeChange && hostNode != null) {
+      var newHeight = hostNode.scrollHeight;
+      var newWidth = hostNode.scrollWidth;
+      if (newHeight !== dimensions2.current.height || newWidth !== dimensions2.current.width) {
+        dimensions2.current.height = newHeight;
+        dimensions2.current.width = newWidth;
+        onContentSizeChange({
+          nativeEvent: {
+            contentSize: {
+              height: dimensions2.current.height,
+              width: dimensions2.current.width
+            }
+          }
+        });
+      }
+    }
+  }, [multiline, onContentSizeChange]);
+  var imperativeRef = React15.useMemo(() => (hostNode) => {
+    if (hostNode != null) {
+      hostNode.clear = function() {
+        if (hostNode != null) {
+          hostNode.value = "";
+        }
+      };
+      hostNode.isFocused = function() {
+        return hostNode != null && TextInputState_default.currentlyFocusedField() === hostNode;
+      };
+      handleContentSizeChange(hostNode);
+    }
+  }, [handleContentSizeChange]);
+  function handleBlur(e3) {
+    TextInputState_default._currentlyFocusedNode = null;
+    if (onBlur) {
+      e3.nativeEvent.text = e3.target.value;
+      onBlur(e3);
+    }
+  }
+  function handleChange(e3) {
+    var hostNode = e3.target;
+    var text = hostNode.value;
+    e3.nativeEvent.text = text;
+    handleContentSizeChange(hostNode);
+    if (onChange) {
+      onChange(e3);
+    }
+    if (onChangeText) {
+      onChangeText(text);
+    }
+  }
+  function handleFocus(e3) {
+    var hostNode = e3.target;
+    if (onFocus) {
+      e3.nativeEvent.text = hostNode.value;
+      onFocus(e3);
+    }
+    if (hostNode != null) {
+      TextInputState_default._currentlyFocusedNode = hostNode;
+      if (clearTextOnFocus) {
+        hostNode.value = "";
+      }
+      if (selectTextOnFocus) {
+        if (focusTimeout != null) {
+          clearTimeout(focusTimeout);
+        }
+        focusTimeout = setTimeout(() => {
+          if (hostNode != null && document.activeElement === hostNode) {
+            hostNode.select();
+          }
+        }, 0);
+      }
+    }
+  }
+  function handleKeyDown(e3) {
+    var hostNode = e3.target;
+    e3.stopPropagation();
+    var blurOnSubmitDefault = !multiline;
+    var shouldBlurOnSubmit = blurOnSubmit == null ? blurOnSubmitDefault : blurOnSubmit;
+    var nativeEvent = e3.nativeEvent;
+    var isComposing = isEventComposing(nativeEvent);
+    if (onKeyPress) {
+      onKeyPress(e3);
+    }
+    if (e3.key === "Enter" && !e3.shiftKey && // Do not call submit if composition is occuring.
+    !isComposing && !e3.isDefaultPrevented()) {
+      if ((blurOnSubmit || !multiline) && onSubmitEditing) {
+        e3.preventDefault();
+        nativeEvent.text = e3.target.value;
+        onSubmitEditing(e3);
+      }
+      if (shouldBlurOnSubmit && hostNode != null) {
+        setTimeout(() => hostNode.blur(), 0);
+      }
+    }
+  }
+  function handleSelectionChange(e3) {
+    try {
+      var _e$target = e3.target, selectionStart = _e$target.selectionStart, selectionEnd = _e$target.selectionEnd;
+      var _selection = {
+        start: selectionStart,
+        end: selectionEnd
+      };
+      if (onSelectionChange) {
+        e3.nativeEvent.selection = _selection;
+        e3.nativeEvent.text = e3.target.value;
+        onSelectionChange(e3);
+      }
+      if (prevSecureTextEntry.current === secureTextEntry) {
+        prevSelection.current = _selection;
+      }
+    } catch (e4) {
+    }
+  }
+  useLayoutEffect_default(() => {
+    var node = hostRef.current;
+    if (node != null && selection != null) {
+      setSelection(node, selection);
+    }
+    if (document.activeElement === node) {
+      TextInputState_default._currentlyFocusedNode = node;
+    }
+  }, [hostRef, selection]);
+  var component = multiline ? "textarea" : "input";
+  useElementLayout(hostRef, onLayout);
+  useResponderEvents(hostRef, {
+    onMoveShouldSetResponder,
+    onMoveShouldSetResponderCapture,
+    onResponderEnd,
+    onResponderGrant,
+    onResponderMove,
+    onResponderReject,
+    onResponderRelease,
+    onResponderStart,
+    onResponderTerminate,
+    onResponderTerminationRequest,
+    onScrollShouldSetResponder,
+    onScrollShouldSetResponderCapture,
+    onSelectionChangeShouldSetResponder,
+    onSelectionChangeShouldSetResponderCapture,
+    onStartShouldSetResponder,
+    onStartShouldSetResponderCapture
+  });
+  var _useLocaleContext = useLocaleContext(), contextDirection = _useLocaleContext.direction;
+  var supportedProps = pickProps3(props);
+  supportedProps.autoCapitalize = autoCapitalize;
+  supportedProps.autoComplete = autoComplete || autoCompleteType || "on";
+  supportedProps.autoCorrect = autoCorrect ? "on" : "off";
+  supportedProps.dir = dir !== void 0 ? dir : "auto";
+  supportedProps.enterKeyHint = enterKeyHint || returnKeyType;
+  supportedProps.inputMode = _inputMode;
+  supportedProps.onBlur = handleBlur;
+  supportedProps.onChange = handleChange;
+  supportedProps.onFocus = handleFocus;
+  supportedProps.onKeyDown = handleKeyDown;
+  supportedProps.onSelect = handleSelectionChange;
+  supportedProps.readOnly = readOnly === true || editable === false;
+  supportedProps.rows = multiline ? rows != null ? rows : numberOfLines : 1;
+  supportedProps.spellCheck = spellCheck != null ? spellCheck : autoCorrect;
+  supportedProps.style = [{
+    "--placeholderTextColor": placeholderTextColor
+  }, styles8.textinput$raw, styles8.placeholder, props.style, caretHidden && styles8.caretHidden];
+  supportedProps.type = multiline ? void 0 : type2;
+  supportedProps.virtualkeyboardpolicy = showSoftInputOnFocus === false ? "manual" : "auto";
+  var platformMethodsRef = usePlatformMethods(supportedProps);
+  var setRef = useMergeRefs(hostRef, platformMethodsRef, imperativeRef, forwardedRef);
+  supportedProps.ref = setRef;
+  var langDirection = props.lang != null ? getLocaleDirection(props.lang) : null;
+  var componentDirection = props.dir || langDirection;
+  var writingDirection = componentDirection || contextDirection;
+  var element = createElement_default(component, supportedProps, {
+    writingDirection
+  });
+  return element;
+});
+TextInput.displayName = "TextInput";
+TextInput.State = TextInputState_default;
+var styles8 = StyleSheet_default.create({
+  textinput$raw: {
+    MozAppearance: "textfield",
+    WebkitAppearance: "none",
+    backgroundColor: "transparent",
+    border: "0 solid black",
+    borderRadius: 0,
+    boxSizing: "border-box",
+    font: "14px System",
+    margin: 0,
+    padding: 0,
+    resize: "none"
+  },
+  placeholder: {
+    placeholderTextColor: "var(--placeholderTextColor)"
+  },
+  caretHidden: {
+    caretColor: "transparent"
+  }
+});
+var TextInput_default = TextInput;
+
 // tools/contact-sheet-entry.tsx
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -7911,7 +8208,7 @@ function Keypad({ onKey, s, mode = "comfort", testID = "keypad" }) {
     {
       testID,
       accessibilityRole: "keyboardkey",
-      style: { backgroundColor: t.color.surface, padding: t.space.sm },
+      style: { backgroundColor: t.color.surface, padding: t.space.xs },
       children: ROWS.map((row) => /* @__PURE__ */ jsx2(View_default, { style: { flexDirection: "row" }, children: row.map((k) => {
         const label = k === "back" ? s("keypad.back") : k === "clear" ? s("keypad.clear") : k;
         return /* @__PURE__ */ jsx2(
@@ -7941,8 +8238,8 @@ function Keypad({ onKey, s, mode = "comfort", testID = "keypad" }) {
                 maxFontSizeMultiplier: t.maxFontScale,
                 style: {
                   fontFamily: t.font.medium,
-                  fontSize: t.type.heading,
-                  lineHeight: t.leading(t.type.heading),
+                  fontSize: t.type.body,
+                  lineHeight: t.leading(t.type.body),
                   color: t.color.ink,
                   fontVariant: ["tabular-nums"],
                   // Wrapped Odia labels fill the key, so the Text owns the centring.
@@ -7955,6 +8252,287 @@ function Keypad({ onKey, s, mode = "comfort", testID = "keypad" }) {
           k
         );
       }) }, row.join("")))
+    }
+  );
+}
+
+// apps/mobile/src/components/Shell.tsx
+import { Fragment, jsx as jsx3, jsxs } from "react/jsx-runtime";
+function Shell({
+  id,
+  s,
+  display = "comfort",
+  status = "ready",
+  titleKey,
+  headline,
+  empty = false,
+  emptyKey,
+  onRetry = () => {
+  },
+  children,
+  footer
+}) {
+  const t = tokens(display);
+  if (status === "loading") {
+    return /* @__PURE__ */ jsxs(
+      View_default,
+      {
+        testID: id + "-loading",
+        style: {
+          flex: 1,
+          backgroundColor: t.color.bg,
+          alignItems: "center",
+          justifyContent: "center"
+        },
+        children: [
+          /* @__PURE__ */ jsx3(ActivityIndicator_default, { accessibilityLabel: s("common.loading"), color: t.color.accent }),
+          /* @__PURE__ */ jsx3(
+            Text_default,
+            {
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                fontFamily: t.font.regular,
+                fontSize: t.type.body,
+                lineHeight: t.leading(t.type.body),
+                color: t.color.inkMuted,
+                marginTop: t.space.md
+              },
+              children: s("common.loading")
+            }
+          )
+        ]
+      }
+    );
+  }
+  if (status === "error") {
+    return /* @__PURE__ */ jsxs(
+      View_default,
+      {
+        testID: id + "-error",
+        style: { flex: 1, backgroundColor: t.color.bg, padding: t.space.md },
+        children: [
+          /* @__PURE__ */ jsx3(
+            Text_default,
+            {
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                fontFamily: t.font.regular,
+                fontSize: t.type.body,
+                lineHeight: t.leading(t.type.body),
+                color: t.color.negative
+              },
+              children: s("common.error")
+            }
+          ),
+          /* @__PURE__ */ jsx3(
+            Pressable_default,
+            {
+              testID: id + "-retry",
+              accessibilityRole: "button",
+              accessibilityLabel: s("common.retry"),
+              onPress: onRetry,
+              style: {
+                minHeight: t.touchTarget,
+                minWidth: t.touchTarget,
+                marginTop: t.space.md,
+                paddingHorizontal: t.space.md,
+                borderRadius: t.radius.md,
+                backgroundColor: t.color.accent,
+                alignItems: "center",
+                justifyContent: "center"
+              },
+              children: /* @__PURE__ */ jsx3(
+                Text_default,
+                {
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    fontFamily: t.font.medium,
+                    fontSize: t.type.body,
+                    lineHeight: t.leading(t.type.body),
+                    color: t.color.onAccent
+                  },
+                  children: s("common.retry")
+                }
+              )
+            }
+          )
+        ]
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxs(View_default, { testID: id, style: { flex: 1, backgroundColor: t.color.bg }, children: [
+    /* @__PURE__ */ jsxs(
+      View_default,
+      {
+        style: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          // Money is uncapped by design, so the title and the figure wrap rather
+          // than running off the side at a large system font scale.
+          flexWrap: "wrap",
+          // sm, not md. At the chrome cap in Focus mode a wrapped title plus a
+          // wrapped headline label is already three lines tall, and the sixteen
+          // pixels this saves is what keeps the keypad on screen on T8.
+          padding: t.space.sm,
+          borderBottomWidth: t.hairline,
+          borderBottomColor: t.color.border
+        },
+        children: [
+          /* @__PURE__ */ jsx3(
+            Text_default,
+            {
+              testID: id + "-title",
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                fontFamily: t.font.bold,
+                fontSize: t.type.heading,
+                lineHeight: t.leading(t.type.heading),
+                color: t.color.ink
+              },
+              children: s(titleKey)
+            }
+          ),
+          headline ? /* @__PURE__ */ jsxs(View_default, { style: { alignItems: "flex-end" }, children: [
+            /* @__PURE__ */ jsx3(
+              Text_default,
+              {
+                maxFontSizeMultiplier: t.maxFontScale,
+                style: {
+                  fontFamily: t.font.regular,
+                  fontSize: t.type.label,
+                  lineHeight: t.leading(t.type.label),
+                  color: t.color.inkMuted
+                },
+                children: s(headline.labelKey)
+              }
+            ),
+            /* @__PURE__ */ jsx3(Money, { testID: id + "-headline", amount: headline.amount, mode: display, size: "figure" })
+          ] }) : null
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsx3(ScrollView_default, { testID: id + "-body", style: { flex: 1, minHeight: 0 }, children: empty ? /* @__PURE__ */ jsx3(View_default, { testID: id + "-empty", style: { padding: t.space.lg, alignItems: "center" }, children: /* @__PURE__ */ jsx3(
+      Text_default,
+      {
+        maxFontSizeMultiplier: t.maxFontScale,
+        style: {
+          fontFamily: t.font.regular,
+          fontSize: t.type.body,
+          lineHeight: t.leading(t.type.body),
+          color: t.color.inkMuted,
+          textAlign: "center"
+        },
+        children: s(emptyKey ?? "common.empty")
+      }
+    ) }) : children }),
+    footer
+  ] });
+}
+function Row({
+  testID,
+  label,
+  amount,
+  display = "comfort",
+  directional = false,
+  onPress
+}) {
+  const t = tokens(display);
+  const body = /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx3(
+      Text_default,
+      {
+        maxFontSizeMultiplier: t.maxFontScale,
+        style: {
+          flex: 1,
+          flexWrap: "wrap",
+          marginRight: t.space.sm,
+          fontFamily: t.font.regular,
+          fontSize: t.type.body,
+          lineHeight: t.leading(t.type.body),
+          color: t.color.ink
+        },
+        children: label
+      }
+    ),
+    /* @__PURE__ */ jsx3(
+      Money,
+      {
+        amount,
+        mode: display,
+        size: "body",
+        withSign: directional,
+        tone: directional ? "directional" : "neutral"
+      }
+    )
+  ] });
+  const style = {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    minHeight: t.touchTarget,
+    paddingHorizontal: t.space.md,
+    paddingVertical: t.space.sm,
+    borderBottomWidth: t.hairline,
+    borderBottomColor: t.color.border
+  };
+  return onPress ? /* @__PURE__ */ jsx3(
+    Pressable_default,
+    {
+      testID,
+      accessibilityRole: "button",
+      accessibilityLabel: label,
+      onPress,
+      style: { ...style, minWidth: t.touchTarget },
+      children: body
+    }
+  ) : /* @__PURE__ */ jsx3(View_default, { testID, style, children: body });
+}
+function PrimaryButton({
+  testID,
+  label,
+  onPress,
+  display = "comfort",
+  disabled = false
+}) {
+  const t = tokens(display);
+  return /* @__PURE__ */ jsx3(
+    Pressable_default,
+    {
+      testID,
+      accessibilityRole: "button",
+      accessibilityLabel: label,
+      accessibilityState: { disabled },
+      disabled,
+      onPress,
+      style: {
+        minHeight: t.touchTarget,
+        minWidth: t.touchTarget,
+        margin: t.space.sm,
+        paddingHorizontal: t.space.md,
+        borderRadius: t.radius.md,
+        backgroundColor: disabled ? t.color.surface : t.color.accent,
+        borderWidth: t.hairline,
+        borderColor: t.color.border,
+        alignItems: "center",
+        justifyContent: "center"
+      },
+      children: /* @__PURE__ */ jsx3(
+        Text_default,
+        {
+          maxFontSizeMultiplier: t.maxFontScale,
+          style: {
+            fontFamily: t.font.medium,
+            fontSize: t.type.body,
+            lineHeight: t.leading(t.type.body),
+            // Ink on surface when disabled: onAccent is only checked against accent.
+            color: disabled ? t.color.inkMuted : t.color.onAccent,
+            textAlign: "center"
+          },
+          children: label
+        }
+      )
     }
   );
 }
@@ -8030,7 +8608,107 @@ var STRINGS = {
     en: "Back",
     hi: "\u092A\u0940\u091B\u0947",
     or: "\u0B2A\u0B1B\u0B15\u0B41"
-  }
+  },
+  /* ---- shared by every screen frame -------------------------------- */
+  "common.loading": { en: "Opening", hi: "\u0916\u0941\u0932 \u0930\u0939\u093E \u0939\u0948", or: "\u0B16\u0B4B\u0B32\u0B41\u0B1B\u0B3F" },
+  "common.error": {
+    en: "Could not open this. Nothing you entered is lost.",
+    hi: "\u092F\u0939 \u0928\u0939\u0940\u0902 \u0916\u0941\u0932 \u0938\u0915\u093E\u0964 \u0906\u092A\u0915\u093E \u0926\u0930\u094D\u091C \u0915\u093F\u092F\u093E \u0915\u0941\u091B \u092D\u0940 \u0928\u0939\u0940\u0902 \u0917\u092F\u093E\u0964",
+    or: "\u0B0F\u0B39\u0B3E \u0B16\u0B4B\u0B32\u0B3F\u0B2A\u0B3E\u0B30\u0B3F\u0B32\u0B3E \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B06\u0B2A\u0B23 \u0B32\u0B47\u0B16\u0B3F\u0B25\u0B3F\u0B2C\u0B3E \u0B15\u0B3F\u0B1B\u0B3F \u0B39\u0B1C\u0B3F\u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964"
+  },
+  "common.retry": { en: "Try again", hi: "\u092B\u093F\u0930 \u0915\u094B\u0936\u093F\u0936 \u0915\u0930\u0947\u0902", or: "\u0B2A\u0B41\u0B23\u0B3F \u0B1A\u0B47\u0B37\u0B4D\u0B1F\u0B3E \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
+  "common.empty": { en: "Nothing here yet", hi: "\u0905\u092D\u0940 \u092F\u0939\u093E\u0901 \u0915\u0941\u091B \u0928\u0939\u0940\u0902", or: "\u0B0F\u0B20\u0B3E\u0B30\u0B47 \u0B0F\u0B2A\u0B30\u0B4D\u0B2F\u0B4D\u0B5F\u0B28\u0B4D\u0B24 \u0B15\u0B3F\u0B1B\u0B3F \u0B28\u0B3E\u0B39\u0B3F\u0B01" },
+  "common.save": { en: "Save", hi: "\u0938\u0939\u0947\u091C\u0947\u0902", or: "\u0B38\u0B1E\u0B4D\u0B1A\u0B5F \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
+  /* ---- the nine sections of the paper sheet -------------------------- */
+  "section.cash_sales": { en: "Cash sales", hi: "\u0928\u0915\u0926 \u092C\u093F\u0915\u094D\u0930\u0940", or: "\u0B28\u0B17\u0B26 \u0B2C\u0B3F\u0B15\u0B4D\u0B30\u0B3F" },
+  "section.upi_sales": { en: "UPI sales", hi: "UPI \u092C\u093F\u0915\u094D\u0930\u0940", or: "UPI \u0B2C\u0B3F\u0B15\u0B4D\u0B30\u0B3F" },
+  "section.udhar_sales": { en: "Credit sales", hi: "\u0909\u0927\u093E\u0930 \u092C\u093F\u0915\u094D\u0930\u0940", or: "\u0B09\u0B27\u0B3E\u0B30 \u0B2C\u0B3F\u0B15\u0B4D\u0B30\u0B3F" },
+  "section.purchase": { en: "Purchases", hi: "\u0916\u0930\u0940\u0926", or: "\u0B15\u0B3F\u0B23\u0B3E" },
+  "section.expense": { en: "Expenses", hi: "\u0916\u0930\u094D\u091A", or: "\u0B16\u0B30\u0B4D\u0B1A\u0B4D\u0B1A" },
+  "section.udhar_collection": { en: "Udhar collected", hi: "\u0909\u0927\u093E\u0930 \u0935\u0938\u0942\u0932\u0940", or: "\u0B09\u0B27\u0B3E\u0B30 \u0B06\u0B26\u0B3E\u0B5F" },
+  "section.party_payment": { en: "Paid to suppliers", hi: "\u0906\u092A\u0942\u0930\u094D\u0924\u093F\u0915\u0930\u094D\u0924\u093E \u0915\u094B \u092D\u0941\u0917\u0924\u093E\u0928", or: "\u0B2F\u0B4B\u0B17\u0B3E\u0B23\u0B15\u0B3E\u0B30\u0B40\u0B19\u0B4D\u0B15\u0B41 \u0B26\u0B3F\u0B06\u0B17\u0B32\u0B3E" },
+  "section.withdrawal": { en: "Taken by owner", hi: "\u092E\u093E\u0932\u093F\u0915 \u0928\u0947 \u0932\u093F\u092F\u093E", or: "\u0B2E\u0B3E\u0B32\u0B3F\u0B15 \u0B28\u0B47\u0B07\u0B1B\u0B28\u0B4D\u0B24\u0B3F" },
+  /* ---- T1 · Today, the front door ------------------------------------ */
+  "t1.title": { en: "Today", hi: "\u0906\u091C", or: "\u0B06\u0B1C\u0B3F" },
+  "t1.cashInHand": { en: "Cash should be", hi: "\u0928\u0915\u0926 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F", or: "\u0B28\u0B17\u0B26 \u0B30\u0B39\u0B3F\u0B2C\u0B3E \u0B09\u0B1A\u0B3F\u0B24" },
+  "t1.empty": {
+    en: "Nothing entered yet today. Start with a sale.",
+    hi: "\u0906\u091C \u0905\u092D\u0940 \u0915\u0941\u091B \u0926\u0930\u094D\u091C \u0928\u0939\u0940\u0902\u0964 \u092C\u093F\u0915\u094D\u0930\u0940 \u0938\u0947 \u0936\u0941\u0930\u0942 \u0915\u0930\u0947\u0902\u0964",
+    or: "\u0B06\u0B1C\u0B3F \u0B0F\u0B2A\u0B30\u0B4D\u0B2F\u0B4D\u0B5F\u0B28\u0B4D\u0B24 \u0B15\u0B3F\u0B1B\u0B3F \u0B32\u0B47\u0B16\u0B3E \u0B39\u0B4B\u0B07\u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B2C\u0B3F\u0B15\u0B4D\u0B30\u0B3F\u0B30\u0B41 \u0B06\u0B30\u0B2E\u0B4D\u0B2D \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  "t1.closeDay": { en: "Close the day", hi: "\u0926\u093F\u0928 \u092C\u0902\u0926 \u0915\u0930\u0947\u0902", or: "\u0B26\u0B3F\u0B28 \u0B2C\u0B28\u0B4D\u0B26 \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
+  "t1.profit": { en: "Estimated profit", hi: "\u0905\u0928\u0941\u092E\u093E\u0928\u093F\u0924 \u0932\u093E\u092D", or: "\u0B06\u0B28\u0B41\u0B2E\u0B3E\u0B28\u0B3F\u0B15 \u0B32\u0B3E\u0B2D" },
+  /* ---- T5 · the nine-section day close list -------------------------- */
+  "t5.title": { en: "Day close", hi: "\u0926\u093F\u0928 \u092C\u0902\u0926", or: "\u0B26\u0B3F\u0B28 \u0B2C\u0B28\u0B4D\u0B26" },
+  "t5.total": { en: "Day total", hi: "\u0926\u093F\u0928 \u0915\u093E \u0915\u0941\u0932", or: "\u0B26\u0B3F\u0B28\u0B30 \u0B2E\u0B4B\u0B1F" },
+  /* ---- T6 · opening cash --------------------------------------------- */
+  "t6.title": { en: "Opening cash", hi: "\u0936\u0941\u0930\u0941\u0906\u0924\u0940 \u0928\u0915\u0926", or: "\u0B06\u0B30\u0B2E\u0B4D\u0B2D \u0B28\u0B17\u0B26" },
+  "t6.prompt": {
+    en: "How much cash is in the box before you start?",
+    hi: "\u0936\u0941\u0930\u0942 \u0915\u0930\u0928\u0947 \u0938\u0947 \u092A\u0939\u0932\u0947 \u092C\u0949\u0915\u094D\u0938 \u092E\u0947\u0902 \u0915\u093F\u0924\u0928\u093E \u0928\u0915\u0926 \u0939\u0948?",
+    or: "\u0B06\u0B30\u0B2E\u0B4D\u0B2D \u0B15\u0B30\u0B3F\u0B2C\u0B3E \u0B2A\u0B42\u0B30\u0B4D\u0B2C\u0B30\u0B41 \u0B2C\u0B3E\u0B15\u0B4D\u0B38\u0B30\u0B47 \u0B15\u0B47\u0B24\u0B47 \u0B28\u0B17\u0B26 \u0B05\u0B1B\u0B3F?"
+  },
+  /* ---- T8 · Form B, a party and an amount ---------------------------- */
+  /* Short, because it is a TITLE at up to 1.5x on a 360dp screen. The long form
+     wrapped to four lines in Focus mode and pushed the keypad off the bottom. */
+  "t8.title": { en: "Udhar book", hi: "\u0909\u0927\u093E\u0930 \u0916\u093E\u0924\u093E", or: "\u0B09\u0B27\u0B3E\u0B30 \u0B16\u0B3E\u0B24\u0B3E" },
+  /* Button labels are SHORT. A three-across row is about 100dp wide, and an Odia
+     word longer than that cannot break - it overflows the button rather than
+     wrapping inside it, which check:layout caught on this exact row. The full
+     phrasing lives on the line the entry produces, where there is room for it. */
+  "t8.collect": { en: "Collected", hi: "\u0935\u0938\u0942\u0932\u0940", or: "\u0B06\u0B26\u0B3E\u0B5F" },
+  "t8.pay": { en: "Paid out", hi: "\u092D\u0941\u0917\u0924\u093E\u0928", or: "\u0B26\u0B47\u0B32\u0B3F" },
+  "t8.credit": { en: "On credit", hi: "\u0909\u0927\u093E\u0930", or: "\u0B09\u0B27\u0B3E\u0B30" },
+  /* The headline on T8 is P7 - what customers OWE - not what was sold on credit
+     today. It was labelled 'Credit sales', which named a different figure
+     entirely. Caught while trimming the header to fit; wrong for longer. */
+  "t8.outstanding": { en: "Owed to you", hi: "\u0906\u092A\u0915\u094B \u092E\u093F\u0932\u0928\u093E \u0939\u0948", or: "\u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15\u0B41 \u0B2E\u0B3F\u0B33\u0B3F\u0B2C\u0B3E\u0B30" },
+  /* ---- T9 · Form C, a label and a mode ------------------------------- */
+  "t9.title": { en: "Expense", hi: "\u0916\u0930\u094D\u091A", or: "\u0B16\u0B30\u0B4D\u0B1A\u0B4D\u0B1A" },
+  "t9.label": { en: "What for?", hi: "\u0915\u093F\u0938\u0932\u093F\u090F?", or: "\u0B15\u0B3E\u0B39\u0B3F\u0B01\u0B15\u0B3F?" },
+  "t9.mode.other": { en: "Other", hi: "\u0905\u0928\u094D\u092F", or: "\u0B05\u0B28\u0B4D\u0B5F" },
+  "t9.mode.shop_stock": { en: "Shop stock", hi: "\u0926\u0941\u0915\u093E\u0928 \u092E\u093E\u0932", or: "\u0B26\u0B4B\u0B15\u0B3E\u0B28 \u0B2E\u0B3E\u0B32" },
+  /* ---- T10 · Form D, the owner taking money -------------------------- */
+  "t10.title": { en: "Money you took", hi: "\u0906\u092A\u0928\u0947 \u091C\u094B \u0932\u093F\u092F\u093E", or: "\u0B06\u0B2A\u0B23 \u0B28\u0B47\u0B07\u0B25\u0B3F\u0B2C\u0B3E \u0B1F\u0B19\u0B4D\u0B15\u0B3E" },
+  "t10.note": {
+    en: "This leaves the cash box but is not a shop cost, so it does not change profit.",
+    hi: "\u092F\u0939 \u0928\u0915\u0926 \u0938\u0947 \u091C\u093E\u0924\u093E \u0939\u0948 \u092A\u0930 \u0926\u0941\u0915\u093E\u0928 \u0915\u093E \u0916\u0930\u094D\u091A \u0928\u0939\u0940\u0902, \u0907\u0938\u0932\u093F\u090F \u0932\u093E\u092D \u0928\u0939\u0940\u0902 \u092C\u0926\u0932\u0924\u093E\u0964",
+    or: "\u0B0F\u0B39\u0B3E \u0B28\u0B17\u0B26\u0B30\u0B41 \u0B2F\u0B3E\u0B0F \u0B15\u0B3F\u0B28\u0B4D\u0B24\u0B41 \u0B26\u0B4B\u0B15\u0B3E\u0B28\u0B30 \u0B16\u0B30\u0B4D\u0B1A\u0B4D\u0B1A \u0B28\u0B41\u0B39\u0B47\u0B01, \u0B24\u0B47\u0B23\u0B41 \u0B32\u0B3E\u0B2D \u0B2C\u0B26\u0B33\u0B47 \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964"
+  },
+  /* ---- T11 · cash check, counting ------------------------------------ */
+  "t11.title": { en: "Count the cash", hi: "\u0928\u0915\u0926 \u0917\u093F\u0928\u0947\u0902", or: "\u0B28\u0B17\u0B26 \u0B17\u0B23\u0B28\u0B4D\u0B24\u0B41" },
+  "t11.expected": { en: "Should be", hi: "\u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F", or: "\u0B30\u0B39\u0B3F\u0B2C\u0B3E \u0B09\u0B1A\u0B3F\u0B24" },
+  "t11.counted": { en: "You counted", hi: "\u0906\u092A\u0928\u0947 \u0917\u093F\u0928\u093E", or: "\u0B06\u0B2A\u0B23 \u0B17\u0B23\u0B3F\u0B32\u0B47" },
+  /* ---- T12 · cash check, the difference ------------------------------ */
+  "t12.title": { en: "The difference", hi: "\u0905\u0902\u0924\u0930", or: "\u0B2A\u0B3E\u0B30\u0B4D\u0B25\u0B15\u0B4D\u0B5F" },
+  "t12.difference": { en: "Difference", hi: "\u0905\u0902\u0924\u0930", or: "\u0B2A\u0B3E\u0B30\u0B4D\u0B25\u0B15\u0B4D\u0B5F" },
+  "t12.reasonPrompt": {
+    en: "What do you think happened?",
+    hi: "\u0906\u092A\u0915\u094B \u0915\u094D\u092F\u093E \u0932\u0917\u0924\u093E \u0939\u0948 \u0939\u0941\u0906?",
+    or: "\u0B06\u0B2A\u0B23 \u0B2D\u0B3E\u0B2C\u0B41\u0B1B\u0B28\u0B4D\u0B24\u0B3F \u0B15\u0B23 \u0B39\u0B4B\u0B07\u0B1B\u0B3F?"
+  },
+  "t12.reason.change": { en: "Gave change from my pocket", hi: "\u0905\u092A\u0928\u0940 \u091C\u0947\u092C \u0938\u0947 \u091B\u0941\u091F\u094D\u091F\u093E \u0926\u093F\u092F\u093E", or: "\u0B28\u0B3F\u0B1C \u0B2A\u0B15\u0B47\u0B1F\u0B30\u0B41 \u0B16\u0B41\u0B1A\u0B41\u0B30\u0B3E \u0B26\u0B47\u0B32\u0B3F" },
+  "t12.reason.missed": { en: "Forgot to write something", hi: "\u0915\u0941\u091B \u0932\u093F\u0916\u0928\u093E \u092D\u0942\u0932 \u0917\u092F\u093E", or: "\u0B15\u0B3F\u0B1B\u0B3F \u0B32\u0B47\u0B16\u0B3F\u0B2C\u0B3E\u0B15\u0B41 \u0B2D\u0B41\u0B32\u0B3F\u0B17\u0B32\u0B3F" },
+  /* ---- T14 · the day, closed ----------------------------------------- */
+  "t14.title": { en: "Day closed", hi: "\u0926\u093F\u0928 \u092C\u0902\u0926 \u0939\u0941\u0906", or: "\u0B26\u0B3F\u0B28 \u0B2C\u0B28\u0B4D\u0B26 \u0B39\u0B47\u0B32\u0B3E" },
+  "t14.profit": { en: "Estimated profit", hi: "\u0905\u0928\u0941\u092E\u093E\u0928\u093F\u0924 \u0932\u093E\u092D", or: "\u0B06\u0B28\u0B41\u0B2E\u0B3E\u0B28\u0B3F\u0B15 \u0B32\u0B3E\u0B2D" },
+  "t14.withdrawalNote": {
+    en: "Money you took is shown separately and is not counted against profit.",
+    hi: "\u0906\u092A\u0928\u0947 \u091C\u094B \u0932\u093F\u092F\u093E \u0935\u0939 \u0905\u0932\u0917 \u0926\u093F\u0916\u093E\u092F\u093E \u0939\u0948 \u0914\u0930 \u0932\u093E\u092D \u092E\u0947\u0902 \u0938\u0947 \u0928\u0939\u0940\u0902 \u0918\u091F\u093E\u092F\u093E\u0964",
+    or: "\u0B06\u0B2A\u0B23 \u0B28\u0B47\u0B07\u0B25\u0B3F\u0B2C\u0B3E \u0B1F\u0B19\u0B4D\u0B15\u0B3E \u0B05\u0B32\u0B17\u0B3E \u0B26\u0B47\u0B16\u0B3E\u0B2F\u0B3E\u0B07\u0B1B\u0B3F \u0B0F\u0B2C\u0B02 \u0B32\u0B3E\u0B2D\u0B30\u0B41 \u0B39\u0B1F\u0B3E\u0B2F\u0B3E\u0B07\u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964"
+  },
+  /* ---- the cash-check working, line by line -------------------------- */
+  "working.opening_cash": { en: "Cash you started with", hi: "\u0936\u0941\u0930\u0942 \u0915\u093E \u0928\u0915\u0926", or: "\u0B06\u0B30\u0B2E\u0B4D\u0B2D\u0B30 \u0B28\u0B17\u0B26" },
+  "working.cash_sales": { en: "Cash sales", hi: "\u0928\u0915\u0926 \u092C\u093F\u0915\u094D\u0930\u0940", or: "\u0B28\u0B17\u0B26 \u0B2C\u0B3F\u0B15\u0B4D\u0B30\u0B3F" },
+  "working.udhar_collected_cash": { en: "Udhar collected in cash", hi: "\u0928\u0915\u0926 \u092E\u0947\u0902 \u0909\u0927\u093E\u0930 \u0935\u0938\u0942\u0932\u0940", or: "\u0B28\u0B17\u0B26\u0B30\u0B47 \u0B09\u0B27\u0B3E\u0B30 \u0B06\u0B26\u0B3E\u0B5F" },
+  "working.cash_purchase": { en: "Purchases paid in cash", hi: "\u0928\u0915\u0926 \u092E\u0947\u0902 \u0916\u0930\u0940\u0926", or: "\u0B28\u0B17\u0B26\u0B30\u0B47 \u0B15\u0B3F\u0B23\u0B3E" },
+  "working.cash_expenses": { en: "Expenses paid in cash", hi: "\u0928\u0915\u0926 \u092E\u0947\u0902 \u0916\u0930\u094D\u091A", or: "\u0B28\u0B17\u0B26\u0B30\u0B47 \u0B16\u0B30\u0B4D\u0B1A\u0B4D\u0B1A" },
+  "working.cash_party_payment": { en: "Paid to suppliers in cash", hi: "\u0928\u0915\u0926 \u092E\u0947\u0902 \u0906\u092A\u0942\u0930\u094D\u0924\u093F\u0915\u0930\u094D\u0924\u093E \u0915\u094B", or: "\u0B28\u0B17\u0B26\u0B30\u0B47 \u0B2F\u0B4B\u0B17\u0B3E\u0B23\u0B15\u0B3E\u0B30\u0B40\u0B19\u0B4D\u0B15\u0B41" },
+  "working.withdrawal_cash": { en: "Cash you took", hi: "\u0906\u092A\u0928\u0947 \u0932\u093F\u092F\u093E \u0928\u0915\u0926", or: "\u0B06\u0B2A\u0B23 \u0B28\u0B47\u0B07\u0B25\u0B3F\u0B2C\u0B3E \u0B28\u0B17\u0B26" },
+  /* ---- the three states a section can be in (D8) ---------------------- */
+  "state.entered": { en: "entered", hi: "\u0926\u0930\u094D\u091C", or: "\u0B32\u0B47\u0B16\u0B3E\u0B2F\u0B3E\u0B07\u0B1B\u0B3F" },
+  "state.skipped": { en: "nothing today", hi: "\u0906\u091C \u0915\u0941\u091B \u0928\u0939\u0940\u0902", or: "\u0B06\u0B1C\u0B3F \u0B15\u0B3F\u0B1B\u0B3F \u0B28\u0B3E\u0B39\u0B3F\u0B01" },
+  "state.untouched": { en: "not yet", hi: "\u0905\u092D\u0940 \u0928\u0939\u0940\u0902", or: "\u0B0F\u0B2A\u0B30\u0B4D\u0B2F\u0B4D\u0B5F\u0B28\u0B4D\u0B24 \u0B28\u0B41\u0B39\u0B47\u0B01" }
 };
 function phrase(key, language) {
   const p = STRINGS[key];
@@ -8044,16 +8722,18 @@ function phrase(key, language) {
 }
 var strings = (language) => (key) => phrase(key, language);
 
-// apps/mobile/src/screens/T7.tsx
-import { jsx as jsx3, jsxs } from "react/jsx-runtime";
-var SALES_SECTIONS = ["cash_sales", "upi_sales", "udhar_sales"];
-var MODE_LABEL = {
-  cash_sales: "formA.mode.cash",
-  upi_sales: "formA.mode.upi",
-  udhar_sales: "formA.mode.udhar"
-};
-function FormA({
+// apps/mobile/src/components/EntryForm.tsx
+import { Fragment as Fragment2, jsx as jsx4, jsxs as jsxs2 } from "react/jsx-runtime";
+function EntryForm({
+  id,
   store,
+  titleKey,
+  sections,
+  runningTotal,
+  runningTotalKey,
+  commits,
+  emptyKey,
+  noteKey,
   status = "ready",
   language = "en",
   display = "comfort",
@@ -8067,70 +8747,240 @@ function FormA({
 }) {
   const t = tokens(display);
   const s = strings(language);
-  if (status === "loading") {
-    return /* @__PURE__ */ jsxs(
-      View_default,
-      {
-        testID: "t7-loading",
-        style: {
-          flex: 1,
-          backgroundColor: t.color.bg,
-          alignItems: "center",
-          justifyContent: "center"
-        },
-        children: [
-          /* @__PURE__ */ jsx3(ActivityIndicator_default, { accessibilityLabel: s("formA.loading"), color: t.color.accent }),
-          /* @__PURE__ */ jsx3(
-            Text_default,
-            {
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                fontFamily: t.font.regular,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.inkMuted,
-                marginTop: t.space.md
-              },
-              children: s("formA.loading")
-            }
-          )
-        ]
-      }
-    );
-  }
-  if (status === "error") {
-    return /* @__PURE__ */ jsxs(View_default, { testID: "t7-error", style: { flex: 1, backgroundColor: t.color.bg, padding: t.space.md }, children: [
-      /* @__PURE__ */ jsx3(
-        Text_default,
-        {
-          maxFontSizeMultiplier: t.maxFontScale,
-          style: {
-            fontFamily: t.font.regular,
-            fontSize: t.type.body,
-            lineHeight: t.leading(t.type.body),
-            color: t.color.negative
+  const parties = new Map(store.state.parties.map((p) => [p.id, p.name]));
+  const lines = store.state.entries.filter((e3) => sections.includes(e3.section));
+  return /* @__PURE__ */ jsxs2(
+    Shell,
+    {
+      id,
+      s,
+      display,
+      status,
+      titleKey,
+      headline: { labelKey: runningTotalKey, amount: runningTotal },
+      empty: lines.length === 0,
+      emptyKey,
+      onRetry,
+      footer: /* @__PURE__ */ jsxs2(Fragment2, { children: [
+        /* @__PURE__ */ jsxs2(
+          View_default,
+          {
+            testID: id + "-draft",
+            style: {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              // sm rather than md: the footer is the tightest vertical budget on
+              // the screen, and at the chrome cap in Focus mode those eight
+              // pixels were the difference between the keypad fitting and not.
+              padding: t.space.sm,
+              borderTopWidth: t.hairline,
+              borderTopColor: t.color.border
+            },
+            children: [
+              /* @__PURE__ */ jsx4(
+                Text_default,
+                {
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    fontFamily: t.font.regular,
+                    fontSize: t.type.label,
+                    lineHeight: t.leading(t.type.label),
+                    color: t.color.inkMuted
+                  },
+                  children: s("formA.amount")
+                }
+              ),
+              /* @__PURE__ */ jsx4(
+                Money,
+                {
+                  testID: id + "-draft-amount",
+                  amount: draftPaise ?? 0,
+                  mode: display,
+                  size: "figure"
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx4(View_default, { style: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: t.space.sm }, children: commits.map((option) => /* @__PURE__ */ jsx4(
+          Pressable_default,
+          {
+            testID: id + "-commit-" + option.mode + "-" + option.section,
+            accessibilityRole: "button",
+            accessibilityLabel: s(option.labelKey),
+            onPress: () => onCommit(option),
+            style: {
+              /*
+               * TWO PER ROW, NOT ALL OF THEM. Three or five buttons across a
+               * 360dp screen leaves about 100dp each, and an Odia or English
+               * word wider than that cannot break - it overflows the button.
+               * check:layout caught exactly that on T8 and T9.
+               */
+              flexBasis: "45%",
+              flexGrow: 1,
+              minHeight: t.touchTarget,
+              minWidth: t.touchTarget,
+              margin: t.space.xs,
+              borderRadius: t.radius.md,
+              backgroundColor: t.color.accent,
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            children: /* @__PURE__ */ jsx4(
+              Text_default,
+              {
+                maxFontSizeMultiplier: t.maxFontScale,
+                style: {
+                  fontFamily: t.font.medium,
+                  fontSize: t.type.body,
+                  lineHeight: t.leading(t.type.body),
+                  color: t.color.onAccent,
+                  textAlign: "center"
+                },
+                children: s(option.labelKey)
+              }
+            )
           },
-          children: s("formA.error")
-        }
-      ),
-      /* @__PURE__ */ jsx3(
+          option.section + ":" + option.mode
+        )) }),
+        /* @__PURE__ */ jsx4(Keypad, { onKey, s, mode: display })
+      ] }),
+      children: [
+        lines.map((e3) => /* @__PURE__ */ jsx4(
+          Row,
+          {
+            testID: id + "-line-" + e3.id,
+            label: s("section." + e3.section) + (e3.partyId ? " - " + (parties.get(e3.partyId) ?? e3.partyId) : "") + (e3.label ? " - " + e3.label : ""),
+            amount: e3.amount,
+            display
+          },
+          e3.id
+        )),
+        noteKey ? /* @__PURE__ */ jsx4(
+          Text_default,
+          {
+            testID: id + "-note",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              padding: t.space.md,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.inkMuted
+            },
+            children: s(noteKey)
+          }
+        ) : null
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/T7.tsx
+import { jsx as jsx5 } from "react/jsx-runtime";
+var COMMITS = [
+  { labelKey: "formA.mode.cash", section: "cash_sales", mode: "cash" },
+  { labelKey: "formA.mode.upi", section: "upi_sales", mode: "upi" },
+  { labelKey: "formA.mode.udhar", section: "udhar_sales", mode: "udhar" }
+];
+function FormA({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  draftPaise = null,
+  onKey = () => {
+  },
+  onCommit = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  return /* @__PURE__ */ jsx5(
+    EntryForm,
+    {
+      id: "t7",
+      store,
+      titleKey: "formA.title",
+      sections: ["cash_sales", "upi_sales", "udhar_sales"],
+      runningTotal: store.primary().p4NetSales.value,
+      runningTotalKey: "formA.runningTotal",
+      commits: COMMITS,
+      emptyKey: "formA.empty",
+      status,
+      language,
+      display,
+      draftPaise,
+      onKey,
+      onCommit: (option) => onCommit(option.mode),
+      onRetry
+    }
+  );
+}
+
+// apps/mobile/src/screens/T1.tsx
+import { jsx as jsx6, jsxs as jsxs3 } from "react/jsx-runtime";
+var SUMMARY_SECTIONS = [
+  "cash_sales",
+  "upi_sales",
+  "udhar_sales",
+  "purchase",
+  "expense",
+  "udhar_collection",
+  "party_payment",
+  "withdrawal"
+];
+function Today({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onCloseDay = () => {
+  },
+  onOpenSection = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const entries = store.state.entries;
+  const primary = store.primary();
+  const totals = SUMMARY_SECTIONS.map((section) => ({
+    section,
+    amount: store.sectionTotal(section),
+    count: entries.filter((e3) => e3.section === section).length
+  }));
+  return /* @__PURE__ */ jsxs3(
+    Shell,
+    {
+      id: "t1",
+      s,
+      display,
+      status,
+      titleKey: "t1.title",
+      headline: { labelKey: "t1.cashInHand", amount: store.expectedCash().value },
+      empty: entries.length === 0,
+      emptyKey: "t1.empty",
+      onRetry,
+      footer: /* @__PURE__ */ jsx6(View_default, { style: { padding: t.space.sm }, children: /* @__PURE__ */ jsx6(
         Pressable_default,
         {
-          testID: "t7-retry",
+          testID: "t1-close-day",
           accessibilityRole: "button",
-          accessibilityLabel: s("formA.retry"),
-          onPress: onRetry,
+          accessibilityLabel: s("t1.closeDay"),
+          onPress: onCloseDay,
           style: {
             minHeight: t.touchTarget,
             minWidth: t.touchTarget,
-            marginTop: t.space.md,
-            paddingHorizontal: t.space.md,
             borderRadius: t.radius.md,
             backgroundColor: t.color.accent,
             alignItems: "center",
             justifyContent: "center"
           },
-          children: /* @__PURE__ */ jsx3(
+          children: /* @__PURE__ */ jsx6(
             Text_default,
             {
               maxFontSizeMultiplier: t.maxFontScale,
@@ -8140,195 +8990,727 @@ function FormA({
                 lineHeight: t.leading(t.type.body),
                 color: t.color.onAccent
               },
-              children: s("formA.retry")
+              children: s("t1.closeDay")
             }
           )
         }
-      )
-    ] });
-  }
-  const parties = new Map(store.state.parties.map((p) => [p.id, p.name]));
-  const lines = store.state.entries.filter(
-    (e3) => SALES_SECTIONS.includes(e3.section)
+      ) }),
+      children: [
+        totals.filter((row) => row.count > 0).map((row) => /* @__PURE__ */ jsx6(
+          Row,
+          {
+            testID: "t1-section-" + row.section,
+            label: s("section." + row.section),
+            amount: row.amount,
+            display,
+            onPress: () => onOpenSection(row.section)
+          },
+          row.section
+        )),
+        /* @__PURE__ */ jsx6(
+          Row,
+          {
+            testID: "t1-profit",
+            label: s("t1.profit"),
+            amount: primary.estimatedProfit.value,
+            display,
+            directional: true
+          }
+        )
+      ]
+    }
   );
-  return /* @__PURE__ */ jsxs(View_default, { testID: "t7", style: { flex: 1, backgroundColor: t.color.bg }, children: [
-    /* @__PURE__ */ jsxs(
-      View_default,
-      {
-        style: {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          // Money is uncapped by design, so at a large system font scale the label and the
-          // figure wrap onto two lines rather than running off the side of the screen.
-          flexWrap: "wrap",
-          padding: t.space.md,
-          borderBottomWidth: t.hairline,
-          borderBottomColor: t.color.border
-        },
-        children: [
-          /* @__PURE__ */ jsx3(
-            Text_default,
+}
+
+// apps/mobile/src/screens/T5.tsx
+import { jsx as jsx7, jsxs as jsxs4 } from "react/jsx-runtime";
+var SECTIONS2 = [
+  "cash_sales",
+  "upi_sales",
+  "udhar_sales",
+  "purchase",
+  "expense",
+  "udhar_collection",
+  "party_payment",
+  "withdrawal"
+];
+function DayCloseList({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onOpenSection = () => {
+  },
+  onSkipSection = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  return /* @__PURE__ */ jsx7(
+    Shell,
+    {
+      id: "t5",
+      s,
+      display,
+      status,
+      titleKey: "t5.title",
+      headline: { labelKey: "t5.total", amount: store.expectedCash().value },
+      onRetry,
+      children: SECTIONS2.map((section) => {
+        const state = store.sectionState(section);
+        return /* @__PURE__ */ jsxs4(View_default, { testID: "t5-row-" + section, children: [
+          /* @__PURE__ */ jsx7(
+            Row,
             {
-              testID: "t7-title",
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: { fontFamily: t.font.bold, fontSize: t.type.heading, color: t.color.ink },
-              children: s("formA.title")
+              testID: "t5-figure-" + section,
+              label: s("section." + section),
+              amount: store.sectionTotal(section),
+              display,
+              onPress: () => onOpenSection(section)
             }
           ),
-          /* @__PURE__ */ jsxs(View_default, { style: { alignItems: "flex-end" }, children: [
-            /* @__PURE__ */ jsx3(
+          /* @__PURE__ */ jsxs4(
+            View_default,
+            {
+              style: {
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                paddingHorizontal: t.space.md,
+                paddingBottom: t.space.sm
+              },
+              children: [
+                /* @__PURE__ */ jsx7(
+                  Text_default,
+                  {
+                    testID: "t5-state-" + section,
+                    maxFontSizeMultiplier: t.maxFontScale,
+                    style: {
+                      fontFamily: t.font.regular,
+                      fontSize: t.type.label,
+                      lineHeight: t.leading(t.type.label),
+                      color: t.color.inkMuted
+                    },
+                    children: s("state." + state)
+                  }
+                ),
+                state === "untouched" ? /* @__PURE__ */ jsx7(
+                  Pressable_default,
+                  {
+                    testID: "t5-skip-" + section,
+                    accessibilityRole: "button",
+                    accessibilityLabel: s("state.skipped"),
+                    onPress: () => onSkipSection(section),
+                    style: {
+                      minHeight: t.touchTarget,
+                      minWidth: t.touchTarget,
+                      paddingHorizontal: t.space.md,
+                      borderRadius: t.radius.md,
+                      borderWidth: t.hairline,
+                      borderColor: t.color.border,
+                      alignItems: "center",
+                      justifyContent: "center"
+                    },
+                    children: /* @__PURE__ */ jsx7(
+                      Text_default,
+                      {
+                        maxFontSizeMultiplier: t.maxFontScale,
+                        style: {
+                          fontFamily: t.font.medium,
+                          fontSize: t.type.body,
+                          lineHeight: t.leading(t.type.body),
+                          color: t.color.ink
+                        },
+                        children: s("state.skipped")
+                      }
+                    )
+                  }
+                ) : null
+              ]
+            }
+          )
+        ] }, section);
+      })
+    }
+  );
+}
+
+// apps/mobile/src/screens/T6.tsx
+import { Fragment as Fragment3, jsx as jsx8, jsxs as jsxs5 } from "react/jsx-runtime";
+function OpeningCash({
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  draftPaise = null,
+  onKey = () => {
+  },
+  onConfirm = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  return /* @__PURE__ */ jsx8(
+    Shell,
+    {
+      id: "t6",
+      s,
+      display,
+      status,
+      titleKey: "t6.title",
+      onRetry,
+      footer: /* @__PURE__ */ jsxs5(Fragment3, { children: [
+        /* @__PURE__ */ jsxs5(
+          View_default,
+          {
+            testID: "t6-draft",
+            style: {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              padding: t.space.md,
+              borderTopWidth: t.hairline,
+              borderTopColor: t.color.border
+            },
+            children: [
+              /* @__PURE__ */ jsx8(
+                Text_default,
+                {
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    fontFamily: t.font.regular,
+                    fontSize: t.type.label,
+                    lineHeight: t.leading(t.type.label),
+                    color: t.color.inkMuted
+                  },
+                  children: s("formA.amount")
+                }
+              ),
+              /* @__PURE__ */ jsx8(
+                Money,
+                {
+                  testID: "t6-draft-amount",
+                  amount: draftPaise ?? 0,
+                  mode: display,
+                  size: "figure"
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx8(
+          PrimaryButton,
+          {
+            testID: "t6-confirm",
+            label: s("common.save"),
+            onPress: onConfirm,
+            display,
+            disabled: draftPaise === null
+          }
+        ),
+        /* @__PURE__ */ jsx8(Keypad, { onKey, s, mode: display })
+      ] }),
+      children: /* @__PURE__ */ jsx8(
+        Text_default,
+        {
+          testID: "t6-prompt",
+          maxFontSizeMultiplier: t.maxFontScale,
+          style: {
+            padding: t.space.md,
+            fontFamily: t.font.regular,
+            fontSize: t.type.body,
+            lineHeight: t.leading(t.type.body),
+            color: t.color.ink
+          },
+          children: s("t6.prompt")
+        }
+      )
+    }
+  );
+}
+
+// apps/mobile/src/screens/T8.tsx
+import { jsx as jsx9 } from "react/jsx-runtime";
+var COMMITS2 = [
+  { labelKey: "t8.collect", section: "udhar_collection", mode: "cash" },
+  { labelKey: "t8.pay", section: "party_payment", mode: "cash" },
+  { labelKey: "t8.credit", section: "udhar_sales", mode: "udhar" }
+];
+function FormB({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  draftPaise = null,
+  onKey = () => {
+  },
+  onCommit = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  return /* @__PURE__ */ jsx9(
+    EntryForm,
+    {
+      id: "t8",
+      store,
+      titleKey: "t8.title",
+      sections: ["udhar_collection", "party_payment", "udhar_sales"],
+      runningTotal: store.primary().p7CreditOutstanding.value,
+      runningTotalKey: "t8.outstanding",
+      commits: COMMITS2,
+      emptyKey: "common.empty",
+      status,
+      language,
+      display,
+      draftPaise,
+      onKey,
+      onCommit,
+      onRetry
+    }
+  );
+}
+
+// apps/mobile/src/screens/T9.tsx
+import { jsx as jsx10 } from "react/jsx-runtime";
+var COMMITS3 = [
+  { labelKey: "formA.mode.cash", section: "expense", mode: "cash" },
+  { labelKey: "formA.mode.upi", section: "expense", mode: "upi" },
+  { labelKey: "t9.mode.other", section: "expense", mode: "other" },
+  { labelKey: "formA.mode.udhar", section: "expense", mode: "udhar" },
+  { labelKey: "t9.mode.shop_stock", section: "expense", mode: "shop_stock" }
+];
+function FormC({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  draftPaise = null,
+  onKey = () => {
+  },
+  onCommit = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  return /* @__PURE__ */ jsx10(
+    EntryForm,
+    {
+      id: "t9",
+      store,
+      titleKey: "t9.title",
+      sections: ["expense"],
+      runningTotal: store.primary().p6TotalExpenses.value,
+      runningTotalKey: "section.expense",
+      commits: COMMITS3,
+      emptyKey: "common.empty",
+      status,
+      language,
+      display,
+      draftPaise,
+      onKey,
+      onCommit,
+      onRetry
+    }
+  );
+}
+
+// apps/mobile/src/screens/T10.tsx
+import { jsx as jsx11 } from "react/jsx-runtime";
+var COMMITS4 = [
+  { labelKey: "formA.mode.cash", section: "withdrawal", mode: "cash" },
+  { labelKey: "formA.mode.upi", section: "withdrawal", mode: "upi" }
+];
+function FormD({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  draftPaise = null,
+  onKey = () => {
+  },
+  onCommit = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  return /* @__PURE__ */ jsx11(
+    EntryForm,
+    {
+      id: "t10",
+      store,
+      titleKey: "t10.title",
+      sections: ["withdrawal"],
+      runningTotal: store.sectionTotal("withdrawal"),
+      runningTotalKey: "section.withdrawal",
+      commits: COMMITS4,
+      emptyKey: "common.empty",
+      noteKey: "t10.note",
+      status,
+      language,
+      display,
+      draftPaise,
+      onKey,
+      onCommit,
+      onRetry
+    }
+  );
+}
+
+// apps/mobile/src/screens/T11.tsx
+import { Fragment as Fragment4, jsx as jsx12, jsxs as jsxs6 } from "react/jsx-runtime";
+function CashCheck({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  countedPaise = null,
+  onKey = () => {
+  },
+  onConfirm = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const cash = store.expectedCash();
+  return /* @__PURE__ */ jsx12(
+    Shell,
+    {
+      id: "t11",
+      s,
+      display,
+      status,
+      titleKey: "t11.title",
+      headline: { labelKey: "t11.expected", amount: cash.value },
+      onRetry,
+      footer: /* @__PURE__ */ jsxs6(Fragment4, { children: [
+        /* @__PURE__ */ jsxs6(
+          View_default,
+          {
+            testID: "t11-counted",
+            style: {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              padding: t.space.md,
+              borderTopWidth: t.hairline,
+              borderTopColor: t.color.border
+            },
+            children: [
+              /* @__PURE__ */ jsx12(
+                Text_default,
+                {
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    fontFamily: t.font.regular,
+                    fontSize: t.type.label,
+                    lineHeight: t.leading(t.type.label),
+                    color: t.color.inkMuted
+                  },
+                  children: s("t11.counted")
+                }
+              ),
+              /* @__PURE__ */ jsx12(
+                Money,
+                {
+                  testID: "t11-counted-amount",
+                  amount: countedPaise ?? 0,
+                  mode: display,
+                  size: "figure"
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx12(
+          PrimaryButton,
+          {
+            testID: "t11-confirm",
+            label: s("common.save"),
+            onPress: onConfirm,
+            display,
+            disabled: countedPaise === null
+          }
+        ),
+        /* @__PURE__ */ jsx12(Keypad, { onKey, s, mode: display })
+      ] }),
+      children: cash.working.lines.map((line) => /* @__PURE__ */ jsx12(
+        Row,
+        {
+          testID: "t11-working-" + line.key,
+          label: s(line.key),
+          amount: line.sign === "-" ? subtract(0, line.amount) : line.amount,
+          display,
+          directional: true
+        },
+        line.key
+      ))
+    }
+  );
+}
+
+// apps/mobile/src/screens/T12.tsx
+import { jsx as jsx13, jsxs as jsxs7 } from "react/jsx-runtime";
+var REASONS = ["t12.reason.change", "t12.reason.missed"];
+function CashDifference({
+  store,
+  countedPaise,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  reason = null,
+  onChooseReason = () => {
+  },
+  onReasonText = () => {
+  },
+  onClose = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const expected = store.expectedCash().value;
+  const difference = subtract(countedPaise, expected);
+  const canClose = difference === 0 || Boolean(reason && reason.trim());
+  return /* @__PURE__ */ jsxs7(
+    Shell,
+    {
+      id: "t12",
+      s,
+      display,
+      status,
+      titleKey: "t12.title",
+      headline: { labelKey: "t12.difference", amount: difference },
+      onRetry,
+      footer: /* @__PURE__ */ jsx13(View_default, { style: { padding: t.space.sm }, children: /* @__PURE__ */ jsx13(
+        Pressable_default,
+        {
+          testID: "t12-close",
+          accessibilityRole: "button",
+          accessibilityLabel: s("t1.closeDay"),
+          accessibilityState: { disabled: !canClose },
+          disabled: !canClose,
+          onPress: onClose,
+          style: {
+            minHeight: t.touchTarget,
+            minWidth: t.touchTarget,
+            borderRadius: t.radius.md,
+            backgroundColor: canClose ? t.color.accent : t.color.surface,
+            borderWidth: t.hairline,
+            borderColor: t.color.border,
+            alignItems: "center",
+            justifyContent: "center"
+          },
+          children: /* @__PURE__ */ jsx13(
+            Text_default,
+            {
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                fontFamily: t.font.medium,
+                fontSize: t.type.body,
+                lineHeight: t.leading(t.type.body),
+                // Ink on the surface when disabled: the accent pair is the only
+                // one checked for contrast, so a disabled button uses ink on bg.
+                color: canClose ? t.color.onAccent : t.color.inkMuted
+              },
+              children: s("t1.closeDay")
+            }
+          )
+        }
+      ) }),
+      children: [
+        /* @__PURE__ */ jsx13(
+          Row,
+          {
+            testID: "t12-expected",
+            label: s("t11.expected"),
+            amount: expected,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx13(
+          Row,
+          {
+            testID: "t12-counted",
+            label: s("t11.counted"),
+            amount: countedPaise,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx13(
+          Text_default,
+          {
+            testID: "t12-prompt",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              padding: t.space.md,
+              fontFamily: t.font.medium,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.ink
+            },
+            children: s("t12.reasonPrompt")
+          }
+        ),
+        REASONS.map((key) => /* @__PURE__ */ jsx13(
+          Pressable_default,
+          {
+            testID: "t12-reason-" + key,
+            accessibilityRole: "button",
+            accessibilityLabel: s(key),
+            accessibilityState: { selected: reason === s(key) },
+            onPress: () => onChooseReason(key),
+            style: {
+              minHeight: t.touchTarget,
+              minWidth: t.touchTarget,
+              margin: t.space.xs,
+              paddingHorizontal: t.space.md,
+              borderRadius: t.radius.md,
+              borderWidth: t.hairline,
+              borderColor: reason === s(key) ? t.color.accent : t.color.border,
+              backgroundColor: t.color.bg,
+              justifyContent: "center"
+            },
+            children: /* @__PURE__ */ jsx13(
               Text_default,
               {
                 maxFontSizeMultiplier: t.maxFontScale,
                 style: {
                   fontFamily: t.font.regular,
-                  fontSize: t.type.label,
-                  lineHeight: t.leading(t.type.label),
-                  color: t.color.inkMuted
+                  fontSize: t.type.body,
+                  lineHeight: t.leading(t.type.body),
+                  color: t.color.ink
                 },
-                children: s("formA.runningTotal")
-              }
-            ),
-            /* @__PURE__ */ jsx3(
-              Money,
-              {
-                testID: "t7-running-total",
-                amount: store.primary().p4NetSales.value,
-                mode: display,
-                size: "figure"
+                children: s(key)
               }
             )
-          ] })
-        ]
-      }
-    ),
-    /* @__PURE__ */ jsx3(ScrollView_default, { testID: "t7-lines", style: { flex: 1, minHeight: 0 }, children: lines.length === 0 ? /* @__PURE__ */ jsx3(View_default, { testID: "t7-empty", style: { padding: t.space.lg, alignItems: "center" }, children: /* @__PURE__ */ jsx3(
-      Text_default,
-      {
-        maxFontSizeMultiplier: t.maxFontScale,
-        style: {
-          fontFamily: t.font.regular,
-          fontSize: t.type.body,
-          lineHeight: t.leading(t.type.body),
-          color: t.color.inkMuted,
-          textAlign: "center"
-        },
-        children: s("formA.empty")
-      }
-    ) }) : lines.map((e3) => /* @__PURE__ */ jsxs(
-      View_default,
-      {
-        testID: "t7-line-" + e3.id,
-        style: {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          // Money is uncapped by design, so at a large system font scale the label and the
-          // figure wrap onto two lines rather than running off the side of the screen.
-          flexWrap: "wrap",
-          minHeight: t.touchTarget,
-          paddingHorizontal: t.space.md,
-          paddingVertical: t.space.sm,
-          borderBottomWidth: t.hairline,
-          borderBottomColor: t.color.border
-        },
-        children: [
-          /* @__PURE__ */ jsxs(
-            Text_default,
-            {
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                flex: 1,
-                flexWrap: "wrap",
-                marginRight: t.space.sm,
-                fontFamily: t.font.regular,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.ink
-              },
-              children: [
-                s(MODE_LABEL[e3.section]),
-                e3.partyId ? " - " + (parties.get(e3.partyId) ?? e3.partyId) : ""
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsx3(Money, { amount: e3.amount, mode: display, size: "body" })
-        ]
-      },
-      e3.id
-    )) }),
-    /* @__PURE__ */ jsxs(
-      View_default,
-      {
-        testID: "t7-draft",
-        style: {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          // Money is uncapped by design, so at a large system font scale the label and the
-          // figure wrap onto two lines rather than running off the side of the screen.
-          flexWrap: "wrap",
-          padding: t.space.md,
-          borderTopWidth: t.hairline,
-          borderTopColor: t.color.border
-        },
-        children: [
-          /* @__PURE__ */ jsx3(
-            Text_default,
-            {
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                fontFamily: t.font.regular,
-                fontSize: t.type.label,
-                lineHeight: t.leading(t.type.label),
-                color: t.color.inkMuted
-              },
-              children: s("formA.amount")
-            }
-          ),
-          /* @__PURE__ */ jsx3(Money, { testID: "t7-draft-amount", amount: draftPaise ?? 0, mode: display, size: "figure" })
-        ]
-      }
-    ),
-    /* @__PURE__ */ jsx3(View_default, { style: { flexDirection: "row", paddingHorizontal: t.space.sm }, children: SALES_SECTIONS.map((section) => {
-      const paymentMode = section === "cash_sales" ? "cash" : section === "upi_sales" ? "upi" : "udhar";
-      return /* @__PURE__ */ jsx3(
-        Pressable_default,
-        {
-          testID: "t7-commit-" + paymentMode,
-          accessibilityRole: "button",
-          accessibilityLabel: s(MODE_LABEL[section]),
-          onPress: () => onCommit(paymentMode),
-          style: {
-            flex: 1,
-            minHeight: t.touchTarget,
-            minWidth: t.touchTarget,
-            margin: t.space.xs,
-            borderRadius: t.radius.md,
-            backgroundColor: t.color.accent,
-            alignItems: "center",
-            justifyContent: "center"
           },
-          children: /* @__PURE__ */ jsx3(
-            Text_default,
-            {
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                fontFamily: t.font.medium,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.onAccent
-              },
-              children: s(MODE_LABEL[section])
+          key
+        )),
+        /* @__PURE__ */ jsx13(
+          TextInput_default,
+          {
+            testID: "t12-reason-text",
+            accessibilityLabel: s("t12.reasonPrompt"),
+            value: reason ?? "",
+            onChangeText: onReasonText,
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              minHeight: t.touchTarget,
+              margin: t.space.md,
+              paddingHorizontal: t.space.md,
+              borderRadius: t.radius.md,
+              borderWidth: t.hairline,
+              borderColor: t.color.border,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.ink,
+              backgroundColor: t.color.bg
             }
-          )
-        },
-        section
-      );
-    }) }),
-    /* @__PURE__ */ jsx3(Keypad, { onKey, s, mode: display })
-  ] });
+          }
+        )
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/T14.tsx
+import { jsx as jsx14, jsxs as jsxs8 } from "react/jsx-runtime";
+function DayClosed({
+  store,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const primary = store.primary();
+  return /* @__PURE__ */ jsxs8(
+    Shell,
+    {
+      id: "t14",
+      s,
+      display,
+      status,
+      titleKey: "t14.title",
+      headline: { labelKey: "t14.profit", amount: primary.estimatedProfit.value },
+      onRetry,
+      children: [
+        /* @__PURE__ */ jsx14(
+          Row,
+          {
+            testID: "t14-net-sales",
+            label: s("section.cash_sales"),
+            amount: primary.p4NetSales.value,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx14(
+          Row,
+          {
+            testID: "t14-purchases",
+            label: s("section.purchase"),
+            amount: primary.p5NetPurchase.value,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx14(
+          Row,
+          {
+            testID: "t14-expenses",
+            label: s("section.expense"),
+            amount: primary.p6TotalExpenses.value,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx14(
+          Row,
+          {
+            testID: "t14-credit-outstanding",
+            label: s("section.udhar_sales"),
+            amount: primary.p7CreditOutstanding.value,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx14(
+          Row,
+          {
+            testID: "t14-withdrawal",
+            label: s("section.withdrawal"),
+            amount: store.sectionTotal("withdrawal"),
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx14(
+          Text_default,
+          {
+            testID: "t14-withdrawal-note",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              padding: t.space.md,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.inkMuted
+            },
+            children: s("t14.withdrawalNote")
+          }
+        )
+      ]
+    }
+  );
 }
 
 // apps/mobile/src/store/index.ts
@@ -8402,6 +9784,51 @@ var Store = class {
   /** P3 with its working - the cash check shows the derivation, not a verdict. */
   expectedCash() {
     return expectedCashBalance(this.input);
+  }
+  /**
+   * What one section of the paper sheet comes to, right now.
+   *
+   * IT LIVES HERE RATHER THAN ON THE SCREEN, and it goes through `sum`. A screen
+   * that adds its own rows up with `+` is a second implementation of a total the
+   * day-close sheet also computes - two answers to one question, and the first
+   * time they disagree the shopkeeper has no way to tell which is his. ADR-003
+   * also means a bare `+` on money would not survive check:money.
+   */
+  sectionTotal(section) {
+    return sum(this.#state.entries.filter((e3) => e3.section === section).map((e3) => e3.amount));
+  }
+  /**
+   * SECTIONS HE HAS SAID ARE EMPTY, as opposed to sections he has not reached.
+   *
+   * D8: skipped and untouched produce the SAME total and a different day state.
+   * That distinction is the one a screen can get wrong while every number on it
+   * stays right - a day showing eight zeroes cannot tell you whether the shop
+   * sold nothing or whether nobody has finished entering. Only the shopkeeper
+   * knows, so only the shopkeeper can say, and saying it is a write.
+   */
+  skip(section) {
+    if (this.#state.day.state === "closed") {
+      throw new DayClosedViolation(this.#state.day.date);
+    }
+    if (this.#state.skippedSections.includes(section)) return;
+    this.#state = {
+      ...this.#state,
+      skippedSections: [...this.#state.skippedSections, section]
+    };
+    this.#revision += 1;
+  }
+  isSkipped(section) {
+    return this.#state.skippedSections.includes(section);
+  }
+  /**
+   * The three states D8 asks for, derived rather than stored.
+   *
+   * `entered` wins over `skipped`: if there are entries in a section, it was not
+   * empty, whatever was said earlier.
+   */
+  sectionState(section) {
+    if (this.#state.entries.some((e3) => e3.section === section)) return "entered";
+    return this.isSkipped(section) ? "skipped" : "untouched";
   }
   /**
    * Append an entry and its outbox row, together.
@@ -8582,7 +10009,7 @@ var adversarialInput = () => ({
 });
 
 // apps/mobile/src/screens/registry.tsx
-import { jsx as jsx4 } from "react/jsx-runtime";
+import { jsx as jsx15 } from "react/jsx-runtime";
 var storeOf = (input, parties, shopId) => {
   const state = {
     shopId,
@@ -8590,7 +10017,8 @@ var storeOf = (input, parties, shopId) => {
     entries: input.entries,
     parties,
     priorCreditOutstanding: input.priorCreditOutstanding,
-    priorSupplierOutstanding: input.priorSupplierOutstanding
+    priorSupplierOutstanding: input.priorSupplierOutstanding,
+    skippedSections: []
   };
   return new Store(memoryPort(state));
 };
@@ -8600,7 +10028,118 @@ var emptyStore = () => {
   const base = canonicalInput();
   return storeOf({ ...base, entries: [] }, CANONICAL_PARTIES, "shop-canonical");
 };
+var standardCases = (screen, title, render2, options = {}) => {
+  const onSheet = options.sheet ?? true;
+  return [
+    {
+      id: screen + "-canonical",
+      screen,
+      caption: title + " - canonical shop, English, Comfort",
+      language: "en",
+      display: "comfort",
+      sheet: onSheet,
+      element: () => render2(canonicalStore(), "en", "comfort")
+    },
+    {
+      id: screen + "-adversarial",
+      screen,
+      caption: title + " - adversarial shop, Odia, Comfort",
+      language: "or",
+      display: "comfort",
+      sheet: onSheet,
+      element: () => render2(adversarialStore(), "or", "comfort")
+    },
+    {
+      id: screen + "-adversarial-focus",
+      screen,
+      caption: title + " - adversarial shop, Odia, Focus mode",
+      language: "or",
+      display: "focus",
+      sheet: false,
+      element: () => render2(adversarialStore(), "or", "focus")
+    },
+    {
+      id: screen + "-longest",
+      screen,
+      caption: title + " - longest strings at the largest type, the worst case",
+      language: "longest",
+      display: "focus",
+      sheet: false,
+      element: () => render2(adversarialStore(), "longest", "focus")
+    }
+  ];
+};
 var SCREEN_CASES = [
+  ...standardCases("T5", "T5 Day close list", (store, language, display) => /* @__PURE__ */ jsx15(DayCloseList, { store, language, display })),
+  ...standardCases("T6", "T6 Opening cash", (_store, language, display) => /* @__PURE__ */ jsx15(OpeningCash, { language, display, draftPaise: 25e4 })),
+  ...standardCases("T8", "T8 Form B - party and amount", (store, language, display) => /* @__PURE__ */ jsx15(FormB, { store, language, display, draftPaise: 45e3 })),
+  ...standardCases("T9", "T9 Form C - expense", (store, language, display) => /* @__PURE__ */ jsx15(FormC, { store, language, display, draftPaise: 12500 })),
+  ...standardCases("T10", "T10 Form D - money you took", (store, language, display) => /* @__PURE__ */ jsx15(FormD, { store, language, display, draftPaise: 5e5 })),
+  ...standardCases("T11", "T11 Cash check - counting", (store, language, display) => /* @__PURE__ */ jsx15(CashCheck, { store, language, display, countedPaise: 199237 })),
+  ...standardCases("T12", "T12 Cash check - the difference", (store, language, display) => /* @__PURE__ */ jsx15(
+    CashDifference,
+    {
+      store,
+      language,
+      display,
+      countedPaise: 15e4
+    }
+  )),
+  ...standardCases("T14", "T14 Day closed", (store, language, display) => /* @__PURE__ */ jsx15(DayClosed, { store, language, display })),
+  {
+    id: "T1-canonical",
+    screen: "T1",
+    caption: "T1 Today - canonical shop, English, Comfort. The front door.",
+    language: "en",
+    display: "comfort",
+    sheet: true,
+    element: () => /* @__PURE__ */ jsx15(Today, { store: canonicalStore(), language: "en", display: "comfort" })
+  },
+  {
+    id: "T1-adversarial",
+    screen: "T1",
+    caption: "T1 Today - adversarial shop, Odia, Comfort",
+    language: "or",
+    display: "comfort",
+    sheet: true,
+    element: () => /* @__PURE__ */ jsx15(Today, { store: adversarialStore(), language: "or", display: "comfort" })
+  },
+  {
+    id: "T1-adversarial-focus",
+    screen: "T1",
+    caption: "T1 Today - adversarial shop, Odia, Focus mode",
+    language: "or",
+    display: "focus",
+    sheet: false,
+    element: () => /* @__PURE__ */ jsx15(Today, { store: adversarialStore(), language: "or", display: "focus" })
+  },
+  {
+    id: "T1-empty",
+    screen: "T1",
+    caption: "T1 Today - the first morning, before anything is entered",
+    language: "or",
+    display: "comfort",
+    sheet: true,
+    element: () => /* @__PURE__ */ jsx15(Today, { store: emptyStore(), language: "or", display: "comfort" })
+  },
+  {
+    id: "T1-longest",
+    screen: "T1",
+    caption: "T1 Today - longest strings at the largest type",
+    language: "longest",
+    display: "focus",
+    sheet: false,
+    element: () => /* @__PURE__ */ jsx15(Today, { store: adversarialStore(), language: "longest", display: "focus" })
+  },
+  {
+    id: "T1-error",
+    screen: "T1",
+    caption: "T1 Today - could not be opened",
+    language: "hi",
+    display: "comfort",
+    sheet: false,
+    element: () => /* @__PURE__ */ jsx15(Today, { store: canonicalStore(), status: "error", language: "hi", display: "comfort" })
+  },
   {
     id: "T7-canonical",
     screen: "T7",
@@ -8608,7 +10147,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: canonicalStore(), language: "en", display: "comfort", draftPaise: 4500 })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), language: "en", display: "comfort", draftPaise: 4500 })
   },
   {
     id: "T7-adversarial",
@@ -8617,7 +10156,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: adversarialStore(), language: "or", display: "comfort", draftPaise: 12345678 })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "or", display: "comfort", draftPaise: 12345678 })
   },
   {
     id: "T7-adversarial-focus",
@@ -8626,7 +10165,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: adversarialStore(), language: "or", display: "focus", draftPaise: 12345678 })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "or", display: "focus", draftPaise: 12345678 })
   },
   {
     id: "T7-longest",
@@ -8635,7 +10174,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: adversarialStore(), language: "longest", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "longest", display: "comfort" })
   },
   {
     id: "T7-empty",
@@ -8644,7 +10183,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: emptyStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: emptyStore(), language: "or", display: "comfort" })
   },
   {
     id: "T7-error",
@@ -8653,7 +10192,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: canonicalStore(), status: "error", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), status: "error", language: "or", display: "comfort" })
   },
   {
     id: "T7-loading",
@@ -8663,7 +10202,7 @@ var SCREEN_CASES = [
     display: "comfort",
     // Measured but not on the sheet: a spinner and a line of text is not worth a panel.
     sheet: false,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: canonicalStore(), status: "loading", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), status: "loading", language: "or", display: "comfort" })
   },
   {
     id: "T7-hindi",
@@ -8672,7 +10211,7 @@ var SCREEN_CASES = [
     language: "hi",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: canonicalStore(), language: "hi", display: "focus" })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), language: "hi", display: "focus" })
   },
   {
     id: "T7-longest-focus",
@@ -8681,7 +10220,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx4(FormA, { store: adversarialStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "longest", display: "focus" })
   }
 ];
 var COVERED_SCREENS = [...new Set(SCREEN_CASES.map((c) => c.screen))];

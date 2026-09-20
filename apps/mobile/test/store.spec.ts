@@ -17,6 +17,7 @@ const freshStore = () => {
       parties: CANONICAL_PARTIES,
       priorCreditOutstanding: base.priorCreditOutstanding,
       priorSupplierOutstanding: base.priorSupplierOutstanding,
+      skippedSections: [],
     }),
   );
 };

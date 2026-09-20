@@ -135,7 +135,7 @@ Engine functions actually present: **26 of 26** named by TRACEABILITY
 |---|---|---|---|---|---|
 | P1 | How much cash came in today, from every source | `totalCashReceived` | 1 | T1 Today, T11 working | **DONE** |
 | P2 | How much cash went out today, for every reason | `totalCashPaid` | 1 | T1 Today, T11 working | **DONE** |
-| P3 | How much cash should be in the box right now | `expectedCashBalance` | 1 | T11 Cash check, as its working | **DONE** |
+| P3 | How much cash should be in the box right now | `expectedCashBalance` | 1 | T11 Cash check, as its working; T5 day close list, as its headline; T6 opening cash, which sets its opening term | **DONE** |
 | P4 | What did I really sell, after returns | `netSales` | 1 | T1 Today, T14 summary | **DONE** |
 | P5 | What did the stock really cost me | `netPurchase` | 1 | T14 summary | **DONE** |
 | P6 | What did it cost me to keep the doors open | `totalExpenses` | 1 | T14 summary | **DONE** |
@@ -517,7 +517,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 ---
 
 <!-- PLANHASH:START -->
-64aab2a2868cc08e  traceability  docs/spec/TRACEABILITY.md
+5cba20454958baa4  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
 2fbfd2c828d5a581  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md

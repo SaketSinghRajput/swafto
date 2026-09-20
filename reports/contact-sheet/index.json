@@ -1,5 +1,100 @@
 [
   {
+    "id": "T5-canonical",
+    "caption": "T5 Day close list - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T5-canonical.html"
+  },
+  {
+    "id": "T5-adversarial",
+    "caption": "T5 Day close list - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T5-adversarial.html"
+  },
+  {
+    "id": "T6-canonical",
+    "caption": "T6 Opening cash - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T6-canonical.html"
+  },
+  {
+    "id": "T6-adversarial",
+    "caption": "T6 Opening cash - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T6-adversarial.html"
+  },
+  {
+    "id": "T8-canonical",
+    "caption": "T8 Form B - party and amount - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T8-canonical.html"
+  },
+  {
+    "id": "T8-adversarial",
+    "caption": "T8 Form B - party and amount - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T8-adversarial.html"
+  },
+  {
+    "id": "T9-canonical",
+    "caption": "T9 Form C - expense - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T9-canonical.html"
+  },
+  {
+    "id": "T9-adversarial",
+    "caption": "T9 Form C - expense - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T9-adversarial.html"
+  },
+  {
+    "id": "T10-canonical",
+    "caption": "T10 Form D - money you took - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T10-canonical.html"
+  },
+  {
+    "id": "T10-adversarial",
+    "caption": "T10 Form D - money you took - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T10-adversarial.html"
+  },
+  {
+    "id": "T11-canonical",
+    "caption": "T11 Cash check - counting - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T11-canonical.html"
+  },
+  {
+    "id": "T11-adversarial",
+    "caption": "T11 Cash check - counting - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T11-adversarial.html"
+  },
+  {
+    "id": "T12-canonical",
+    "caption": "T12 Cash check - the difference - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T12-canonical.html"
+  },
+  {
+    "id": "T12-adversarial",
+    "caption": "T12 Cash check - the difference - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T12-adversarial.html"
+  },
+  {
+    "id": "T14-canonical",
+    "caption": "T14 Day closed - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T14-canonical.html"
+  },
+  {
+    "id": "T14-adversarial",
+    "caption": "T14 Day closed - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T14-adversarial.html"
+  },
+  {
+    "id": "T1-canonical",
+    "caption": "T1 Today - canonical shop, English, Comfort. The front door.",
+    "file": "reports\\contact-sheet\\T1-canonical.html"
+  },
+  {
+    "id": "T1-adversarial",
+    "caption": "T1 Today - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T1-adversarial.html"
+  },
+  {
+    "id": "T1-empty",
+    "caption": "T1 Today - the first morning, before anything is entered",
+    "file": "reports\\contact-sheet\\T1-empty.html"
+  },
+  {
     "id": "T7-canonical",
     "caption": "T7 Form A - canonical shop, English, Comfort",
     "file": "reports\\contact-sheet\\T7-canonical.html"

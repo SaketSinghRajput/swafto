@@ -23,6 +23,15 @@
  */
 import type { ReactElement } from 'react';
 import { FormA } from './T7.tsx';
+import { Today } from './T1.tsx';
+import { DayCloseList } from './T5.tsx';
+import { OpeningCash } from './T6.tsx';
+import { FormB } from './T8.tsx';
+import { FormC } from './T9.tsx';
+import { FormD } from './T10.tsx';
+import { CashCheck } from './T11.tsx';
+import { CashDifference } from './T12.tsx';
+import { DayClosed } from './T14.tsx';
 import { Store, memoryPort, type StoreState } from '../store/index.ts';
 import type { RenderLanguage } from '../i18n/strings.ts';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
@@ -42,6 +51,7 @@ const storeOf = (input: DayInput, parties: readonly Party[], shopId: string): St
     parties,
     priorCreditOutstanding: input.priorCreditOutstanding,
     priorSupplierOutstanding: input.priorSupplierOutstanding,
+    skippedSections: [],
   };
   return new Store(memoryPort(state));
 };
@@ -72,7 +82,149 @@ export interface ScreenCase {
   readonly element: () => ReactElement;
 }
 
+/**
+ * The four cases every screen must have, produced rather than retyped.
+ *
+ * `screens.spec.tsx` REQUIRES each screen to have an adversarial case, an Odia
+ * case and a Focus case. Writing those by hand for ten screens is forty near
+ * identical objects and one screen that quietly ends up with three of them -
+ * which the spec would then catch, after somebody spent an afternoon on it.
+ * Producing them means a screen cannot be registered incompletely.
+ *
+ * A screen with states the others do not have - T7's loading panel, T1's first
+ * morning - adds those explicitly alongside.
+ */
+const standardCases = (
+  screen: string,
+  title: string,
+  render: (store: Store, language: RenderLanguage, display: DisplayMode) => ReactElement,
+  options: { readonly sheet?: boolean } = {},
+): ScreenCase[] => {
+  const onSheet = options.sheet ?? true;
+  return [
+    {
+      id: screen + '-canonical',
+      screen,
+      caption: title + ' - canonical shop, English, Comfort',
+      language: 'en',
+      display: 'comfort',
+      sheet: onSheet,
+      element: () => render(canonicalStore(), 'en', 'comfort'),
+    },
+    {
+      id: screen + '-adversarial',
+      screen,
+      caption: title + ' - adversarial shop, Odia, Comfort',
+      language: 'or',
+      display: 'comfort',
+      sheet: onSheet,
+      element: () => render(adversarialStore(), 'or', 'comfort'),
+    },
+    {
+      id: screen + '-adversarial-focus',
+      screen,
+      caption: title + ' - adversarial shop, Odia, Focus mode',
+      language: 'or',
+      display: 'focus',
+      sheet: false,
+      element: () => render(adversarialStore(), 'or', 'focus'),
+    },
+    {
+      id: screen + '-longest',
+      screen,
+      caption: title + ' - longest strings at the largest type, the worst case',
+      language: 'longest',
+      display: 'focus',
+      sheet: false,
+      element: () => render(adversarialStore(), 'longest', 'focus'),
+    },
+  ];
+};
+
 export const SCREEN_CASES: readonly ScreenCase[] = [
+  ...standardCases('T5', 'T5 Day close list', (store, language, display) => (
+    <DayCloseList store={store} language={language} display={display} />
+  )),
+  ...standardCases('T6', 'T6 Opening cash', (_store, language, display) => (
+    <OpeningCash language={language} display={display} draftPaise={250000} />
+  )),
+  ...standardCases('T8', 'T8 Form B - party and amount', (store, language, display) => (
+    <FormB store={store} language={language} display={display} draftPaise={45000} />
+  )),
+  ...standardCases('T9', 'T9 Form C - expense', (store, language, display) => (
+    <FormC store={store} language={language} display={display} draftPaise={12500} />
+  )),
+  ...standardCases('T10', 'T10 Form D - money you took', (store, language, display) => (
+    <FormD store={store} language={language} display={display} draftPaise={500000} />
+  )),
+  ...standardCases('T11', 'T11 Cash check - counting', (store, language, display) => (
+    <CashCheck store={store} language={language} display={display} countedPaise={199237} />
+  )),
+  ...standardCases('T12', 'T12 Cash check - the difference', (store, language, display) => (
+    <CashDifference
+      store={store}
+      language={language}
+      display={display}
+      countedPaise={150000}
+    />
+  )),
+  ...standardCases('T14', 'T14 Day closed', (store, language, display) => (
+    <DayClosed store={store} language={language} display={display} />
+  )),
+  {
+    id: 'T1-canonical',
+    screen: 'T1',
+    caption: 'T1 Today - canonical shop, English, Comfort. The front door.',
+    language: 'en',
+    display: 'comfort',
+    sheet: true,
+    element: () => <Today store={canonicalStore()} language="en" display="comfort" />,
+  },
+  {
+    id: 'T1-adversarial',
+    screen: 'T1',
+    caption: 'T1 Today - adversarial shop, Odia, Comfort',
+    language: 'or',
+    display: 'comfort',
+    sheet: true,
+    element: () => <Today store={adversarialStore()} language="or" display="comfort" />,
+  },
+  {
+    id: 'T1-adversarial-focus',
+    screen: 'T1',
+    caption: 'T1 Today - adversarial shop, Odia, Focus mode',
+    language: 'or',
+    display: 'focus',
+    sheet: false,
+    element: () => <Today store={adversarialStore()} language="or" display="focus" />,
+  },
+  {
+    id: 'T1-empty',
+    screen: 'T1',
+    caption: 'T1 Today - the first morning, before anything is entered',
+    language: 'or',
+    display: 'comfort',
+    sheet: true,
+    element: () => <Today store={emptyStore()} language="or" display="comfort" />,
+  },
+  {
+    id: 'T1-longest',
+    screen: 'T1',
+    caption: 'T1 Today - longest strings at the largest type',
+    language: 'longest',
+    display: 'focus',
+    sheet: false,
+    element: () => <Today store={adversarialStore()} language="longest" display="focus" />,
+  },
+  {
+    id: 'T1-error',
+    screen: 'T1',
+    caption: 'T1 Today - could not be opened',
+    language: 'hi',
+    display: 'comfort',
+    sheet: false,
+    element: () => <Today store={canonicalStore()} status="error" language="hi" display="comfort" />,
+  },
   {
     id: 'T7-canonical',
     screen: 'T7',

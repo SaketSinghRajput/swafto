@@ -107,6 +107,119 @@ export const STRINGS = {
     hi: 'पीछे',
     or: 'ପଛକୁ',
   },
+
+  /* ---- shared by every screen frame -------------------------------- */
+  'common.loading': { en: 'Opening', hi: 'खुल रहा है', or: 'ଖୋଲୁଛି' },
+  'common.error': {
+    en: 'Could not open this. Nothing you entered is lost.',
+    hi: 'यह नहीं खुल सका। आपका दर्ज किया कुछ भी नहीं गया।',
+    or: 'ଏହା ଖୋଲିପାରିଲା ନାହିଁ। ଆପଣ ଲେଖିଥିବା କିଛି ହଜିନାହିଁ।',
+  },
+  'common.retry': { en: 'Try again', hi: 'फिर कोशिश करें', or: 'ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ' },
+  'common.empty': { en: 'Nothing here yet', hi: 'अभी यहाँ कुछ नहीं', or: 'ଏଠାରେ ଏପର୍ଯ୍ୟନ୍ତ କିଛି ନାହିଁ' },
+  'common.save': { en: 'Save', hi: 'सहेजें', or: 'ସଞ୍ଚୟ କରନ୍ତୁ' },
+
+  /* ---- the nine sections of the paper sheet -------------------------- */
+  'section.cash_sales': { en: 'Cash sales', hi: 'नकद बिक्री', or: 'ନଗଦ ବିକ୍ରି' },
+  'section.upi_sales': { en: 'UPI sales', hi: 'UPI बिक्री', or: 'UPI ବିକ୍ରି' },
+  'section.udhar_sales': { en: 'Credit sales', hi: 'उधार बिक्री', or: 'ଉଧାର ବିକ୍ରି' },
+  'section.purchase': { en: 'Purchases', hi: 'खरीद', or: 'କିଣା' },
+  'section.expense': { en: 'Expenses', hi: 'खर्च', or: 'ଖର୍ଚ୍ଚ' },
+  'section.udhar_collection': { en: 'Udhar collected', hi: 'उधार वसूली', or: 'ଉଧାର ଆଦାୟ' },
+  'section.party_payment': { en: 'Paid to suppliers', hi: 'आपूर्तिकर्ता को भुगतान', or: 'ଯୋଗାଣକାରୀଙ୍କୁ ଦିଆଗଲା' },
+  'section.withdrawal': { en: 'Taken by owner', hi: 'मालिक ने लिया', or: 'ମାଲିକ ନେଇଛନ୍ତି' },
+
+  /* ---- T1 · Today, the front door ------------------------------------ */
+  't1.title': { en: 'Today', hi: 'आज', or: 'ଆଜି' },
+  't1.cashInHand': { en: 'Cash should be', hi: 'नकद होना चाहिए', or: 'ନଗଦ ରହିବା ଉଚିତ' },
+  't1.empty': {
+    en: 'Nothing entered yet today. Start with a sale.',
+    hi: 'आज अभी कुछ दर्ज नहीं। बिक्री से शुरू करें।',
+    or: 'ଆଜି ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଲେଖା ହୋଇନାହିଁ। ବିକ୍ରିରୁ ଆରମ୍ଭ କରନ୍ତୁ।',
+  },
+  't1.closeDay': { en: 'Close the day', hi: 'दिन बंद करें', or: 'ଦିନ ବନ୍ଦ କରନ୍ତୁ' },
+  't1.profit': { en: 'Estimated profit', hi: 'अनुमानित लाभ', or: 'ଆନୁମାନିକ ଲାଭ' },
+
+  /* ---- T5 · the nine-section day close list -------------------------- */
+  't5.title': { en: 'Day close', hi: 'दिन बंद', or: 'ଦିନ ବନ୍ଦ' },
+  't5.total': { en: 'Day total', hi: 'दिन का कुल', or: 'ଦିନର ମୋଟ' },
+
+  /* ---- T6 · opening cash --------------------------------------------- */
+  't6.title': { en: 'Opening cash', hi: 'शुरुआती नकद', or: 'ଆରମ୍ଭ ନଗଦ' },
+  't6.prompt': {
+    en: 'How much cash is in the box before you start?',
+    hi: 'शुरू करने से पहले बॉक्स में कितना नकद है?',
+    or: 'ଆରମ୍ଭ କରିବା ପୂର୍ବରୁ ବାକ୍ସରେ କେତେ ନଗଦ ଅଛି?',
+  },
+
+  /* ---- T8 · Form B, a party and an amount ---------------------------- */
+  /* Short, because it is a TITLE at up to 1.5x on a 360dp screen. The long form
+     wrapped to four lines in Focus mode and pushed the keypad off the bottom. */
+  't8.title': { en: 'Udhar book', hi: 'उधार खाता', or: 'ଉଧାର ଖାତା' },
+  /* Button labels are SHORT. A three-across row is about 100dp wide, and an Odia
+     word longer than that cannot break - it overflows the button rather than
+     wrapping inside it, which check:layout caught on this exact row. The full
+     phrasing lives on the line the entry produces, where there is room for it. */
+  't8.collect': { en: 'Collected', hi: 'वसूली', or: 'ଆଦାୟ' },
+  't8.pay': { en: 'Paid out', hi: 'भुगतान', or: 'ଦେଲି' },
+  't8.credit': { en: 'On credit', hi: 'उधार', or: 'ଉଧାର' },
+  /* The headline on T8 is P7 - what customers OWE - not what was sold on credit
+     today. It was labelled 'Credit sales', which named a different figure
+     entirely. Caught while trimming the header to fit; wrong for longer. */
+  't8.outstanding': { en: 'Owed to you', hi: 'आपको मिलना है', or: 'ଆପଣଙ୍କୁ ମିଳିବାର' },
+
+  /* ---- T9 · Form C, a label and a mode ------------------------------- */
+  't9.title': { en: 'Expense', hi: 'खर्च', or: 'ଖର୍ଚ୍ଚ' },
+  't9.label': { en: 'What for?', hi: 'किसलिए?', or: 'କାହିଁକି?' },
+  't9.mode.other': { en: 'Other', hi: 'अन्य', or: 'ଅନ୍ୟ' },
+  't9.mode.shop_stock': { en: 'Shop stock', hi: 'दुकान माल', or: 'ଦୋକାନ ମାଲ' },
+
+  /* ---- T10 · Form D, the owner taking money -------------------------- */
+  't10.title': { en: 'Money you took', hi: 'आपने जो लिया', or: 'ଆପଣ ନେଇଥିବା ଟଙ୍କା' },
+  't10.note': {
+    en: 'This leaves the cash box but is not a shop cost, so it does not change profit.',
+    hi: 'यह नकद से जाता है पर दुकान का खर्च नहीं, इसलिए लाभ नहीं बदलता।',
+    or: 'ଏହା ନଗଦରୁ ଯାଏ କିନ୍ତୁ ଦୋକାନର ଖର୍ଚ୍ଚ ନୁହେଁ, ତେଣୁ ଲାଭ ବଦଳେ ନାହିଁ।',
+  },
+
+  /* ---- T11 · cash check, counting ------------------------------------ */
+  't11.title': { en: 'Count the cash', hi: 'नकद गिनें', or: 'ନଗଦ ଗଣନ୍ତୁ' },
+  't11.expected': { en: 'Should be', hi: 'होना चाहिए', or: 'ରହିବା ଉଚିତ' },
+  't11.counted': { en: 'You counted', hi: 'आपने गिना', or: 'ଆପଣ ଗଣିଲେ' },
+
+  /* ---- T12 · cash check, the difference ------------------------------ */
+  't12.title': { en: 'The difference', hi: 'अंतर', or: 'ପାର୍ଥକ୍ୟ' },
+  't12.difference': { en: 'Difference', hi: 'अंतर', or: 'ପାର୍ଥକ୍ୟ' },
+  't12.reasonPrompt': {
+    en: 'What do you think happened?',
+    hi: 'आपको क्या लगता है हुआ?',
+    or: 'ଆପଣ ଭାବୁଛନ୍ତି କଣ ହୋଇଛି?',
+  },
+  't12.reason.change': { en: 'Gave change from my pocket', hi: 'अपनी जेब से छुट्टा दिया', or: 'ନିଜ ପକେଟରୁ ଖୁଚୁରା ଦେଲି' },
+  't12.reason.missed': { en: 'Forgot to write something', hi: 'कुछ लिखना भूल गया', or: 'କିଛି ଲେଖିବାକୁ ଭୁଲିଗଲି' },
+
+  /* ---- T14 · the day, closed ----------------------------------------- */
+  't14.title': { en: 'Day closed', hi: 'दिन बंद हुआ', or: 'ଦିନ ବନ୍ଦ ହେଲା' },
+  't14.profit': { en: 'Estimated profit', hi: 'अनुमानित लाभ', or: 'ଆନୁମାନିକ ଲାଭ' },
+  't14.withdrawalNote': {
+    en: 'Money you took is shown separately and is not counted against profit.',
+    hi: 'आपने जो लिया वह अलग दिखाया है और लाभ में से नहीं घटाया।',
+    or: 'ଆପଣ ନେଇଥିବା ଟଙ୍କା ଅଲଗା ଦେଖାଯାଇଛି ଏବଂ ଲାଭରୁ ହଟାଯାଇନାହିଁ।',
+  },
+
+  /* ---- the cash-check working, line by line -------------------------- */
+  'working.opening_cash': { en: 'Cash you started with', hi: 'शुरू का नकद', or: 'ଆରମ୍ଭର ନଗଦ' },
+  'working.cash_sales': { en: 'Cash sales', hi: 'नकद बिक्री', or: 'ନଗଦ ବିକ୍ରି' },
+  'working.udhar_collected_cash': { en: 'Udhar collected in cash', hi: 'नकद में उधार वसूली', or: 'ନଗଦରେ ଉଧାର ଆଦାୟ' },
+  'working.cash_purchase': { en: 'Purchases paid in cash', hi: 'नकद में खरीद', or: 'ନଗଦରେ କିଣା' },
+  'working.cash_expenses': { en: 'Expenses paid in cash', hi: 'नकद में खर्च', or: 'ନଗଦରେ ଖର୍ଚ୍ଚ' },
+  'working.cash_party_payment': { en: 'Paid to suppliers in cash', hi: 'नकद में आपूर्तिकर्ता को', or: 'ନଗଦରେ ଯୋଗାଣକାରୀଙ୍କୁ' },
+  'working.withdrawal_cash': { en: 'Cash you took', hi: 'आपने लिया नकद', or: 'ଆପଣ ନେଇଥିବା ନଗଦ' },
+
+  /* ---- the three states a section can be in (D8) ---------------------- */
+  'state.entered': { en: 'entered', hi: 'दर्ज', or: 'ଲେଖାଯାଇଛି' },
+  'state.skipped': { en: 'nothing today', hi: 'आज कुछ नहीं', or: 'ଆଜି କିଛି ନାହିଁ' },
+  'state.untouched': { en: 'not yet', hi: 'अभी नहीं', or: 'ଏପର୍ଯ୍ୟନ୍ତ ନୁହେଁ' },
 } as const satisfies Record<string, Phrase>;
 
 export type StringKey = keyof typeof STRINGS;

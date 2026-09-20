@@ -24,6 +24,7 @@
 import {
   computePrimary,
   expectedCashBalance,
+  sum,
   type DayInput,
   type DayRecord,
   type Entry,
@@ -41,6 +42,8 @@ export interface StoreState {
   readonly parties: readonly Party[];
   readonly priorCreditOutstanding: Paise;
   readonly priorSupplierOutstanding: Paise;
+  /** D8: sections he has said are empty, as opposed to ones he has not reached. */
+  readonly skippedSections: readonly Entry['section'][];
 }
 
 /** One queued write. Draining is the sync client's problem, not the store's. */
@@ -149,6 +152,55 @@ export class Store {
   /** P3 with its working - the cash check shows the derivation, not a verdict. */
   expectedCash(): { value: Paise; working: Working } {
     return expectedCashBalance(this.input);
+  }
+
+  /**
+   * What one section of the paper sheet comes to, right now.
+   *
+   * IT LIVES HERE RATHER THAN ON THE SCREEN, and it goes through `sum`. A screen
+   * that adds its own rows up with `+` is a second implementation of a total the
+   * day-close sheet also computes - two answers to one question, and the first
+   * time they disagree the shopkeeper has no way to tell which is his. ADR-003
+   * also means a bare `+` on money would not survive check:money.
+   */
+  sectionTotal(section: Entry['section']): Paise {
+    return sum(this.#state.entries.filter((e) => e.section === section).map((e) => e.amount));
+  }
+
+  /**
+   * SECTIONS HE HAS SAID ARE EMPTY, as opposed to sections he has not reached.
+   *
+   * D8: skipped and untouched produce the SAME total and a different day state.
+   * That distinction is the one a screen can get wrong while every number on it
+   * stays right - a day showing eight zeroes cannot tell you whether the shop
+   * sold nothing or whether nobody has finished entering. Only the shopkeeper
+   * knows, so only the shopkeeper can say, and saying it is a write.
+   */
+  skip(section: Entry['section']): void {
+    if (this.#state.day.state === 'closed') {
+      throw new DayClosedViolation(this.#state.day.date);
+    }
+    if (this.#state.skippedSections.includes(section)) return;
+    this.#state = {
+      ...this.#state,
+      skippedSections: [...this.#state.skippedSections, section],
+    };
+    this.#revision += 1;
+  }
+
+  isSkipped(section: Entry['section']): boolean {
+    return this.#state.skippedSections.includes(section);
+  }
+
+  /**
+   * The three states D8 asks for, derived rather than stored.
+   *
+   * `entered` wins over `skipped`: if there are entries in a section, it was not
+   * empty, whatever was said earlier.
+   */
+  sectionState(section: Entry['section']): 'entered' | 'skipped' | 'untouched' {
+    if (this.#state.entries.some((e) => e.section === section)) return 'entered';
+    return this.isSkipped(section) ? 'skipped' : 'untouched';
   }
 
   /**

@@ -11,7 +11,7 @@ Every fact is labelled **STATIC** (read from the source: cheap, complete, blind 
 anything computed at runtime) or **MEASURED** (render and instrument output: expensive,
 partial, and the only thing that tells the truth about a layout).
 
-**10 committed screens, 1 implemented.**
+**10 committed screens, 10 implemented.**
 
 > **No measured data.** `reports/design/measured.json` does not exist, so every MEASURED cell
 > reads `-`. The screen instruments that would produce it are tasks `I-001` through
@@ -30,11 +30,11 @@ partial, and the only thing that tells the truth about a layout).
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | IN1 | - |
-| components composed | ActivityIndicator, Keypad, Money, Pressable, SalesSection, ScrollView, Text, View | - |
+| components composed | EntryForm | - |
 | tokens used | **none** | - |
 | keypad | yes | - |
 | bottom nav | no | - |
-| states | loading [x] · empty [x] · error [x] · loaded [x] | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [ ] | - |
 | screenshots | canonical [x] · adversarial [x] | - |
 
 **RAW VALUES** — this table should be empty.
@@ -47,48 +47,201 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T1 — Today · open day
 
-**ABSENT.** No file at `apps/mobile/src/screens/T1.tsx`.
-TRACEABILITY says it will display P1, P2, P4, P7, P8, OP4, OP6.
+`apps\mobile\src\screens\T1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P1, P2, P4, P7, P8, OP4, OP6 | - |
+| components composed | Pressable, Row, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T8 — Entry · Form B
 
-**ABSENT.** No file at `apps/mobile/src/screens/T8.tsx`.
-TRACEABILITY says it will display IN1, IN4, IN5.
+`apps\mobile\src\screens\T8.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | IN1, IN4, IN5 | - |
+| components composed | EntryForm | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T9 — Entry · Form C
 
-**ABSENT.** No file at `apps/mobile/src/screens/T9.tsx`.
-TRACEABILITY says it will display IN2, IN3.
+`apps\mobile\src\screens\T9.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | IN2, IN3 | - |
+| components composed | EntryForm | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T10 — Entry · Form D
 
-**ABSENT.** No file at `apps/mobile/src/screens/T10.tsx`.
-TRACEABILITY says it will display IN6.
+`apps\mobile\src\screens\T10.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | IN6 | - |
+| components composed | EntryForm | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T5 — Day close list
 
-**ABSENT.** No file at `apps/mobile/src/screens/T5.tsx`.
-TRACEABILITY says it will display no feature yet recorded.
+`apps\mobile\src\screens\T5.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P3 | - |
+| components composed | Pressable, Row, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T11 — Cash check · counting
 
-**ABSENT.** No file at `apps/mobile/src/screens/T11.tsx`.
-TRACEABILITY says it will display IN7, P1, P2, P3.
+`apps\mobile\src\screens\T11.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | IN7, P1, P2, P3 | - |
+| components composed | Keypad, Money, PrimaryButton, Row, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T12 — Cash check · difference
 
-**ABSENT.** No file at `apps/mobile/src/screens/T12.tsx`.
-TRACEABILITY says it will display OP1.
+`apps\mobile\src\screens\T12.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | OP1 | - |
+| components composed | Pressable, Row, Shell, Text, TextInput, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T14 — Day closed summary
 
-**ABSENT.** No file at `apps/mobile/src/screens/T14.tsx`.
-TRACEABILITY says it will display P4, P5, P6.
+`apps\mobile\src\screens\T14.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P4, P5, P6 | - |
+| components composed | Row, Shell, Text | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 ### T6 — Opening cash
 
-**ABSENT.** No file at `apps/mobile/src/screens/T6.tsx`.
-TRACEABILITY says it will display no feature yet recorded.
+`apps\mobile\src\screens\T6.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P3 | - |
+| components composed | Keypad, Money, PrimaryButton, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
 
 
 ---
@@ -97,19 +250,21 @@ TRACEABILITY says it will display no feature yet recorded.
 
 | component | file | used by | tokens | raw values |
 |---|---|---|---|---|
-| `Keypad` | apps\mobile\src\components\Keypad.tsx | T7 | 0 | 0 |
-| `Money` | apps\mobile\src\components\Money.tsx | T7 | 0 | 0 |
+| `EntryForm` | apps\mobile\src\components\EntryForm.tsx | T7, T8, T9, T10 | 0 | 0 |
+| `Keypad` | apps\mobile\src\components\Keypad.tsx | T11, T6 | 0 | 0 |
+| `Money` | apps\mobile\src\components\Money.tsx | T11, T6 | 0 | 0 |
+| `Shell` | apps\mobile\src\components\Shell.tsx | T1, T5, T11, T12, T14, T6 | 0 | 0 |
 
 **USED ONCE** — built as shared, used by a single screen. Not necessarily wrong, but a
 component with one caller is usually a screen section that got promoted for no reason.
 
-- `Keypad` — only T7
-- `Money` — only T7
+*none*
 
 **DUPLICATED** — near-identical component trees in more than one screen with no shared
 component.
 
-*none*
+- `EntryForm` in T7, T8, T9, T10
+- `Pressable > Row > Shell > Text > View` in T1, T5
 
 ---
 
@@ -170,8 +325,26 @@ gets disabled.
 
 | what the spec says | where | what the code does | where | severity |
 |---|---|---|---|---|
-| touch target at or above the registry minimum | TOUCH_TARGET_MIN_DP | height 0 | apps\mobile\src\screens\T7.tsx | REPORTED |
-| T7 displays IN1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T7.tsx | REPORTED |
+| T1 displays P1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T1 displays P2 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T1 displays P4 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T1 displays P7 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T1 displays P8 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T1 displays OP4 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T1 displays OP6 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
+| T9 displays IN2 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T9.tsx | REPORTED |
+| T9 displays IN3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T9.tsx | REPORTED |
+| T10 displays IN6 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T10.tsx | REPORTED |
+| T5 displays P3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T5.tsx | REPORTED |
+| T11 displays IN7 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
+| T11 displays P1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
+| T11 displays P2 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
+| T11 displays P3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
+| T12 displays OP1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T12.tsx | REPORTED |
+| T14 displays P4 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T14.tsx | REPORTED |
+| T14 displays P5 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T14.tsx | REPORTED |
+| T14 displays P6 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T14.tsx | REPORTED |
+| T6 displays P3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T6.tsx | REPORTED |
 
 ---
 

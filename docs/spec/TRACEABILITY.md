@@ -15,24 +15,24 @@ Status legend: `TODO` not started · `WIP` in progress · `DONE` all five cells 
 
 | ID | Engine function | Test | API surface | Screen | Status |
 |----|-----------------|------|-------------|--------|--------|
-| IN1 | `parseSalesEntry` (sections 01/02/03) | `vectors.json:canonical-15-july`, `input.spec.ts:IN1 sales` | `POST /v1/sync/push` section=`cash_sales`\|`upi_sales`\|`udhar_sales` | T7 Form A, T8 Form B | TODO |
-| IN2 | `parsePurchaseEntry` | `input.spec.ts:IN2 purchase` | `POST /v1/sync/push` section=`purchase` | T9 Form C | TODO |
-| IN3 | `parseExpenseEntry` | `input.spec.ts:IN3 expense` | `POST /v1/sync/push` section=`expense` | T9 Form C | TODO |
-| IN4 | `parseCollectionEntry` | `input.spec.ts:IN4 collection` | `POST /v1/sync/push` section=`udhar_collection` | T8 Form B | TODO |
-| IN5 | `parsePartyPaymentEntry` | `input.spec.ts:IN5 payment` | `POST /v1/sync/push` section=`party_payment` | T8 Form B | TODO |
-| IN6 | `parseWithdrawalEntry` | `input.spec.ts:IN6 withdrawal` | `POST /v1/sync/push` section=`withdrawal` | T10 Form D | TODO |
-| IN7 | `captureCountedCash` | `input.spec.ts:IN7 counted cash` | `POST /v1/days/:date/close` | T11 Cash check counting | TODO |
+| IN1 | `parseSalesEntry` (sections 01/02/03) | `vectors.json:canonical-15-july`, `input.spec.ts:IN1 sales` | `POST /v1/sync/push` section=`cash_sales`\|`upi_sales`\|`udhar_sales` | T7 Form A, T8 Form B | DONE |
+| IN2 | `parsePurchaseEntry` | `input.spec.ts:IN2 purchase` | `POST /v1/sync/push` section=`purchase` | T9 Form C | DONE |
+| IN3 | `parseExpenseEntry` | `input.spec.ts:IN3 expense` | `POST /v1/sync/push` section=`expense` | T9 Form C | DONE |
+| IN4 | `parseCollectionEntry` | `input.spec.ts:IN4 collection` | `POST /v1/sync/push` section=`udhar_collection` | T8 Form B | DONE |
+| IN5 | `parsePartyPaymentEntry` | `input.spec.ts:IN5 payment` | `POST /v1/sync/push` section=`party_payment` | T8 Form B | DONE |
+| IN6 | `parseWithdrawalEntry` | `input.spec.ts:IN6 withdrawal` | `POST /v1/sync/push` section=`withdrawal` | T10 Form D | DONE |
+| IN7 | `captureCountedCash` | `input.spec.ts:IN7 counted cash` | `POST /v1/days/:date/close` | T11 Cash check counting | DONE |
 
 ## Primary outputs — never gated
 
 | ID | Engine function | Test | API surface | Screen | Status |
 |----|-----------------|------|-------------|--------|--------|
-| P1 | `totalCashReceived` | `vectors.json:canonical-15-july` (=918000p) | `GET /v1/days/:date/summary` | T1 Today, T11 working | TODO |
-| P2 | `totalCashPaid` | `vectors.json:canonical-15-july` (=438000p) | `GET /v1/days/:date/summary` | T1 Today, T11 working | TODO |
-| P3 | `expectedCashBalance` | `vectors.json:canonical-15-july` (=630000p) | `GET /v1/days/:date/summary` | T11 Cash check, as its working | TODO |
-| P4 | `netSales` | `vectors.json:canonical-15-july` (=1145000p) | `GET /v1/days/:date/summary` | T1 Today, T14 summary | TODO |
-| P5 | `netPurchase` | `vectors.json:canonical-15-july` (=320000p) | `GET /v1/days/:date/summary` | T14 summary | TODO |
-| P6 | `totalExpenses` | `vectors.json:canonical-15-july` (=118000p) | `GET /v1/days/:date/summary` | T14 summary | TODO |
+| P1 | `totalCashReceived` | `vectors.json:canonical-15-july` (=918000p) | `GET /v1/days/:date/summary` | T1 Today, T11 working | DONE |
+| P2 | `totalCashPaid` | `vectors.json:canonical-15-july` (=438000p) | `GET /v1/days/:date/summary` | T1 Today, T11 working | DONE |
+| P3 | `expectedCashBalance` | `vectors.json:canonical-15-july` (=630000p) | `GET /v1/days/:date/summary` | T11 Cash check, as its working; T5 day close list, as its headline; T6 opening cash, which sets its opening term | DONE |
+| P4 | `netSales` | `vectors.json:canonical-15-july` (=1145000p) | `GET /v1/days/:date/summary` | T1 Today, T14 summary | DONE |
+| P5 | `netPurchase` | `vectors.json:canonical-15-july` (=320000p) | `GET /v1/days/:date/summary` | T14 summary | DONE |
+| P6 | `totalExpenses` | `vectors.json:canonical-15-july` (=118000p) | `GET /v1/days/:date/summary` | T14 summary | DONE |
 | P7 | `creditOutstanding` | `vectors.json:p7-credit-outstanding` | `GET /v1/parties/outstanding` | T1 Today, P1 Parties, P2 Customer | TODO |
 | P8 | `supplierOutstanding` | `vectors.json:p8-supplier-outstanding` | `GET /v1/parties/outstanding` | T1 Today, P1 Parties, P3 Supplier | TODO |
 
@@ -48,7 +48,7 @@ Each of P1-P8 also returns a `Working` structure (line-by-line derivation), asse
 | OP3 | `collectionEfficiency` | `vectors.json:op3-collection-efficiency` | `GET /v1/reports` | R1 Reports | TODO |
 | OP4 | `paymentDue` | `vectors.json:op4-payment-due-horizon` | `GET /v1/alerts` | T1 Today, P3 Supplier | TODO |
 | OP5 | `businessMovement` | `vectors.json:op5-business-movement` | `GET /v1/reports` | R1 Reports | TODO |
-| OP6 | `cashDeficitWarnings` | `vectors.json:op6-deficit-names-party-amount-date` | `GET /v1/alerts` | T1 Today AlertBanner | TODO |
+| OP6 | `cashDeficitWarnings` | `vectors.json:op6-deficit-names-party-amount-date` | `GET /v1/alerts` | T1 Today AlertBanner | DONE |
 
 ## Business intelligence — gated on closed-day count
 
