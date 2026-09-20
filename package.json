@@ -24,7 +24,7 @@
     "db:emit": "node --experimental-strip-types tools/emit-sql.mjs",
     "check:prose": "node tools/check-prose.mjs",
     "check:sms": "node tools/check-sms-templates.mjs",
-    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:findings && npm run check:verifiers",
+    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:registry && npm run check:findings && npm run check:verifiers",
     "check:sms:segments": "node tools/check-sms-segments.mjs",
     "check:tooling": "node tools/check-tooling.mjs",
     "detection-rate": "node tools/detection-rate.mjs",
@@ -38,7 +38,8 @@
     "check:traceability": "node tools/check-traceability.mjs",
     "check:secrets": "node tools/check-secrets.mjs",
     "mutation": "stryker run",
-    "check:findings": "node tools/check-findings.mjs"
+    "check:findings": "node tools/check-findings.mjs",
+    "check:registry": "node tools/check-registry.mjs"
   },
   "devDependencies": {
     "@stryker-mutator/core": "^10.0.0",

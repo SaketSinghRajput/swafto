@@ -14,6 +14,7 @@
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { OTP_TTL_SECONDS } from '@swafto/values';
 
 const read = (f) => readFileSync(f, 'utf8').split('\r\n').join('\n');
 const failures = [];
@@ -121,37 +122,35 @@ for (const f of walk('.')) {
  * language, must agree. Hindi and Odia carry no validity clause today (AD-012), so
  * this is quiet for them - and it fires the moment one gains a number.
  */
-const ttlSrc = read('apps/api/src/rate-limit/limits.ts');
-const ttlExpr = /export const OTP_TTL_SECONDS = (\d+) \* (MINUTE|SECOND|HOUR);/.exec(ttlSrc);
-if (!ttlExpr) {
-  failures.push(
-    'could not read OTP_TTL_SECONDS out of limits.ts - this check cannot verify the ' +
-      'template copy against a constant it cannot find, and silently passing would ' +
-      'be worse than failing.',
-  );
-} else {
-  const unit = { SECOND: 1, MINUTE: 60, HOUR: 3600 }[ttlExpr[2]];
-  const ttlSeconds = Number(ttlExpr[1]) * unit;
-  const ttlMinutes = ttlSeconds / 60;
+/*
+ * The TTL comes from THE REGISTRY, not from a regex over a source file.
+ *
+ * This used to parse `OTP_TTL_SECONDS = 10 * MINUTE` out of limits.ts. The moment
+ * limits.ts started importing @swafto/values, the regex stopped matching and this
+ * check FAILED CLOSED - refusing to pass rather than skipping, which is what it was
+ * built to do. The fix is not a better regex: it is to read the value from the one
+ * place that owns it, which is the entire point of the registry.
+ */
+const ttlSeconds = OTP_TTL_SECONDS;
+const ttlMinutes = ttlSeconds / 60;
 
-  // "10 min", "10 minutes", "10-minute", and the Hindi/Odia words, in case a
-  // validity clause is ever restored to them.
-  const DURATION = /([0-9]+) ?-? ?(minutes|minute|mins|min|मिनट|ମିନିଟ)/gi;
-  let checked = 0;
-  for (const [key, text] of codeTemplates) {
-    for (const m of text.matchAll(DURATION)) {
-      checked += 1;
-      if (Number(m[1]) !== ttlMinutes) {
-        failures.push(
-          `template ${key} promises "${m[0]}" but OTP_TTL_SECONDS is ${ttlSeconds}s ` +
-            `(${ttlMinutes} min). The message would tell a shopkeeper one thing and the ` +
-            `server would do another.`,
-        );
-      }
+// "10 min", "10 minutes", "10-minute", and the Hindi and Odia words, in case a
+// validity clause is ever restored to those templates.
+const DURATION = /([0-9]+) ?-? ?(minutes|minute|mins|min|मिनट|ମିନିଟ)/gi;
+let checked = 0;
+for (const [key, text] of codeTemplates) {
+  for (const m of text.matchAll(DURATION)) {
+    checked += 1;
+    if (Number(m[1]) !== ttlMinutes) {
+      failures.push(
+        `template ${key} promises "${m[0]}" but OTP_TTL_SECONDS is ${ttlSeconds}s ` +
+          `(${ttlMinutes} min). The message would tell a shopkeeper one thing and the ` +
+          `server would do another.`,
+      );
     }
   }
-  console.log(`  OTP_TTL_SECONDS       : ${ttlSeconds}s · ${checked} duration(s) stated in copy`);
 }
+console.log(`  OTP_TTL_SECONDS       : ${ttlSeconds}s (registry) · ${checked} duration(s) in copy`);
 
 console.log(`  templates in markdown : ${mdTemplates.size}`);
 console.log(`  templates in code     : ${codeTemplates.size}`);

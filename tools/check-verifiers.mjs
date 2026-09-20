@@ -86,10 +86,12 @@ export const VERIFIERS = [
     claims:
       'SMS-TEMPLATES.md and the code registry agree; every sent templateId is registered; every duration stated in copy matches OTP_TTL_SECONDS.',
     benchmarks: [],
+    // Plants at the REGISTRY now, because that is where the value lives. The old
+    // plant edited limits.ts, which today merely re-exports it.
     defect: {
-      file: 'apps/api/src/rate-limit/limits.ts',
-      find: 'export const OTP_TTL_SECONDS = 10 * MINUTE;',
-      replace: 'export const OTP_TTL_SECONDS = 5 * MINUTE;',
+      file: 'packages/values/src/index.ts',
+      find: 'export const OTP_TTL_SECONDS = 600;',
+      replace: 'export const OTP_TTL_SECONDS = 300;',
     },
   },
   {
@@ -220,6 +222,19 @@ export const VERIFIERS = [
     defect: null,
     provenBy:
       'It IS a defect-planting harness - 145 planted mutants on money.ts alone - so proving it can fail is the thing it does on every run. What is NOT yet proven is that it sees the whole suite: its dry run finds 170 of 303 tests, so its first reading of 9.66% is a statement about the harness, not the engine. Recorded as provisional in BENCHMARKS-RESULTS.md rather than as a B4 measurement.',
+  },
+  {
+    id: 'registry',
+    command: 'npm run check:registry',
+    file: 'tools/check-registry.mjs',
+    claims:
+      'Every value that lives in more than one place has ONE home in @swafto/values. No document states a number that disagrees with it, no code keeps its own literal, and every externally-sourced value carries its authority and date.',
+    benchmarks: [],
+    defect: {
+      file: 'DEVICE-CHECKLIST.md',
+      find: '## B · Legibility',
+      replace: 'Touch targets are at least 48dp.\n\n## B · Legibility',
+    },
   },
   {
     id: 'findings',
@@ -525,7 +540,8 @@ const STALE_AFTER = 5;
 
 /** Each entry is a JUDGEMENT: not derivable, and therefore perishable. */
 const JUDGEMENTS = [
-  { where: 'PROJECTION.md', what: 'every iteration estimate and the 20-iteration plan', made: 21 },
+  { where: 'PROJECTION.md', what: 'every iteration estimate and the 20-iteration plan', made: 23 },
+  { where: 'PROJECTION.md', what: 'the hard checkpoint at iteration 26', made: 23 },
   { where: 'PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
   { where: 'PROJECTION.md', what: 'committed = A.3 items 1-5; stretch = items 6-8', made: 21 },
   { where: 'DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },

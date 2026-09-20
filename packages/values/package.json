@@ -1,0 +1,14 @@
+{
+  "name": "@swafto/values",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "description": "The canonical value registry. One home for every value that appears in more than one place. Code imports it; documents are checked against it.",
+  "dependencies": {
+    "@swafto/formula-engine": "*"
+  }
+}

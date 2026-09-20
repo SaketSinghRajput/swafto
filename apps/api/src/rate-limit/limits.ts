@@ -26,6 +26,12 @@
  * outcome than any threat in this table."
  */
 
+import {
+  OTP_TTL_SECONDS as REGISTRY_TTL,
+  OTP_DIGITS as REGISTRY_DIGITS,
+  OTP_LIMITS as REGISTRY_LIMITS,
+} from '@swafto/values';
+
 export interface RateRule {
   /** Stable identifier; also the bucket prefix, so renaming one resets its counters. */
   readonly name: string;
@@ -78,18 +84,18 @@ const DAY = 24 * HOUR;
  * DEVICE-CHECKLIST D2 still measures real carrier latency. It can now only push this
  * number UP.
  */
-export const OTP_TTL_SECONDS = 10 * MINUTE;
+export const OTP_TTL_SECONDS = REGISTRY_TTL;
 
-/** 6 digits, per TB6 and B.3. Stated here so nothing else picks its own length. */
-export const OTP_DIGITS = 6;
+/** 6 digits, per TB6 and B.3. The registry owns the number; this re-exports it. */
+export const OTP_DIGITS = REGISTRY_DIGITS;
 
 export const OTP_LIMITS = {
   /** TB6: per phone number - send - 3 per 15 min, lockout 1 h. */
   sendPerPhoneBurst: {
     name: 'otp:send:phone:burst',
-    windowSeconds: 15 * MINUTE,
-    max: 3,
-    lockoutSeconds: 1 * HOUR,
+    windowSeconds: REGISTRY_LIMITS.sendPerPhoneBurst.windowSeconds,
+    max: REGISTRY_LIMITS.sendPerPhoneBurst.max,
+    lockoutSeconds: REGISTRY_LIMITS.sendPerPhoneBurst.lockoutSeconds,
     source: 'SECURITY-AUDIT TB6, "Per phone number - send", 3 / 15 min, lockout 1 h',
   },
 
@@ -100,9 +106,9 @@ export const OTP_LIMITS = {
    */
   sendPerPhoneDaily: {
     name: 'otp:send:phone:day',
-    windowSeconds: DAY,
-    max: 10,
-    lockoutSeconds: DAY,
+    windowSeconds: REGISTRY_LIMITS.sendPerPhoneDaily.windowSeconds,
+    max: REGISTRY_LIMITS.sendPerPhoneDaily.max,
+    lockoutSeconds: REGISTRY_LIMITS.sendPerPhoneDaily.lockoutSeconds,
     source: 'SECURITY-AUDIT TB6, "Per phone number - send", 10 / 24 h, lockout 24 h',
   },
 
@@ -125,18 +131,18 @@ export const OTP_LIMITS = {
    */
   sendPerIp: {
     name: 'otp:send:ip:hour',
-    windowSeconds: HOUR,
-    max: 2000,
-    lockoutSeconds: 0,
+    windowSeconds: REGISTRY_LIMITS.sendPerIp.windowSeconds,
+    max: REGISTRY_LIMITS.sendPerIp.max,
+    lockoutSeconds: REGISTRY_LIMITS.sendPerIp.lockoutSeconds,
     source: 'SECURITY-AUDIT TB6 as amended at iteration 19, "Per IP - send", 2000 / 1 h, telemetry only',
   },
 
   /** TB6: per device id - send - 5 per 1 h, lockout 1 h. */
   sendPerDevice: {
     name: 'otp:send:device:hour',
-    windowSeconds: HOUR,
-    max: 5,
-    lockoutSeconds: HOUR,
+    windowSeconds: REGISTRY_LIMITS.sendPerDevice.windowSeconds,
+    max: REGISTRY_LIMITS.sendPerDevice.max,
+    lockoutSeconds: REGISTRY_LIMITS.sendPerDevice.lockoutSeconds,
     source: 'SECURITY-AUDIT TB6, "Per device id - send", 5 / 1 h, lockout 1 h',
   },
 
@@ -150,9 +156,9 @@ export const OTP_LIMITS = {
    */
   verifyPerCode: {
     name: 'otp:verify:code',
-    windowSeconds: OTP_TTL_SECONDS,
-    max: 5,
-    lockoutSeconds: OTP_TTL_SECONDS,
+    windowSeconds: REGISTRY_LIMITS.verifyPerCode.windowSeconds,
+    max: REGISTRY_LIMITS.verifyPerCode.max,
+    lockoutSeconds: REGISTRY_LIMITS.verifyPerCode.lockoutSeconds,
     source:
       'SECURITY-AUDIT TB6, "Per phone number - verify attempts", 5 per code; TTL per ' +
       'SPEC-DIGEST §1 ruling (10 min)',

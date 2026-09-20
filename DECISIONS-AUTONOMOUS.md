@@ -670,7 +670,7 @@ look are R-006 and R-007 in REVIEW.md, raised rather than quietly implemented.
 - **DC-003's compensating control lands somewhere that already offers rate limiting**
   (a WAF, an API gateway). Then the cheap pre-database limit belongs there and this
   store keeps only the per-number accounting.
-- **R-006 resolves against the 5-minute TTL** once DEVICE-CHECKLIST D2 measures real
+- **R-006 resolves against the shorter TTL** once DEVICE-CHECKLIST D2 measures real
   carrier latency. That changes a constant, not the store.
 
 **Iteration 17 · B.2**

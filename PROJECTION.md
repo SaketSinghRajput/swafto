@@ -59,8 +59,10 @@ DEFERRED.md.** That gives:
 | 4 | rejects.json and the B3 re-measurement | 2 |
 | 5 | The two fixtures | 1 |
 | | **subtotal - everything A.6 protects, plus the fixtures** | **8** |
-| 6 | App skeleton, design tokens, i18n, the §B.6 screen harness | 3 |
-| 7 | The A.3 screen set | 9 |
+| 6 | App skeleton, design tokens, fonts, store wiring | 1 |
+| 7 | **Form A** - the screen itself | 1 |
+| 8 | **The ~10 instruments Form A's existence makes due** | 1 |
+| 9 | A.3 items 2-5, the rest of the day close | 8 |
 | | **total** | **20** |
 
 Nothing in A.6 is touched. Nothing in §5.1, §5.9, §5.12, §5.13 or §6 is touched. The
@@ -75,8 +77,10 @@ thresholds stay frozen. **What is cut is features, and the feature cut is the se
   existing `StubSmsPort`, which is what it was built for - but the code that arrives is
   not a code a server issued. The owner's own note anticipates this: *"you would stub
   past sign-in for testing."*
-- **B8, B11 and B36 stay uninstrumented**, because their subjects never come to exist
-  inside this ceiling. Their rows say so.
+- **B8 and B11 stay uninstrumented**, because their subjects never come to exist
+  inside this ceiling. Their rows say so. **B36 does NOT** - injection 16 A.3
+  corrected that: a CLIENT day close writes CLIENT logs, so its instrument is due
+  with the first screen.
 - **The rate limiter and the SMS port stay built and tested.** That work is done and is
   not discarded; only the routes on top of them are deferred.
 
@@ -138,7 +142,34 @@ a performance miss. One is a decision the owner made; the other would be a failu
 3. **Further injections.** Six in twenty iterations. At that rate three more arrive
    before 40, and none of them is priced here.
 
+## THE FIRST SCREEN UNBLOCKS TEN INSTRUMENTS AT ONCE, AND I HAD NOT PRICED IT
+
+Injection 17 B is right and the earlier plan was wrong. The moment anything renders,
+ten subjects come into existence simultaneously and §5.13 makes every one of their
+instruments due in that same iteration:
+
+  B26 contrast · B27 white-on-marigold · B28 touch targets · B29 text size ·
+  B30 missing i18n keys · B31 layout overflow · B32 non-Latin numerals ·
+  B36 amounts, names or phones in CLIENT logs · then B24 once an APK builds ·
+  then the first of B14-B23 once the emulator runs it.
+
+**Form A is therefore THREE iterations, not two:** the project and tokens, the screen,
+and the instruments. That is honest scheduling rather than padding - ten screens built
+against an uninstrumented token set is ten screens to fix, and the instruments pay for
+themselves on screen two.
+
+## CHECKPOINT AT 26, NOT 35 — a hard one
+
+**If Form A is not built AND instrumented by the end of iteration 26, the screen set
+is re-cut immediately.** Not at 35. Cut from the bottom of A.3 items 1-5, never from
+§B.6, and re-STATE this file from the facts rather than editing it (§5.15.2).
+
+The reasoning is that eleven screens in twelve iterations has no slack, and the place
+a plan like this slips is its first unit. A plan that slips at the start and is not
+re-cut until two thirds through is how a build reaches its ceiling with nine
+half-finished screens. The decision is cheap at 26 and expensive at 35.
+
 ## When to revise
 
-At the end of A.3 item 1 - the first honest read on screen velocity - and again at 35,
-where the injection requires a one-page pre-stop check anyway.
+At the checkpoint at **26**, at **30** and at **35** (§5.15.4), each time re-stated
+from the facts as they are rather than edited from the previous version.
