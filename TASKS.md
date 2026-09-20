@@ -16,9 +16,9 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 
 **NEXT:** `I-006` — Instrument B31 — layout overflow at maximum font scale
 
-**READY NOW:** 6 — `I-006` `I-008` `I-009` `I-010` `Z-001` `Z-003`
+**READY NOW:** 5 — `I-006` `I-008` `I-009` `I-010` `Z-001`
 
-**BLOCKED:** 1, and the one blocking the most others is `Z-003` — 1 downstream
+**BLOCKED:** 0, and the one blocking the most others is `I-006` — 0 downstream
 
 ---
 
@@ -172,8 +172,8 @@ and it moves when the world provably moves (§5.16).
 |---|---|---|---|---|---|---|---|---|
 | 133 | `Z-001` | [ ] Run the adversary pass at its §6.1 cadence | An empty adversary pass is not reassurance; the cadence exists so it is not skipped when busy. | NONE | - | READY | - | 1 (made at 29) |
 | 134 | `Z-002` | [x] Pre-stop check at iteration 35 | The last point at which the screen set can be re-cut and the cut still mean anything. | NONE | 1 | DONE | - | 1 (made at 29) |
-| 135 | `Z-003` | [ ] Final full verification: check:all, prove, responds, mutation, vectors on both runtimes | The handover claims a state. This is the command set that makes the claim checkable. | `Z-002` | 1 | READY | - | 1 (made at 29) |
-| 136 | `Z-004` | [ ] Write the handover report with its six required sections | The build stops at the ceiling regardless. This is what makes the work usable by someone else. | `Z-003` | - | BLOCKED | - | 1 (made at 29) |
+| 135 | `Z-003` | [x] Final full verification: check:all, prove, responds, mutation, vectors on both runtimes | The handover claims a state. This is the command set that makes the claim checkable. | `Z-002` | 1 | DONE | - | 1 (made at 29) |
+| 136 | `Z-004` | [x] Write the handover report with its six required sections | The build stops at the ceiling regardless. This is what makes the work usable by someone else. | `Z-003` | - | DONE | - | 1 (made at 29) |
 
 ## Human — referenced, never duplicated
 

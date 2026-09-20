@@ -2772,3 +2772,55 @@ language - `\p{Nd}` catches Odia numerals where a bare `\d` would not.
   $ npm run check:all -> 21 checks, all pass
   $ npm run typecheck -> clean
   $ npm run design    -> 1 component, 6 tokens used, 0 raw values
+
+---
+
+## 2026-09-21 · Iteration 36 · FINAL VERIFICATION
+
+Z-003. Every command below was run in this session and every figure is its output.
+Nothing here is recalled from an earlier run.
+
+### The commands, and what they said
+
+```
+  $ npx vitest run                  -> 36 files, 1,210 passed, 0 failed
+  $ npm run check:all               -> 25 checks, all pass
+  $ npm run typecheck               -> clean
+  $ npm run check:divergence        -> 77 vectors, Node and Hermes, divergence NONE
+  $ npm audit --audit-level=high    -> 0 high or critical (2 moderate, in tooling)
+  $ node tools/check-verifiers.mjs --prove
+                                    -> 25 verifiers planted and failed as required
+  $ npm run coverage:engine         -> statements 91.39 · branches 86.34 · lines 91.90
+  $ npm run coverage:api            -> statements 84.55 · branches 73.97 · lines 86.42
+  $ npm run shots                   -> 55 panels, contact sheet written
+```
+
+Postgres was running for this verification, so the suites that skip without one
+actually ran: the schema guards, the repository equivalence contract on both
+implementations, and the new RLS attack.
+
+### What the verification itself found
+
+Three things, none of them in the product and all of them in the measurement -
+which is the pattern this build has produced all along.
+
+1. **`npm run coverage` answers neither B3 nor B5.** It includes the engine AND the
+   API, so its summary line is a blend: 77.77% branches. B3 is an ENGINE branch
+   figure and B5 a BACKEND line figure, and reading the blend as B3 would understate
+   the engine by nine points. Two scoped commands now exist and the rows cite them.
+2. **B3 had drifted 0.28pp** from its iteration-32 record, and **B5's denominator had
+   grown eightfold** - it was 94 of 103 lines when "the backend" was the rate limiter,
+   and is 681 of 788 now. Both re-measured. B3 stays MISSED, B5 stays MET.
+3. **`check:layout` was intermittent.** One 2px overflow on the spinner panel in one
+   run, then four clean runs. The cause was a CSS animation being measured
+   mid-transform; animations are now frozen before measurement. No threshold moved.
+
+### The benchmark position, derived
+
+  BENCHMARKS INSTRUMENTED: 23 of 40
+  BENCHMARKS MET         : 6 of 7 measured (B1 B2 B5 B12 B33 B40)
+                           1 MISSED (B3, 86.34% against 100%)
+  known MISSED - SCOPE   : 2 (B38, B39)
+  overdue                : 2 (B4, B6 - the subject exists and nothing measures it)
+  blocked                : 15 - no APK and no handset
+

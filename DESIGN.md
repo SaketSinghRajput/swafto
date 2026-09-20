@@ -3,7 +3,7 @@
 
 # DESIGN — what the code actually does
 
-**Generated at iteration 35.** This document reports; it never proposes. The
+**Generated at iteration 36.** This document reports; it never proposes. The
 design system and the Strategy 1 spec say what the screens *should* do — this says what
 they *do*, and the difference between the two is section E.
 

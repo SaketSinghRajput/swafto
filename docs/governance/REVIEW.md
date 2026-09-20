@@ -46,6 +46,10 @@ start rather than rediscovering them:
 
 ### THE PASS AT ITERATION 35, AND WHAT IT FOUND
 
+*(Recorded under 35, which is when the work was done; the BUILD_LOG heading for the
+verification that followed it reads 36. Same session, and the dates in this section
+are left as they were written rather than renumbered to look tidier.)*
+
 Run against the surfaces built since the last pass: the API client, the host
 drain, the consent flow, the deletion path, the web page, and the two checkers
 added in the same iteration.

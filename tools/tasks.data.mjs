@@ -287,7 +287,16 @@ export const TASKS = [
     title: 'Run the adversary pass at its §6.1 cadence',
     why: 'An empty adversary pass is not reassurance; the cadence exists so it is not skipped when busy.',
     blockedBy: [],
-    judgement: { what: 'whether the last pass was thorough rather than merely performed', made: 29 },
+    /*
+     * RE-STATED at 36, and the judgement is that it WAS thorough rather than
+     * merely performed - which is a claim with evidence behind it rather than
+     * a feeling. The pass produced three findings (a forged shop id that
+     * survived 228 tests, a checker scoped to four hand-listed files, a
+     * tripwire blind to unlisted SDKs) and discharged both plants REVIEW had
+     * carried as owed since iteration 19. A pass that finds nothing is the one
+     * to be suspicious of.
+     */
+    judgement: { what: 'whether the last pass was thorough rather than merely performed', made: 36 },
     benchmarks: [],
     estimate: { iterations: 1, made: 29 },
   },
