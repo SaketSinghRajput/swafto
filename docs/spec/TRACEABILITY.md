@@ -96,10 +96,10 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-08 | Breach response runbook + rehearsal | `docs/runbooks/breach.md` | Eng (G3) | TODO |
 | L-09 | No processor moves data out of India | Cloudflare/Sentry/FCM/SMS review | Eng | TODO |
 | L-10 | Cloudflare TLS termination abroad = transfer? | Architecture decision | AD-005/006 | RESOLVED |
-| L-11 | FCM payloads carry no personal data | Push builder, trigger-only | Eng | TODO |
+| L-11 | FCM payloads carry no personal data | `tools/check-push-payload.mjs` - a tripwire; V1 ships no push at all | Eng | N/A-V1 - fails the build the day an SDK appears |
 | L-12 | Data Safety form word-identical to policy | Play Console + policy | Eng | TODO |
 | L-13 | Public web deletion page | `apps/web/delete-account/index.html`, `POST /v1/deletion/request`, `POST /v1/deletion/confirm`, `otp_account_deletion` | Eng | WIP - built and checked; the URL itself needs hosting |
-| L-14 | POST_NOTIFICATIONS primer after first close | Manifest + primer screen | Eng | TODO |
+| L-14 | POST_NOTIFICATIONS primer after first close | Manifest must not declare it; the primer returns with the inbox (DEFERRED) | Eng | N/A-V1 - no notifications are requested |
 | L-15 | GST disclaimer in app copy and exports | Export screen + file header | Eng | TODO |
 | L-16 | Export naming rules enforced | Copy + i18n key audit | Eng | TODO |
 | L-17 | Privacy policy drafted, reviewed, live | Website | AD-005/006 | RESOLVED |

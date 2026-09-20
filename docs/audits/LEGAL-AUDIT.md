@@ -450,10 +450,10 @@ Every row here is mirrored into `TRACEABILITY.md`.
 | L-08 | Breach response runbook + rehearsal | ACTION-REQUIRED | `docs/runbooks/breach.md` (owner G3) | - |
 | L-09 | Verify no processor moves data out of India | ACTION-REQUIRED | Cloudflare / Sentry / FCM / SMS review | - |
 | L-10 | Cloudflare TLS termination outside India - is it a transfer? | **RESOLVED-AUTONOMOUSLY** | Architecture §08 decision | - |
-| L-11 | FCM push payloads must carry no personal data | ACTION-REQUIRED | Push builder - trigger only, text resolved on device | - |
+| L-11 | FCM push payloads must carry no personal data | **NOT APPLICABLE IN V1, with a tripwire** | There is no push integration at all, and the notification inbox and its permission primer are cut (DEFERRED). `check:push` fails the build the day an SDK appears, and says what must be true before it is rewritten. | - |
 | L-12 | Data Safety form declarations, word-identical to the policy | ACTION-REQUIRED | Play Console + privacy policy | Play submission |
 | L-13 | **Public web deletion page at `swafto.app/delete-account`** | **BUILT - needs hosting** | `apps/web/delete-account/index.html`, `POST /v1/deletion/request` + `/confirm`, its own SMS template and OTP namespace. The page exists and is checked against the API; putting it at that URL is infrastructure. | **Play submission** |
-| L-14 | `POST_NOTIFICATIONS` primer after first close, never on launch | ACTION-REQUIRED | Manifest + primer screen | - |
+| L-14 | `POST_NOTIFICATIONS` primer after first close, never on launch | **NOT APPLICABLE IN V1** | The permission is never requested, because there are no notifications (DEFERRED). The manifest must simply not declare it - part of H14, and the primer returns with the inbox. | - |
 | L-15 | GST disclaimer in app copy and in every exported file | ACTION-REQUIRED | Export screen + file header, 3 languages | - |
 | L-16 | Export naming rules enforced (never "invoice"/"return"/"filing") | ACTION-REQUIRED | Copy review + i18n key audit | - |
 | L-17 | Privacy policy drafted, reviewed, **live** | **RESOLVED-AUTONOMOUSLY** | Website | **Play submission** |

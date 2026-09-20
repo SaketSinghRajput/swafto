@@ -375,6 +375,22 @@ export const VERIFIERS = [
     },
   },
   {
+    id: 'push-payload',
+    command: 'npm run check:push',
+    file: 'tools/check-push-payload.mjs',
+    claims:
+      'A TRIPWIRE, and it is described as one. No push integration exists in this repository, so L-11 and SECURITY-AUDIT T6.4 - a push payload must carry a trigger only, never an amount, a name or a phone - have no subject to be true of. This proves the rule has not silently become applicable, and it must never be read as proving a real payload is clean.',
+    benchmarks: [],
+    defect: {
+      file: 'apps/mobile/package.json',
+      find: '    "react": "^19.1.0",',
+      replace:
+        '    "@react-native-firebase/messaging": "^21.0.0",' +
+        String.fromCharCode(10) +
+        '    "react": "^19.1.0",',
+    },
+  },
+  {
     id: 'design',
     command: 'npm run check:design',
     file: 'tools/gen-design.mjs',
@@ -822,6 +838,10 @@ const RESPONSES = {
      */
     plantIsResponse:
       'B31 is "0 overflow". The plant removes the style that lets the list give up its space and the keypad lands below the fold. Beyond the plant, the instrument has already tracked a moving subject: 18 overflows on its first run, then 7, then 1, then 0, as each underlying defect was fixed.',
+  },
+  'push-payload': {
+    plantIsResponse:
+      'The rule is "0 push integrations, because V1 has none". The plant adds the Firebase messaging SDK to the app manifest and the count moves 0 -> 1, with a failure that says what has to be true before the check is rewritten. There is no benchmark here, so section 5.16 does not strictly reach it - it is response-tested anyway, because a tripwire nobody has seen trip is a tripwire nobody should trust.',
   },
   'export-naming': {
     plantIsResponse:
