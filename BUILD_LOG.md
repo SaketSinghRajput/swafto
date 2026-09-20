@@ -1811,3 +1811,181 @@ Commands:
 NEXT — rejects.json and the B3 re-measurement. Per injection 18 C the mutation diff
 waits until after it lands, so it is measured once against the real suite. Then the
 two fixtures, then Form A over three iterations, with the checkpoint at 26.
+
+---
+
+## 2026-09-20 · Iteration 25 · Injection 19: the polluted window
+
+### A.1 · THE PREMISE IS WRONG, AND SO WAS MY OWN RECORD
+
+The injection says the sandbox "has been there SINCE ITERATION 17" and that every test
+ran twice for seven iterations. It had not, and they did not. **The window is about
+fifteen minutes inside iteration 24.**
+
+I am not in a position to be smug about this. The seven-iteration claim came from *my*
+iteration-24 entry, which asserted the sandbox "is the intermittent G4 failure seen
+since iteration 17." The owner read my record and reasoned correctly from it. The
+defect is mine and it is the one worth recording: I explained a long-standing
+intermittent failure with a cause I had never dated.
+
+**The evidence, all re-derivable:**
+
+1. **Stryker was first run at iteration 20.** The mutation harness was built then. No
+   Stryker sandbox can predate its first run, so iterations 17, 18 and 19 are excluded
+   by construction.
+2. **The recorded test counts refute it directly.** BUILD_LOG records `npx vitest run`
+   at every iteration in the window:
+
+   | Iteration | Recorded | Doubled would be | Verdict |
+   |---|---|---|---|
+   | 17 | 230 passed, 0 skipped | ~460 | clean |
+   | 18 | 231 passed | ~462 | clean |
+   | 19 | 303 passed | ~606 | clean |
+   | 20 | 303 passed | ~606 | clean |
+   | 21 | 303 passed | ~606 | clean |
+   | 22 | 303 passed | ~606 | clean |
+   | 24 | 606 observed, then 309 after removal | — | **the window** |
+
+   303 is the correct undoubled figure: today's suite is 309, and six tests were added
+   this iteration (four for `stdevMoney`, two for `medianMoney`). Had a sandbox been
+   present at 19 through 22, each of those runs would have read about 606, which is
+   exactly what iteration 24 saw. Iteration 21 reading 303 also proves iteration 20's
+   Stryker run cleaned up after itself.
+3. **The sandbox dates itself.** It contains `INJECTIONS/18-survivors-not-scores.md`,
+   written this iteration, and it does *not* contain the `stdevMoney` tests added
+   later the same iteration. Directory mtime `2026-09-20 12:50`.
+
+So the intermittent G4 failure seen from iteration 17 has a different cause, still
+unexplained, and the iteration-24 entry claiming otherwise is wrong. The earlier
+diagnoses at iteration 17 — the Postgres suite silently skipping, the rate-limit suite
+racing on CREATE TABLE, S-10's schema-blind RLS query — were each fixed at the time.
+
+### The enumeration A.1 asked for
+
+Every number recorded in iterations 17 to 24, by what it counts:
+
+| Number | Kind | Verdict |
+|---|---|---|
+| 230 / 231 / 303 x4 passed (iters 17-22) | test count | UNAFFECTED - and they are the evidence above |
+| 85.71% branch, engine (iters 19, 20) | coverage | UNAFFECTED - no sandbox existed then; and `coverage.include` is scoped to `packages/formula-engine/src` and `apps/api/src`, which a `.stryker-tmp` path cannot match |
+| 91.26% lines, backend (iter 20) | coverage | UNAFFECTED - same |
+| 63 of 70 golden vectors (B1) | artefact count | UNAFFECTED - counts entries in `vectors.json`, not test executions |
+| 16 of 40 instrumented (iters 20, 21) | derived count | UNAFFECTED - derived from the inventory, never from a run |
+| 15 fixed / 1 open / 1 withdrawn (iter 21) | derived count | UNAFFECTED - predicates over files |
+| "2 of 59", "1 flagged" (5.9, iters 11-12) | detection rate | OUTSIDE the window by eight iterations - and these are the ones the injection most wanted checked |
+| any wall-clock timing | timing | NONE EXIST. No duration is recorded anywhere in the window; the perf benchmarks B14-B23 are blocked on an app |
+| 9.66% score, 145 mutants, 131 survivors | mutation | **REPRODUCIBLE** - re-derived identically on a clean tree. Not suspect, and the reproduction is the damning part. See below |
+| "Stryker's dry run sees 170 of 303 tests" | test count | **WRONG. Re-derived clean: 275 of 309.** See below |
+| "8.96 tests per mutant on average" | ratio | re-derived as **7.76**. Both are "a handful"; the conclusion does not turn on which |
+| first mutant table, "1 failing" x12 | detection counts | RETRACTED within iteration 24 - the runs never executed |
+| second mutant table, raw totals 11/18/6/... | detection counts | RETRACTED within iteration 24 - inflated by doubled DB failures |
+| final mutant table, 2 to 19 | detection counts | UNAFFECTED - taken after removal, baseline-subtracted |
+| 12 planted / 12 killed / 0 survivors | verdicts | UNAFFECTED - taken after removal |
+| 11 files, 309 passed | test count | UNAFFECTED - taken after removal |
+
+**Net: one causal claim wrong, one recorded figure wrong, one ratio slightly off, and
+every surviving measurement clean.** Three numbers were produced inside the window and
+all three were retracted inside the same iteration, before anything was built on them.
+Nothing downstream rests on a polluted reading.
+
+### The re-derived dry run, and why the conclusion is unchanged
+
+`npx stryker run --dryRunOnly` on a clean tree: **`Ran 275 tests`.** Against a suite of
+309, so it misses 34, not the 133 the record claimed. I cannot reproduce 170 and I am
+not going to defend it.
+
+The conclusion it was cited for does not move, and it never rested on that figure. B4
+and B6 are NOT INSTRUMENTED because **Stryker called all twelve money-helper
+arithmetic mutants Survived and eleven of them die to tests that already existed** -
+established by planting each one by hand, which is independent of any count Stryker
+prints about itself. If anything the correction sharpens it: a harness that loads 275
+of 309 tests and still reports those mutants as survivors is harder to excuse than one
+that loads 170.
+
+### The re-run answered a question I had not thought to ask
+
+Re-running the full mutation harness on a clean tree was meant only to re-derive two
+suspect numbers. It produced something better.
+
+**money.ts re-derives identically: 9.66%, 145 mutants, 14 killed, 131 survived. The
+survivor set is unchanged, mutant for mutant, including line 179,
+`acc * values.length`.**
+
+That line is the `stdevMoney` defect. Since the first run I have added four tests that
+exist specifically to kill it, and `mutation:money` shows it dying to two of them. The
+suite got strictly stronger and **Stryker's score did not move by a single mutant.**
+
+This is the cleanest disproof available, and it needs no argument about test counts:
+
+- a harness whose score is unchanged after the suite gains tests that provably kill
+  one of its reported survivors is not running those tests against that mutant;
+- so it is not measuring B4 or B6, whatever number it prints.
+
+It also settles injection 18 A.1's set-diff for this harness: **zero arrivals, zero
+departures.** A diff of nothing is not good news here — it is the finding. The real
+set-diff, against the real suite, still waits for rejects.json per injection 18 C.
+
+### A.2 - a check for the class
+
+`tools/check-shadow-copies.mjs`, in `check:all` as `check:shadow`. It fails on any
+**untracked directory** containing a `package.json`, a spec file or a vitest config.
+
+Three design notes, each the difference between a check people obey and one they learn
+to ignore:
+
+- **The unit is a directory, not a file.** "Untracked spec file" would fail every time
+  someone writes a test before staging it. Nobody authors a new suite inside a
+  directory git has never heard of.
+- **Gitignored does not exempt.** `.stryker-tmp` is in `.gitignore` now and would still
+  be a hazard, because vitest does not read `.gitignore`. Verified directly: recreating
+  `.stryker-tmp/sandbox-zzz/` with a package.json and a spec file fails the check.
+- **It is proven.** `npm run check:shadow:prove` plants the exact shape, requires the
+  scan to find it, and removes it.
+
+`check-tooling` could not have caught this: it walks only `tools/` and `scripts/`, and
+skips every dot-directory by name.
+
+### H12 - injection 14 is not in the repository
+
+Found while pinning injection 19. `INJECTIONS/` holds fourteen verbatim files and
+injection 14, "instruments before subjects", is not among them -
+`14-verify-the-verifiers.md` is injection *13*, and the filename numbers are a file
+index rather than injection numbers.
+
+5.13, checklist item A12 and the benchmark partition all come from injection 14. Three
+live mechanisms cite an instruction nobody can re-read, which is precisely the failure
+`INJECTIONS/` was created to prevent.
+
+I did not reconstruct it. I hold a paraphrase, and writing that into `INJECTIONS/`
+would produce a file that looks verbatim, hashes into `injections.lock`, and is
+actually my summary of someone else's words. Raised as H12 instead. Nothing is blocked
+by it; the risk is drift.
+
+### C - the checkpoints, restated
+
+The checkpoint at 26 would have fired because of a reordering the owner asked for.
+PROJECTION.md now carries two, and says which is live:
+
+- **LIVE - end of iteration 26:** rejects.json, the B3 re-measurement, the A.1 sweep
+  and both fixtures done, RN project scaffolded. Four of those five remain.
+- **End of iteration 29:** Form A built and instrumented.
+
+Either re-cut comes from the bottom of A.3 items 1-5, never from B.6.
+
+### D.1 - not done, and deliberately still not done
+
+FINDINGS.md's stale judgement stays at 13. The instruction is to re-state the seventeen
+severities in an iteration where it can be done honestly; this iteration went on the
+sweep, and clearing the marker without doing the work is the 5.14 defect in a different
+hat. It stays visible.
+
+Commands:
+  $ npm run check:all            -> 15 checks, all pass
+  $ npm run check:shadow:prove   -> a planted shadow tree is found
+  $ npx vitest run               -> 11 files, 309 passed, 0 skipped
+  $ npx stryker run --dryRunOnly -> Ran 275 tests (the record said 170 of 303)
+
+NEXT - rejects.json and the B3 re-measurement, with injection 19 B.1-B.3 folded in:
+sweep the engine for functions whose only tests hit an early return, treat the gap as a
+defect surface rather than bookkeeping, and require n=0, n=1 and n>=2 for every
+aggregate. Then the two fixtures and the RN scaffold, all inside checkpoint 1.

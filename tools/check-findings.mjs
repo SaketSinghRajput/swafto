@@ -184,7 +184,24 @@ export const FINDINGS = [
     id: 'V-9',
     what: 'a stale Stryker sandbox was a second copy of the repo, so vitest ran every test twice and two copies of postgres.spec.ts raced the same database',
     premise: 'vitest reported 606 tests for a 303-test suite, and .stryker-tmp/ was untracked',
-    fixed: all(() => !existsSync('.stryker-tmp'), contains('.gitignore', '.stryker-tmp/')),
+    /*
+     * THE PREDICATE IS THE MECHANISM, NOT THE MOMENT.
+     *
+     * It first read `!existsSync('.stryker-tmp')`, which reopened the finding the
+     * instant a legitimate `stryker run` created its sandbox mid-run. That tests
+     * transient state rather than whether the defect is fixed, and a finding that
+     * flickers is a finding people learn to ignore.
+     *
+     * The fix is the class check (A.2) plus the ignore. Whether a sandbox exists
+     * right now is enforced by check:shadow, which is in check:all and fails the
+     * build on its own - the right place for it, and the reason this does not need
+     * to duplicate the test.
+     */
+    fixed: all(
+      contains('.gitignore', '.stryker-tmp/'),
+      fileExists('tools/check-shadow-copies.mjs'),
+      contains('package.json', 'npm run check:shadow &&'),
+    ),
   },
 ];
 

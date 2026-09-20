@@ -10,8 +10,9 @@
  * one is killed by tests that were ALREADY in the suite. Two separate checks of that
  * tool, neither of which it survives:
  *
- *   - its dry run finds 170 of the tests, and the shortfall is NOT the cause: the 170
- *     it does see already contain the killing tests.
+ *   - its dry run loads 275 of the 309 tests, and the 34 it misses are NOT the cause:
+ *     the tests it does load already contain the killing ones. (Re-derived clean at
+ *     iteration 25. The figure first recorded here, 170 of 303, is not reproducible.)
  *   - with `coverageAnalysis: all` it prints "Ran all tests for this mutant" and then
  *     reports 8.96 tests per mutant on average.
  *

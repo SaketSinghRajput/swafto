@@ -221,7 +221,18 @@ export const VERIFIERS = [
     benchmarks: ['B4', 'B6'],
     defect: null,
     provenBy:
-      'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run finds 170 of 303 tests, and the 133 it misses are NOT the cause, because the 170 it does see already contain the killing tests; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
+      'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
+  },
+  {
+    id: 'shadow-copies',
+    command: 'npm run check:shadow',
+    file: 'tools/check-shadow-copies.mjs',
+    claims:
+      'No untracked directory in this repository contains a package.json, a spec file or a vitest config - nothing a test runner or package manager could discover and act on as if it were the real tree.',
+    benchmarks: [],
+    defect: null,
+    provenBy:
+      'npm run check:shadow:prove plants a directory holding a package.json and a spec file, requires the scan to find it, and removes it. Separately verified against the real shape: recreating .stryker-tmp/ with those two files fails the check even though .stryker-tmp is now in .gitignore, which is the design claim - vitest does not read .gitignore, so ignored and untracked are the same thing to it.',
   },
   {
     id: 'money-mutants',
@@ -562,7 +573,11 @@ const STALE_AFTER = 5;
 /** Each entry is a JUDGEMENT: not derivable, and therefore perishable. */
 const JUDGEMENTS = [
   { where: 'PROJECTION.md', what: 'every iteration estimate and the 20-iteration plan', made: 23 },
-  { where: 'PROJECTION.md', what: 'the hard checkpoint at iteration 26', made: 23 },
+  {
+    where: 'PROJECTION.md',
+    what: 'the two checkpoints - 26 for the queue, 29 for Form A - and which one is live',
+    made: 25,
+  },
   { where: 'PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
   { where: 'PROJECTION.md', what: 'committed = A.3 items 1-5; stretch = items 6-8', made: 21 },
   { where: 'DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },
@@ -571,8 +586,8 @@ const JUDGEMENTS = [
   { where: 'BENCHMARKS-RESULTS.md', what: "B1's attempts narrative - close it at G7", made: 19 },
   {
     where: 'BENCHMARKS-RESULTS.md',
-    what: "B3's attempts narrative - the gap is in rejection arms",
-    made: 19,
+    what: "B3's attempts narrative - the gap has THREE shapes, the third being bodies below early returns",
+    made: 25,
   },
   /*
    * STILL 13, and deliberately. Bumping this to 24 would clear the STALE warning
@@ -810,6 +825,53 @@ ${bmRows}
       const out = body.slice(0, s) + table + body.slice(e + END.length);
       writeFileSync('BENCHMARKS-RESULTS.md', rCrlf ? out.split('\n').join('\r\n') : out);
       console.log('  rewrote the partition in BENCHMARKS-RESULTS.md');
+    }
+  }
+
+  /*
+   * §5.14 - THE TWO NUMBERS ARE DERIVED, NOT RE-TYPED.
+   *
+   * BUILD_STATE carried "INSTRUMENTED: 16 of 40 · 0 overdue" by hand. At iteration 25
+   * the truth was 14 and 2, and it had also gone stale on the check count, the test
+   * count and B4/B6's classification - five wrong numbers in six lines, in the file
+   * that holds the rule against hand-written status. It is the same disease as the
+   * "Iteration: 7" field deleted at iteration 22, and it gets the same treatment:
+   * generated between markers, and check-generated fails if it drifts.
+   *
+   * §5.13 A.5 calls these the two most important numbers in the build. They are now
+   * the two that nobody can mistype.
+   */
+  if (existsSync('BUILD_STATE.md')) {
+    const sRaw = readFileSync('BUILD_STATE.md', 'utf8');
+    const sCrlf = sRaw.includes('\r\n');
+    const body = sRaw.split('\r\n').join('\n');
+    const START = '<!-- TWONUMBERS:START';
+    const END = '<!-- TWONUMBERS:END -->';
+    const a = body.indexOf(START);
+    const b = body.indexOf(END);
+    if (a !== -1 && b !== -1) {
+      const block = [
+        `${START} - generated by tools/check-verifiers.mjs --update-md -->`,
+        '',
+        '**Two numbers (§5.13 A.5):**',
+        '',
+        `> **INSTRUMENTED: ${instrumented} of ${declared.length}.** ` +
+          `${overdue.length} overdue, ${blocked.length} blocked on artifacts that do not exist yet.`,
+        overdue.length
+          ? `> **OVERDUE: ${overdue.join(', ')}** - the subject exists and nothing measures it.`
+          : '> No benchmark is overdue.',
+        '> **MET:** see BENCHMARKS-RESULTS.md. A benchmark with no instrument cannot be',
+        '> claimed met, and none is claimed here - this block counts instruments, not',
+        '> results, because conflating the two is how a benchmark goes green untested.',
+        scopeMisses.length
+          ? `> **MISSED - SCOPE: ${scopeMisses.join(', ')}**, a decision rather than a failure.`
+          : '> No benchmark is a scope miss.',
+        '',
+        END,
+      ].join('\n');
+      const out = body.slice(0, a) + block + body.slice(b + END.length);
+      writeFileSync('BUILD_STATE.md', sCrlf ? out.split('\n').join('\r\n') : out);
+      console.log('  rewrote the two numbers in BUILD_STATE.md');
     }
   }
 

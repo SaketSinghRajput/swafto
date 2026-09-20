@@ -80,14 +80,41 @@ were the instrument, not the engine.
 | `money.ts` | 97.61% | one `stdevMoney` guard |
 | `primary.ts`, `types.ts`, `index.ts` | 100% | - |
 
-**Reading this honestly:** the uncovered branches are concentrated in rejection and
-gate-closed paths. That is the same shape as the `assertPaise` 0/59 finding - the arms
-that fire when something is WRONG are the ones the corpus cannot reach, because the
-corpus describes valid days. The fix is the rejection corpus and gate-boundary
-vectors, not more vectors of the shape we already have.
+**Re-stated at iteration 25 (§5.15.2), because the earlier reading was incomplete and
+the incompleteness cost a real defect.**
 
-**Attempts recorded: 1 of 3.** Next attempt when the rejection corpus grows at G7/G8,
-which targets exactly these arms.
+That reading said the gap was rejection and gate-closed arms — the same shape as the
+`assertPaise` 0/59 finding, arms that fire when something is WRONG, unreachable
+because the corpus describes valid days. True, and only two thirds of the story.
+
+**There is a third shape, and this table already named it.** The row reading
+`money.ts | 97.61% | one stdevMoney guard` was written six iterations ago and read as
+bookkeeping — one guard, 2.39%, tidy up later. It was not a guard that was uncovered.
+It was **the body below the guard**: `stdevMoney`'s only test passed `[]` and `[500]`,
+both of which return early, so the arithmetic on the last line had never run with a
+checked result. That is where iteration 24's real money-path defect was, and the row
+pointing at it sat in this file the whole time.
+
+So the gap has three shapes, not two:
+
+1. **rejection arms** — the corpus describes valid days, so invalid ones are unreached;
+2. **gate-closed arms** — the "not enough history yet" branches in `intelligence.ts`;
+3. **bodies below early returns** — the function is tested, the guard is tested, and
+   the code after the guard never executes with an assertion on its result.
+
+`rejects.json` addresses the first. It does nothing for the third.
+
+**This is a defect surface, not a ledger.** One of twelve survivors was real, and it
+lived in shape 3. Treating the remaining 14.29% as tidy-up is what let it sit for six
+iterations behind a row that named it.
+
+**Attempts recorded: 1 of 3.** The next attempt comes with `rejects.json`, and carries
+a sweep for shape 3 with it: every function with an early return, and whether any test
+reaches past every guard with an assertion on the result — not "is the function
+tested", but "is the code after the guard tested". Plus, for every aggregate whose
+arithmetic depends on how many values it gets, cases at n=0, n=1 **and** n>=2.
+`stdevMoney` was invisible at n<=1 by construction, and that is a property of
+aggregates rather than a quirk of that one.
 
 ---
 
@@ -103,13 +130,21 @@ twelfth was a real hole and is now covered. Not one of the twelve survives today
 
 Two independent disproofs, either sufficient on its own:
 
-1. **The dry run finds 170 of 303 tests — and the shortfall is NOT the cause.**
+1. **The dry run loads 275 of 309 tests — and the shortfall is NOT the cause.**
    The 170 it does see already contain the killing tests. Running a planted mutant
    against exactly that 170-set produces failures. So the missing 133 do not explain
    a single one of the twelve.
 2. **With `coverageAnalysis: all` it says one thing and does another.** It logs
    `Ran all tests for this mutant` for every mutant and then reports
-   `Ran 8.96 tests per mutant on average`, still scoring 9.66%.
+   `Ran 8.96 tests per mutant on average` — 7.76 on re-run — still scoring 9.66%.
+3. **Added at iteration 25, and the strongest of the three.** Re-run on a clean tree
+   after four tests were written specifically to kill the `stdevMoney` survivor,
+   `money.ts` re-derives **identically: 9.66%, 145 mutants, 14 killed, 131 survived**,
+   and the survivor set is unchanged mutant for mutant — line 179,
+   `acc * values.length`, still listed as Survived. `mutation:money` shows that exact
+   mutant dying to two tests. **A harness whose score does not move by a single mutant
+   after the suite gains tests that provably kill one of its reported survivors is not
+   running those tests against that mutant.** No test count is needed to see it.
 
 A harness that selects a handful of tests per mutant while claiming to run them all
 is not a weak instrument, it is a broken one, and 9.66% is a statement about Stryker.
@@ -203,9 +238,17 @@ confident, wholly false result:
 `.stryker-tmp/sandbox-2dFJHU/` — a full copy of the repository left behind by an
 earlier Stryker run — was untracked, un-ignored, and **discovered by vitest**. Every
 test ran twice (`606` reported for a 303-test suite), and the two copies of
-`postgres.spec.ts` raced each other against the same database, which is the
-intermittent G4 failure seen since iteration 17. Removed and added to `.gitignore`.
-With it gone the suite is **11 files, 309 tests, all passing**.
+`postgres.spec.ts` raced each other against the same database. Removed and added to
+`.gitignore`. With it gone the suite is **11 files, 309 tests, all passing**.
+
+**Corrected at iteration 25.** That paragraph originally ended "…which is the
+intermittent G4 failure seen since iteration 17." That was wrong, and it was my claim
+rather than anyone else's. The sandbox existed for roughly fifteen minutes inside
+iteration 24. The recorded vitest counts at iterations 19, 20, 21 and 22 all read
+`303 passed`, which is the correct undoubled figure — had a sandbox been present at
+any of them, each would have read about 606. A fifteen-minute-old directory cannot
+explain a failure seen at iteration 17. The A.1 sweep in BUILD_LOG iteration 25 has
+the full enumeration.
 
 ---
 

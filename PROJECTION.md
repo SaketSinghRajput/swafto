@@ -158,16 +158,44 @@ and the instruments. That is honest scheduling rather than padding - ten screens
 against an uninstrumented token set is ten screens to fix, and the instruments pay for
 themselves on screen two.
 
-## CHECKPOINT AT 26, NOT 35 — a hard one
+## THE CHECKPOINTS — TWO OF THEM, AND WHICH ONE IS LIVE
 
-**If Form A is not built AND instrumented by the end of iteration 26, the screen set
-is re-cut immediately.** Not at 35. Cut from the bottom of A.3 items 1-5, never from
-§B.6, and re-STATE this file from the facts rather than editing it (§5.15.2).
+**LIVE NOW: checkpoint 1, at the end of iteration 26.**
 
-The reasoning is that eleven screens in twelve iterations has no slack, and the place
-a plan like this slips is its first unit. A plan that slips at the start and is not
-re-cut until two thirds through is how a build reaches its ceiling with nine
-half-finished screens. The decision is cheap at 26 and expensive at 35.
+| # | Fires at end of | Condition | If not met |
+|---|---|---|---|
+| **1** | **iteration 26** | rejects.json, the B3 re-measurement, the A.1 sweep and both fixtures are done, and the React Native project is scaffolded | re-cut then |
+| 2 | iteration 29 | Form A is built AND instrumented | re-cut the screen set immediately |
+
+Either re-cut comes from the bottom of A.3 items 1-5, **never from §B.6**, and this
+file is re-STATED from the facts rather than edited (§5.15.2).
+
+### Why this replaces the single checkpoint at 26
+
+Injection 17 D set one checkpoint: Form A built and instrumented by the end of 26.
+Injection 18 C then deliberately put rejects.json and the B3 re-measurement in front
+of it, which was the right call — the coverage gap is concentrated in rejection arms,
+and mutants in unreached rejection code survive, so measuring once after rejects.json
+beats measuring twice against two partial suites.
+
+Those two instructions conflicted. The checkpoint at 26 would have fired, and it would
+have fired because of **a reordering the owner asked for**, not because of slippage.
+Injection 19 C restates it, and the argument is the whole of it: a checkpoint that
+fires for the wrong reason teaches you to ignore checkpoints.
+
+The reasoning behind having a hard one at all is unchanged: eleven screens in twelve
+iterations has no slack, and the place a plan like this slips is its first unit. A
+plan that slips at the start and is not re-cut until two thirds through is how a build
+reaches its ceiling with nine half-finished screens. The decision is cheap at 29 and
+expensive at 35.
+
+### The A.1 sweep is now inside checkpoint 1
+
+Injection 19 put it at the head of the queue, ahead of rejects.json, and it was done
+at iteration 25. So of checkpoint 1's five items, **one is complete and four remain
+for iteration 26**: rejects.json, the B3 re-measurement, the two fixtures, and the RN
+scaffold. That is a full iteration with no slack in it, and it is the first thing that
+will say whether checkpoint 2 is reachable.
 
 ## When to revise
 

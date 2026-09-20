@@ -21,6 +21,7 @@ If yes, it does not belong here.
 | H9 | Counsel review of the legal text | - | Legal certainty |
 | H10 | **Native review of the Odia and Hindi SMS templates** | 30 minutes | DLT submission |
 | H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration; enforcement already runs in CI |
+| H12 | **Re-paste injection 14** | 1 minute | Nothing - three live mechanisms cite text nobody can re-read |
 
 ---
 
@@ -270,3 +271,32 @@ are expressible as stock ESLint rules and are currently unenforced.
 **What to do.** Disable the config-protection hook for one commit, or drop in a config
 that registers `tools/eslint-rules/no-money-float.mjs` as the `swafto` plugin. The
 content is drafted in BUILD_LOG under iteration 18.
+
+## H12 · Re-paste injection 14, "instruments before subjects"
+
+**Why no agent can do it.** It is not in the repository. `INJECTIONS/` holds fourteen
+verbatim files and injection 14 is not among them — `14-verify-the-verifiers.md` is
+injection *13*, and the filename numbering is a file index rather than an injection
+number. The text exists only in a chat transcript.
+
+I will not reconstruct it. I have a paraphrase in working context and writing that
+into `INJECTIONS/` would produce a file that looks verbatim, hashes into
+`injections.lock`, and is actually my summary of someone else's words. That is worse
+than the gap, and §5.6 forbids it: the directory's own header says these files are
+evidence, not our prose.
+
+**Why it matters more than the other gaps.** Injection 14 is where §5.13 came from —
+"an instrument is built with its subject, never after" — along with checklist item A12
+and the benchmark partition that `check:verifiers` regenerates on every run. Three
+live mechanisms cite an instruction nobody can re-read.
+
+**What is NOT blocked.** All three mechanisms are implemented, tested and running;
+§5.13 is enforced by the partition, A12 by the adversary checklist, and the
+INSTRUMENTED count is derived rather than asserted. Nothing waits on this. The risk is
+drift: with no verbatim text, §5.13 slowly becomes whatever the last iteration
+remembered of it, which is the exact failure the directory was created to prevent.
+
+**What to do.** Paste the original injection 14 message. I will save it verbatim as
+`INJECTIONS/14-instruments-before-subjects.md`, renaming the existing
+`14-verify-the-verifiers.md` to `13b-` so the numbering stops lying, and re-pin the
+lock.
