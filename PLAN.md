@@ -404,8 +404,8 @@ be moved to meet a result.
 |---|---|---|---|
 | B1 | Golden vectors | >= 70, 100% pass | **77, 100% pass** - MET |
 | B2 | Node vs Hermes divergence | exactly 0 | **0** - MET |
-| B3 | Engine branch coverage | 100% | **86.62%** - MISSED |
-| B5 | Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET |
+| B3 | Engine branch coverage | 100% | **86.34%** (196 of 227) - MISSED |
+| B5 | Backend line coverage | >= 85% | **86.42%** (681 of 788) - MET |
 | B12 | Money float-arithmetic lint | 0 violations | **0** across 45 files - MET |
 | B33 | npm audit high/critical | 0 | **0** - MET |
 | B40 | Stubs, TODOs in shipped paths | 0 | **0** - MET |
@@ -520,7 +520,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 <!-- PLANHASH:START -->
 63dbcf47a91560c8  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
-2fbfd2c828d5a581  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
+22eb0e0f66549859  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 597c7f77729c8b86  humanActions  docs/handover/HUMAN-ACTIONS.md

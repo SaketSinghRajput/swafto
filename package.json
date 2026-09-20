@@ -53,6 +53,8 @@
     "design:prove": "node tools/gen-design.mjs --prove",
     "check:shadow:prove": "node tools/check-shadow-copies.mjs --prove",
     "coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='packages/formula-engine/src/**' --coverage.include='apps/api/src/**' --coverage.reporter=text --coverage.reporter=json-summary",
+    "coverage:engine": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='packages/formula-engine/src/**' --coverage.reporter=text-summary",
+    "coverage:api": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='apps/api/src/**' --coverage.reporter=text-summary",
     "check:verifiers": "node tools/check-verifiers.mjs",
     "prove:verifiers": "node tools/check-verifiers.mjs --prove",
     "responds:verifiers": "node tools/check-verifiers.mjs --responds",

@@ -21,14 +21,28 @@ reported is a result.
 |---|---|---|---|---|
 | B1 Golden vectors | >= 70, 100% pass | **77, 100% pass** - MET | `npm run test:vectors:node` | iteration 36 |
 | B2 Node vs Hermes divergence | exactly 0 | **0** - MET | `npm run test:vectors:diff` | iteration 19 |
-| B3 Engine branch coverage | 100% | **86.62%** - MISSED | `npm run coverage` | iteration 19, re-measured at 32 |
-| B5 Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET | `npm run coverage` | iteration 20, re-derived identical at 26 |
+| B3 Engine branch coverage | 100% | **86.34%** (196 of 227) - MISSED | `npm run coverage:engine` | iteration 19, re-measured at 32 and again at 35 |
+| B5 Backend line coverage | >= 85% | **86.42%** (681 of 788) - MET | `npm run coverage:api` | iteration 20, re-derived at 26, re-measured at 35 against a backend eight times larger |
 | B12 Money float-arithmetic lint | 0 violations | **0** across 45 files - MET | `npm run check:money` | iteration 19 |
 | B33 npm audit high/critical | 0 | **0** - MET | `npm audit --audit-level=high` | iteration 19 |
 | B40 Stubs, TODOs in shipped paths | 0 | **0** - MET | `npm run check:governance` | iteration 19 |
 
-Full coverage reading at iteration 32: statements 91.80%, branches 86.62%, functions
-90.32%, lines 92.27%, over `packages/formula-engine/src/**`.
+Full coverage reading at **iteration 35**, engine only (`npm run coverage:engine`,
+over `packages/formula-engine/src/**`, with the whole suite running): statements
+91.39%, branches **86.34%**, functions 91.42%, lines 91.90%. At iteration 32 the same
+scope read 91.80 / 86.62 / 90.32 / 92.27 - a drift of 0.28pp on branches.
+
+**WHY THERE ARE NOW TWO COVERAGE COMMANDS, AND WHY IT MATTERS.** `npm run coverage`
+includes the API as well as the engine, so its summary line is neither B3 nor B5: at
+iteration 35 it reads 77.77% branches across both, and reading that number as B3
+would understate the engine by nine points. B3 is an ENGINE branch figure and B5 is a
+BACKEND line figure; each now has a command that measures exactly its own subject.
+That is a measurement trap removed rather than a result changed.
+
+**B5's denominator moved by a factor of eight.** It was recorded as 91.26% of 103
+lines at iteration 20, when "the backend" was the rate limiter and the SMS port. The
+backend is now 788 lines of auth, sync, read and DPDP routes, and the figure is
+86.42%. Still MET, and a genuinely harder number than the one it replaces.
 
 ---
 
