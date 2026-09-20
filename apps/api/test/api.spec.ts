@@ -100,6 +100,18 @@ const wire = (e: { id: string; partyId?: string }) => ({
 const auth = (token: string) => ({ authorization: 'Bearer ' + token });
 
 /**
+ * A sync push body built from a fixture, at module scope because more than one
+ * describe needs it. The G7 block has its own copy from before this was true;
+ * they are the same shape and the duplicate is worth removing next time
+ * somebody is in here.
+ */
+const pushBatch = (input: DayInput, date: string) => ({
+  days: [{ date, state: 'open' as const, openingCash: input.day.openingCash ?? 0 }],
+  parties: CANONICAL_PARTIES.map((p) => ({ id: asUuid(p.id), kind: p.kind, name: p.name })),
+  entries: input.entries.map(wire),
+});
+
+/**
  * A JSON body AND a token, in one object.
  *
  * Spreading  after  silently replaces the
@@ -1006,6 +1018,84 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).cancelled).toBe(true);
+  });
+
+  it('L-04 · a party can be redacted, and the ledger survives it intact', async () => {
+    /*
+     * The right that belongs to somebody who never met SWAFTO. The shopkeeper's
+     * customer asks him to stop holding their name; he must be able to do it
+     * WITHOUT losing what he is owed, because that figure is his own record of
+     * his own business.
+     */
+    const s = await signIn(h);
+    const input = canonicalInput();
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push',
+      ...jsonAuth(s.accessToken!)(pushBatch(input, CANONICAL_DATE)),
+    });
+
+    const before = JSON.parse(
+      (
+        await h.app.inject({
+          method: 'GET',
+          url: '/v1/days/' + CANONICAL_DATE + '/summary',
+          headers: auth(s.accessToken!),
+        })
+      ).body,
+    );
+
+    const partyId = asUuid(CANONICAL_PARTIES[0]!.id);
+    const res = await h.app.inject({
+      method: 'POST',
+      url: '/v1/parties/' + partyId + '/redact',
+      ...jsonAuth(s.accessToken!)({}),
+    });
+    expect(res.statusCode).toBe(200);
+
+    // The name and number are gone.
+    const parties = h.deps.repo.dump() as { parties: { id: string; name: string; phone?: string }[] };
+    const redacted = parties.parties.find((p) => p.id === partyId)!;
+    expect(redacted.name).toBe('');
+    expect(redacted.phone).toBeUndefined();
+
+    // And EVERY figure is exactly what it was. Not recomputed - unchanged.
+    const after = JSON.parse(
+      (
+        await h.app.inject({
+          method: 'GET',
+          url: '/v1/days/' + CANONICAL_DATE + '/summary',
+          headers: auth(s.accessToken!),
+        })
+      ).body,
+    );
+    expect(after.figures).toEqual(before.figures);
+    expect(after.entryCount).toBe(before.entryCount);
+  });
+
+  it("another shop's party cannot be redacted, and the answer is the same 404", async () => {
+    const s = await signIn(h);
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push',
+      ...jsonAuth(s.accessToken!)(pushBatch(canonicalInput(), CANONICAL_DATE)),
+    });
+    const other = await signIn(h, '+919876500011');
+
+    const theirs = await h.app.inject({
+      method: 'POST',
+      url: '/v1/parties/' + asUuid(CANONICAL_PARTIES[0]!.id) + '/redact',
+      ...jsonAuth(other.accessToken!)({}),
+    });
+    const nobody = await h.app.inject({
+      method: 'POST',
+      url: '/v1/parties/44444444-4444-4444-8444-000000000000/redact',
+      ...jsonAuth(other.accessToken!)({}),
+    });
+    // Identical: a different answer for "exists elsewhere" is a membership oracle.
+    expect(theirs.statusCode).toBe(404);
+    expect(nobody.statusCode).toBe(404);
+    expect(theirs.body).toBe(nobody.body);
   });
 
   it('names a grievance officer and a number of days', async () => {

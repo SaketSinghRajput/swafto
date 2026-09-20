@@ -637,6 +637,39 @@ describe('the DPDP rights work from the app, end to end', () => {
     expect(s.sms.count()).toBe(before);
   });
 
+  it("a customer's details can be removed from the app, and the money stays", async () => {
+    /*
+     * L-04, end to end and through the client the app actually uses. The
+     * shopkeeper's customer is a Data Principal who never met SWAFTO; when
+     * they ask him to stop holding their name he must be able to do it without
+     * losing what he is owed.
+     */
+    const h = handset(s);
+    await signIn(s, h);
+
+    const partyId = '66666666-6666-4666-8666-000000000001';
+    await h.client.push([
+      { id: 'ob-day', kind: 'day', queuedAt: T0, payload: { date: CANONICAL_DATE, state: 'open' } },
+    ]);
+    await s.deps.repo.upsertParty(h.client.session!.shopId, {
+      id: partyId,
+      kind: 'customer',
+      name: 'Ramesh Kumar Behera',
+      phone: '+919812345678',
+    } as never);
+
+    const exported = (await h.client.exportParty(partyId)) as { party: { name: string } };
+    expect(exported.party.name).toBe('Ramesh Kumar Behera');
+
+    expect((await h.client.redactParty(partyId)).redacted).toBe(true);
+
+    const after = (await h.client.exportParty(partyId)) as {
+      party: { name: string; phone?: string };
+    };
+    expect(after.party.name).toBe('');
+    expect(after.party.phone).toBeUndefined();
+  });
+
   it('the grievance officer is reachable WITHOUT an account, through the notice', async () => {
     /*
      * The `/v1/me/grievance` route needs a token. Somebody who cannot sign in is

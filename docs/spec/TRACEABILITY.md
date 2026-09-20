@@ -89,7 +89,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-01 | Consent notice before OTP, 3 languages | X0 `ConsentNotice` (en/hi/or), `GET /v1/legal/notice`, `consents` table | Eng | WIP - built and tested; the Odia and Hindi copy is a DRAFT until H13 native review |
 | L-02 | Granular consent + easy withdrawal | X0 per-purpose toggles in manage mode, reached from T1; `POST /v1/me/consent` (grant and withdraw are the same call), `GET /v1/me/consents` returning `current` as well as the log | Eng | WIP - built end to end; the Odia and Hindi copy is DRAFT until H13 |
 | L-03 | Party data Fiduciary vs Processor analysis | Terms clause | AD-005/006 | RESOLVED |
-| L-04 | Per-party export and redaction | P2/P3, `GET /v1/parties/:id/export` | Eng | TODO |
+| L-04 | Per-party export and redaction | `GET /v1/parties/:id/export`, `POST /v1/parties/:id/redact`, `ApiClient.exportParty/redactParty` | Eng | WIP - both routes built and tested on both repositories; the P2/P3 screens are deferred |
 | L-05 | Retention / inactivity period | Privacy policy | AD-003/007 | RESOLVED |
 | L-06 | Deletion propagates to S3 backups | Deletion job + TF lifecycle rule | Eng | TODO |
 | L-07 | Grievance Officer named with SLA | About screen, policy, website | AD-003/007 | RESOLVED |

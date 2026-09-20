@@ -150,6 +150,21 @@ export interface Repo {
   entriesBefore(shopId: string, date: IsoDate): Promise<readonly Entry[]>;
   partiesFor(shopId: string): Promise<readonly Party[]>;
   upsertParty(shopId: string, party: Party): Promise<void>;
+  /**
+   * L-04 · REMOVE A CUSTOMER'S DETAILS WITHOUT REMOVING THE LEDGER.
+   *
+   * The shopkeeper's customers are Data Principals who never met SWAFTO, and
+   * one of them may ask him to stop holding their name. He has to be able to
+   * do that - and he must not lose his own financial record doing it, because
+   * the money he is owed is his, and a ledger with a hole in it is not a
+   * ledger.
+   *
+   * So the row survives with its id, and the entries that point at it keep
+   * pointing. What goes is the name and the phone number. Every figure in the
+   * book is unchanged, and it is unchanged by construction rather than by
+   * being recomputed.
+   */
+  redactParty(shopId: string, partyId: string): Promise<{ redacted: boolean }>;
 
   /* ---- DPDP ------------------------------------------------------------ */
   /** Everything held about one user, for the access right (DPDP §1.5). */

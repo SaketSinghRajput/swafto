@@ -205,6 +205,25 @@ export function memoryRepo(): Repo & { readonly dump: () => unknown } {
       if (shop) shops.set(shopId, { ...shop, deletionRequestedAt: at });
     },
 
+    async redactParty(shopId, partyId) {
+      assertUuid(partyId, 'party id');
+      const party = parties.get(partyId);
+      // Scoped by shop, like every other read: a party id from another shop is
+      // simply not found, rather than found and refused.
+      if (!party || party.shopId !== shopId) return { redacted: false };
+      /*
+       * The id stays and the entries keep pointing at it. Deleting the row
+       * would orphan every line of the shopkeeper's own ledger, which is his
+       * record rather than the customer's.
+       */
+      // `phone` is optional on Party, so it is REMOVED rather than nulled -
+      // an absent key and a null are different things to an exactOptional type,
+      // and the column is nullable underneath either way.
+      const { phone: _removed, ...withoutPhone } = party;
+      parties.set(partyId, { ...withoutPhone, name: '' });
+      return { redacted: true };
+    },
+
     async cancelDeletion(shopId) {
       const shop = shops.get(shopId);
       // A shop already erased does not come back; only a PENDING request clears.

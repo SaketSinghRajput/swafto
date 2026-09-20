@@ -386,6 +386,25 @@ export class ApiClient {
     return this.#authed('GET', '/v1/parties/outstanding');
   }
 
+  /** Everything held about one customer or supplier - L-04's first half. */
+  async exportParty(partyId: string): Promise<unknown> {
+    return this.#authed('GET', '/v1/parties/' + encodeURIComponent(partyId) + '/export');
+  }
+
+  /**
+   * Remove a customer's name and number, and keep the ledger.
+   *
+   * L-04's second half, and the one the shopkeeper needs when a customer asks
+   * him to stop holding their details. What he is owed stays: that figure is
+   * his record of his own business, not the customer's personal data.
+   */
+  async redactParty(partyId: string): Promise<{ redacted: boolean; message: string }> {
+    return (await this.#authed(
+      'POST',
+      '/v1/parties/' + encodeURIComponent(partyId) + '/redact',
+    )) as { redacted: boolean; message: string };
+  }
+
   async reports(): Promise<unknown> {
     return this.#authed('GET', '/v1/reports');
   }

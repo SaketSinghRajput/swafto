@@ -175,6 +175,37 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
    * the DPDP Act the shopkeeper has to be able to answer. This is that answer, and
    * it is deliberately narrow: one party's rows, never the ledger.
    */
+  /**
+   * L-04 · the other half of the party right: REMOVE the details.
+   *
+   * A shopkeeper's customer can ask him to stop holding their name. He must be
+   * able to do that without losing his own financial record - what they owe him
+   * is his fact about his business, and a ledger with a hole in it is not a
+   * ledger. So the party row keeps its id and every entry keeps pointing at it;
+   * the name and the phone number go.
+   *
+   * NOT REVERSIBLE, AND NOT CONFIRMED HERE. The screen that calls this asks
+   * first. A route that demanded a confirmation word AND a screen that asked
+   * would be two confirmations, and the second one teaches him to tap through
+   * the first.
+   */
+  app.post('/v1/parties/:id/redact', async (req, reply) => {
+    const shopId = shopOf(req);
+    const { id } = req.params as { id: string };
+
+    const { redacted } = await deps.repo.redactParty(shopId, id);
+    // 404 for a party of another shop as well as for one that does not exist:
+    // the two answers must be the same or the difference is an oracle.
+    if (!redacted) return reply.code(404).send({ error: 'not_found' });
+
+    return reply.code(200).send({
+      redacted: true,
+      message:
+        'The name and phone number are gone. The entries stay, because what you are ' +
+        'owed is your own record.',
+    });
+  });
+
   app.get('/v1/parties/:id/export', async (req, reply) => {
     const shopId = shopOf(req);
     const { id } = req.params as { id: string };

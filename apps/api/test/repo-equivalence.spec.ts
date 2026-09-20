@@ -22,7 +22,7 @@ import { memoryRepo } from '../src/db/memory.ts';
 import { pgRepo } from '../src/db/postgres.ts';
 import { WriteRefused, type Repo } from '../src/db/port.ts';
 import { migrationUp } from '@swafto/schema';
-import type { Entry, IsoDate } from '@swafto/formula-engine';
+import type { Entry, IsoDate, Party } from '@swafto/formula-engine';
 
 const URL = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:55432/swafto_test';
 const DATE = '2026-07-15' as IsoDate;
@@ -302,6 +302,49 @@ function contract(label: string, make: () => Repo, enabled: () => boolean, n: st
       const repo = make();
       const { shopId } = await seed(repo, 'c' + n);
       expect(await repo.shopsDueForPurge('2099-01-01T00:00:00.000Z')).not.toContain(shopId);
+    });
+
+    maybe()('redacts a party without touching the entries that point at it', async () => {
+      const repo = make();
+      const { shopId } = await seed(repo, 'd' + n);
+      const partyId = uuid('a1' + n);
+      await repo.upsertParty(shopId, {
+        id: partyId,
+        kind: 'customer',
+        name: 'Ramesh Kumar Behera',
+        phone: '+919812345678',
+      } as Party);
+      await repo.appendEntry(
+        shopId,
+        entry('eq-' + n + 'r', 25000, { partyId, section: 'udhar_sales', mode: 'udhar' }),
+      );
+
+      expect((await repo.redactParty(shopId, partyId)).redacted).toBe(true);
+
+      const party = (await repo.partiesFor(shopId)).find((p) => p.id === partyId);
+      expect(party, 'the row survives, because the entries point at it').toBeTruthy();
+      expect(party!.name).toBe('');
+      expect(party!.phone ?? null).toBeNull();
+
+      // The money is untouched: it is the shopkeeper's record, not the customer's.
+      const rows = await repo.entriesFor(shopId, DATE);
+      expect(rows.find((e) => e.partyId === partyId)?.amount).toBe(25000);
+    });
+
+    maybe()('refuses to redact a party of another shop, and says nothing about it', async () => {
+      const repo = make();
+      const mine = await seed(repo, 'e' + n);
+      const theirs = await seed(repo, 'f' + n);
+      const partyId = uuid('b2' + n);
+      await repo.upsertParty(theirs.shopId, {
+        id: partyId,
+        kind: 'customer',
+        name: 'Somebody Else',
+      } as Party);
+
+      expect((await repo.redactParty(mine.shopId, partyId)).redacted).toBe(false);
+      const still = (await repo.partiesFor(theirs.shopId)).find((p) => p.id === partyId);
+      expect(still!.name).toBe('Somebody Else');
     });
 
     maybe()('a revoked device stays, with the time it was revoked', async () => {

@@ -20,6 +20,7 @@
  */
 import {
   WriteRefused,
+  assertUuid,
   type ConsentRow,
   type DayRow,
   type DeviceRow,
@@ -412,6 +413,15 @@ export function pgRepo(sql: SqlClient): Repo {
 
     async requestDeletion(shopId, at) {
       await sql.query('UPDATE shops SET deletion_requested_at = $2 WHERE id = $1', [shopId, at]);
+    },
+
+    async redactParty(shopId, partyId) {
+      assertUuid(partyId, 'party id');
+      const { rows } = await sql.query(
+        'UPDATE parties SET name = $3, phone = NULL WHERE id = $2 AND shop_id = $1 RETURNING id',
+        [shopId, partyId, ''],
+      );
+      return { redacted: rows.length > 0 };
     },
 
     async cancelDeletion(shopId) {
