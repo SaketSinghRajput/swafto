@@ -114,7 +114,7 @@ copied**: the engine function is looked up in the engine source, the vectors in
 reading NOT BUILT says so because the artifact is absent today, not because a column
 somewhere says TODO.
 
-Engine functions actually present: **25 of 26** named by TRACEABILITY
+Engine functions actually present: **26 of 26** named by TRACEABILITY
 (BI5 is reserved and names none, so the denominator is not the feature count).
 
 ### Inputs — what he types
@@ -151,7 +151,7 @@ Engine functions actually present: **25 of 26** named by TRACEABILITY
 | OP3 | Of the credit I gave out, how much is coming back | `collectionEfficiency` | 1 | R1 Reports | engine done · no API, no screen |
 | OP4 | Who do I have to pay, and when | `paymentDue` | 1 | T1 Today, P3 Supplier | engine done · no API, no screen |
 | OP5 | Is the shop busier or quieter than it was | `businessMovement` | 1 | R1 Reports | engine done · no API, no screen |
-| OP6 | Am I about to run out of cash | `cashDeficitWarning` *(absent)* | 1 | T1 Today AlertBanner | **NOT BUILT** |
+| OP6 | Am I about to run out of cash | `cashDeficitWarnings` | 1 | T1 Today AlertBanner | engine done · no API, no screen |
 
 ### Intelligence outputs — gated on closed-day history
 
@@ -322,6 +322,7 @@ would make it wrong — in
 | AD-018 | The server block moves behind the screens |
 | AD-019 | Three things that stay when the server goes |
 | AD-020 | AD-018 is REVERSED: the server is built, and the ceiling is lifted |
+| AD-021 | I-006 and I-008 stay open, and the caveat that keeps them open stays too |
 
 ---
 
@@ -516,10 +517,10 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 ---
 
 <!-- PLANHASH:START -->
-e0f36bb9d5baab8d  traceability  docs/spec/TRACEABILITY.md
+64aab2a2868cc08e  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
-d6d5d152198da4bc  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
-2e96d515acdc85e0  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
+63eff7dee680c88c  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
+c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 ab90001626808cb0  humanActions  docs/handover/HUMAN-ACTIONS.md
 71bae6e9b226bc2c  legal  docs/audits/LEGAL-AUDIT.md

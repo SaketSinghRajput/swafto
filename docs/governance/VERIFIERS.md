@@ -33,6 +33,9 @@ requires the command to fail, restores the file and verifies the restore.
 | `unit` | `npx vitest run` | `packages/formula-engine/test/vectors.spec.ts` | All specs pass, including the 63 golden vectors, now executed INSIDE the runner so coverage can see them. | plants a defect in `packages/schema/src/spec.ts` |
 | `mutation` | `npm run mutation` | `stryker.config.json` | Mutation score for the formula engine (B4) and the backend (B6) - how many deliberately broken variants of the code the suite actually kills. | NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself. |
 | `crossdoc` | `npm run check:crossdoc` | `tools/check-crossdoc.mjs` | PLAN.md, TASKS.md and DESIGN.md describe the same repository. The shared facts are re-derived independently and every document must report them; a disagreement is a generator bug, never a judgement call. | plants a defect in `tools/gen-plan.mjs` |
+| `screens` | `npx vitest run apps/mobile` | `apps/mobile/test/screens.spec.tsx` | Across EVERY case in the screen registry, in three languages plus the longest-string pseudo-locale and in both display modes: no text colour fails the contrast minimum (B26), nothing draws white on the accent (B27), every interactive element asks for the registry touch target (B28), no text is under the registry floor (B29), no string is missing or untranslated in any language and no raw key reaches the screen (B30), and every digit rendered anywhere is Latin (B32). A screen joins these assertions by being in the registry, not by anybody remembering it. | plants a defect in `apps/mobile/src/theme/tokens.ts` |
+| `layout` | `npm run check:layout` | `tools/check-layout.mjs` | Every registry case, laid out by a real engine in headless Chromium at a budget-handset viewport with the shipped fonts, at three font scales: nothing runs wider than the screen, no element escapes the element containing it, and no fixed chrome sits below the fold at or under the chrome font-scale cap. Money is scaled without limit and chrome stops at the cap, which is what the device does. | plants a defect in `apps/mobile/src/screens/T7.tsx` |
+| `client-logs` | `npm run check:client-logs` | `tools/check-client-logs.mjs` | No client source file can write to logcat at all, so no amount, customer name or phone number can reach it. Stricter than B36 asks and for a reason: a rule permitting some logging requires a per-line judgement about whether THIS interpolation carries personal data, and that judgement is wrong once eventually. | plants a defect in `apps/mobile/src/store/index.ts` |
 | `design` | `npm run check:design` | `tools/gen-design.mjs` | No screen or component contains a raw colour, size or spacing value where a token belongs; no screen shows a keypad beside a bottom navigation; STATIC and MEASURED never disagree about the same property; and DESIGN.md matches a fresh read of the code. | npm run design:prove writes a screen containing one hardcoded colour, requires the RAW VALUES table to grow by exactly one row, removes it, and requires the row to disappear - which is F.3 exactly. Verified end-to-end at iteration 30 as well: a real screen file with a hardcoded colour made check:design exit 1 naming the file and line, and removing it returned the check to green. |
 | `tasks` | `npm run check:tasks` | `tools/gen-tasks.mjs` | TASKS.md matches a fresh generation, so every checkbox is derived from a predicate rather than ticked by hand. Also: no cycle in the dependency graph, no task without a predicate that is not marked JUDGEMENT, no duplicate or reused id, and no human task appearing as a blocker. | plants a defect in `tools/tasks.data.mjs` |
 | `plan` | `npm run check:plan` | `tools/gen-plan.mjs` | PLAN.md is not stale: every artifact it summarises has exactly the content it had when the document was generated. It also enforces A.4 - no number written into the plan prose - and refuses to generate if the build-map parse degrades below the full screen set. | plants a defect in `docs/handover/DEFERRED.md` |
@@ -48,7 +51,7 @@ requires the command to fail, restores the file and verifies the restore.
 
 ## Benchmark coverage
 
-A benchmark with no instrument **cannot be claimed met**. 26 of
+A benchmark with no instrument **cannot be claimed met**. 18 of
 40 have none yet; each carries the gate it is owed at, in
 `tools/check-verifiers.mjs`.
 
@@ -79,17 +82,17 @@ A benchmark with no instrument **cannot be claimed met**. 26 of
 | B23 | **none yet** |
 | B24 | `font` |
 | B25 | **none yet** |
-| B26 | **none yet** |
-| B27 | **none yet** |
-| B28 | **none yet** |
-| B29 | **none yet** |
-| B30 | **none yet** |
-| B31 | **none yet** |
-| B32 | **none yet** |
+| B26 | `screens` |
+| B27 | `screens` |
+| B28 | `screens` |
+| B29 | `screens` |
+| B30 | `screens` |
+| B31 | `layout` |
+| B32 | `screens` |
 | B33 | `audit` |
 | B34 | **none yet** |
 | B35 | `secrets` |
-| B36 | **none yet** |
+| B36 | `client-logs` |
 | B37 | `unit` |
 | B38 | **none yet** |
 | B39 | `traceability` |

@@ -16,38 +16,11 @@ import { describe, it, expect } from 'vitest';
 import { FormA } from './T7.tsx';
 import { render, all, byTestId, byType, text } from '../../test/render.tsx';
 import { undersizedTargets, undersizedText, failingContrast } from '../../test/a11y.tsx';
-import { Store, memoryPort, type StoreState } from '../store/index.ts';
-import {
-  canonicalInput,
-  CANONICAL_PARTIES,
-  CANONICAL_DATE,
-  adversarialInput,
-  ADVERSARIAL_PARTIES,
-} from '@swafto/fixtures';
-import { formatPaise, type DayInput, type Entry, type Party } from '@swafto/formula-engine';
+import { canonicalStore, adversarialStore, emptyStore } from './registry.tsx';
+import { CANONICAL_DATE } from '@swafto/fixtures';
+import { formatPaise, type Entry } from '@swafto/formula-engine';
 import { TOUCH_TARGET_MIN_DP, BODY_TEXT_MIN_SP, CHROME_FONT_SCALE_CAP } from '@swafto/values';
 import { STRINGS, phrase, type StringKey, type Language } from '../i18n/strings.ts';
-
-const storeOf = (input: DayInput, parties: readonly Party[], shopId: string): Store => {
-  const state: StoreState = {
-    shopId,
-    day: input.day,
-    entries: input.entries,
-    parties,
-    priorCreditOutstanding: input.priorCreditOutstanding,
-    priorSupplierOutstanding: input.priorSupplierOutstanding,
-  };
-  return new Store(memoryPort(state));
-};
-
-const canonicalStore = () => storeOf(canonicalInput(), CANONICAL_PARTIES, 'shop-canonical');
-const adversarialStore = () => storeOf(adversarialInput(), ADVERSARIAL_PARTIES, 'shop-adversarial');
-
-/** A store on a day with nothing entered - the first morning of a real shop. */
-const emptyStore = () => {
-  const base = canonicalInput();
-  return storeOf({ ...base, entries: [] }, CANONICAL_PARTIES, 'shop-canonical');
-};
 
 const SALES = ['cash_sales', 'upi_sales', 'udhar_sales'];
 const rowCount = (tree: ReturnType<typeof render>): number =>

@@ -167,6 +167,9 @@ export function FormA({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          // Money is uncapped by design, so at a large system font scale the label and the
+          // figure wrap onto two lines rather than running off the side of the screen.
+          flexWrap: 'wrap',
           padding: t.space.md,
           borderBottomWidth: t.hairline,
           borderBottomColor: t.color.border,
@@ -204,7 +207,7 @@ export function FormA({
         </View>
       </View>
 
-      <ScrollView testID="t7-lines" style={{ flex: 1 }}>
+      <ScrollView testID="t7-lines" style={{ flex: 1, minHeight: 0 }}>
         {lines.length === 0 ? (
           <View testID="t7-empty" style={{ padding: t.space.lg, alignItems: 'center' }}>
             <Text
@@ -229,6 +232,9 @@ export function FormA({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                // Money is uncapped by design, so at a large system font scale the label and the
+                // figure wrap onto two lines rather than running off the side of the screen.
+                flexWrap: 'wrap',
                 minHeight: t.touchTarget,
                 paddingHorizontal: t.space.md,
                 paddingVertical: t.space.sm,
@@ -269,6 +275,9 @@ export function FormA({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          // Money is uncapped by design, so at a large system font scale the label and the
+          // figure wrap onto two lines rather than running off the side of the screen.
+          flexWrap: 'wrap',
           padding: t.space.md,
           borderTopWidth: t.hairline,
           borderTopColor: t.color.border,

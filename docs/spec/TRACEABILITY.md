@@ -48,7 +48,7 @@ Each of P1-P8 also returns a `Working` structure (line-by-line derivation), asse
 | OP3 | `collectionEfficiency` | `vectors.json:op3-collection-efficiency` | `GET /v1/reports` | R1 Reports | TODO |
 | OP4 | `paymentDue` | `vectors.json:op4-payment-due-horizon` | `GET /v1/alerts` | T1 Today, P3 Supplier | TODO |
 | OP5 | `businessMovement` | `vectors.json:op5-business-movement` | `GET /v1/reports` | R1 Reports | TODO |
-| OP6 | `cashDeficitWarning` | `vectors.json:op6-deficit-names-party-amount-date` | `GET /v1/alerts` | T1 Today AlertBanner | TODO |
+| OP6 | `cashDeficitWarnings` | `vectors.json:op6-deficit-names-party-amount-date` | `GET /v1/alerts` | T1 Today AlertBanner | TODO |
 
 ## Business intelligence — gated on closed-day count
 

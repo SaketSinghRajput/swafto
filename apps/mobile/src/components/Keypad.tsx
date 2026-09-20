@@ -84,8 +84,8 @@ export function Keypad({ onKey, s, mode = 'comfort', testID = 'keypad' }: Keypad
                   maxFontSizeMultiplier={t.maxFontScale}
                   style={{
                     fontFamily: t.font.medium,
-                    fontSize: t.type.figure,
-                    lineHeight: t.leading(t.type.figure),
+                    fontSize: t.type.heading,
+                    lineHeight: t.leading(t.type.heading),
                     color: t.color.ink,
                     fontVariant: ['tabular-nums'],
                     // Wrapped Odia labels fill the key, so the Text owns the centring.

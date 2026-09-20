@@ -248,6 +248,71 @@ export const VERIFIERS = [
     },
   },
   {
+    id: 'screens',
+    command: 'npx vitest run apps/mobile',
+    file: 'apps/mobile/test/screens.spec.tsx',
+    claims:
+      'Across EVERY case in the screen registry, in three languages plus the longest-string pseudo-locale and in both display modes: no text colour fails the contrast minimum (B26), nothing draws white on the accent (B27), every interactive element asks for the registry touch target (B28), no text is under the registry floor (B29), no string is missing or untranslated in any language and no raw key reaches the screen (B30), and every digit rendered anywhere is Latin (B32). A screen joins these assertions by being in the registry, not by anybody remembering it.',
+    benchmarks: ['B26', 'B27', 'B28', 'B29', 'B30', 'B32'],
+    /*
+     * The plant is the defect this suite was written after finding: white on the
+     * marigold accent in Focus mode, which measures 3.85:1 against a 4.5 minimum.
+     * It is the right plant precisely because it SHIPPED - the comment above the
+     * palette asserted the pair was not expressible while the palette expressed it.
+     */
+    defect: {
+      file: 'apps/mobile/src/theme/tokens.ts',
+      find: "    onAccent: '#000000',",
+      replace: "    onAccent: '#FFFFFF',",
+    },
+  },
+  {
+    id: 'layout',
+    command: 'npm run check:layout',
+    file: 'tools/check-layout.mjs',
+    claims:
+      'Every registry case, laid out by a real engine in headless Chromium at a budget-handset viewport with the shipped fonts, at three font scales: nothing runs wider than the screen, no element escapes the element containing it, and no fixed chrome sits below the fold at or under the chrome font-scale cap. Money is scaled without limit and chrome stops at the cap, which is what the device does.',
+    benchmarks: ['B31'],
+    /*
+     * The plant removes the wrap from the draft row, where the amount being typed
+     * sits beside its label. Money is deliberately uncapped - it grows with the
+     * reader's system font setting without limit - so without the wrap the figure
+     * runs off the side of the screen at a large scale, which is exactly the defect
+     * this tool found on its first run.
+     *
+     * AN EARLIER PLANT HERE STOPPED WORKING AND SAID SO. It removed `minHeight: 0`
+     * from the list, which had put the keypad below the fold. Stepping the keypad
+     * label down one size gave the layout enough room that the same plant no longer
+     * overflowed anything, so the plant passed and the prove step failed - which is
+     * the prove step doing its job. A plant that stops planting is a finding.
+     */
+    defect: {
+      file: 'apps/mobile/src/screens/T7.tsx',
+      find:
+        "        testID=\"t7-draft\"\n        style={{\n          flexDirection: 'row',\n" +
+        "          alignItems: 'center',\n          justifyContent: 'space-between',\n" +
+        '          // Money is uncapped by design, so at a large system font scale the label and the\n' +
+        '          // figure wrap onto two lines rather than running off the side of the screen.\n' +
+        "          flexWrap: 'wrap',",
+      replace:
+        "        testID=\"t7-draft\"\n        style={{\n          flexDirection: 'row',\n" +
+        "          alignItems: 'center',\n          justifyContent: 'space-between',",
+    },
+  },
+  {
+    id: 'client-logs',
+    command: 'npm run check:client-logs',
+    file: 'tools/check-client-logs.mjs',
+    claims:
+      'No client source file can write to logcat at all, so no amount, customer name or phone number can reach it. Stricter than B36 asks and for a reason: a rule permitting some logging requires a per-line judgement about whether THIS interpolation carries personal data, and that judgement is wrong once eventually.',
+    benchmarks: ['B36'],
+    defect: {
+      file: 'apps/mobile/src/store/index.ts',
+      find: '  get revision(): number {',
+      replace: '  get revision(): number {\n    console.log(this.#state.entries);',
+    },
+  },
+  {
     id: 'design',
     command: 'npm run check:design',
     file: 'tools/gen-design.mjs',
@@ -478,13 +543,17 @@ export const BENCHMARKS = {
     partial: 'The FONT share of the budget is measured (1.87%). The APK itself does not exist, so the benchmark as a whole is not met - only bounded from below.',
   },
   B25: { state: 'blocked', blockedOn: 'the outbox and a 2G network profile', gate: 'G17' },
-  B26: { state: 'blocked', blockedOn: 'the design tokens', gate: 'G10' },
-  B27: { state: 'blocked', blockedOn: 'the design tokens', gate: 'G10' },
-  B28: { state: 'blocked', blockedOn: 'rendered components', gate: 'G11' },
-  B29: { state: 'blocked', blockedOn: 'the typography scale', gate: 'G10' },
-  B30: { state: 'blocked', blockedOn: 'the i18n bundles', gate: 'G16' },
-  B31: { state: 'blocked', blockedOn: 'rendered screens in three languages', gate: 'G16' },
-  B32: { state: 'blocked', blockedOn: 'money fields on screens', gate: 'G12' },
+  B26: { verifier: 'screens' },
+  B27: { verifier: 'screens' },
+  B28: { verifier: 'screens' },
+  B29: { verifier: 'screens' },
+  B30: { verifier: 'screens' },
+  B31: {
+    verifier: 'layout',
+    partial:
+      'Measured by a real layout engine in Chromium, not on Android. The two shape text identically, which is why the reading is worth having, but pixel spacing and the system font-scale machinery belong to the device. B14-B19 on a handset stay blocked.',
+  },
+  B32: { verifier: 'screens' },
   B33: { verifier: 'audit' },
   B34: { state: 'blocked', blockedOn: 'a container image', gate: 'G9' },
   B35: {
@@ -493,14 +562,9 @@ export const BENCHMARKS = {
       'The REPO half is measured and clean over 102 files. The APK half is blocked on a build (G9), and gitleaks joins this scanner there rather than replacing it.',
   },
   B36: {
-    state: 'blocked',
-    blockedOn: 'the first client log line - NOT the server',
-    gate: 'due at A.3 item 1, the first screen',
-    // Listed with B8 and B11 as never-instrumented when the server was deferred.
-    // Wrong: a CLIENT day close writes CLIENT logs, and crash reporting ships them
-    // off the device, so this is a DPDP matter (LEGAL §1) rather than hygiene.
-    // Corrected by injection 16 A.3. §5.13 - the subject WILL exist, so the
-    // instrument is due with it, not after it.
+    verifier: 'client-logs',
+    partial:
+      'The benchmark asks for zero amounts, names or phones "proven by grepping a full day close". No client log line exists to grep, so this is proven the other way: no client source file can write to logcat at all. A stronger result than a clean grep, and not the same one - when a real logger arrives this instrument is REPLACED by one that reads its output, not exempted.',
   },
   B37: { verifier: 'unit' },
   B38: {
@@ -558,6 +622,79 @@ for (const v of VERIFIERS) {
   }
 }
 
+
+/**
+ * RUN A VERIFIER'S COMMAND WITHOUT GOING NEAR A .cmd SHIM.
+ *
+ * THIS FIXES A HARNESS DEFECT THAT MADE EVERY PLANT A PHANTOM PASS. --prove used to
+ * spawn `npm.cmd` / `npx.cmd` through execFileSync. Since the fix for
+ * CVE-2024-27980, Node refuses to execFile a .cmd at all and throws EINVAL before
+ * anything runs - measured on this machine, both shims, zero bytes of output. The
+ * prove harness caught that throw and read it as "the verifier failed, as it
+ * should", so every npm-based verifier reported a successful plant WITHOUT THE
+ * PLANT EVER BEING TESTED. The same trap produced twelve phantom mutant kills in
+ * check-money-mutants at iteration 24; this is the same bug in a second place.
+ *
+ * `shell: true` would work and is banned by check-tooling, correctly. So the
+ * command is RESOLVED to a JavaScript entry point and run with this same Node:
+ * `npm run X` becomes the script X actually is, and `npx pkg` becomes the file
+ * pkg's own package.json nominates as its bin.
+ */
+const requireHere = createRequire(import.meta.url);
+
+/**
+ * A BIN NAME IS NOT A PACKAGE NAME. `tsc` lives in `typescript`, and resolving
+ * "tsc/package.json" throws MODULE_NOT_FOUND - which the old harness would have
+ * read as the verifier failing. So when the direct resolution misses, the declared
+ * dependencies are asked which one owns that bin.
+ */
+function resolveBin(name, args) {
+  let pkgPath = null;
+  try {
+    pkgPath = requireHere.resolve(name + '/package.json');
+  } catch {
+    const root = JSON.parse(readFileSync('package.json', 'utf8'));
+    const deps = Object.keys({ ...root.dependencies, ...root.devDependencies });
+    for (const dep of deps) {
+      let candidate;
+      try {
+        candidate = requireHere.resolve(dep + '/package.json');
+      } catch {
+        continue;
+      }
+      const bin = JSON.parse(readFileSync(candidate, 'utf8')).bin;
+      if (bin && typeof bin === 'object' && bin[name]) {
+        return { exe: process.execPath, args: [join(dirname(candidate), bin[name]), ...args] };
+      }
+    }
+    throw new Error('no installed package declares a bin named ' + name);
+  }
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+  const bin = typeof pkg.bin === 'string' ? pkg.bin : (pkg.bin ?? {})[name];
+  if (!bin) throw new Error(name + ' declares no bin, so it cannot be run directly');
+  return { exe: process.execPath, args: [join(dirname(pkgPath), bin), ...args] };
+}
+
+function resolveCommand(command) {
+  const parts = command.trim().split(/\s+/);
+  if (parts.includes('&&')) {
+    throw new Error('a verifier command must be one command, not a chain: ' + command);
+  }
+  if (parts[0] === 'npm' && parts[1] === 'run') {
+    const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts ?? {};
+    const script = scripts[parts[2]];
+    if (!script) throw new Error('no npm script named ' + parts[2]);
+    return resolveCommand([script, ...parts.slice(3)].join(' '));
+  }
+  if (parts[0] === 'node') return { exe: process.execPath, args: parts.slice(1) };
+  if (parts[0] === 'npx') return resolveBin(parts[1], parts.slice(2));
+  if (parts[0] === 'npm') {
+    // `npm audit` and friends have no JS entry we can resolve from here. Rather
+    // than spawn a shim that throws and be read as a pass, say so out loud.
+    throw new Error('cannot run "' + command + '" without the npm shim, so it cannot be proven here');
+  }
+  return resolveBin(parts[0], parts.slice(1));
+}
 /**
  * §5.16 · AN INSTRUMENT MUST RESPOND, NOT ONLY FAIL.
  *
@@ -581,6 +718,29 @@ for (const v of VERIFIERS) {
  * zero, failing and tracking are different properties and both must be shown.
  */
 const RESPONSES = {
+  screens: {
+    plantIsResponse:
+      'B26-B32 are all "0 violations". The plant restores white on the marigold accent in Focus mode and three assertions move from 0 to 1 - the contrast pair, the no-white-token rule, and the per-case contrast sweep.',
+  },
+  layout: {
+    /*
+     * This one has a better argument than its plant, and it is worth recording
+     * because it is the argument §5.16 actually asks for: the number tracked the
+     * world while the world changed underneath it.
+     *
+     * First run: 18 overflows. Letting the list shrink and the money rows wrap
+     * took it to 7. Stepping the keypad label down one size took it to 1. Teaching
+     * the tool that React Native caps chrome - which removed a reading that could
+     * not happen on a device - took it to 0. Four changes in four directions, and
+     * the count moved for each one, by the amount the change warranted.
+     */
+    plantIsResponse:
+      'B31 is "0 overflow". The plant removes the style that lets the list give up its space and the keypad lands below the fold. Beyond the plant, the instrument has already tracked a moving subject: 18 overflows on its first run, then 7, then 1, then 0, as each underlying defect was fixed.',
+  },
+  'client-logs': {
+    plantIsResponse:
+      'B36 is "0 amounts, names or phones in client logs". The plant adds one console.log of the entry list inside the store and the count moves 0 -> 1. Verified both directions at iteration 37: exit 1 planted, exit 0 restored.',
+  },
   governance: { plantIsResponse: 'B40 is "0 stubs". The plant adds one; the count moves 0 -> 1.' },
   'money-lint': { plantIsResponse: 'B12 is "0 violations". The plant adds one.' },
   secrets: { plantIsResponse: 'B35 is "0 secrets". The plant adds one.' },
@@ -1264,17 +1424,24 @@ if (process.argv.includes('--prove')) {
     writeFileSync(file, crlf ? mutated.split('\n').join('\r\n') : mutated);
 
     let failedAsItShould = false;
+    let couldNotRun = null;
     try {
-      // NOT `shell: true` - check:tooling bans it, and caught this file using it.
-      // On Windows npm and npx are .cmd shims, which execFileSync needs named
-      // explicitly; going through a shell instead would re-parse argv and mangle
-      // forward-slash paths, which is the trap §5.10.3 records.
-      const [cmd, ...args] = v.command.split(' ');
-      const win = process.platform === 'win32';
-      const exe = win && (cmd === 'npm' || cmd === 'npx') ? `${cmd}.cmd` : cmd;
+      /*
+       * Resolved to a JS entry and run with this Node. NOT `npm.cmd` - that throws
+       * EINVAL before running anything, and the catch below would read the throw as
+       * the verifier failing. See resolveCommand: this is the phantom-pass bug.
+       */
+      const { exe, args } = resolveCommand(v.command);
       execFileSync(exe, args, { stdio: 'pipe', timeout: 900000 });
-    } catch {
-      failedAsItShould = true;
+    } catch (e) {
+      /*
+       * A command that could not be STARTED has not failed - it has not run. The
+       * two were conflated here, which is the whole defect, so they are separated
+       * by the one signal that distinguishes them: a process that ran has a numeric
+       * exit status, and one that never started does not.
+       */
+      if (typeof e.status === 'number') failedAsItShould = true;
+      else couldNotRun = e.code || e.message;
     } finally {
       writeFileSync(file, original);
     }
@@ -1282,13 +1449,21 @@ if (process.argv.includes('--prove')) {
     if (readFileSync(file, 'utf8') !== original) {
       failures.push(`${v.id}: RESTORE FAILED for ${file} - the tree is left mutated`);
     }
-    if (!failedAsItShould) {
+    if (couldNotRun) {
+      failures.push(
+        v.id + ': "' + v.command + '" COULD NOT BE STARTED (' + couldNotRun + '), so the plant ' +
+          'proved nothing. A command that never ran is not a command that failed - reading ' +
+          'one as the other is what made every npm-based plant a phantom pass until ' +
+          'iteration 37.',
+      );
+    } else if (!failedAsItShould) {
       failures.push(
         `${v.id}: a real defect was planted in ${file} and "${v.command}" STILL PASSED. ` +
           'This verifier does not verify.',
       );
     }
-    console.log(`  ${failedAsItShould ? 'ok  ' : 'x   '} ${v.id.padEnd(20)} ${v.command}`);
+    const mark = couldNotRun ? '?   ' : failedAsItShould ? 'ok  ' : 'x   ';
+    console.log(`  ${mark} ${v.id.padEnd(20)} ${v.command}`);
   }
 }
 

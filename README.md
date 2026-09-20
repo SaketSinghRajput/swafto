@@ -18,7 +18,7 @@ accounting app and does not want one.
 
 - **Iteration 35, against a hard ceiling of 40.**
 - **Gates passed: 6.**
-- **Benchmarks instrumented: 14 of 40** - 2 overdue, 24 blocked on artifacts that do not exist yet.
+- **Benchmarks instrumented: 22 of 40** - 2 overdue, 16 blocked on artifacts that do not exist yet.
 - **Benchmarks met: 6 of 7 measured** (B1, B2, B5, B12, B33, B40). 1 missed (B3). 33 never measured.
 - **B38, B39: MISSED - SCOPE** - a decision, not a failure. See DEFERRED.md.
 

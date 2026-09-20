@@ -14,9 +14,9 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 
 ---
 
-**NEXT:** `I-001` — Instrument B26 — contrast ratio on every rendered screen
+**NEXT:** `I-006` — Instrument B31 — layout overflow at maximum font scale
 
-**READY NOW:** 77 — `I-001` `I-002` `I-003` `I-004` `I-005` `I-006` `I-007` `I-008` `I-009` `I-010` `S-020-A11Y` `S-020-FIXTURES` `S-020-I18N` `S-020-KEYPAD` `S-020-SHOTS` `S-020-STATES` `S-020-WIRED` `S-030-A11Y` `S-030-FIXTURES` `S-030-I18N` `S-030-KEYPAD` `S-030-SHOTS` `S-030-STATES` `S-030-WIRED` `S-040-A11Y` `S-040-FIXTURES` `S-040-I18N` `S-040-KEYPAD` `S-040-SHOTS` `S-040-STATES` `S-040-WIRED` `S-050-A11Y` `S-050-FIXTURES` `S-050-I18N` `S-050-KEYPAD` `S-050-SHOTS` `S-050-STATES` `S-050-WIRED` `S-060-A11Y` `S-060-FIXTURES` `S-060-I18N` `S-060-KEYPAD` `S-060-SHOTS` `S-060-STATES` `S-060-TRACE` `S-060-WIRED` `S-070-A11Y` `S-070-FIXTURES` `S-070-I18N` `S-070-KEYPAD` `S-070-SHOTS` `S-070-STATES` `S-070-WIRED` `S-080-A11Y` `S-080-FIXTURES` `S-080-I18N` `S-080-KEYPAD` `S-080-SHOTS` `S-080-STATES` `S-080-WIRED` `S-090-A11Y` `S-090-FIXTURES` `S-090-I18N` `S-090-KEYPAD` `S-090-SHOTS` `S-090-STATES` `S-090-WIRED` `S-100-A11Y` `S-100-FIXTURES` `S-100-I18N` `S-100-KEYPAD` `S-100-SHOTS` `S-100-STATES` `S-100-TRACE` `S-100-WIRED` `Z-001` `Z-003`
+**READY NOW:** 71 — `I-006` `I-008` `I-009` `I-010` `S-020-A11Y` `S-020-FIXTURES` `S-020-I18N` `S-020-KEYPAD` `S-020-SHOTS` `S-020-STATES` `S-020-WIRED` `S-030-A11Y` `S-030-FIXTURES` `S-030-I18N` `S-030-KEYPAD` `S-030-SHOTS` `S-030-STATES` `S-030-WIRED` `S-040-A11Y` `S-040-FIXTURES` `S-040-I18N` `S-040-KEYPAD` `S-040-SHOTS` `S-040-STATES` `S-040-WIRED` `S-050-A11Y` `S-050-FIXTURES` `S-050-I18N` `S-050-KEYPAD` `S-050-SHOTS` `S-050-STATES` `S-050-WIRED` `S-060-A11Y` `S-060-FIXTURES` `S-060-I18N` `S-060-KEYPAD` `S-060-SHOTS` `S-060-STATES` `S-060-TRACE` `S-060-WIRED` `S-070-A11Y` `S-070-FIXTURES` `S-070-I18N` `S-070-KEYPAD` `S-070-SHOTS` `S-070-STATES` `S-070-WIRED` `S-080-A11Y` `S-080-FIXTURES` `S-080-I18N` `S-080-KEYPAD` `S-080-SHOTS` `S-080-STATES` `S-080-WIRED` `S-090-A11Y` `S-090-FIXTURES` `S-090-I18N` `S-090-KEYPAD` `S-090-SHOTS` `S-090-STATES` `S-090-WIRED` `S-100-A11Y` `S-100-FIXTURES` `S-100-I18N` `S-100-KEYPAD` `S-100-SHOTS` `S-100-STATES` `S-100-TRACE` `S-100-WIRED` `Z-001` `Z-003`
 
 **BLOCKED:** 10, and the one blocking the most others is `S-020-A11Y` — 9 downstream
 
@@ -146,13 +146,13 @@ and it moves when the world provably moves (§5.16).
 
 | ORDER | ID | TASK | WHY | BLOCKED BY | BLOCKS | STATE | BENCHMARKS | ESTIMATE |
 |---|---|---|---|---|---|---|---|---|
-| 032 | `I-001` | [ ] Instrument B26 — contrast ratio on every rendered screen | §5.13: B26's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B26 | - |
-| 033 | `I-002` | [ ] Instrument B27 — white-on-marigold, the one combination that fails by default | §5.13: B27's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B27 | - |
-| 034 | `I-003` | [ ] Instrument B28 — touch target size | §5.13: B28's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B28 | - |
-| 035 | `I-004` | [ ] Instrument B29 — body text size | §5.13: B29's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B29 | - |
-| 036 | `I-005` | [ ] Instrument B30 — missing i18n keys in any of the three languages | §5.13: B30's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B30 | - |
+| 032 | `I-001` | [x] Instrument B26 — contrast ratio on every rendered screen | §5.13: B26's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | DONE | B26 | - |
+| 033 | `I-002` | [x] Instrument B27 — white-on-marigold, the one combination that fails by default | §5.13: B27's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | DONE | B27 | - |
+| 034 | `I-003` | [x] Instrument B28 — touch target size | §5.13: B28's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | DONE | B28 | - |
+| 035 | `I-004` | [x] Instrument B29 — body text size | §5.13: B29's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | DONE | B29 | - |
+| 036 | `I-005` | [x] Instrument B30 — missing i18n keys in any of the three languages | §5.13: B30's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | DONE | B30 | - |
 | 037 | `I-006` | [ ] Instrument B31 — layout overflow at maximum font scale | §5.13: B31's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B31 | - |
-| 038 | `I-007` | [ ] Instrument B32 — non-Latin numerals leaking into a money figure | §5.13: B32's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B32 | - |
+| 038 | `I-007` | [x] Instrument B32 — non-Latin numerals leaking into a money figure | §5.13: B32's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | DONE | B32 | - |
 | 039 | `I-008` | [ ] Instrument B36 — amounts, names or phone numbers in client logs | §5.13: B36's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B36 | - |
 | 040 | `I-009` | [ ] Instrument B24 — APK size, once one builds | §5.13: B24's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B24 | - |
 | 041 | `I-010` | [ ] Instrument B14 — cold start on the target handset, the first of the performance set | §5.13: B14's subject exists the moment a screen renders, so its instrument is due then, not later. | `S-010` | - | READY | B14 | - |

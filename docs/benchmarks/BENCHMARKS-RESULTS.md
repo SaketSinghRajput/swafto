@@ -358,7 +358,7 @@ the full enumeration.
 
 ## The partition (§5.13 A.1)
 
-**14 of 40 instrumented. 2 overdue. 24 blocked.**
+**22 of 40 instrumented. 2 overdue. 16 blocked.**
 
 OVERDUE means the subject already EXISTS and nothing measures it - a present
 failure under §5.13, not a future task. BLOCKED names the artifact whose
@@ -391,17 +391,17 @@ existence unblocks it, and the gate that artifact arrives at.
 | B23 | blocked | - | needs **the Today screen**, at G18 |
 | B24 | instrumented | `font` | The FONT share of the budget is measured (1.87%). The APK itself does not exist, so the benchmark as a whole is not met - only bounded from below. |
 | B25 | blocked | - | needs **the outbox and a 2G network profile**, at G17 |
-| B26 | blocked | - | needs **the design tokens**, at G10 |
-| B27 | blocked | - | needs **the design tokens**, at G10 |
-| B28 | blocked | - | needs **rendered components**, at G11 |
-| B29 | blocked | - | needs **the typography scale**, at G10 |
-| B30 | blocked | - | needs **the i18n bundles**, at G16 |
-| B31 | blocked | - | needs **rendered screens in three languages**, at G16 |
-| B32 | blocked | - | needs **money fields on screens**, at G12 |
+| B26 | instrumented | `screens` | - |
+| B27 | instrumented | `screens` | - |
+| B28 | instrumented | `screens` | - |
+| B29 | instrumented | `screens` | - |
+| B30 | instrumented | `screens` | - |
+| B31 | instrumented | `layout` | Measured by a real layout engine in Chromium, not on Android. The two shape text identically, which is why the reading is worth having, but pixel spacing and the system font-scale machinery belong to the device. B14-B19 on a handset stay blocked. |
+| B32 | instrumented | `screens` | - |
 | B33 | instrumented | `audit` | - |
 | B34 | blocked | - | needs **a container image**, at G9 |
 | B35 | instrumented | `secrets` | The REPO half is measured and clean over 102 files. The APK half is blocked on a build (G9), and gitleaks joins this scanner there rather than replacing it. |
-| B36 | blocked | - | needs **the first client log line - NOT the server**, at due at A.3 item 1, the first screen |
+| B36 | instrumented | `client-logs` | The benchmark asks for zero amounts, names or phones "proven by grepping a full day close". No client log line exists to grep, so this is proven the other way: no client source file can write to logcat at all. A stronger result than a clean grep, and not the same one - when a real logger arrives this instrument is REPLACED by one that reads its output, not exempted. |
 | B37 | instrumented | `unit` | - |
 | B38 | **MISSED - SCOPE** | - | Requires 27 of 27. The ceiling of 40 funds about 11 committed and 16 at best (PROJECTION.md), so this cannot be met. A DECISION, not a failure - the deferred set is in DEFERRED.md and the threshold is untouched. |
 | B39 | **MISSED - SCOPE** | `traceability` | Measured: 0 of 26, and the instrument reports WHICH column holds each row. The api column is blocked by the deferred server (AD-018) and the screen column by the deferred screens, so this cannot be met inside the ceiling. A DECISION, not a failure. |

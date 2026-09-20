@@ -40,7 +40,20 @@ const present = claimed.filter((fn) =>
   new RegExp(`(export\\s+(async\\s+)?function|export\\s+const)\\s+${fn}\\b`).test(engineSrc),
 );
 
-/** Screens that actually exist, counted the same way for everyone. */
+/**
+ * Screens that actually exist, counted the same way for everyone.
+ *
+ * A SCREEN IS A FILE NAMED AFTER ITS BUILD-MAP ID. Not "any .tsx under screens/",
+ * which is what this counted until iteration 37 and which made `registry.tsx` -
+ * the list of screen CASES - register as a second screen. The two documents then
+ * disagreed, one saying 1 implemented and the other 2, and §5.2 says a
+ * disagreement between them is a generator bug rather than something to reconcile
+ * by hand. It was: this counter was the wrong one.
+ *
+ * Naming the rule after the build map also means a helper, a hook or a second
+ * registry can live beside the screens without inflating the figure, and a real
+ * screen cannot be added without taking an id.
+ */
 const screensBuilt = (() => {
   const walk = (d) => {
     let n = 0;
@@ -48,7 +61,7 @@ const screensBuilt = (() => {
     for (const e of readdirSync(d)) {
       const p = join(d, e);
       if (statSync(p).isDirectory()) n += walk(p);
-      else if (e.endsWith('.tsx') && !/\.(spec|test)\./.test(e)) n += 1;
+      else if (/^[TPRX]\d{1,2}\.tsx$/.test(e)) n += 1;
     }
     return n;
   };

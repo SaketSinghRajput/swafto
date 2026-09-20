@@ -170,6 +170,7 @@ gets disabled.
 
 | what the spec says | where | what the code does | where | severity |
 |---|---|---|---|---|
+| touch target at or above the registry minimum | TOUCH_TARGET_MIN_DP | height 0 | apps\mobile\src\screens\T7.tsx | REPORTED |
 | T7 displays IN1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T7.tsx | REPORTED |
 
 ---

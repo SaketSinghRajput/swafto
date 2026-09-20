@@ -104,6 +104,21 @@ for (const [id, r] of rows) {
 }
 
 /* ---- 3 · the references must RESOLVE, not merely be present ------------- */
+/*
+ * A CITATION THAT NAMES NOTHING IS A FAILURE, WHATEVER THE ROW'S STATUS.
+ *
+ * This used to fail only for rows marked DONE and merely note the rest, which made
+ * sense while the engine was being written: a row could honestly name a function
+ * that was still coming. That period ended when V-7 closed - all 26 named engine
+ * functions now exist - and the leniency immediately cost something. OP6 had been
+ * citing `cashDeficitWarning` while the engine exports `cashDeficitWarnings`, one
+ * letter out, and the note scrolled past for eighteen iterations because nothing
+ * failed. It only surfaced when the prove harness was repaired and this verifier
+ * was asked, for the first time, to actually fail on its planted defect.
+ *
+ * §5.14.5: build it, or remove the claim. A third option where the claim stays and
+ * points at nothing is how a traceability matrix becomes decoration.
+ */
 let unresolvedFn = 0;
 let unresolvedVec = 0;
 for (const [id, r] of rows) {
@@ -113,22 +128,19 @@ for (const [id, r] of rows) {
   for (const m of r.engine.matchAll(/`(\w+)`/g)) {
     if (engineExports.has(m[1])) continue;
     unresolvedFn += 1;
-    notes.push(`${id} names engine function ${m[1]}, which the engine does not export`);
-    if (done) {
-      failures.push(
-        `${id} is DONE but names engine function ${m[1]}, which does not exist. ` +
-          'A row cannot be complete while its payload is absent (A11).',
-      );
-    }
+    failures.push(
+      `${id} names engine function ${m[1]}, which the engine does not export` +
+        (done ? ' - and the row is marked DONE (A11).' : '. Build it, or remove the claim.'),
+    );
   }
 
   for (const m of r.test.matchAll(/vectors\.json:([\w-]+)/g)) {
     if (vectorNames.has(m[1])) continue;
     unresolvedVec += 1;
-    notes.push(`${id} names vector "${m[1]}", which is not in vectors.json`);
-    if (done) {
-      failures.push(`${id} is DONE but names vector "${m[1]}", which does not exist.`);
-    }
+    failures.push(
+      `${id} names vector "${m[1]}", which is not in vectors.json` +
+        (done ? ' - and the row is marked DONE.' : '. Write it, or remove the claim.'),
+    );
   }
 }
 

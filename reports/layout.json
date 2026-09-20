@@ -1,0 +1,229 @@
+{
+  "VIEWPORT": {
+    "width": 360,
+    "height": 800
+  },
+  "SCALES": [
+    1,
+    1.5,
+    2
+  ],
+  "results": [
+    {
+      "id": "T7-canonical",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-adversarial",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-adversarial-focus",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-longest",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-empty",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-error",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-loading",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-hindi",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-longest-focus",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-canonical",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-adversarial",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-adversarial-focus",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-longest",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-empty",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-error",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-loading",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-hindi",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-longest-focus",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-canonical",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-adversarial",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-adversarial-focus",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 115,
+      "overflowing": []
+    },
+    {
+      "id": "T7-longest",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-empty",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-error",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-loading",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-hindi",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "T7-longest-focus",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 64,
+      "overflowing": []
+    }
+  ]
+}

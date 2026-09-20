@@ -829,3 +829,38 @@ server that syncs a wrong figure propagates it to every device.
 If the owner sets a date before which something must ship, this reverses to AD-018's
 posture immediately: an offline day-close that works beats a half-built server, and
 the cut list in DEFERRED.md is already ranked for exactly that.
+
+---
+
+## AD-021 · I-006 and I-008 stay open, and the caveat that keeps them open stays too
+
+**The decision: do not empty a caveat column to make a checkbox tick.**
+
+Eight of the ten instrument tasks closed at iteration 37. Two did not, and both could
+be closed in about ten seconds by deleting a sentence.
+
+`I-006` reads B31 off `check:layout`, which measures real overflow in a real layout
+engine with the shipped fonts, fails on a planted defect, and has already tracked a
+moving subject from eighteen overflows down to zero. Its caveat says the engine is
+Chromium and not Android. `I-008` reads B36 off `check:client-logs`, which proves no
+client file can write to logcat at all. Its caveat says B36's own wording asks for a
+grep of a full day close, and there is no log line to grep.
+
+The task predicate is "instrumented, with the caveat column empty". Both caveats are
+true, so both tasks stay open.
+
+**Why this is worth a decision rather than a shrug.** The predicate was written this
+way after `I-009` ticked itself off a substring while no APK existed - a box checked
+by a coincidence. Loosening it now, for two instruments I wrote myself in the same
+iteration, would be the same defect with better manners. And the alternative -
+deleting the caveats - is worse, because the caveats are the only place a reader
+learns that a green B31 was measured in a browser.
+
+**What these two are actually waiting for.** `I-006` waits for a real handset, which
+is B14-B19 and H8. `I-008` waits for the app to have a logger, at which point the
+instrument is REPLACED by one that greps a real day close - not exempted, replaced.
+
+**REVERSAL TRIGGER.** If a physical-device layout pass runs and agrees with
+`check:layout` on every case, the Chromium caveat has been discharged by measurement
+rather than by deletion, and `I-006` closes. Likewise `I-008` closes the day a logger
+exists and its output survives a full day close under grep.
