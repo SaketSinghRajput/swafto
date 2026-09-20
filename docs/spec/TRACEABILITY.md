@@ -91,7 +91,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-03 | Party data Fiduciary vs Processor analysis | Terms clause | AD-005/006 | RESOLVED |
 | L-04 | Per-party export and redaction | `GET /v1/parties/:id/export`, `POST /v1/parties/:id/redact`, `ApiClient.exportParty/redactParty` | Eng | WIP - both routes built and tested on both repositories; the P2/P3 screens are deferred |
 | L-05 | Retention / inactivity period | Privacy policy | AD-003/007 | RESOLVED |
-| L-06 | Deletion propagates to S3 backups | Deletion job + TF lifecycle rule | Eng | TODO |
+| L-06 | Deletion propagates to S3 backups | `apps/api/src/jobs/purge-due.ts` exists; no S3, no Terraform, no rotation | Eng | WIP - the job half is built, the infrastructure half does not exist |
 | L-07 | Grievance Officer named with SLA | About screen, policy, website | AD-003/007 | RESOLVED |
 | L-08 | Breach response runbook + rehearsal | `docs/runbooks/breach.md` - Rule 7 clocks, the two notifications, what the system can answer | Eng (G3) | WIP - written; the rehearsal has never been run |
 | L-09 | No processor moves data out of India | `check:licences` processor sweep + `check:push`; no processor in the shipped closure | Eng | WIP - no subject today, and a tripwire if that changes |
@@ -101,7 +101,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-13 | Public web deletion page | `apps/web/delete-account/index.html`, `POST /v1/deletion/request`, `POST /v1/deletion/confirm`, `otp_account_deletion` | Eng | WIP - built and checked; the URL itself needs hosting |
 | L-14 | POST_NOTIFICATIONS primer after first close | Manifest must not declare it; the primer returns with the inbox (DEFERRED) | Eng | N/A-V1 - no notifications are requested |
 | L-15 | GST disclaimer in app copy and exports | `EXPORT_DISCLAIMER` on both export routes, with a test that walks them | Eng | WIP - every export carries it; the export screen is deferred |
-| L-16 | Export naming rules enforced | Copy + i18n key audit | Eng | TODO |
+| L-16 | Export naming rules enforced | `tools/check-export-naming.mjs`, walking every source file | Eng | WIP - enforced in Latin script; the same words in Devanagari or Odia are H13 |
 | L-17 | Privacy policy drafted, reviewed, live | `apps/web/legal/privacy.html` | Eng | WIP - written and checked against the notice; unreviewed (H9), not yet live (H5) |
 | L-18 | Terms live; liability vs accuracy promise | `apps/web/legal/terms.html` | Eng | WIP - written; the arithmetic promise is kept and tested, unreviewed (H9) |
 | L-19 | Verify Anek + IBM Plex OFL 1.1 | `tools/check-licences.mjs` font audit -> `docs/handover/LICENCES.md` with SHA-256 per file | Eng | WIP - licence text machine-checked; one hash comparison against upstream is human |
