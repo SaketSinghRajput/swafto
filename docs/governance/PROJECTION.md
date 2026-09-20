@@ -259,3 +259,101 @@ them from.
 
 At the checkpoint at **26**, at **30** and at **35** (§5.15.4), each time re-stated
 from the facts as they are rather than edited from the previous version.
+
+---
+
+# RE-STATED AT ITERATION 35 (§5.15.4)
+
+**Re-stated from the facts as they are, not edited from the version above.** Everything
+before this line is the record of what was believed at iterations 20 and 26; it stays
+because a projection whose wrong versions are deleted cannot be checked against its own
+history. Two re-statements were due - at 30 and at 35 - and both are discharged here,
+late, which is itself a fact worth recording rather than smoothing over.
+
+## What the ceiling is now
+
+**There is no iteration ceiling.** AD-020 replaced the owner's number with a condition:
+*every feature, all APIs and the pipeline working, all security checks, and compliance
+with the Indian norms that apply to an app holding customer data and transaction
+records.* Everything above this line prices work against a budget of 40 iterations
+that no longer exists, which is the single largest reason it needed re-stating rather
+than amending.
+
+A condition is not a looser constraint than a number. It is a harder one: a budget can
+be missed and reported, and a condition is either met or the work is not finished.
+
+## What is actually built, counted rather than estimated
+
+| | |
+|---|---|
+| Screens | **11** - the ten committed, plus X0, mandated by the legal audit rather than chosen |
+| Screen bar (§B.6) | **88 of 88 children** derived, across all eleven |
+| Tasks | **136**, of which **115 done**, 6 ready, 1 blocked |
+| Tests | **1,164** across 34 files, including a real client against a real API |
+| Check chain | **25 checks**, all green |
+| Verifiers | **25 proven** by planting a real defect and requiring a real failure |
+| API | auth, sync, read, DPDP and the public deletion path, against two repositories |
+
+The server that AD-018 deferred and AD-020 restored is built. The outbox drains. The
+day close reaches the server and the server's figures are the engine's figures,
+proved by a test that drives the real client through the real routes.
+
+## What the plan above got right and wrong
+
+**Right, and worth keeping:** that the first screen makes ten instruments due at once;
+that a checkpoint waivable by naming a cause is not a checkpoint; that eleven
+benchmarked screens beat sixteen unbenchmarked ones; that the estimate history runs
+optimistic.
+
+**Wrong:** the screen-velocity fear. Ten screens were built in roughly the iterations
+the plan allowed for four, because the shared `Shell`, `EntryForm` and registry meant
+screen six cost a fraction of screen one. The plan priced screens as independent units
+and they were not.
+
+**Wrong in the other direction:** the plan never priced compliance as construction. It
+treated LEGAL-AUDIT as an audit - rows to be satisfied later by somebody else - and
+AD-020 made every one of them an endpoint, a screen or a check. That work has taken
+several iterations and is the bulk of what iterations 33-35 contain.
+
+## What now stands between here and done
+
+**Code, and therefore mine:**
+
+| | |
+|---|---|
+| Z-001 | the §6.1 adversary pass, due on cadence |
+| Z-003 | the final full verification |
+| Z-004 | the handover report |
+
+**Not code, and therefore not mine to finish** - each recorded in HUMAN-ACTIONS with
+what it unblocks:
+
+| | |
+|---|---|
+| H14 | a JDK, the Android SDK and a release keystore. **No APK can exist without it**, and this machine has none of the three - checked, not assumed |
+| H8 | the device pass, which is the only honest source for B14-B19 |
+| H1 | DLT registration, without which no real SMS is delivered |
+| H5 | publishing the legal pages and the deletion page at their URLs |
+| H6 | a named grievance officer |
+| H9 | counsel review |
+| H13 | native review of the Odia and Hindi copy |
+
+**The honest shape of the remainder:** everything left that is software is verification
+and reporting. Everything left that is delivery needs a credential, a device or a
+person. That is a different position from any earlier version of this file, and it is
+the reason this one has no table of iterations: there is nothing left to schedule
+against, only work to finish and facts to hand over.
+
+## B38 and B39, restated
+
+Unchanged and still **MISSED - SCOPE**. B38 asks for 27 of 27 screens and eleven exist;
+B39 asks for every traceability row complete and twelve rows name screens deliberately
+deferred. Both are decisions the owner's cut made, both are reported with the measured
+count, and neither threshold has moved. A scope miss is a decision; a performance miss
+is a failure; they are never merged.
+
+## When to revise this again
+
+At the adversary pass (Z-001) if it finds anything that changes the shape of what is
+left, and at the handover (Z-004). Not on a fixed iteration, because iterations are no
+longer the unit the owner is counting in.

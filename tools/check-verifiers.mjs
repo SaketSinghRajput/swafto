@@ -1051,16 +1051,43 @@ const STALE_AFTER = 5;
 
 /** Each entry is a JUDGEMENT: not derivable, and therefore perishable. */
 const JUDGEMENTS = [
-  { where: 'docs/governance/PROJECTION.md', what: 'the re-cut at checkpoint 1 and the 14-iteration plan', made: 26 },
+  /*
+   * RE-STATED AT 35, and the two entries these replace are gone rather than
+   * re-dated. "The 14-iteration plan" and "checkpoint 2 is unreachable" are not
+   * judgements that went stale - they are judgements whose SUBJECT no longer
+   * exists, because AD-020 replaced the iteration ceiling with a condition.
+   * Carrying them forward with a new date would be asserting I had re-made a
+   * call about a plan there is no longer a plan to make.
+   */
   {
     where: 'docs/governance/PROJECTION.md',
-    what: 'checkpoint 1 FAILED at 26; checkpoint 2 at 29 is unreachable, earliest is 32',
-    made: 26,
+    what: 'that what remains is Z-001, Z-003, Z-004 and seven human actions - no schedule, because the owner is no longer counting in iterations',
+    made: 35,
   },
+  {
+    where: 'docs/governance/PROJECTION.md',
+    what: 'that eleven screens IS the committed set plus the one the legal audit mandated, and B38/B39 stay MISSED - SCOPE at that count',
+    made: 35,
+  },
+  /*
+   * STILL 21, and deliberately. The iteration-35 re-statement did not re-derive
+   * the ranking of the cut-list; DEFERRED.md still rests on it. Bumping this
+   * because a nearby judgement was re-made is exactly the borrowed-freshness
+   * mistake the register exists to prevent.
+   */
   { where: 'docs/governance/PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
-  { where: 'docs/governance/PROJECTION.md', what: 'committed = A.3 items 1-3; items 4-5 moved to stretch', made: 26 },
   { where: 'docs/handover/DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },
-  { where: 'docs/governance/DECISIONS-AUTONOMOUS.md', what: "AD-018's reversal trigger", made: 21 },
+  /*
+   * AD-018's trigger did not go stale - it FIRED. AD-020 records the owner's
+   * instruction that pulled it, the server was built, and the outbox drains. A
+   * spent trigger is a different state from a perishable one, and it is dated
+   * from when it fired.
+   */
+  {
+    where: 'docs/governance/DECISIONS-AUTONOMOUS.md',
+    what: "AD-018's reversal trigger, SPENT - AD-020 fired it and the server is built",
+    made: 35,
+  },
   { where: 'docs/governance/DECISIONS-AUTONOMOUS.md', what: "AD-019's three reversal triggers", made: 22 },
   { where: 'docs/benchmarks/BENCHMARKS-RESULTS.md', what: "B1's attempts narrative - close it at G7", made: 19 },
   {

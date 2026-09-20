@@ -528,6 +528,6 @@ a3f92d49d487ddaf  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md
 1352e51ba2027971  derivedConstraints  docs/governance/DERIVED-CONSTRAINTS.md
-bc240b2330764c0b  projection  docs/governance/PROJECTION.md
+ee584189bb24778e  projection  docs/governance/PROJECTION.md
 731391dfd0488fa3  prose  tools/plan-prose.md
 <!-- PLANHASH:END -->
