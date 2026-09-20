@@ -42,6 +42,44 @@ const all =
     ps.every((p) => p());
 
 /**
+ * V-7's predicate: every name TRACEABILITY cites, resolved against the repository.
+ *
+ * Returns the unresolved ones, so the finding's status and its detail come from the
+ * same derivation rather than from a sentence somebody kept up to date.
+ */
+function traceabilityUnresolved() {
+  const engine = ['money', 'dates', 'types', 'primary', 'operational', 'intelligence', 'input']
+    .map((n) => read(`packages/formula-engine/src/${n}.ts`))
+    .join('');
+  const vectors = new Set(
+    (JSON.parse(read('packages/formula-engine/vectors.json') || '{"vectors":[]}').vectors ?? []).map(
+      (v) => v.name,
+    ),
+  );
+  const unresolved = [];
+
+  for (const line of read('docs/spec/TRACEABILITY.md').split('\n')) {
+    const m = /^\|\s*((?:IN|P|OP|BI)\d+)\s*\|(.+)$/.exec(line);
+    if (!m) continue;
+    // Unescaped pipes only: TRACEABILITY writes alternatives as `a`\|`b` inside a cell.
+    const cells = m[2].split(/(?<!\\)\|/).map((c) => c.trim());
+    const [fnCell = '', testCell = ''] = cells;
+
+    const fn = /`([A-Za-z0-9_]+)`/.exec(fnCell)?.[1];
+    if (fn && !engine.includes(`export function ${fn}`) && !engine.includes(`export const ${fn}`)) {
+      unresolved.push(`${m[1]}: engine function ${fn}`);
+    }
+    for (const v of testCell.matchAll(/`([^`]+)`/g)) {
+      const name = v[1].replace(/^vectors\.json:/, '').trim();
+      // Only kebab-case tokens are vector names; the cell also holds prose.
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) continue;
+      if (!vectors.has(name)) unresolved.push(`${m[1]}: vector ${name}`);
+    }
+  }
+  return unresolved;
+}
+
+/**
  * THE FINDINGS.
  *
  * `premise` is the command that established the finding was real - §5.14.3, because
@@ -162,8 +200,29 @@ export const FINDINGS = [
     id: 'V-7',
     what: 'TRACEABILITY names 8 engine functions and 18 vectors that do not exist',
     premise: 'resolved every backticked name against engine exports and vectors.json',
-    fixed: () => false,
-    open: '§5.14.5 requires each one built or the claim removed. Not started. The rows are TODO, so naming a planned artifact is a plan rather than a lie - but the claims must still resolve or go.',
+    /*
+     * THIS READ `() => false` UNTIL ITERATION 36 - a hardcoded status, in the file
+     * whose entire purpose is that status is derived. The §5.14 defect inside the
+     * §5.14 mechanism, and it would have held the finding open for ever no matter
+     * what was built. Found while building the very parsers it was complaining about.
+     *
+     * It now resolves both halves of the claim against the repository: every engine
+     * function TRACEABILITY names must exist, and every vector its TEST column cites
+     * must be in vectors.json.
+     */
+    fixed: () => traceabilityUnresolved().length === 0,
+    /*
+     * The detail DERIVES from the same helper as the status, so the two cannot
+     * disagree. A hand-written "not started" outlived the work by three iterations
+     * last time, which is the smaller version of the same defect.
+     */
+    get open() {
+      const u = traceabilityUnresolved();
+      return u.length === 0
+        ? ''
+        : `§5.14.5 requires each one built or the claim removed. ${u.length} still ` +
+            `unresolved: ${u.slice(0, 30).join('; ')}${u.length > 30 ? `; and ${u.length - 30} more` : ''}.`;
+    },
   },
   {
     id: 'V-8',
@@ -284,6 +343,16 @@ for (const f of FINDINGS) {
 console.log(`  findings          : ${FINDINGS.length}`);
 console.log(`  FIXED (derived)   : ${fixedCount}`);
 console.log(`  OPEN              : ${openCount}`);
+/*
+ * An open finding prints WHY it is open. A count alone is a number nobody can act
+ * on, and "1 OPEN" looked identical for seventeen iterations while the reason
+ * underneath it changed completely.
+ */
+for (const f of FINDINGS) {
+  if (f.withdrawn || f.fixed()) continue;
+  const why = typeof f.open === 'string' ? f.open : '';
+  if (why) console.log(`       ${f.id}: ${why.slice(0, 2000)}`);
+}
 console.log(`  WITHDRAWN         : ${withdrawnCount} (premise was false)`);
 
 if (process.argv.includes('--update-md')) {

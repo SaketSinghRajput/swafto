@@ -114,20 +114,20 @@ copied**: the engine function is looked up in the engine source, the vectors in
 reading NOT BUILT says so because the artifact is absent today, not because a column
 somewhere says TODO.
 
-Engine functions actually present: **18 of 26** named by TRACEABILITY
+Engine functions actually present: **25 of 26** named by TRACEABILITY
 (BI5 is reserved and names none, so the denominator is not the feature count).
 
 ### Inputs — what he types
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| IN1 | What did I sell today, and how much of it was cash, UPI or on credit | `parseSalesEntry` *(absent)* | 2 *(some absent)* | T7 Form A, T8 Form B | **NOT BUILT** |
-| IN2 | What stock did I buy, and did I pay for it or take it on account | `parsePurchaseEntry` *(absent)* | 1 *(some absent)* | T9 Form C | **NOT BUILT** |
-| IN3 | What did I spend on running the shop | `parseExpenseEntry` *(absent)* | 1 *(some absent)* | T9 Form C | **NOT BUILT** |
-| IN4 | Which customer paid back some of what he owed me | `parseCollectionEntry` *(absent)* | 1 *(some absent)* | T8 Form B | **NOT BUILT** |
-| IN5 | Which supplier did I pay, and how much | `parsePartyPaymentEntry` *(absent)* | 1 *(some absent)* | T8 Form B | **NOT BUILT** |
-| IN6 | What did I take out of the drawer for myself | `parseWithdrawalEntry` *(absent)* | 1 *(some absent)* | T10 Form D | **NOT BUILT** |
-| IN7 | What is actually in the drawer, counted by hand | `captureCountedCash` *(absent)* | 1 *(some absent)* | T11 Cash check counting | **NOT BUILT** |
+| IN1 | What did I sell today, and how much of it was cash, UPI or on credit | `parseSalesEntry` | 1 | T7 Form A, T8 Form B | engine done · no API, no screen |
+| IN2 | What stock did I buy, and did I pay for it or take it on account | `parsePurchaseEntry` | - | T9 Form C | function only |
+| IN3 | What did I spend on running the shop | `parseExpenseEntry` | - | T9 Form C | function only |
+| IN4 | Which customer paid back some of what he owed me | `parseCollectionEntry` | - | T8 Form B | function only |
+| IN5 | Which supplier did I pay, and how much | `parsePartyPaymentEntry` | - | T8 Form B | function only |
+| IN6 | What did I take out of the drawer for myself | `parseWithdrawalEntry` | - | T10 Form D | function only |
+| IN7 | What is actually in the drawer, counted by hand | `captureCountedCash` | - | T11 Cash check counting | function only |
 
 ### Primary outputs — never gated, always shown
 
@@ -139,28 +139,28 @@ Engine functions actually present: **18 of 26** named by TRACEABILITY
 | P4 | What did I really sell, after returns | `netSales` | 1 | T1 Today, T14 summary | engine done · no API, no screen |
 | P5 | What did the stock really cost me | `netPurchase` | 1 | T14 summary | engine done · no API, no screen |
 | P6 | What did it cost me to keep the doors open | `totalExpenses` | 1 | T14 summary | engine done · no API, no screen |
-| P7 | How much of my money are my customers holding | `creditOutstanding` | 1 *(some absent)* | T1 Today, P1 Parties, P2 Customer | function only |
-| P8 | How much do I owe my suppliers | `supplierOutstanding` | 1 *(some absent)* | T1 Today, P1 Parties, P3 Supplier | function only |
+| P7 | How much of my money are my customers holding | `creditOutstanding` | 1 | T1 Today, P1 Parties, P2 Customer | engine done · no API, no screen |
+| P8 | How much do I owe my suppliers | `supplierOutstanding` | 1 | T1 Today, P1 Parties, P3 Supplier | engine done · no API, no screen |
 
 ### Operational outputs
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| OP1 | Is the drawer healthy today, or am I running thin | `dailyCashHealth` | 3 *(some absent)* | T12 difference, T13 balanced | function only |
-| OP2 | Are my expenses eating the day | `expensePressure` | 1 *(some absent)* | R1 Reports | function only |
-| OP3 | Of the credit I gave out, how much is coming back | `collectionEfficiency` | 1 *(some absent)* | R1 Reports | function only |
-| OP4 | Who do I have to pay, and when | `paymentDue` | 1 *(some absent)* | T1 Today, P3 Supplier | function only |
-| OP5 | Is the shop busier or quieter than it was | `businessMovement` | 1 *(some absent)* | R1 Reports | function only |
-| OP6 | Am I about to run out of cash | `cashDeficitWarning` *(absent)* | 1 *(some absent)* | T1 Today AlertBanner | **NOT BUILT** |
+| OP1 | Is the drawer healthy today, or am I running thin | `dailyCashHealth` | 3 | T12 difference, T13 balanced | engine done · no API, no screen |
+| OP2 | Are my expenses eating the day | `expensePressure` | 1 | R1 Reports | engine done · no API, no screen |
+| OP3 | Of the credit I gave out, how much is coming back | `collectionEfficiency` | 1 | R1 Reports | engine done · no API, no screen |
+| OP4 | Who do I have to pay, and when | `paymentDue` | 1 | T1 Today, P3 Supplier | engine done · no API, no screen |
+| OP5 | Is the shop busier or quieter than it was | `businessMovement` | 1 | R1 Reports | engine done · no API, no screen |
+| OP6 | Am I about to run out of cash | `cashDeficitWarning` *(absent)* | 1 | T1 Today AlertBanner | **NOT BUILT** |
 
 ### Intelligence outputs — gated on closed-day history
 
 | ID | What it answers for the shopkeeper | Engine function | Vectors | Screen | Status |
 |---|---|---|---|---|---|
-| BI1 | Is the shop making more or less than it was | `profitTrend` | 1 *(some absent)* | R1/R2 Reports GateCard | function only |
-| BI2 | Are my sales steady, or all over the place | `salesConsistency` | 1 *(some absent)* | R1/R2 Reports GateCard | function only |
-| BI3 | Is my cash flow stable enough to plan against | `cashFlowStability` | 1 *(some absent)* | R1/R2 Reports GateCard | function only |
-| BI4 | Is my money stuck in credit instead of in the drawer | `workingCapitalPressure` | 1 *(some absent)* | R1/R2 Reports GateCard | function only |
+| BI1 | Is the shop making more or less than it was | `profitTrend` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
+| BI2 | Are my sales steady, or all over the place | `salesConsistency` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
+| BI3 | Is my cash flow stable enough to plan against | `cashFlowStability` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
+| BI4 | Is my money stuck in credit instead of in the drawer | `workingCapitalPressure` | 1 | R1/R2 Reports GateCard | engine done · no API, no screen |
 | BI5 | Reserved. Not in V1 - the data model cannot answer it | - | - | **RESERVED - NO UI (D5)** | reserved, not V1 |
 | BI6 | How much of what I am owed sits with one or two customers | `creditConcentrationTrend` | 5 | R1/R2 Reports GateCard | engine done · no API, no screen |
 
@@ -401,7 +401,7 @@ be moved to meet a result.
 
 | ID | Benchmark | Threshold | Measured |
 |---|---|---|---|
-| B1 | Golden vectors | >= 70, 100% pass | **63, 100% pass** - MISSED on count |
+| B1 | Golden vectors | >= 70, 100% pass | **77, 100% pass** - MET |
 | B2 | Node vs Hermes divergence | exactly 0 | **0** - MET |
 | B3 | Engine branch coverage | 100% | **86.62%** - MISSED |
 | B5 | Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET |
@@ -515,9 +515,9 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 ---
 
 <!-- PLANHASH:START -->
-409b86c2d96ec65b  traceability  docs/spec/TRACEABILITY.md
+e0f36bb9d5baab8d  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
-b948d3599473c459  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
+d6d5d152198da4bc  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 2e96d515acdc85e0  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 52c5a4dbb0c94bd1  humanActions  docs/handover/HUMAN-ACTIONS.md

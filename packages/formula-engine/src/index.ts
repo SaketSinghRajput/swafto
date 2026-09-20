@@ -14,6 +14,7 @@
  */
 
 export * from './money.ts';
+export * from './input.ts';
 export * from './dates.ts';
 export * from './types.ts';
 export * from './primary.ts';

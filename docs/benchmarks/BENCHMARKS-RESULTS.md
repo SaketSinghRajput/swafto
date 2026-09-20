@@ -19,7 +19,7 @@ reported is a result.
 
 | benchmark | threshold | measured | command | when |
 |---|---|---|---|---|
-| B1 Golden vectors | >= 70, 100% pass | **63, 100% pass** - MISSED on count | `npm run test:vectors:node` | iteration 19 |
+| B1 Golden vectors | >= 70, 100% pass | **77, 100% pass** - MET | `npm run test:vectors:node` | iteration 36 |
 | B2 Node vs Hermes divergence | exactly 0 | **0** - MET | `npm run test:vectors:diff` | iteration 19 |
 | B3 Engine branch coverage | 100% | **86.62%** - MISSED | `npm run coverage` | iteration 19, re-measured at 32 |
 | B5 Backend line coverage | >= 85% | **91.26%** (94 of 103) - MET | `npm run coverage` | iteration 20, re-derived identical at 26 |
@@ -32,27 +32,30 @@ Full coverage reading at iteration 32: statements 91.80%, branches 86.62%, funct
 
 ---
 
-## BENCHMARK-MISSED · B1 · 63 vectors against 70
+## BENCHMARK-MET · B1 · 77 vectors against 70
 
-**Measured: 63. Threshold: 70. Short by 7.**
+**Measured: 77. Threshold: 70. Met with 7 to spare, 100% pass, divergence NONE.**
 
-Not a defect and not a surprise - injection 08 section D named it at 51 and said
-exactly how to close it: *"Add them as you build G7 and G8, where the scenarios are in
-front of you, and add each one because it encodes a case you had to think about -
-never to raise the count."*
+Recorded so the path is auditable rather than only the result: 51 (injection 08
+section D) -> 59 (the DC-002 grouping vectors) -> 63 (adversary pass F-03, F-04,
+F-09) -> 77 (iteration 36).
 
-Progress since: 51 -> 59 (the DC-002 grouping vectors) -> 63 (adversary pass F-03,
-F-04, F-09: year boundary, leap day, imported source, expense labels). Every one was
-added because a question came up, not to move the number.
+**The fourteen added at iteration 36 were not added to move the number.** They were
+added because finding V-7 named engine functions that TRACEABILITY cited as covered
+and no vector exercised: P7, P8, OP1 through OP6, and BI1 through BI4. The count
+moving past the threshold is a side effect of closing V-7, which is the order
+injection 08 section D asked for - *"add each one because it encodes a case you had
+to think about, never to raise the count."*
 
-**Why it is not being closed by writing seven vectors today.** That is precisely the
-failure §5.1 exists to prevent, and section D says so in as many words. The uncovered
-ground D names is sync-adjacent and correction-adjacent - entries arriving out of
-order, an entry arriving for a day that closed after it was created, two corrections
-against one closed day - and none of those scenarios exists until G7 and G8. Vectors
-written now would encode a guess at the shape of code that has not been written.
+**What is still not covered, and the threshold does not know it.** The ground
+section D named as uncovered was sync-adjacent and correction-adjacent: entries
+arriving out of order, an entry arriving for a day that closed after it was created,
+two corrections against one closed day. None of that exists to encode until G7 and
+G8 are built, and none of the fourteen touches it. B1 is MET on its own definition,
+which counts vectors; it is not a claim that the vector set is complete. The
+scenarios above remain owed at G7 and are carried as such, not as a benchmark.
 
-**Attempts recorded: 1 of 3.** Next attempt at G7.
+**Attempts recorded: 1 of 3, closed at attempt 2.**
 
 ---
 

@@ -15,13 +15,13 @@ Status legend: `TODO` not started · `WIP` in progress · `DONE` all five cells 
 
 | ID | Engine function | Test | API surface | Screen | Status |
 |----|-----------------|------|-------------|--------|--------|
-| IN1 | `parseSalesEntry` (sections 01/02/03) | `vectors.json:canonical-15-july`, `in1-sales-modes` | `POST /v1/sync/push` section=`cash_sales`\|`upi_sales`\|`udhar_sales` | T7 Form A, T8 Form B | TODO |
-| IN2 | `parsePurchaseEntry` | `vectors.json:in2-purchase-modes` | `POST /v1/sync/push` section=`purchase` | T9 Form C | TODO |
-| IN3 | `parseExpenseEntry` | `vectors.json:in3-expense-five-modes` | `POST /v1/sync/push` section=`expense` | T9 Form C | TODO |
-| IN4 | `parseCollectionEntry` | `vectors.json:in4-udhar-collection` | `POST /v1/sync/push` section=`udhar_collection` | T8 Form B | TODO |
-| IN5 | `parsePartyPaymentEntry` | `vectors.json:in5-party-payment` | `POST /v1/sync/push` section=`party_payment` | T8 Form B | TODO |
-| IN6 | `parseWithdrawalEntry` | `vectors.json:in6-withdrawal-not-expense` | `POST /v1/sync/push` section=`withdrawal` | T10 Form D | TODO |
-| IN7 | `captureCountedCash` | `vectors.json:in7-counted-cash` | `POST /v1/days/:date/close` | T11 Cash check counting | TODO |
+| IN1 | `parseSalesEntry` (sections 01/02/03) | `vectors.json:canonical-15-july`, `input.spec.ts:IN1 sales` | `POST /v1/sync/push` section=`cash_sales`\|`upi_sales`\|`udhar_sales` | T7 Form A, T8 Form B | TODO |
+| IN2 | `parsePurchaseEntry` | `input.spec.ts:IN2 purchase` | `POST /v1/sync/push` section=`purchase` | T9 Form C | TODO |
+| IN3 | `parseExpenseEntry` | `input.spec.ts:IN3 expense` | `POST /v1/sync/push` section=`expense` | T9 Form C | TODO |
+| IN4 | `parseCollectionEntry` | `input.spec.ts:IN4 collection` | `POST /v1/sync/push` section=`udhar_collection` | T8 Form B | TODO |
+| IN5 | `parsePartyPaymentEntry` | `input.spec.ts:IN5 payment` | `POST /v1/sync/push` section=`party_payment` | T8 Form B | TODO |
+| IN6 | `parseWithdrawalEntry` | `input.spec.ts:IN6 withdrawal` | `POST /v1/sync/push` section=`withdrawal` | T10 Form D | TODO |
+| IN7 | `captureCountedCash` | `input.spec.ts:IN7 counted cash` | `POST /v1/days/:date/close` | T11 Cash check counting | TODO |
 
 ## Primary outputs — never gated
 

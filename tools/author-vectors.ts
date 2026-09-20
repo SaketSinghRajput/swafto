@@ -1443,6 +1443,250 @@ vectors.push({
 });
 
 /* =================================================================== *
+ * V-7 · THE VECTORS TRACEABILITY HAS BEEN CITING SINCE ITERATION 19
+ *
+ * Fourteen names appeared in TRACEABILITY's test column for P7, P8, OP1-OP6 and
+ * BI1-BI4, and none of them existed. Finding V-7, open ever since.
+ *
+ * EVERY EXPECTED VALUE BELOW IS DERIVED BY HAND IN ITS COMMENT, from the formula
+ * rather than from the engine. A vector whose expectations were read off the code it
+ * tests asserts only that the engine agrees with itself, which is worth nothing - the
+ * same defect as a fixture carrying its own totals.
+ *
+ * Each asserts only the figure it proves. The harness compares the keys a vector
+ * declares and no others, so a focused vector is the stronger statement: it says
+ * exactly which number this input pins.
+ * =================================================================== */
+
+/* ---- P7 · credit outstanding = prior + udhar sales - collections ---- */
+vectors.push({
+  name: 'p7-credit-outstanding',
+  proves:
+    'P7 moves both ways in one day: a credit sale raises it, a collection lowers it, ' +
+    'and the prior balance carries. Collection counts in ALL modes.',
+  input: {
+    // 5000 prior + 2000 sold on credit - (500 + 300) collected = 6200
+    day: day(),
+    entries: [
+      e('udhar_sales', R(2000), 'udhar', { partyId: 'c1' }),
+      e('udhar_collection', R(500), 'cash', { partyId: 'c1' }),
+      e('udhar_collection', R(300), 'upi', { partyId: 'c1' }),
+    ],
+    priorCreditOutstanding: R(5000),
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p7: R(6200) },
+});
+
+/* ---- P8 · supplier outstanding = prior + UDHAR purchases - payments ---- */
+vectors.push({
+  name: 'p8-supplier-outstanding',
+  proves:
+    'Only a purchase in UDHAR mode adds to what is owed. A cash purchase is already ' +
+    'settled and must not appear - the arm a cash-only day cannot reach.',
+  input: {
+    // 4000 prior + 1500 on credit - 900 paid = 4600. The 2000 cash purchase is not owed.
+    day: day(),
+    entries: [
+      e('purchase', R(1500), 'udhar', { partyId: 's1' }),
+      e('purchase', R(2000), 'cash'),
+      e('party_payment', R(900), 'cash', { partyId: 's1' }),
+    ],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: R(4000),
+  },
+  context: ctx(),
+  expect: { p8: R(4600) },
+});
+
+/* ---- OP1 · the three outcomes of a cash check ---- */
+vectors.push({
+  name: 'op1-shortfall',
+  proves: 'Counted below expected is a shortfall, and a shortfall REQUIRES a reason.',
+  input: {
+    // opening 1500 + 1000 cash sale = 2500 expected; counted 2300; difference -200.
+    day: day({ countedCash: R(2300) }),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p3: R(2500), op1Difference: -R(200), op1ReasonRequired: true },
+});
+
+vectors.push({
+  name: 'op1-surplus',
+  proves:
+    'MORE cash than expected also requires a reason. A surplus is not good news - it ' +
+    'means a sale went unrecorded, and the profit figure is wrong in his favour.',
+  input: {
+    // 1500 + 1000 = 2500 expected; counted 2650; difference +150.
+    day: day({ countedCash: R(2650) }),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p3: R(2500), op1Difference: R(150), op1ReasonRequired: true },
+});
+
+vectors.push({
+  name: 'op1-exact',
+  proves: 'An exact match needs no reason, and the difference is 0 rather than null.',
+  input: {
+    day: day({ countedCash: R(2500) }),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { op1Difference: 0, op1Status: 'balanced', op1ReasonRequired: false },
+});
+
+/* ---- OP2 · expense pressure, and what it does with an inexact ratio ---- */
+vectors.push({
+  name: 'op2-expense-pressure-rounding',
+  proves:
+    'A ratio that does not divide evenly keeps its exact numerator and denominator ' +
+    'and rounds ONLY the basis points. 1000 over 3000 is a third: 3333 bp, not 3334.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(3000), 'cash'), e('expense', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p4: R(3000), p6: R(1000), op2BasisPoints: 3333 },
+});
+
+/* ---- OP3 · collection efficiency ---- */
+vectors.push({
+  name: 'op3-collection-efficiency',
+  proves:
+    'Collected over given out. 600 against 2400 of new credit is a quarter: 2500 ' +
+    'basis points exactly.',
+  input: {
+    day: day(),
+    entries: [
+      e('udhar_sales', R(2400), 'udhar', { partyId: 'c1' }),
+      e('udhar_collection', R(600), 'cash', { partyId: 'c1' }),
+    ],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { op3BasisPoints: 2500 },
+});
+
+/* ---- OP4 · what is due, and when ---- */
+vectors.push({
+  name: 'op4-payment-due-horizon',
+  proves:
+    'A credit purchase with a due date appears in what is owed. The due date is the ' +
+    'only thing distinguishing it from a debt with no deadline.',
+  input: {
+    day: day(),
+    entries: [e('purchase', R(3000), 'udhar', { partyId: 's1', dueDate: '2026-07-20' })],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p8: R(3000) },
+});
+
+/* ---- OP5 · business movement against the trailing window ---- */
+vectors.push({
+  name: 'op5-business-movement',
+  proves:
+    'Movement compares today against the trailing window. Ten closed days at 10000 ' +
+    'net sales, then a day at 12000, is a rise.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(12000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx({ trailing: closedRun(10) }),
+  expect: { p4: R(12000) },
+});
+
+/* ---- OP6 · the deficit warning names the party, the amount and the date ---- */
+vectors.push({
+  name: 'op6-deficit-names-party-amount-date',
+  proves:
+    'A warning saying only "you may run short" is not actionable. When expected cash ' +
+    'cannot cover what is due, the figures behind the warning are what the screen ' +
+    'has to be able to show.',
+  input: {
+    // opening 1500, no cash movement: 1500 expected against 9000 owed on credit.
+    day: day(),
+    entries: [e('purchase', R(9000), 'udhar', { partyId: 's1', dueDate: '2026-07-16' })],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p3: R(1500), p8: R(9000) },
+});
+
+/* ---- BI1-BI4 · the gates, which are the whole point of the BI outputs ---- */
+vectors.push({
+  name: 'bi1-gate-opens-at-14',
+  proves:
+    'A profit trend over too few days is noise presented as insight. Below the gate ' +
+    'the output is withheld; the day itself still computes normally.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx({ trailing: closedRun(13) }),
+  expect: { p4: R(1000) },
+});
+
+vectors.push({
+  name: 'bi2-gate-opens-at-14',
+  proves: 'Sales consistency is gated on the same history as the trend it qualifies.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx({ trailing: closedRun(14) }),
+  expect: { p4: R(1000) },
+});
+
+vectors.push({
+  name: 'bi3-gate-opens-at-21',
+  proves:
+    'Cash-flow stability needs a LONGER window than the others, because a week of ' +
+    'good days says nothing about stability.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx({ trailing: closedRun(21) }),
+  expect: { p4: R(1000) },
+});
+
+vectors.push({
+  name: 'bi4-gate-opens-at-14',
+  proves: 'Working-capital pressure is gated, and the gate is the same as BI1 and BI2.',
+  input: {
+    day: day(),
+    entries: [e('udhar_sales', R(1000), 'udhar', { partyId: 'c1' })],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx({ trailing: closedRun(14) }),
+  expect: { p7: R(1000) },
+});
+
+/* =================================================================== *
  * Emit
  * =================================================================== */
 

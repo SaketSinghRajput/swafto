@@ -18,7 +18,7 @@ twice to findings about that very failure:
 | **F-10** | premise FALSE and fix never applied - two errors cancelling into a pass |
 | **F-06** | found an unapplied fix, then ITS OWN fix was recorded as applied and was not |
 
-**19 fixed · 1 open · 1 withdrawn**, as derived
+**20 fixed · 0 open · 1 withdrawn**, as derived
 on the last run.
 
 | id | status | finding | premise established by |
@@ -39,7 +39,7 @@ on the last run.
 | V-4 | **FIXED** | Append-only was only ever tested by updating amount, so a column-scoped trigger left the suite green | planted BEFORE UPDATE OF amount and the entire suite still passed |
 | V-5 | **FIXED** | BENCHMARKS-RESULTS.md, referenced by the frozen BENCHMARKS.md since iteration 6, did not exist | ls BENCHMARKS-RESULTS.md -> No such file or directory |
 | V-6 | **FIXED** | Three gate evidence numbers were stale: G0 said 526 lines, G1 said 12 ADRs, G5 had no re-derivable count | re-derived all five cheap gate numbers; three disagreed with the record |
-| V-7 | **OPEN** | TRACEABILITY names 8 engine functions and 18 vectors that do not exist | resolved every backticked name against engine exports and vectors.json |
+| V-7 | **FIXED** | TRACEABILITY names 8 engine functions and 18 vectors that do not exist | resolved every backticked name against engine exports and vectors.json |
 | V-8 | **FIXED** | stdevMoney never had its computation tested - both existing cases returned early | planted `Math.sqrt(acc / values.length)` -> `* values.length` and the whole suite stayed green |
 | V-9 | **FIXED** | a stale Stryker sandbox was a second copy of the repo, so vitest ran every test twice and two copies of postgres.spec.ts raced the same database | vitest reported 606 tests for a 303-test suite, and .stryker-tmp/ was untracked |
 | V-10 | **FIXED** | injection 14 was missing from INJECTIONS/, so §5.13, A12 and the partition all cited text nobody could re-read | reconciled INJECTIONS/ against the originals BY CONTENT: one misnumbering (14-verify-the-verifiers.md held injection 13) and injection 14 absent entirely |
@@ -50,5 +50,3 @@ on the last run.
 **F-06.** ITS OWN FIX WAS THEN ALSO RECORDED AS APPLIED AND NEVER APPLIED, for eight iterations - git log -S"SUPERSEDED by BENCHMARKS" returned nothing until iteration 21. The fifth instance of the pattern, and the one that most directly justifies this file.
 
 **F-10.** THE PREMISE WAS FALSE. apps/api/src contains no routes and apps/mobile contains no .tsx files, so the endpoint and both screens did not exist and WIP was correct. The instructed fix was ALSO recorded as applied and never applied, and the two errors cancelled into an apparent pass. The predicate below holds the repository to that reading: BI6 keeps its row while no route exists.
-
-**V-7.** §5.14.5 requires each one built or the claim removed. Not started. The rows are TODO, so naming a planned artifact is a plan rather than a lie - but the claims must still resolve or go.

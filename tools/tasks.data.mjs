@@ -29,6 +29,33 @@ export const jsonCount = (f, key, min) => () => {
 };
 
 /**
+ * WHAT "THE PACKAGE EXPORTS THIS" ACTUALLY MEANS.
+ *
+ * A barrel re-exports with `export * from './input.ts'`, so a substring search for a
+ * function name inside index.ts finds nothing even when the name is squarely part of
+ * the public surface. P-008 was held false for exactly that reason while all seven
+ * parsers existed and were exported - the predicate was reading the wrong file.
+ *
+ * This follows the star re-exports one level and requires an actual export
+ * DECLARATION for every name, which is strictly more than the substring test asked:
+ * seven names instead of one, and a declaration instead of any mention.
+ */
+export const packageExports =
+  (barrel, ...names) =>
+  () => {
+    const src = read(barrel);
+    if (!src) return false;
+    const dir = barrel.slice(0, barrel.lastIndexOf('/'));
+    const bodies = [
+      src,
+      ...[...src.matchAll(/export \* from '\.\/([^']+)'/g)].map((m) => read(join(dir, m[1]))),
+    ];
+    return names.every((n) =>
+      bodies.some((b) => b.includes(`export function ${n}(`) || b.includes(`export const ${n} `)),
+    );
+  };
+
+/**
  * THE COMMITTED SCREEN SET.
  *
  * PROJECTION owns the SELECTION - "A.3 items 1 to 3 plus opening cash" after the
@@ -211,7 +238,16 @@ export const TASKS = [
     title: 'Build the seven input parsers TRACEABILITY already names',
     why: 'V-7: TRACEABILITY names parseSalesEntry and six others, none exists. No entry screen works without them.',
     blockedBy: [],
-    predicate: contains('packages/formula-engine/src/index.ts', 'parseSalesEntry'),
+    predicate: packageExports(
+      'packages/formula-engine/src/index.ts',
+      'parseSalesEntry',
+      'parsePurchaseEntry',
+      'parseExpenseEntry',
+      'parseCollectionEntry',
+      'parsePartyPaymentEntry',
+      'parseWithdrawalEntry',
+      'captureCountedCash',
+    ),
     benchmarks: ['B39'],
     estimate: { iterations: 2, made: 29 },
   },
