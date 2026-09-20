@@ -8,6 +8,24 @@
  * and doing it here would make this module impossible to import in a test.
  */
 export { App, type AppProps } from './app/App.tsx';
+export {
+  Host,
+  fetchTransport,
+  secureTokenStore,
+  type HostOptions,
+  type SecureStorage,
+  type FetchLike,
+  type SyncOutcome,
+} from './host.tsx';
+export {
+  ApiClient,
+  ApiError,
+  Offline,
+  Unauthenticated,
+  type Transport,
+  type TokenStore,
+  type SessionTokens,
+} from './net/client.ts';
 export { Session, type SessionState, type SessionOptions, type ScreenId } from './app/session.tsx';
 export { Store, memoryPort, type StoreState, type PersistencePort } from './store/index.ts';
 export { tokens, type Mode as DisplayMode } from './theme/tokens.ts';

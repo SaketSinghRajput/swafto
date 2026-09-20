@@ -484,6 +484,7 @@ DLT registration and a live privacy policy cannot be compressed by building fast
 | H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration and the `npm run lint` script, which cannot run without it. The money rule itself already runs programmatically inside `check:money`, which CI runs |
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 | H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
+| H14 | **An Android build environment and a release signing key** | 2 hours | The APK, and with it B14-B19, B24 and the APK half of B35 |
 
 ---
 
@@ -522,7 +523,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 2fbfd2c828d5a581  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
-059e6c297859c6e6  humanActions  docs/handover/HUMAN-ACTIONS.md
+597c7f77729c8b86  humanActions  docs/handover/HUMAN-ACTIONS.md
 73e499eeec4d90dd  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md

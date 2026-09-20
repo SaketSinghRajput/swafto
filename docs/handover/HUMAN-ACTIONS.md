@@ -23,6 +23,7 @@ If yes, it does not belong here.
 | H11 | Allow `eslint.config.mjs` | 2 minutes | Editor integration and the `npm run lint` script, which cannot run without it. The money rule itself already runs programmatically inside `check:money`, which CI runs |
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 | H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
+| H14 | **An Android build environment and a release signing key** | 2 hours | The APK, and with it B14-B19, B24 and the APK half of B35 |
 
 ---
 
@@ -240,12 +241,53 @@ code. They are resolved in `DECISIONS-AUTONOMOUS.md`:
 |---|---|
 | BI6, the cut-off sixth output | **AD-001** - decided by procedure: Credit Concentration |
 | Privacy policy and terms text | **AD-005** - written, three languages, marked unreviewed |
-| The account-deletion web page | Built in `/web`. Only *publishing* is human (H5) |
+| The account-deletion web page | Built at `apps/web/delete-account/index.html`, with its own routes, SMS template and tests. Only *publishing* it at the URL is human (H5) |
 | Party-data fiduciary analysis | **AD-006** - Processor, with hedges built either way |
 | Retention period | **AD-007** - 3 years inactive, with two warnings |
 | Cloudflare residency question | **AD-008** - conservative reading, DNS-only |
 | Pipeline proof without AWS | LocalStack + docker-compose + a locally executed rollback |
 | Performance without a phone | **AD-009** - constrained AVD, limitations recorded |
+
+---
+
+## H14 · An Android build environment and a release signing key
+
+**Why no agent can do it.** Three things, none of which is a file in this repository:
+a **JDK**, the **Android SDK** (licence-accepted, which is an interactive agreement),
+and a **release keystore** - a private key that must be generated on a machine a human
+controls and never committed. This machine has none of them: `java`, `adb` and
+`ANDROID_HOME` are all absent, checked rather than assumed.
+
+**What already exists, so that this is a short job rather than a project.** The
+JavaScript side is complete and tested:
+
+- `apps/mobile/src/host.tsx` - the composition root. Store, session and API client
+  wired together, with `fetch`, secure storage, the clock and the id source injected.
+- `apps/mobile/src/net/client.ts` - every route the app uses, with refresh, offline
+  and rejection handling.
+- `apps/mobile/src/index.tsx` - the package entry, exporting all of it.
+
+**What to do.**
+1. Install a JDK 17 and the Android SDK; accept the SDK licences.
+2. Generate the native project with the React Native CLI at `apps/mobile`
+   (`npx @react-native-community/cli init` against the existing package, or copy the
+   template's `android/` directory). The version to match is in
+   `apps/mobile/package.json`.
+3. Write `index.js` at `apps/mobile`:
+   ```js
+   import { AppRegistry } from 'react-native';
+   import { Host, App } from './src/index.tsx';
+   // Build the Host with a real fetch, Keystore-backed storage and a UUID source,
+   // then register a component that renders <App session={host.session} />.
+   ```
+4. Generate a release keystore, store it outside the repository, and put its password
+   in CI as a secret. **Never in git** - `check:secrets` will fail the build if it is.
+5. Run `DEVICE-CHECKLIST.md` (H8). B14-B19 cannot be measured any other way, and this
+   build has refused to claim them from a browser or an emulator.
+
+**What it unblocks.** B24 (APK size) and the APK half of B35 are bounded from below
+today and cannot be met until an APK exists - which `BENCHMARKS-RESULTS.md` already
+states rather than rounding up.
 
 ---
 
