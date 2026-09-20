@@ -40,10 +40,10 @@ if (offenders.length) failures.push(`${TOKEN} still appears in: ${offenders.join
 else ok.push(`no "${TOKEN}" status anywhere`);
 
 // 2 · Every autonomous decision must carry a reversal trigger.
-if (!existsSync('DECISIONS-AUTONOMOUS.md')) {
+if (!existsSync('docs/governance/DECISIONS-AUTONOMOUS.md')) {
   failures.push('DECISIONS-AUTONOMOUS.md is missing');
 } else {
-  const text = read('DECISIONS-AUTONOMOUS.md');
+  const text = read('docs/governance/DECISIONS-AUTONOMOUS.md');
   const blocks = text.split(/^## /m).slice(1).filter((b) => b.startsWith('AD-'));
   const missing = blocks
     .filter((b) => !/REVERSAL TRIGGER/.test(b))
@@ -58,9 +58,9 @@ if (!existsSync('DECISIONS-AUTONOMOUS.md')) {
 }
 
 // 3 · HUMAN-ACTIONS must exist and must not claim to block anything.
-if (!existsSync('HUMAN-ACTIONS.md')) {
+if (!existsSync('docs/handover/HUMAN-ACTIONS.md')) {
   failures.push('HUMAN-ACTIONS.md is missing');
-} else if (!/Nothing in this file blocks the build/i.test(read('HUMAN-ACTIONS.md'))) {
+} else if (!/Nothing in this file blocks the build/i.test(read('docs/handover/HUMAN-ACTIONS.md'))) {
   failures.push('HUMAN-ACTIONS.md must state that nothing in it blocks the build');
 } else {
   ok.push('HUMAN-ACTIONS.md present and non-blocking');

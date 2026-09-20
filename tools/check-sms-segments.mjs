@@ -26,7 +26,7 @@ const CODE = '482913'; // a representative 6-digit OTP
 const RETRIEVER_HASH_CHARS = 11;
 const RETRIEVER_BYTE_LIMIT = 140;
 const HEADROOM_WARN = 5;
-const MD = 'SMS-TEMPLATES.md';
+const MD = 'docs/spec/SMS-TEMPLATES.md';
 
 /* ---- GSM 03.38 ---------------------------------------------------------- */
 const GSM_BASIC =
@@ -205,8 +205,8 @@ if (process.argv.includes('--update-md')) {
 }
 
 if (process.argv.includes('--json')) {
-  writeFileSync('.sms-segments.json', JSON.stringify(table, null, 2) + '\n');
-  console.log('  wrote .sms-segments.json');
+  writeFileSync('reports/sms-segments.json', JSON.stringify(table, null, 2) + '\n');
+  console.log('  wrote reports/sms-segments.json');
 }
 
 if (warnings.length) {

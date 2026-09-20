@@ -360,7 +360,10 @@ describe('B.2 · rate limits are persistent and shared', () => {
   maybe()('the code table and the audit table agree', () => {
     // The executable copy must not drift from the ruling it transcribes, so the
     // numbers are read back out of SECURITY-AUDIT.md and compared.
-    const md = readFileSync(new URL('../../../SECURITY-AUDIT.md', import.meta.url), 'utf8');
+    const md = readFileSync(
+      new URL('../../../docs/audits/SECURITY-AUDIT.md', import.meta.url),
+      'utf8',
+    );
     // Compared as whole table rows with whitespace collapsed - simpler to read than
     // a regex, and it fails loudly if the audit table is reformatted, which is the
     // moment somebody is most likely to change a number by accident.

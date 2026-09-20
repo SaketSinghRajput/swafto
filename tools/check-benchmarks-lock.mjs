@@ -5,20 +5,20 @@ import { createHash } from 'node:crypto';
 
 // Hash the bytes with CRLF normalised, so a line-ending change on Windows is not
 // mistaken for someone editing a threshold.
-const text = readFileSync('BENCHMARKS.md', 'utf8').replace(/\r\n/g, '\n');
+const text = readFileSync('docs/benchmarks/BENCHMARKS.md', 'utf8').replace(/\r\n/g, '\n');
 const hash = createHash('sha256').update(text, 'utf8').digest('hex');
 
 if (process.argv.includes('--write')) {
-  writeFileSync('benchmarks.lock', hash + '\n');
+  writeFileSync('docs/benchmarks/benchmarks.lock', hash + '\n');
   console.log(`benchmarks.lock written: ${hash}`);
   process.exit(0);
 }
 
-if (!existsSync('benchmarks.lock')) {
+if (!existsSync('docs/benchmarks/benchmarks.lock')) {
   console.error('benchmarks.lock is missing. BENCHMARKS.md is unprotected.');
   process.exit(1);
 }
-const locked = readFileSync('benchmarks.lock', 'utf8').trim();
+const locked = readFileSync('docs/benchmarks/benchmarks.lock', 'utf8').trim();
 console.log(`BENCHMARKS.md sha256 : ${hash}`);
 console.log(`benchmarks.lock      : ${locked}`);
 if (hash !== locked) {

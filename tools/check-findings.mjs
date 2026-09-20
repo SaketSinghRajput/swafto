@@ -58,8 +58,8 @@ export const FINDINGS = [
     what: 'SECURITY-AUDIT still designed around Cloudflare being in the data path, three iterations after AD-008 removed it',
     premise: 'grep for Cloudflare in SECURITY-AUDIT TB4/T4.1/T4.2 - all three described the old topology',
     fixed: all(
-      contains('SECURITY-AUDIT.md', 'TOPOLOGY CHANGED AT AD-008'),
-      absent('SECURITY-AUDIT.md', "Cloudflare's published IP ranges"),
+      contains('docs/audits/SECURITY-AUDIT.md', 'TOPOLOGY CHANGED AT AD-008'),
+      absent('docs/audits/SECURITY-AUDIT.md', "Cloudflare's published IP ranges"),
     ),
   },
   {
@@ -93,7 +93,7 @@ export const FINDINGS = [
     id: 'F-06',
     what: 'ADR-011 was never annotated as superseded, although AD-010 said it was',
     premise: 'searched TECH-DECISIONS.md for "superseded" near ADR-011 - only unrelated hits',
-    fixed: contains('TECH-DECISIONS.md', 'SUPERSEDED by BENCHMARKS.md'),
+    fixed: contains('docs/spec/TECH-DECISIONS.md', 'SUPERSEDED by BENCHMARKS.md'),
     note: 'ITS OWN FIX WAS THEN ALSO RECORDED AS APPLIED AND NEVER APPLIED, for eight iterations - git log -S"SUPERSEDED by BENCHMARKS" returned nothing until iteration 21. The fifth instance of the pattern, and the one that most directly justifies this file.',
   },
   {
@@ -120,19 +120,19 @@ export const FINDINGS = [
     premise: 'ASSERTED that its function, vectors, endpoint and screen were "all present" - NOT VERIFIED',
     withdrawn:
       'THE PREMISE WAS FALSE. apps/api/src contains no routes and apps/mobile contains no .tsx files, so the endpoint and both screens did not exist and WIP was correct. The instructed fix was ALSO recorded as applied and never applied, and the two errors cancelled into an apparent pass. The predicate below holds the repository to that reading: BI6 keeps its row while no route exists.',
-    fixed: all(contains('TRACEABILITY.md', '| BI6 |'), absent('apps/api/src/sms/port.ts', '.post(')),
+    fixed: all(contains('docs/spec/TRACEABILITY.md', '| BI6 |'), absent('apps/api/src/sms/port.ts', '.post(')),
   },
   {
     id: 'V-1',
     what: "G2's evidence command escapes its alternation so grep -E reads a literal pipe; it has never produced its recorded output",
     premise: 'ran the command as recorded: matched nothing, exit 1, against a recorded 52',
-    fixed: contains('BUILD_STATE.md', 'LITERAL pipe'),
+    fixed: contains('docs/governance/BUILD_STATE.md', 'LITERAL pipe'),
   },
   {
     id: 'V-2',
     what: 'G3 recorded "STRIDE rows: 87", which counted every table row in the file',
     premise: 'counted threat rows at the G3 commit and today - 28 both times',
-    fixed: contains('BUILD_STATE.md', 'STRIDE THREAT rows re-counted'),
+    fixed: contains('docs/governance/BUILD_STATE.md', 'STRIDE THREAT rows re-counted'),
   },
   {
     id: 'V-3',
@@ -150,7 +150,7 @@ export const FINDINGS = [
     id: 'V-5',
     what: 'BENCHMARKS-RESULTS.md, referenced by the frozen BENCHMARKS.md since iteration 6, did not exist',
     premise: 'ls BENCHMARKS-RESULTS.md -> No such file or directory',
-    fixed: fileExists('BENCHMARKS-RESULTS.md'),
+    fixed: fileExists('docs/benchmarks/BENCHMARKS-RESULTS.md'),
   },
   {
     id: 'V-6',
@@ -321,8 +321,8 @@ ${rows
   .map((r) => `**${r.id}.** ${r.note ?? r.withdrawn ?? r.open}`)
   .join('\n\n')}
 `;
-  const crlf = existsSync('FINDINGS.md') && readFileSync('FINDINGS.md', 'utf8').includes('\r\n');
-  writeFileSync('FINDINGS.md', crlf ? md.split('\n').join('\r\n') : md);
+  const crlf = existsSync('docs/governance/FINDINGS.md') && readFileSync('docs/governance/FINDINGS.md', 'utf8').includes('\r\n');
+  writeFileSync('docs/governance/FINDINGS.md', crlf ? md.split('\n').join('\r\n') : md);
   console.log('  rewrote FINDINGS.md');
 }
 

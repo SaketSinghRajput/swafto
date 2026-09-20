@@ -20,7 +20,7 @@ const read = (f) => readFileSync(f, 'utf8').split('\r\n').join('\n');
 const failures = [];
 
 /* ---- parse the markdown, which is the submission ---------------------- */
-const md = read('SMS-TEMPLATES.md');
+const md = read('docs/spec/SMS-TEMPLATES.md');
 const mdTemplates = new Map(); // "id|lang" -> text
 
 let currentId = null;

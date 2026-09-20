@@ -87,21 +87,36 @@ const RULES = [
   { name: 'OTP TTL minutes', expect: OTP_TTL_SECONDS / 60, re: /(\d+)[ -]minute TTL|Valid (\d+) min/g },
 ];
 
-const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'docs', 'INJECTIONS']);
+/**
+ * `docs` WAS IN THIS SET, and injection 21's move put every governance document
+ * inside it. This check then scanned ZERO documents and would have exited 0 for
+ * ever - precisely the quiet failure injection 21 C predicted. It was caught only by
+ * the §5.12.2 guard below that refuses to pass on an empty corpus, which is the
+ * clearest argument yet for asserting on the work done rather than on the exit code.
+ *
+ * docs/spec/source is skipped for the same reason INJECTIONS/ is: it holds the
+ * owner's original documents. They are evidence, not our prose, and they are allowed
+ * to state values that later decisions superseded.
+ */
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'INJECTIONS', 'source']);
 /**
  * BUILD_LOG is an append-only NARRATIVE: it records what a number WAS at the time -
  * "recorded as 526 until iteration 20" - and rewriting history to match the present
  * is the opposite of what it is for. The other three exist to discuss superseded and
  * measured values, so they quote numbers that are deliberately not current.
  */
-const SKIP_FILES = new Set(['BUILD_LOG.md', 'REVIEW.md', 'FINDINGS.md', 'BENCHMARKS-RESULTS.md']);
+const SKIP_FILES = new Set(['docs/governance/BUILD_LOG.md', 'docs/governance/REVIEW.md', 'docs/governance/FINDINGS.md', 'docs/benchmarks/BENCHMARKS-RESULTS.md']);
 
 function docs(dir, out = []) {
   for (const n of readdirSync(dir)) {
     if (SKIP_DIRS.has(n) || n.startsWith('.')) continue;
     const p = join(dir, n);
     if (statSync(p).isDirectory()) docs(p, out);
-    else if (n.endsWith('.md') && !SKIP_FILES.has(n)) out.push(p);
+    // Compared as a REPO-RELATIVE PATH, not a basename. The move made these entries
+    // full paths, and a basename comparison against a path silently matches nothing -
+    // which put BUILD_LOG back into the scan and produced four false disagreements
+    // about numbers it is supposed to record as history.
+    else if (n.endsWith('.md') && !SKIP_FILES.has(p.split('\\').join('/'))) out.push(p);
   }
   return out;
 }

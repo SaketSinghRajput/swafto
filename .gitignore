@@ -16,13 +16,15 @@ ios/Pods/
 .terraform/
 *.tfstate
 *.tfstate.*
-.vectors-node.json
-.vectors-hermes.json
 .hermes-bundle.js
-.sms-segments.json
 nul
 .detection-tmp.json
 
 # Stryker sandboxes: full copies of the repo. Left behind, vitest discovers them and
 # runs every test twice, and the mutation harness reads doubled counts.
 .stryker-tmp/
+
+# Generated run output. reports/mutation/ IS tracked - these are not.
+reports/vectors-node.json
+reports/vectors-hermes.json
+reports/sms-segments.json

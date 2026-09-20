@@ -6,7 +6,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 const args = Object.fromEntries(
   process.argv.slice(2).map((a) => { const [k, v] = a.replace(/^--/, '').split('='); return [k, v ?? true]; }),
 );
-const outPath = args.out ?? '.vectors-hermes.json';
+const outPath = args.out ?? 'reports/vectors-hermes.json';
 
 const HERMES = process.platform === 'win32'
   ? 'node_modules/hermes-engine-cli/win64-bin/hermes.exe'

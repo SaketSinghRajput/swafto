@@ -47,7 +47,7 @@ const RESERVED = new Set(['BI5']);
 
 /* ---- parse the matrix --------------------------------------------------- */
 const rows = new Map();
-for (const line of read('TRACEABILITY.md').split('\n')) {
+for (const line of read('docs/spec/TRACEABILITY.md').split('\n')) {
   const m = /^\|\s*\*{0,2}([A-Z]{1,2}\d+)\*{0,2}\s*\|(.+)\|\s*$/.exec(line.trim());
   if (!m) continue;
   const cells = m[2].split('|').map((c) => c.trim());

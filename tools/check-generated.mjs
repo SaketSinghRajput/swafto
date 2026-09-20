@@ -14,15 +14,15 @@ import { execFileSync } from 'node:child_process';
 const GENERATED = [
   { file: 'packages/formula-engine/vectors.json', by: ['--experimental-strip-types', 'tools/author-vectors.ts'] },
   { file: 'packages/formula-engine/rejects.json', by: ['--experimental-strip-types', 'tools/author-rejects.ts'] },
-  { file: 'SMS-TEMPLATES.md', by: ['tools/check-sms-segments.mjs', '--update-md'] },
+  { file: 'docs/spec/SMS-TEMPLATES.md', by: ['tools/check-sms-segments.mjs', '--update-md'] },
   { file: 'packages/schema/migrations/0001_init.sqlite.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
   { file: 'packages/schema/migrations/0001_init.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
   // §5.12: the verifier inventory is generated from the same data the check reads,
   // so the table cannot drift from the thing it documents.
-  { file: 'VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
-  { file: 'BENCHMARKS-RESULTS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
-  { file: 'BUILD_STATE.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
-  { file: 'FINDINGS.md', by: ['tools/check-findings.mjs', '--update-md'] },
+  { file: 'docs/governance/VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
+  { file: 'docs/benchmarks/BENCHMARKS-RESULTS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
+  { file: 'docs/governance/BUILD_STATE.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
+  { file: 'docs/governance/FINDINGS.md', by: ['tools/check-findings.mjs', '--update-md'] },
 ];
 
 const before = new Map(GENERATED.map((g) => [g.file, readFileSync(g.file, 'utf8')]));

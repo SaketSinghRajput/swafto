@@ -9,7 +9,7 @@ const args = Object.fromEntries(
     return [k, v ?? true];
   }),
 );
-const outPath = args.out ?? '.vectors-node.json';
+const outPath = args.out ?? 'reports/vectors-node.json';
 
 const file = JSON.parse(readFileSync('packages/formula-engine/vectors.json', 'utf8'));
 const results = evaluateAll(file);

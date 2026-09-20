@@ -48,7 +48,7 @@ export const VERIFIERS = [
       'No forbidden status token; every AD carries a reversal trigger; no stubs in shipped paths; one money-formatting path; verbatim injections unedited.',
     benchmarks: ['B40'],
     defect: {
-      file: 'REVIEW.md',
+      file: 'docs/governance/REVIEW.md',
       find: '# REVIEW',
       // Assembled, not spelled. Writing the token out would trip the very check
       // this plants it against - the same knot check-governance and check-tooling
@@ -63,7 +63,7 @@ export const VERIFIERS = [
     claims: 'BENCHMARKS.md matches its committed SHA-256, so no threshold has been edited.',
     benchmarks: [],
     defect: {
-      file: 'BENCHMARKS.md',
+      file: 'docs/benchmarks/BENCHMARKS.md',
       find: '| B1 | Golden vectors | >= 70 vectors, 100% pass |',
       replace: '| B1 | Golden vectors | >= 60 vectors, 100% pass |',
     },
@@ -76,7 +76,7 @@ export const VERIFIERS = [
       'No sentence asserts both a resolved and an unresolved status; no dangling AD/B/G/H id.',
     benchmarks: [],
     defect: {
-      file: 'REVIEW.md',
+      file: 'docs/governance/REVIEW.md',
       find: '# REVIEW',
       replace: '# REVIEW\n\nR-999 is CLOSED and still needs counsel.\n',
     },
@@ -255,7 +255,7 @@ export const VERIFIERS = [
       'Every value that lives in more than one place has ONE home in @swafto/values. No document states a number that disagrees with it, no code keeps its own literal, and every externally-sourced value carries its authority and date.',
     benchmarks: [],
     defect: {
-      file: 'DEVICE-CHECKLIST.md',
+      file: 'docs/handover/DEVICE-CHECKLIST.md',
       find: '## B · Legibility',
       replace: 'Touch targets are at least 48dp.\n\n## B · Legibility',
     },
@@ -268,7 +268,7 @@ export const VERIFIERS = [
       '§5.14 - every adversary finding’s status is DERIVED from a predicate against the repository, never asserted. A finding that does not verify as fixed and carries no explanation fails the build.',
     benchmarks: [],
     defect: {
-      file: 'TECH-DECISIONS.md',
+      file: 'docs/spec/TECH-DECISIONS.md',
       find: 'SUPERSEDED by BENCHMARKS.md',
       replace: 'superseded-ish by BENCHMARKS.md',
     },
@@ -281,7 +281,7 @@ export const VERIFIERS = [
       'No AWS key, private key block, provider token, JWT, remote database password or hard-coded credential anywhere in the repository (B35, repo half).',
     benchmarks: ['B35'],
     defect: {
-      file: 'REVIEW.md',
+      file: 'docs/governance/REVIEW.md',
       find: '# REVIEW',
       // Assembled, like the forbidden-status plant above: spelling a real AWS key
       // prefix here would make this file trip the very scanner it is planting for.
@@ -296,7 +296,7 @@ export const VERIFIERS = [
       'Every feature ID has a row with no empty cell (B13); every engine function and vector NAMED in the matrix actually exists; no row is DONE while any artifact it names is absent (B39).',
     benchmarks: ['B13', 'B39'],
     defect: {
-      file: 'TRACEABILITY.md',
+      file: 'docs/spec/TRACEABILITY.md',
       find: '| BI6 | `creditConcentrationTrend` (gate 14)',
       replace: '| BI6 | `creditConcentrationTrendXX` (gate 14)',
     },
@@ -572,7 +572,7 @@ for (const v of VERIFIERS) {
 
 /* 2 · every benchmark must be accounted for (§5.12.3) */
 const declared = Object.keys(BENCHMARK_VERIFIERS);
-const inFile = [...read('BENCHMARKS.md').matchAll(/^\|\s*(B\d+)\s*\|/gm)].map((x) => x[1]);
+const inFile = [...read('docs/benchmarks/BENCHMARKS.md').matchAll(/^\|\s*(B\d+)\s*\|/gm)].map((x) => x[1]);
 for (const b of inFile) {
   if (!declared.includes(b)) {
     failures.push(`${b} is in BENCHMARKS.md but absent from the verifier map (§5.12.3)`);
@@ -610,7 +610,7 @@ for (const b of declared) {
 }
 
 /* 3 · every gate marked PASS must cite something that still runs (§5.12.4) */
-const gateRows = [...read('BUILD_STATE.md').matchAll(/^\|\s*(G\d+)\s*\|([^|]*)\|([^|]*)\|(.*)$/gm)];
+const gateRows = [...read('docs/governance/BUILD_STATE.md').matchAll(/^\|\s*(G\d+)\s*\|([^|]*)\|([^|]*)\|(.*)$/gm)];
 let passGates = 0;
 for (const [, gid, , status, evidence] of gateRows) {
   const isPass = /PASS/.test(status);
@@ -655,26 +655,26 @@ const instrumented = declared.length - unmeasured.length;
  */
 const ITERATION = Math.max(
   0,
-  ...[...read('BUILD_LOG.md').matchAll(/^## .*·\s*Iteration (\d+)/gm)].map((m) => Number(m[1])),
+  ...[...read('docs/governance/BUILD_LOG.md').matchAll(/^## .*·\s*Iteration (\d+)/gm)].map((m) => Number(m[1])),
 );
 const STALE_AFTER = 5;
 
 /** Each entry is a JUDGEMENT: not derivable, and therefore perishable. */
 const JUDGEMENTS = [
-  { where: 'PROJECTION.md', what: 'the re-cut at checkpoint 1 and the 14-iteration plan', made: 26 },
+  { where: 'docs/governance/PROJECTION.md', what: 'the re-cut at checkpoint 1 and the 14-iteration plan', made: 26 },
   {
-    where: 'PROJECTION.md',
+    where: 'docs/governance/PROJECTION.md',
     what: 'checkpoint 1 FAILED at 26; checkpoint 2 at 29 is unreachable, earliest is 32',
     made: 26,
   },
-  { where: 'PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
-  { where: 'PROJECTION.md', what: 'committed = A.3 items 1-3; items 4-5 moved to stretch', made: 26 },
-  { where: 'DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },
-  { where: 'DECISIONS-AUTONOMOUS.md', what: "AD-018's reversal trigger", made: 21 },
-  { where: 'DECISIONS-AUTONOMOUS.md', what: "AD-019's three reversal triggers", made: 22 },
-  { where: 'BENCHMARKS-RESULTS.md', what: "B1's attempts narrative - close it at G7", made: 19 },
+  { where: 'docs/governance/PROJECTION.md', what: 'the ranked cut-list, cheapest harm first', made: 21 },
+  { where: 'docs/governance/PROJECTION.md', what: 'committed = A.3 items 1-3; items 4-5 moved to stretch', made: 26 },
+  { where: 'docs/handover/DEFERRED.md', what: 'the cost-to-build figure on each of the four cuts', made: 21 },
+  { where: 'docs/governance/DECISIONS-AUTONOMOUS.md', what: "AD-018's reversal trigger", made: 21 },
+  { where: 'docs/governance/DECISIONS-AUTONOMOUS.md', what: "AD-019's three reversal triggers", made: 22 },
+  { where: 'docs/benchmarks/BENCHMARKS-RESULTS.md', what: "B1's attempts narrative - close it at G7", made: 19 },
   {
-    where: 'BENCHMARKS-RESULTS.md',
+    where: 'docs/benchmarks/BENCHMARKS-RESULTS.md',
     what: "B3's attempts narrative - the gap has THREE shapes, the third being bodies below early returns",
     made: 25,
   },
@@ -684,9 +684,9 @@ const JUDGEMENTS = [
    * status that is true because a field says so. It stays stale until the severities
    * are actually re-derived, and the warning is the mechanism working.
    */
-  { where: 'FINDINGS.md', what: 'the severity implied by each finding’s wording', made: 13 },
+  { where: 'docs/governance/FINDINGS.md', what: 'the severity implied by each finding’s wording', made: 13 },
   {
-    where: 'BENCHMARKS-RESULTS.md',
+    where: 'docs/benchmarks/BENCHMARKS-RESULTS.md',
     what: 'that the twelve money mutants are ALL killed - re-adjudicate whenever money.ts or its tests change',
     made: 24,
   },
@@ -695,7 +695,7 @@ const JUDGEMENTS = [
     what: 'that the two DB-bound specs cannot observe money.ts, which is what makes excluding them safe',
     made: 24,
   },
-  { where: 'REVIEW.md', what: "the A12 audit's two 'partly' verdicts and their owed plants", made: 20 },
+  { where: 'docs/governance/REVIEW.md', what: "the A12 audit's two 'partly' verdicts and their owed plants", made: 20 },
 ];
 
 const stale = JUDGEMENTS.filter((j) => ITERATION - j.made > STALE_AFTER);
@@ -727,7 +727,7 @@ if (ITERATION >= 30) {
  * own verifier; this covers the counts that live in prose, which is exactly where
  * they rot.
  */
-const buildState = read('BUILD_STATE.md');
+const buildState = read('docs/governance/BUILD_STATE.md');
 const rowOf = (gid) => buildState.split('\n').find((l) => l.startsWith(`| ${gid} |`)) ?? '';
 const countMatches = (file, re) => (read(file).match(re) ?? []).length;
 
@@ -735,25 +735,25 @@ const DERIVATIONS = [
   {
     gate: 'G0',
     what: 'lines in SPEC-DIGEST.md',
-    derive: () => read('SPEC-DIGEST.md').split('\n').length - 1,
+    derive: () => read('docs/spec/SPEC-DIGEST.md').split('\n').length - 1,
   },
   {
     gate: 'G1',
     what: 'ADR count in TECH-DECISIONS.md',
-    derive: () => countMatches('TECH-DECISIONS.md', /^## ADR-/gm),
+    derive: () => countMatches('docs/spec/TECH-DECISIONS.md', /^## ADR-/gm),
   },
   {
     gate: 'G2',
     what: 'ACTION-REQUIRED or resolved-autonomously lines in LEGAL-AUDIT.md',
     derive: () =>
-      read('LEGAL-AUDIT.md')
+      read('docs/audits/LEGAL-AUDIT.md')
         .split('\n')
         .filter((l) => /ACTION-REQUIRED|resolved autonomously/.test(l)).length,
   },
   {
     gate: 'G3',
     what: 'STRIDE threat rows in SECURITY-AUDIT.md',
-    derive: () => countMatches('SECURITY-AUDIT.md', /^\| T\d+\.\d+/gm),
+    derive: () => countMatches('docs/audits/SECURITY-AUDIT.md', /^\| T\d+\.\d+/gm),
   },
   {
     gate: 'G5',
@@ -820,8 +820,8 @@ console.log('');
  * from that table has not been measured and is neither met nor missed.
  */
 const measured = new Map();
-if (existsSync('BENCHMARKS-RESULTS.md')) {
-  const table = read('BENCHMARKS-RESULTS.md').split('## Measured')[1]?.split('\n---')[0] ?? '';
+if (existsSync('docs/benchmarks/BENCHMARKS-RESULTS.md')) {
+  const table = read('docs/benchmarks/BENCHMARKS-RESULTS.md').split('## Measured')[1]?.split('\n---')[0] ?? '';
   for (const m of table.matchAll(/^\|\s*(B\d+)\b[^|]*\|[^|]*\|([^|]*)\|/gm)) {
     if (/MISSED/.test(m[2])) measured.set(m[1], 'MISSED');
     else if (/\bMET\b/.test(m[2])) measured.set(m[1], 'MET');
@@ -922,8 +922,8 @@ ${bmRows}
    * one file a reader opens for results carries it, and it still cannot drift from
    * the tool that computes it.
    */
-  if (existsSync('BENCHMARKS-RESULTS.md')) {
-    const rRaw = readFileSync('BENCHMARKS-RESULTS.md', 'utf8');
+  if (existsSync('docs/benchmarks/BENCHMARKS-RESULTS.md')) {
+    const rRaw = readFileSync('docs/benchmarks/BENCHMARKS-RESULTS.md', 'utf8');
     const rCrlf = rRaw.includes('\r\n');
     const body = rRaw.split('\r\n').join('\n');
     const START = '<!-- PARTITION:START';
@@ -960,7 +960,7 @@ ${bmRows}
         END,
       ].join('\n');
       const out = body.slice(0, s) + table + body.slice(e + END.length);
-      writeFileSync('BENCHMARKS-RESULTS.md', rCrlf ? out.split('\n').join('\r\n') : out);
+      writeFileSync('docs/benchmarks/BENCHMARKS-RESULTS.md', rCrlf ? out.split('\n').join('\r\n') : out);
       console.log('  rewrote the partition in BENCHMARKS-RESULTS.md');
     }
   }
@@ -978,8 +978,8 @@ ${bmRows}
    * §5.13 A.5 calls these the two most important numbers in the build. They are now
    * the two that nobody can mistype.
    */
-  if (existsSync('BUILD_STATE.md')) {
-    const sRaw = readFileSync('BUILD_STATE.md', 'utf8');
+  if (existsSync('docs/governance/BUILD_STATE.md')) {
+    const sRaw = readFileSync('docs/governance/BUILD_STATE.md', 'utf8');
     const sCrlf = sRaw.includes('\r\n');
     const body = sRaw.split('\r\n').join('\n');
     const START = '<!-- TWONUMBERS:START';
@@ -1007,14 +1007,14 @@ ${bmRows}
         END,
       ].join('\n');
       const out = body.slice(0, a) + block + body.slice(b + END.length);
-      writeFileSync('BUILD_STATE.md', sCrlf ? out.split('\n').join('\r\n') : out);
+      writeFileSync('docs/governance/BUILD_STATE.md', sCrlf ? out.split('\n').join('\r\n') : out);
       console.log('  rewrote the two numbers in BUILD_STATE.md');
     }
   }
 
-  const existing = existsSync('VERIFIERS.md') ? readFileSync('VERIFIERS.md', 'utf8') : '';
+  const existing = existsSync('docs/governance/VERIFIERS.md') ? readFileSync('docs/governance/VERIFIERS.md', 'utf8') : '';
   const crlf = existing.includes('\r\n');
-  writeFileSync('VERIFIERS.md', crlf ? md.split('\n').join('\r\n') : md);
+  writeFileSync('docs/governance/VERIFIERS.md', crlf ? md.split('\n').join('\r\n') : md);
   console.log('  rewrote VERIFIERS.md from the inventory');
 }
 

@@ -20,7 +20,21 @@ import { isVerbatim } from './verbatim.mjs';
 
 // `docs/` holds extracted third-party specification text we did not author; its
 // wording is evidence, not our prose, and must not be edited to satisfy a linter.
-const SKIP = new Set(['node_modules', '.git', 'dist', 'coverage', 'docs']);
+/**
+ * `docs` WAS HERE, and injection 21's move put every document inside it. This check
+ * then scanned ONE file instead of nineteen and EXITED 0 - 233 sentences where the
+ * previous run read 9961.
+ *
+ * Nothing failed. It found no contradictions because it was looking at almost
+ * nothing: the quiet failure injection 21 C.4 exists to catch, found only by
+ * comparing the COUNT before and after rather than the exit code. check-registry
+ * survived the same move solely because it refuses to pass on an empty corpus. This
+ * one had no such guard, so it gets one below.
+ *
+ * `source` is skipped for the reason INJECTIONS/ is: the owner's original documents
+ * are evidence, not our prose, and §5.6 forbids editing them to satisfy a checker.
+ */
+const SKIP = new Set(['node_modules', '.git', 'dist', 'coverage', 'source']);
 
 function read(f) {
   return readFileSync(f, 'utf8').split('\r\n').join('\n');
@@ -56,6 +70,24 @@ const failures = [];
 const files = mdFiles('.').filter((f) => !isVerbatim(f));
 const skipped = mdFiles('.').filter(isVerbatim).length;
 
+/**
+ * §5.12.2 - ASSERT ON THE WORK DONE, NOT ON THE EXIT CODE.
+ *
+ * This floor is not decoration. Injection 21's move put every document under `docs/`,
+ * which this walker was skipping, and the check quietly dropped from 19 files to 1
+ * and still exited 0. The floor is deliberately well below the real corpus (19 today)
+ * so it catches a collapse rather than policing a number.
+ */
+const MIN_DOCS = 10;
+if (files.length < MIN_DOCS) {
+  console.error(
+    `x    scanned only ${files.length} documents, expected at least ${MIN_DOCS}. A prose ` +
+      'check over nothing finds no contradictions and passes for ever. Something ' +
+      'moved out from under this walker.',
+  );
+  process.exit(1);
+}
+
 /* ---- 1 · contradictory sentences -------------------------------------- */
 let sentencesScanned = 0;
 for (const f of files) {
@@ -84,17 +116,17 @@ for (const f of files) {
 /* ---- 2 · dangling IDs -------------------------------------------------- */
 const defined = { AD: new Set(), B: new Set(), G: new Set(), H: new Set() };
 
-if (existsSync('DECISIONS-AUTONOMOUS.md')) {
-  for (const m of read('DECISIONS-AUTONOMOUS.md').matchAll(/^## (AD-\d+)/gm)) defined.AD.add(m[1]);
+if (existsSync('docs/governance/DECISIONS-AUTONOMOUS.md')) {
+  for (const m of read('docs/governance/DECISIONS-AUTONOMOUS.md').matchAll(/^## (AD-\d+)/gm)) defined.AD.add(m[1]);
 }
-if (existsSync('BENCHMARKS.md')) {
-  for (const m of read('BENCHMARKS.md').matchAll(/^\|\s*(B\d+)\s*\|/gm)) defined.B.add(m[1]);
+if (existsSync('docs/benchmarks/BENCHMARKS.md')) {
+  for (const m of read('docs/benchmarks/BENCHMARKS.md').matchAll(/^\|\s*(B\d+)\s*\|/gm)) defined.B.add(m[1]);
 }
-if (existsSync('BUILD_STATE.md')) {
-  for (const m of read('BUILD_STATE.md').matchAll(/^\|\s*(G\d+)\s*\|/gm)) defined.G.add(m[1]);
+if (existsSync('docs/governance/BUILD_STATE.md')) {
+  for (const m of read('docs/governance/BUILD_STATE.md').matchAll(/^\|\s*(G\d+)\s*\|/gm)) defined.G.add(m[1]);
 }
-if (existsSync('HUMAN-ACTIONS.md')) {
-  for (const m of read('HUMAN-ACTIONS.md').matchAll(/^\|\s*(H\d+)\s*\|/gm)) defined.H.add(m[1]);
+if (existsSync('docs/handover/HUMAN-ACTIONS.md')) {
+  for (const m of read('docs/handover/HUMAN-ACTIONS.md').matchAll(/^\|\s*(H\d+)\s*\|/gm)) defined.H.add(m[1]);
 }
 
 const dangling = new Map();
