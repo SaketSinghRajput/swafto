@@ -36,6 +36,7 @@ import {
 } from '@swafto/formula-engine';
 import type { AppDeps } from '../app.ts';
 import { shopOf } from '../app.ts';
+import { EXPORT_DISCLAIMER } from '@swafto/values';
 import type { Repo } from '../db/port.ts';
 
 /**
@@ -227,9 +228,7 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
        * must not be able to mistake it for a tax document, and the words
        * "invoice", "return" and "filing" never appear in it.
        */
-      notice:
-        'A record of entries made in this shop book. Not a tax document and not ' +
-        'prepared for any government submission.',
+      notice: EXPORT_DISCLAIMER,
       generatedAt: deps.now(),
     });
   });

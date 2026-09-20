@@ -94,6 +94,24 @@ export const OTP_LIMITS = {
 export const DELETION_GRACE_DAYS = 30;
 
 /**
+ * L-15 · WHAT EVERY EXPORTED FILE MUST SAY IT IS NOT.
+ *
+ * LEGAL-AUDIT §7: the app produces no tax invoice and makes no tax
+ * computation, and a shopkeeper handed a file full of figures may reasonably
+ * assume otherwise - or his accountant may. The audit drafts the sentence and
+ * requires it on the export screen AND in the header of every exported file.
+ *
+ * HERE, BECAUSE "EVERY" IS THE HARD PART. The first version of this lived as a
+ * string literal inside one export route, and the OTHER export - the DPDP
+ * data download, which is the one a person is most likely to forward to
+ * somebody - carried nothing at all. One definition, and a test that walks the
+ * routes, is the only shape in which "every" stays true.
+ */
+export const EXPORT_DISCLAIMER =
+  'A record of entries made in this shop book. Not a tax document and not ' +
+  'prepared for any government submission.';
+
+/**
  * WHICH PRIVACY NOTICE A CONSENT WAS GIVEN AGAINST.
  *
  * A consent record that does not name the notice cannot be honoured once the

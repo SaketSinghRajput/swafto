@@ -22,7 +22,7 @@ import { StubSmsPort } from '../src/sms/stub.ts';
 import { NOTICE_VERSION } from '../src/dpdp/routes.ts';
 import { mintToken } from '../src/auth/tokens.ts';
 import { purgeDue } from '../src/jobs/purge-due.ts';
-import { DELETION_GRACE_DAYS } from '@swafto/values';
+import { DELETION_GRACE_DAYS, EXPORT_DISCLAIMER } from '@swafto/values';
 import {
   canonicalInput,
   CANONICAL_PARTIES,
@@ -1096,6 +1096,40 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
     expect(theirs.statusCode).toBe(404);
     expect(nobody.statusCode).toBe(404);
     expect(theirs.body).toBe(nobody.body);
+  });
+
+  it('L-15 · EVERY export says what it is not, and "every" is checked', async () => {
+    /*
+     * The audit says the disclaimer goes in the export screen AND in every
+     * exported file. It was in one of the two exports. The other - the DPDP
+     * data download, the one a person is most likely to forward to an
+     * accountant - carried nothing, because "every" was a habit rather than a
+     * check. This walks the exports.
+     */
+    const s = await signIn(h);
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push',
+      ...jsonAuth(s.accessToken!)(pushBatch(canonicalInput(), CANONICAL_DATE)),
+    });
+
+    const exports = [
+      '/v1/me/export',
+      '/v1/parties/' + asUuid(CANONICAL_PARTIES[0]!.id) + '/export',
+    ];
+
+    for (const url of exports) {
+      const res = await h.app.inject({ method: 'GET', url, headers: auth(s.accessToken!) });
+      expect(res.statusCode, url).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.notice, url).toBe(EXPORT_DISCLAIMER);
+      // And L-16: the forbidden words appear nowhere in what is handed over.
+      for (const forbidden of ['invoice', 'GST return', 'filing']) {
+        expect(res.body.toLowerCase(), url + ' / ' + forbidden).not.toContain(
+          forbidden.toLowerCase(),
+        );
+      }
+    }
   });
 
   it('names a grievance officer and a number of days', async () => {

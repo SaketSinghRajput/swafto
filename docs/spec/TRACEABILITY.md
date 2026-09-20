@@ -100,7 +100,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | L-12 | Data Safety form word-identical to policy | `docs/handover/DATA-SAFETY.md`, generated from the notice; `apps/web/test/legal.spec.ts` | Eng | WIP - derived; entering it in the Console is H7 |
 | L-13 | Public web deletion page | `apps/web/delete-account/index.html`, `POST /v1/deletion/request`, `POST /v1/deletion/confirm`, `otp_account_deletion` | Eng | WIP - built and checked; the URL itself needs hosting |
 | L-14 | POST_NOTIFICATIONS primer after first close | Manifest must not declare it; the primer returns with the inbox (DEFERRED) | Eng | N/A-V1 - no notifications are requested |
-| L-15 | GST disclaimer in app copy and exports | Export screen + file header | Eng | TODO |
+| L-15 | GST disclaimer in app copy and exports | `EXPORT_DISCLAIMER` on both export routes, with a test that walks them | Eng | WIP - every export carries it; the export screen is deferred |
 | L-16 | Export naming rules enforced | Copy + i18n key audit | Eng | TODO |
 | L-17 | Privacy policy drafted, reviewed, live | `apps/web/legal/privacy.html` | Eng | WIP - written and checked against the notice; unreviewed (H9), not yet live (H5) |
 | L-18 | Terms live; liability vs accuracy promise | `apps/web/legal/terms.html` | Eng | WIP - written; the arithmetic promise is kept and tested, unreviewed (H9) |

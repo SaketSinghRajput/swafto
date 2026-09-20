@@ -35,7 +35,7 @@ import { newId, hashOtp, mintOtp } from '../auth/tokens.ts';
 import { OTP_LIMITS, OTP_TTL_SECONDS, OTP_DIGITS } from '../rate-limit/limits.ts';
 import { PRIVACY_NOTICE_VERSION as NOTICE_VERSION } from '@swafto/values';
 import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
-import { DELETION_GRACE_DAYS } from '@swafto/values';
+import { DELETION_GRACE_DAYS, EXPORT_DISCLAIMER } from '@swafto/values';
 
 /** When a deletion requested at `at` actually happens. One place, both routes. */
 const purgeDueAt = (at: string): string =>
@@ -218,7 +218,19 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
     return reply
       .code(200)
       .header('Content-Disposition', 'attachment; filename="swafto-my-data.json"')
-      .send({ generatedAt: deps.now(), noticeVersion: NOTICE_VERSION, data });
+      .send({
+        generatedAt: deps.now(),
+        noticeVersion: NOTICE_VERSION,
+        /*
+         * L-15. This is a DOWNLOADED FILE full of figures, and it is the one a
+         * person is most likely to forward to an accountant - and it carried
+         * no disclaimer at all while the party export did. "Every exported
+         * file" is only true if somebody checks every export, which is now a
+         * test rather than a habit.
+         */
+        notice: EXPORT_DISCLAIMER,
+        data,
+      });
   });
 
   /**
