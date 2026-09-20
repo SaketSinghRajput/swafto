@@ -787,3 +787,45 @@ in which case B36 is vacuous rather than met, and must say so.
 
 None. The blocked-on-a-human status is abolished entirely; anything genuinely
 impossible in software is in `HUMAN-ACTIONS.md` and blocks nothing in this loop.
+
+## AD-020 · AD-018 is REVERSED: the server is built, and the ceiling is lifted
+
+**Not an autonomous decision. An owner instruction, recorded here because it fires a
+reversal trigger I wrote and must not quietly ignore.**
+
+AD-018 deferred the whole server block - the OTP service, the sync API, the read API -
+on the argument that an offline app which closes a day is the product, and a backend
+with no product on top of it is not. Its reversal trigger read: *if sync matters more
+than the day close, one line reverses this.*
+
+The owner has now defined done as: **every feature, all APIs and the pipeline working,
+all security checks, and compliance with the Indian regulatory norms that apply to an
+app holding customer data and transaction records.** That is the trigger, in as many
+words.
+
+### What changes
+
+- **The server is in scope.** G6 auth, G7 sync, G8 read. The outbox stops being a
+  queue that never drains.
+- **B8 and B11 get instruments**, because their subjects will exist. They were
+  recorded as permanently uninstrumented under AD-018; that recording is now wrong,
+  and it is corrected rather than left standing.
+- **The forty-iteration ceiling is lifted.** It was the owner's number and the owner
+  has replaced it with a condition.
+- **Compliance moves from audited-on-paper to implemented.** DPDP notice, consent, the
+  rights of access, correction and erasure, a grievance route, breach notification,
+  retention and residency each need an endpoint or a screen, not merely a row in
+  LEGAL-AUDIT.md.
+
+### What does NOT change
+
+Every product constraint. The eight non-negotiables, the frozen thresholds, integer
+paise, append-only, derive-on-read, and no inference anywhere in data entry. A larger
+scope is not a licence to relax any of them - if anything the reverse, because a
+server that syncs a wrong figure propagates it to every device.
+
+### REVERSAL TRIGGER
+
+If the owner sets a date before which something must ship, this reverses to AD-018's
+posture immediately: an offline day-close that works beats a half-built server, and
+the cut list in DEFERRED.md is already ranked for exactly that.

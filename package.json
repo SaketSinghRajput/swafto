@@ -59,7 +59,9 @@
   "devDependencies": {
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@testing-library/react-native": "^13.2.0",
     "@types/pg": "^8.23.1",
+    "@types/react": "^19.1.0",
     "@typescript-eslint/parser": "^8.70.0",
     "@vitest/coverage-v8": "^5.0.1",
     "esbuild": "^0.28.2",
@@ -67,6 +69,9 @@
     "hermes-engine": "^0.11.0",
     "hermes-engine-cli": "^0.12.0",
     "pg": "^8.23.0",
+    "react": "^19.1.0",
+    "react-native": "^0.81.4",
+    "react-test-renderer": "^19.1.0",
     "typescript": "^5.9.2",
     "vitest": "^5.0.1"
   }

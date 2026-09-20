@@ -14,11 +14,11 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 
 ---
 
-**NEXT:** `P-006` — Scaffold the React Native project with design tokens and the bundled fonts
+**NEXT:** `P-007` — Wire the local store so a screen reads real entries through the engine
 
-**READY NOW:** 4 — `P-006` `P-008` `Z-001` `Z-002`
+**READY NOW:** 4 — `P-007` `P-008` `Z-001` `Z-002`
 
-**BLOCKED:** 96, and the one blocking the most others is `P-006` — 102 downstream
+**BLOCKED:** 94, and the one blocking the most others is `P-007` — 100 downstream
 
 ---
 
@@ -31,10 +31,10 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 | 003 | `P-003` | [x] Add n=0, n=1 and n>=2 cases for every aggregate in the engine | stdevMoney was invisible at n<=1 by construction. That is a property of aggregates, not a quirk. | NONE | - | DONE | B4 | 1 (made at 29) |
 | 016 | `P-004` | [x] Build the canonical fixture shop | Every screen renders against it. Without it no screen test can assert a figure. | NONE | - | DONE | - | 1 (made at 29) |
 | 017 | `P-005` | [x] Build the adversarial fixture shop | Longest party names, lakh-scale figures, a gap day, a correction against a closed day. | NONE | - | DONE | - | 1 (made at 29) |
-| 018 | `P-006` | [ ] Scaffold the React Native project with design tokens and the bundled fonts | Nothing renders until this exists, and ten screens on an unchecked token set is ten screens to redo. | NONE | 82 | READY | B24 | 1 (made at 29) |
-| 019 | `P-007` | [ ] Wire the local store so a screen reads real entries through the engine | A screen fed a literal is a mock. Every screen wired-figure predicate depends on this. | `P-006` | 80 | BLOCKED | - | 1 (made at 29) |
+| 018 | `P-006` | [x] Scaffold the React Native project with design tokens and the bundled fonts | Nothing renders until this exists, and ten screens on an unchecked token set is ten screens to redo. | NONE | 82 | DONE | B24 | 1 (made at 29) |
+| 019 | `P-007` | [ ] Wire the local store so a screen reads real entries through the engine | A screen fed a literal is a mock. Every screen wired-figure predicate depends on this. | `P-006` | 80 | READY | - | 1 (made at 29) |
 | 020 | `P-008` | [ ] Build the seven input parsers TRACEABILITY already names | V-7: TRACEABILITY names parseSalesEntry and six others, none exists. No entry screen works without them. | NONE | - | READY | B39 | 2 (made at 29) |
-| 021 | `P-009` | [ ] Build the <Money> component and a check that no bare <Text> renders a figure | DC-005: Anek Odia digits are proportional, so a money column does not line up without tnum. Solvable one Text at a time, which is the danger - ADR-018. | `P-006` | - | BLOCKED | B32 | 1 (made at 33) |
+| 021 | `P-009` | [x] Build the <Money> component and a check that no bare <Text> renders a figure | DC-005: Anek Odia digits are proportional, so a money column does not line up without tnum. Solvable one Text at a time, which is the danger - ADR-018. | `P-006` | - | DONE | B32 | 1 (made at 33) |
 
 ## Screens — the committed set
 

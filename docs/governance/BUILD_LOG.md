@@ -2715,3 +2715,60 @@ a number and failed loudly, which is the right behaviour.
 **Also caught by the mechanism:** adding ADR-018 made `check:verifiers` fail - G1
 recorded 17 ADRs and there were 18. Re-derived. The 3.1 product-pass proof was taken
 and printed BEFORE ADR-018 was written, so that claim is unaffected.
+
+---
+
+## 2026-09-20 · Iteration 35 · AD-020, P-006 and P-009 · the app exists
+
+**Scope reversed by owner instruction, recorded as AD-020.** Every feature, all APIs,
+the pipeline, security and Indian regulatory compliance. That fires AD-018's reversal
+trigger in as many words, so the server is back in scope, B8 and B11 get instruments
+after all, and the forty-iteration ceiling is replaced by a condition.
+
+### The test seam, and the thing it deliberately cannot do
+
+React Native ships untranspiled Flow, so a Node test cannot import it. Two ways out:
+
+- **react-native-web** would make the tests run, in a WEB DOM. Touch targets, overflow
+  at maximum font scale and contrast measured against a browser are **not the Android
+  numbers**. That is the instrument-measures-itself defect this build has found twice.
+  Rejected.
+- **A narrow seam.** Screens import `@swafto/ui`, which re-exports React Native in the
+  app and resolves to a recording double in tests.
+
+The seam's limit is the point, not a regret: **a Node test may assert structure and
+data flow; it may not assert layout, size or contrast.** `measuredOnly()` throws if a
+test reaches for one, naming where the real measurement lives. That is exactly the
+STATIC/MEASURED split DESIGN.md already prints, and it is why B26-B31 will never be
+claimed from a unit test.
+
+`react-test-renderer` is deprecated in React 19 and returned null, and
+`@testing-library/react-native` needs the jest preset the seam exists to avoid - so
+rendering is twenty lines that resolve function components until only hosts remain. No
+hooks, no effects: a component needing those has behaviour that belongs in the store.
+
+### P-009 · money has exactly one path to the screen
+
+`<Money>` sets `fontVariant: ['tabular-nums']` in every mode and size, because Anek
+Odia's digits are proportional (DC-005) and a money column that does not line up is
+the screen where he checks the arithmetic he came here to trust. Eight tests, including
+one that strips every Unicode decimal digit to prove the digits are Latin in any
+language - `\p{Nd}` catches Odia numerals where a bare `\d` would not.
+
+### Three things the mechanisms caught, all mine
+
+1. **The RN install broke vitest** - `vite` disappeared under `--legacy-peer-deps`. A
+   broken runner is worse than a missing scaffold; repaired before anything else.
+2. **`check:money` rejected my own fixture.** `expectedCashBalance(...).value - short`
+   is bare arithmetic on money, and ADR-003 says that goes through the audited
+   helpers. Now `subtract()`. The rule caught its author, in a fixture, which is
+   exactly where a silent float would have been least visible.
+3. **`gen-design`'s raw-value scan was scoped to screens and components** - a
+   hardcoded colour in `src/store/` was invisible to the one table whose whole job is
+   to be empty. Widened to the whole app, with `theme/tokens.ts` exempt BY PATH rather
+   than by directory, so the gap is not re-created one level down. Negative-tested.
+
+  $ npx vitest run    -> 12 files, 365 passed
+  $ npm run check:all -> 21 checks, all pass
+  $ npm run typecheck -> clean
+  $ npm run design    -> 1 component, 6 tokens used, 0 raw values

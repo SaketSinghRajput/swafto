@@ -3,7 +3,7 @@
 
 # DESIGN — what the code actually does
 
-**Generated at iteration 33.** This document reports; it never proposes. The
+**Generated at iteration 34.** This document reports; it never proposes. The
 design system and the Strategy 1 spec say what the screens *should* do — this says what
 they *do*, and the difference between the two is section E.
 
@@ -86,7 +86,9 @@ TRACEABILITY says it will display no feature yet recorded.
 
 ## C · Component inventory
 
-*No components — `apps/mobile/src/components` does not exist.*
+| component | file | used by | tokens | raw values |
+|---|---|---|---|---|
+| `Money` | apps\mobile\src\components\Money.tsx | **nothing** | 0 | 0 |
 
 **USED ONCE** — built as shared, used by a single screen. Not necessarily wrong, but a
 component with one caller is usually a screen section that got promoted for no reason.
@@ -116,6 +118,9 @@ component.
 | `OTP_TTL_SECONDS` | 1 |
 | `OTP_DIGITS` | 1 |
 | `OTP_LIMITS` | 1 |
+| `TOUCH_TARGET_MIN_DP` | 1 |
+| `BODY_TEXT_MIN_SP` | 1 |
+| `CHROME_FONT_SCALE_CAP` | 1 |
 
 ### D.2 · defined, and never referenced by `apps/` or `packages/`
 
@@ -129,9 +134,6 @@ done by hand that a token already does. Both are worth knowing; **do not delete
 anything on this evidence alone.**
 
 - `APP_LOCK_PIN_DIGITS`
-- `TOUCH_TARGET_MIN_DP`
-- `BODY_TEXT_MIN_SP`
-- `CHROME_FONT_SCALE_CAP`
 - `CONTRAST_MIN_RATIO`
 - `DLT_VARIABLE_MAX_CHARS`
 - `DLT_MAX_VARIABLE_SHARE_PCT`

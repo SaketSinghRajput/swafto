@@ -227,7 +227,28 @@ for (const f of allSource) {
 const tokensUsedSomewhere = tokenNames.filter((t) => tokenRefs.get(t).length > 0);
 const tokensNeverUsed = tokenNames.filter((t) => tokenRefs.get(t).length === 0);
 
-const rawAll = [...screens.flatMap((s) => s.raw), ...components.flatMap((c) => c.raw)];
+/**
+ * THE RAW-VALUE SCAN COVERS THE WHOLE APP, not only screens and components.
+ *
+ * It was scoped to those two directories, which is a scoping axis (A12): a hardcoded
+ * colour in `src/store/`, or in a second theme file somebody adds, would have been
+ * invisible to the one table whose whole job is to be empty. Caught while scaffolding
+ * rather than at screen six, which is the only cheap moment.
+ *
+ * ONE FILE IS EXEMPT, EXPLICITLY AND BY PATH: `src/theme/tokens.ts`. It is where the
+ * literals are DEFINED. Exempting it by directory would re-create the gap one level
+ * down, so it is named, and anything else under `theme/` is scanned like everything
+ * else.
+ */
+const TOKEN_DEFINITION = join(APP, 'theme', 'tokens.ts');
+const appWide = walk(APP).filter(
+  (f) => f !== TOKEN_DEFINITION && !f.startsWith(join(APP, 'screens')) && !f.startsWith(COMPONENT_DIR),
+);
+const rawAll = [
+  ...screens.flatMap((s) => s.raw),
+  ...components.flatMap((c) => c.raw),
+  ...appWide.flatMap((f) => rawValues(f)),
+];
 /** D.3 - the same value in four files is ONE missing token, not four mistakes. */
 const rawGrouped = [
   ...rawAll.reduce((m, r) => {

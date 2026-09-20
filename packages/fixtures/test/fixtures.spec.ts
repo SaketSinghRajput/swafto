@@ -16,6 +16,7 @@ import {
   computePrimary,
   expectedCashBalance,
   formatPaise,
+  subtract,
   type Entry,
 } from '@swafto/formula-engine';
 import {
@@ -115,7 +116,7 @@ describe('the adversarial shop is actually adversarial', () => {
   it('closes SHORT by exactly the offset asked for, whatever the expected total is', () => {
     const short = 25000;
     const closed = closedAdversarialWithDifference(short);
-    expect(expectedCashBalance(input).value - closed.day.countedCash!).toBe(short);
+    expect(subtract(expectedCashBalance(input).value, closed.day.countedCash!)).toBe(short);
   });
 });
 

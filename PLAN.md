@@ -321,6 +321,7 @@ would make it wrong — in
 | AD-017 | Rate-limit state lives in Postgres, as a sliding window with an explicit lockout |
 | AD-018 | The server block moves behind the screens |
 | AD-019 | Three things that stay when the server goes |
+| AD-020 | AD-018 is REVERSED: the server is built, and the ceiling is lifted |
 
 ---
 
@@ -517,7 +518,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 409b86c2d96ec65b  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
 b948d3599473c459  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
-6550657f0bec3444  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
+2e96d515acdc85e0  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 52c5a4dbb0c94bd1  humanActions  docs/handover/HUMAN-ACTIONS.md
 71bae6e9b226bc2c  legal  docs/audits/LEGAL-AUDIT.md

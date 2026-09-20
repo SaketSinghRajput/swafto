@@ -10,7 +10,7 @@
 export * from './canonical.ts';
 export * from './adversarial.ts';
 
-import { expectedCashBalance, type DayInput } from '@swafto/formula-engine';
+import { expectedCashBalance, subtract, type DayInput } from '@swafto/formula-engine';
 import { canonicalInput } from './canonical.ts';
 import { adversarialInput } from './adversarial.ts';
 
@@ -49,7 +49,8 @@ export function closedAdversarialWithDifference(shortByPaise = 25000): DayInput 
     day: {
       ...base.day,
       state: 'closed',
-      countedCash: expectedCashBalance(base).value - shortByPaise,
+      // ADR-003: money arithmetic goes through the audited helpers, even here.
+      countedCash: subtract(expectedCashBalance(base).value, shortByPaise),
       differenceReason: 'unknown',
       closedAt: '2026-03-02T22:30:00.000Z',
     },

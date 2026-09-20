@@ -1,0 +1,14 @@
+{
+  "name": "@swafto/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "description": "The Retail Desk app. Offline-first; the local store is authoritative (ADR-018).",
+  "dependencies": {
+    "@swafto/formula-engine": "*",
+    "@swafto/values": "*",
+    "@swafto/fixtures": "*"
+  },
+  "scripts": { "test": "vitest run" }
+}
