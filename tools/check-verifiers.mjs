@@ -226,6 +226,22 @@ export const VERIFIERS = [
       'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
   },
   {
+    id: 'design',
+    command: 'npm run check:design',
+    file: 'tools/gen-design.mjs',
+    claims:
+      'No screen or component contains a raw colour, size or spacing value where a token belongs; no screen shows a keypad beside a bottom navigation; STATIC and MEASURED never disagree about the same property; and DESIGN.md matches a fresh read of the code.',
+    benchmarks: [],
+    /*
+     * Not plantable by find-and-replace: the defect has to be a hardcoded value in a
+     * SCREEN, and there are no screens yet. --prove provisions one instead, which is
+     * the same shape as check-shadow-copies.
+     */
+    defect: null,
+    provenBy:
+      'npm run design:prove writes a screen containing one hardcoded colour, requires the RAW VALUES table to grow by exactly one row, removes it, and requires the row to disappear - which is F.3 exactly. Verified end-to-end at iteration 30 as well: a real screen file with a hardcoded colour made check:design exit 1 naming the file and line, and removing it returned the check to green.',
+  },
+  {
     id: 'tasks',
     command: 'npm run check:tasks',
     file: 'tools/gen-tasks.mjs',
@@ -558,6 +574,11 @@ const RESPONSES = {
    * does print a number, "sources changed", and its plant moves that number from
    * zero to one in a known direction. Recorded rather than left implicit.
    */
+  design: {
+    plantIsResponse:
+      'its number is the RAW VALUES row count, which must be zero. The plant adds one hardcoded colour and the count moves 0 -> 1; removing it moves back. Verified both directions.',
+  },
+
   tasks: {
     plantIsResponse:
       'its numbers are the done/ready/blocked counts, and a duplicate id moves them. The plant merges two tasks and the count drops.',

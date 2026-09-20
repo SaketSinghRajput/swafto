@@ -24,6 +24,7 @@ const GENERATED = [
   { file: 'docs/governance/BUILD_STATE.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
   { file: 'README.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
   { file: 'TASKS.md', by: ['tools/gen-tasks.mjs'] },
+  { file: 'DESIGN.md', by: ['tools/gen-design.mjs'] },
   { file: 'docs/governance/FINDINGS.md', by: ['tools/check-findings.mjs', '--update-md'] },
 ];
 

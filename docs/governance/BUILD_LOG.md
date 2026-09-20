@@ -2426,3 +2426,93 @@ Commands:
 
 NEXT — read TASKS.md's NEXT line: `P-001`, grow rejects.json. Then the B3
 re-measurement with the three shapes named.
+
+---
+
+## 2026-09-20 · Iteration 30 · Injection 24: DESIGN.md
+
+Built as a reader of code, never a writer of design. It renders almost empty and says
+so in a header rather than hiding it behind prose.
+
+    committed screens      : 10, 0 implemented
+    components             : 0
+    tokens used / unused   : 3 / 11
+    raw values             : 0
+    drift rows             : 0
+
+Every screen reads ABSENT. That is the correct output: `apps/mobile` holds bundled
+fonts and nothing else.
+
+### What it can and cannot see today, stated in the document itself
+
+**MEASURED is blind.** `reports/design/measured.json` does not exist, so every
+MEASURED cell reads `-`. The instruments that would fill it are tasks `I-001` through
+`I-010`, due the moment the first screen renders. Until then the document cannot see
+a target that is the right size in the style object and the wrong size on screen —
+**which is the single defect it was built to catch.** The header says that outright.
+
+**The design token module does not exist either.** It arrives with `P-006`. The token
+map stands on `@swafto/values`, the value registry, which owns the design-facing
+constants. That is a stand-in and the document names it as one: presenting the
+registry as the design system would be asserting something untrue.
+
+### Two things I declined to hardcode
+
+**White-on-marigold is detected by RATIO, not by a hex.** The rule is real and the
+colour is not something this generator can verify, so it computes the WCAG ratio of
+every foreground/background pair a screen actually produces and reports any below the
+registry minimum. White on marigold fails that test; so does anything else that fails
+it, which is the better rule.
+
+**`padding: 0` is not a magic number.** Zero says "none" rather than expressing a
+design decision, so it is the one numeric literal the raw-value scan ignores. Every
+other literal in a style property is a row.
+
+### D.2 needed its scope stated
+
+The first version listed eleven tokens as "never used", which would have been
+misleading: several are used by the checks in `tools/` — `CONTRAST_MIN_RATIO` is read
+by `check:registry`. The scan covers `apps/` and `packages/`, so the heading now says
+so. It is a list of design-facing values **the product** does not consume, which today
+is all of them because there is no product.
+
+A document that says "never used" when it means "never used by the half I looked at"
+is the same shape as a check that scans nothing and exits zero.
+
+### F.3 proven twice, in both directions
+
+`npm run design:prove` writes a screen with one hardcoded colour, requires the RAW
+VALUES table to grow by exactly one row, removes it and requires the row to go.
+
+Then verified end-to-end with a real file: planting `apps/mobile/src/screens/T7.tsx`
+containing a hardcoded colour made `check:design` exit 1, naming the file and the
+line; removing it returned the check to green. That is §5.16's response test as well
+as §5.12's plant — the number moves in both directions, not merely away from zero.
+
+### What is enforced and what is only reported
+
+`check:design` fails on raw values, on a keypad beside a bottom navigation, and on
+STATIC disagreeing with MEASURED. Everything else in the drift table is reported.
+F.2's reasoning is right and worth keeping visible: a check that fails on judgement
+gets disabled, and a disabled check is worse than a reported row.
+
+### The test that matters is not yet runnable
+
+G says someone who has never opened the app should be able to read DESIGN.md after
+Form A lands and say what Form A looks like, what it is made of, and where it departs
+from the design system. Nothing here demonstrates that yet — there is no Form A. What
+can be said today is that the document does not pretend otherwise.
+
+And the warning in G is the one to carry forward: **an empty drift table once screens
+exist would be surprising**, and should be treated as an empty adversary pass rather
+than as good news. The first screen is where the most drift is created, because that
+is where every pattern gets invented.
+
+Commands:
+  $ npm run design        -> 10 screens, 0 implemented, 0 raw values, 0 drift rows
+  $ npm run check:design  -> no raw values, no keypad beside a nav, no S/M disagreement
+  $ npm run design:prove  -> a hardcoded colour adds exactly one row, removing it removes it
+  $ npm run check:all     -> 18 checks, all pass
+  $ npx vitest run        -> 309 passed, 0 skipped
+
+NEXT — TASKS.md's NEXT line: `P-001`, grow rejects.json.
