@@ -2250,3 +2250,88 @@ Commands:
 NEXT — rejects.json and the B3 re-measurement with the three shapes named, then the
 two fixtures and the RN scaffold. Checkpoint 1 already fired and was re-cut; the
 committed set is A.3 items 1-3 plus opening cash, and the ceiling stays at 40.
+
+---
+
+## 2026-09-20 · Iteration 28 · Injection 22: PLAN.md
+
+Built as a DERIVED document, which is the only form in which it is an asset. Every
+table is generated from the artifact that owns the fact; prose lives in
+`tools/plan-prose.md` and is spliced in, so regenerating never overwrites written text
+and never lets a table go stale.
+
+### A.5 · status is derived, and it says something uncomfortable
+
+The feature inventory does not copy TRACEABILITY's Status column. It looks each engine
+function up in the engine source, each vector in `vectors.json`, each route in the API
+source, and screens in `apps/mobile`. The result:
+
+**Engine functions actually present: 18 of 27.** All seven INPUT parsers are absent -
+`parseSalesEntry`, `parsePurchaseEntry`, `parseExpenseEntry`, `parseCollectionEntry`,
+`parsePartyPaymentEntry`, `parseWithdrawalEntry`, `captureCountedCash`. TRACEABILITY
+names them and they do not exist.
+
+That is **V-7**, the one open finding, now quantified and visible on the front page of
+the product document rather than buried in a checker's output. Per C.4 it is not fixed
+here: the plan is a lens, not a hospital.
+
+### A.4 · no number in prose, enforced
+
+The rule that feels pedantic. `gen-plan.mjs` fails on a numeral anywhere in the prose
+source and - because A.4's own example is a spelled-out duration - also on a written
+number followed by a unit. The discriminator is the unit: "one hand" is ordinary
+English, a spelled duration asserts a value some other artifact owns.
+
+Identifiers are exempt by shape rather than by allowlist: IN1, AD-018, §5.13, T7, B38
+and ap-south-1 name things instead of asserting values.
+
+The first run flagged its own documentation, because the prose file's header explains
+the rule and necessarily cites it. Comment BLOCKS are now skipped rather than only the
+line that opens one.
+
+### A.3 · the staleness alarm, negative-tested
+
+`check:plan` records a content hash for each of the twelve sources and fails when one
+moves. Negative-tested by appending a single newline to DEFERRED.md: it failed, naming
+the file and both hashes. Restored: it passed. Wired into `check:all`, into VERIFIERS
+with a planted defect, and into the §5.16 table.
+
+**The plant edits a SOURCE, not the plan.** That is the whole point: PLAN.md summarises
+artifacts it does not own, so the failure it must detect is one of them moving
+underneath it.
+
+### C.2 · reading the generated document as prose found three real defects
+
+This step earned its place, and none of the three would have been caught by any amount
+of internal consistency:
+
+1. **Column shift.** TRACEABILITY escapes pipes inside cells, and a naive split on the
+   pipe shifted every column after it. IN1's SCREEN cell was rendering as a fragment
+   of its API cell. Fixed by splitting on unescaped pipes only.
+2. **Under-counted vectors.** TRACEABILITY prefixes only the first vector in a cell;
+   the rest are bare. IN1 names two and the table said one.
+3. **Truncated descriptions.** The build map is a fixed-width table whose descriptions
+   wrap across indented continuation lines. Reading only the id line produced
+   "Progress, today's figures," presented as a whole sentence. Continuation lines are
+   now joined, and the priority marker - a column of the source table, not part of the
+   sentence - is extracted into its own column.
+
+The third is the one that mattered: a truncated sentence does not look truncated.
+
+### The screen parse asserts on its own work
+
+Reading a fixed-width text file is the most fragile input in this repository, so the
+parser requires exactly the full screen set and fails loudly otherwise. The count
+matches B38's denominator, and the set resolves across four families - the day-close
+screens, the parties screens, the reports screens and onboarding - which is where that
+denominator comes from.
+
+Commands:
+  $ npm run plan            -> 27 features (18 with a real engine function), 27 screens
+  $ npm run check:plan      -> 12 sources, 0 changed
+  $ npm run check:all       -> 16 checks, all pass
+  $ npm run prove:verifiers -> 17 of 17 plantable verifiers fail as they should
+  $ npx vitest run          -> 309 passed, 0 skipped
+
+NEXT — rejects.json and the B3 re-measurement with the three shapes named, then the
+two fixtures and the RN scaffold.

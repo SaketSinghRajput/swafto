@@ -226,6 +226,24 @@ export const VERIFIERS = [
       'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
   },
   {
+    id: 'plan',
+    command: 'npm run check:plan',
+    file: 'tools/gen-plan.mjs',
+    claims:
+      'PLAN.md is not stale: every artifact it summarises has exactly the content it had when the document was generated. It also enforces A.4 - no number written into the plan prose - and refuses to generate if the build-map parse degrades below the full screen set.',
+    benchmarks: [],
+    /*
+     * The plant is a SOURCE EDIT, not an edit to the plan. That is the whole point of
+     * the check: PLAN.md summarises artifacts it does not own, so the failure it must
+     * detect is one of them moving underneath it.
+     */
+    defect: {
+      file: 'docs/handover/DEFERRED.md',
+      find: '# DEFERRED',
+      replace: '# DEFERRED\n\nPlanted: a source changed and the plan did not.\n',
+    },
+  },
+  {
     id: 'shadow-copies',
     command: 'npm run check:shadow',
     file: 'tools/check-shadow-copies.mjs',
@@ -515,6 +533,16 @@ const RESPONSES = {
   'vectors-node': { plantIsResponse: 'B1 is "100% pass". The plant breaks one vector; passes move down.' },
   unit: { plantIsResponse: 'B10/B11/B37 are pass/fail. The plant fails one.' },
   traceability: { plantIsResponse: 'B13/B39 are "0 unresolved claims". The plant adds one.' },
+
+  /*
+   * check:plan carries no benchmark, so §5.16 does not strictly reach it - but it
+   * does print a number, "sources changed", and its plant moves that number from
+   * zero to one in a known direction. Recorded rather than left implicit.
+   */
+  plan: {
+    plantIsResponse:
+      'its number is "sources changed", zero-thresholded. The plant edits a source; the count moves 0 -> 1.',
+  },
 
   coverage: {
     /*
