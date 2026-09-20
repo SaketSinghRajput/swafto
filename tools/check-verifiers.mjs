@@ -1586,6 +1586,42 @@ if (process.argv.includes('--prove')) {
     if (readFileSync(file, 'utf8') !== original) {
       failures.push(`${v.id}: RESTORE FAILED for ${file} - the tree is left mutated`);
     }
+
+    /*
+     * RESTORING THE SOURCE IS NOT RESTORING THE TREE, and this harness left a
+     * corrupted document behind for as long as it has existed.
+     *
+     * Some verifiers WRITE something. `check:licences` regenerates
+     * `docs/handover/LICENCES.md` every run, so proving it - which plants a
+     * missing dependency, shrinking the closure - rewrote the manifest with
+     * 270 packages removed, and putting the source file back did nothing about
+     * that. The tree was left holding a generated artifact that describes a
+     * repository which does not exist.
+     *
+     * In CI it is harmless, because the checkout is thrown away. On a laptop it
+     * is a trap: the next `git add -A` commits it. It nearly caught me.
+     *
+     * So the verifier is run ONCE MORE against the restored tree. That rewrites
+     * whatever it generates from the real source, and it doubles as a check
+     * that the restore actually worked - a verifier that fails here is telling
+     * you the plant left something behind.
+     */
+    try {
+      const { exe, args } = resolveCommand(v.command);
+      execFileSync(exe, args, { stdio: 'pipe', timeout: 900000 });
+    } catch (e) {
+      if (typeof e.status === 'number') {
+        failures.push(
+          v.id +
+            ': after restoring ' +
+            file +
+            ', "' +
+            v.command +
+            '" STILL FAILS. The plant left something behind, or the tree was not ' +
+            'clean before the plant went in.',
+        );
+      }
+    }
     if (couldNotRun) {
       failures.push(
         v.id + ': "' + v.command + '" COULD NOT BE STARTED (' + couldNotRun + '), so the plant ' +
