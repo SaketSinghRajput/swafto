@@ -18,6 +18,7 @@ export const TEMPLATE_IDS = [
   'otp_number_change_old',
   'otp_number_change_new',
   'otp_pin_reset',
+  'otp_account_deletion',
 ] as const;
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 
@@ -71,6 +72,22 @@ export const TEMPLATES: Readonly<Record<TemplateId, TemplateDef>> = {
       en: '{#var#} is your SWAFTO code to reset your app lock. Never share it. SWAFTO will never ask for it.',
       hi: '{#var#} SWAFTO ऐप लॉक रीसेट कोड। किसी को न बताएं।',
       od: '{#var#} SWAFTO ଆପ୍ ଲକ୍ ରିସେଟ୍ କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।',
+    },
+  },
+  /*
+   * ITS OWN TEMPLATE, AND ITS OWN CODE. Google Play requires a deletion path
+   * that works with the app uninstalled, so the web page verifies by SMS - and
+   * a code whose message says "sign in" must never be the code that deletes a
+   * shop's book. Separate copy is half of that; the other half is the separate
+   * OTP namespace in the route, so one cannot be replayed as the other.
+   */
+  otp_account_deletion: {
+    id: 'otp_account_deletion',
+    variableCount: 1,
+    text: {
+      en: '{#var#} is your SWAFTO code to delete your account. Never share it. SWAFTO will never ask for it.',
+      hi: '{#var#} SWAFTO खाता हटाने का कोड। किसी को न बताएं।',
+      od: '{#var#} SWAFTO ଖାତା ହଟାଇବା କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।',
     },
   },
 };

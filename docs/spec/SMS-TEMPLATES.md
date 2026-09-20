@@ -120,6 +120,21 @@ inside both the 30-character and 40% limits.
 | `hi` | `{#var#} SWAFTO ऐप लॉक रीसेट कोड। किसी को न बताएं।` | UCS-2 | 48 | 70 | 22 |
 | `od` | `{#var#} SWAFTO ଆପ୍ ଲକ୍ ରିସେଟ୍ କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।` | UCS-2 | 52 | 70 | 18 |
 
+### T5 · `otp_account_deletion` — deleting an account from the web page
+
+| Lang | Text | Enc | Units | Limit | Headroom |
+|------|------|-----|-------|-------|----------|
+| `en` | `{#var#} is your SWAFTO code to delete your account. Never share it. SWAFTO will never ask for it.` | GSM-7 | 96 | 160 | 64 |
+| `hi` | `{#var#} SWAFTO खाता हटाने का कोड। किसी को न बताएं।` | UCS-2 | 49 | 70 | 21 |
+| `od` | `{#var#} SWAFTO ଖାତା ହଟାଇବା କୋଡ୍। କାହାକୁ ନ କୁହନ୍ତୁ।` | UCS-2 | 49 | 70 | 21 |
+
+**T5 exists because of a Google Play requirement, LEGAL-AUDIT §4:** an app that
+creates accounts must offer deletion from a **web page usable with the app
+uninstalled**. That page has no session to trust, so it verifies by SMS to the
+registered number — and the code it sends must not be interchangeable with the
+sign-in code. Different copy is half of that separation; the route keeps the
+pending codes in a different namespace, so neither can be replayed as the other.
+
 ### Android OTP autofill: SMS User Consent, NOT SMS Retriever
 
 **Decided in AD-011. Do not reopen without reading it.**
@@ -128,7 +143,7 @@ SMS Retriever requires the message to end with an 11-character app hash and the 
 message to be **<= 140 bytes**. Measured: appending a hash pushes `otp_signin` over
 140 bytes in **both Hindi and Odia** - the highest-volume template in the two
 languages most users read. Retriever is therefore unavailable where it matters most,
-and adopting it would mean re-registering all twelve templates later.
+and adopting it would mean re-registering all fifteen templates later.
 
 **SMS User Consent** needs no hash, imposes no byte ceiling, and costs one tap. That
 is the mechanism, and it is why no template here carries an app hash.

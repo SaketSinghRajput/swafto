@@ -156,5 +156,21 @@ export interface Repo {
   exportUser(userId: string): Promise<unknown>;
   /** Marks the shop for deletion. The job that erases it is separate (L-06). */
   requestDeletion(shopId: string, at: string): Promise<void>;
+  /**
+   * He changed his mind inside the grace period.
+   *
+   * THE CANCEL PATH IS NOT A COURTESY. A deletion with no way back turns one
+   * mis-tap, or one SIM-swapped attacker with one SMS, into the permanent loss
+   * of a shopkeeper's only financial record. The grace period is only real if
+   * something can end it.
+   */
+  cancelDeletion(shopId: string): Promise<void>;
+  /**
+   * Shops whose grace period has run out, for the job that erases them.
+   *
+   * `before` is a timestamp, not a day count: the period is policy and belongs
+   * in one place, and a repository that computed it would be a second place.
+   */
+  shopsDueForPurge(before: string): Promise<readonly string[]>;
   purgeShop(shopId: string, at: string): Promise<void>;
 }

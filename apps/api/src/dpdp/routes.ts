@@ -30,9 +30,16 @@
  */
 import type { FastifyInstance } from 'fastify';
 import type { AppDeps } from '../app.ts';
-import { newId } from '../auth/tokens.ts';
+import { timingSafeEqual } from 'node:crypto';
+import { newId, hashOtp, mintOtp } from '../auth/tokens.ts';
+import { OTP_LIMITS, OTP_TTL_SECONDS, OTP_DIGITS } from '../rate-limit/limits.ts';
 import { PRIVACY_NOTICE_VERSION as NOTICE_VERSION } from '@swafto/values';
 import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
+import { DELETION_GRACE_DAYS } from '@swafto/values';
+
+/** When a deletion requested at `at` actually happens. One place, both routes. */
+const purgeDueAt = (at: string): string =>
+  new Date(Date.parse(at) + DELETION_GRACE_DAYS * 86_400_000).toISOString();
 
 /**
  * The notice version and the purpose list both come from the registry, and both
@@ -41,6 +48,7 @@ import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
  * the row, and two literals four packages apart agree until the day they do not.
  */
 export { PRIVACY_NOTICE_VERSION as NOTICE_VERSION } from '@swafto/values';
+export { DELETION_GRACE_DAYS } from '@swafto/values';
 export { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
 
 /**
@@ -243,19 +251,188 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
 
       const now = deps.now();
       await deps.repo.requestDeletion(shopId, now);
-      await deps.repo.purgeShop(shopId, now);
 
       return reply.code(200).send({
         requestedAt: now,
-        liveDataErased: true,
+        erasesAt: purgeDueAt(now),
+        graceDays: DELETION_GRACE_DAYS,
         /*
-         * Said plainly rather than rounded up to "immediately". Backups rotate,
-         * and a promise of instant erasure from them is one nobody can keep.
+         * NOT ERASED YET, AND IT SAYS SO. An earlier version purged here, on the
+         * press of the button, which contradicted this product's own audit (§1.6:
+         * "30-day grace ... nothing is lost until the 30 days pass") and removed
+         * the only thing standing between a mis-tap - or one SIM-swapped SMS -
+         * and the permanent loss of a shopkeeper's financial record.
          */
+        liveDataErased: false,
         backupsErasedWithinDays: 90,
         message:
-          'Your shop book has been erased from the live system. Encrypted backups ' +
-          'rotate out within 90 days and are not restored after this point.',
+          'Your book will be erased on ' +
+          purgeDueAt(now).slice(0, 10) +
+          '. Sign in again before then to cancel - nothing is lost until that day. ' +
+          'After it, encrypted backups rotate out within 90 days and are not restored.',
+      });
+    },
+  );
+
+  /**
+   * Changed his mind. Also done automatically by signing in, which is what the
+   * deletion copy promises - this route exists so the app can say so plainly
+   * rather than relying on a side effect the shopkeeper cannot see.
+   */
+  app.post('/v1/me/erase/cancel', async (req, reply) => {
+    const shopId = req.claims?.shop;
+    if (!shopId) return reply.code(401).send({ error: 'unauthenticated' });
+    await deps.repo.cancelDeletion(shopId);
+    const shop = await deps.repo.findShop(shopId);
+    return reply.code(200).send({ cancelled: shop?.deletionRequestedAt === null });
+  });
+
+  /* ================================================================== *
+   * THE WEB DELETION PATH - Google Play, LEGAL-AUDIT §4
+   *
+   * Play's User Data policy requires account and data deletion to be
+   * requestable from a WEB URL by somebody who has already uninstalled the
+   * app. That person has no session, no device token and no app, so the only
+   * thing left to verify them with is the number the account is registered to.
+   *
+   * THE CODE IS NOT A SIGN-IN CODE. Pending codes are kept under a different
+   * key and minted from a different template, so a sign-in code cannot delete
+   * a shop and a deletion code cannot sign one in. Sharing the namespace would
+   * mean an attacker who phished "your SWAFTO code" could erase a shop's book
+   * with it - the same six digits, a very different consequence.
+   *
+   * IT ANSWERS IDENTICALLY FOR AN UNKNOWN NUMBER, for the same reason the
+   * sign-in request does: a deletion endpoint that says "no such account" is a
+   * membership oracle that needs no account to query.
+   *
+   * IT SCHEDULES, IT DOES NOT ERASE. Same thirty days, same cancel-by-signing-
+   * in, same job. A web page that erased instantly would be the easiest
+   * denial-of-service against a shopkeeper in the whole product.
+   * ================================================================== */
+
+  /** The namespace. A deletion code is not a sign-in code, ever. */
+  const deletionKey = (phone: string) => 'delete:' + phone;
+
+  app.post(
+    '/v1/deletion/request',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['phone', 'language'],
+          additionalProperties: false,
+          properties: {
+            phone: { type: 'string', minLength: 8, maxLength: 16 },
+            language: { type: 'string', enum: ['od', 'hi', 'en'] },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { phone, language } = req.body as { phone: string; language: 'od' | 'hi' | 'en' };
+
+      const decision = await deps.rate.consumeAll([
+        { rule: OTP_LIMITS.sendPerPhoneBurst, identifier: deletionKey(phone) },
+        { rule: OTP_LIMITS.sendPerPhoneDaily, identifier: deletionKey(phone) },
+      ]);
+      if (!decision.allowed) {
+        return reply
+          .code(429)
+          .header('Retry-After', String(decision.retryAfterSeconds))
+          .send({ error: 'too_many_requests', retryAfterSeconds: decision.retryAfterSeconds });
+      }
+
+      const user = await deps.repo.findUserByPhone(phone);
+      if (user) {
+        const code = mintOtp(OTP_DIGITS);
+        await deps.otp.put({
+          phone: deletionKey(phone),
+          hash: hashOtp(deps.signingKey, deletionKey(phone), code),
+          expiresAt: new Date(Date.parse(deps.now()) + OTP_TTL_SECONDS * 1000).toISOString(),
+          attempts: 0,
+        });
+        await deps.sms.send({
+          phone,
+          templateId: 'otp_account_deletion',
+          variables: [code],
+          languageTag: language,
+        });
+      }
+
+      /*
+       * The same body either way. Unlike the sign-in request, no SMS goes to an
+       * unregistered number - sending one would tell a stranger's handset that
+       * somebody is trying to delete their SWAFTO account, which is worse than
+       * the timing difference it would hide.
+       */
+      return reply.code(202).send({ sent: true, expiresInSeconds: OTP_TTL_SECONDS });
+    },
+  );
+
+  app.post(
+    '/v1/deletion/confirm',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['phone', 'code', 'confirm'],
+          additionalProperties: false,
+          properties: {
+            phone: { type: 'string', minLength: 8, maxLength: 16 },
+            code: { type: 'string', minLength: 4, maxLength: 10 },
+            confirm: { type: 'string', enum: ['DELETE'] },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { phone, code } = req.body as { phone: string; code: string; confirm: 'DELETE' };
+
+      const gate = await deps.rate.consumeAll([
+        { rule: OTP_LIMITS.verifyPerCode, identifier: deletionKey(phone) },
+      ]);
+      if (!gate.allowed) {
+        return reply
+          .code(429)
+          .header('Retry-After', String(gate.retryAfterSeconds))
+          .send({ error: 'too_many_requests', retryAfterSeconds: gate.retryAfterSeconds });
+      }
+
+      const pending = await deps.otp.get(deletionKey(phone));
+      if (!pending || Date.parse(pending.expiresAt) <= Date.parse(deps.now())) {
+        return reply.code(401).send({ error: 'code_invalid' });
+      }
+
+      const given = Buffer.from(hashOtp(deps.signingKey, deletionKey(phone), code));
+      const wanted = Buffer.from(pending.hash);
+      const ok = given.length === wanted.length && timingSafeEqual(given, wanted);
+      if (!ok) {
+        const attempts = await deps.otp.bumpAttempts(deletionKey(phone));
+        if (attempts >= 5) await deps.otp.clear(deletionKey(phone));
+        return reply.code(401).send({ error: 'code_invalid' });
+      }
+      await deps.otp.clear(deletionKey(phone));
+
+      const user = await deps.repo.findUserByPhone(phone);
+      if (!user) {
+        // The code verified, so this is a race rather than a probe: the account
+        // went away between the request and the confirmation.
+        return reply.code(404).send({ error: 'not_found' });
+      }
+
+      const now = deps.now();
+      await deps.repo.requestDeletion(user.shopId, now);
+
+      return reply.code(200).send({
+        requestedAt: now,
+        erasesAt: purgeDueAt(now),
+        graceDays: DELETION_GRACE_DAYS,
+        liveDataErased: false,
+        message:
+          'Your book will be erased on ' +
+          purgeDueAt(now).slice(0, 10) +
+          '. Sign in to the app before then to cancel. After that day, encrypted ' +
+          'backups rotate out within 90 days and are not restored.',
       });
     },
   );

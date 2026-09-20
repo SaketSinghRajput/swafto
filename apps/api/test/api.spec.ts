@@ -21,6 +21,8 @@ import { RateLimiter } from '../src/rate-limit/store.ts';
 import { StubSmsPort } from '../src/sms/stub.ts';
 import { NOTICE_VERSION } from '../src/dpdp/routes.ts';
 import { mintToken } from '../src/auth/tokens.ts';
+import { purgeDue } from '../src/jobs/purge-due.ts';
+import { DELETION_GRACE_DAYS } from '@swafto/values';
 import {
   canonicalInput,
   CANONICAL_PARTIES,
@@ -754,7 +756,14 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
     expect(res.headers['content-disposition']).toContain('attachment');
   });
 
-  it('erasure requires the literal word, and then actually erases', async () => {
+  it('erasure requires the literal word, and then SCHEDULES rather than erases', async () => {
+    /*
+     * IT USED TO PURGE ON THE BUTTON PRESS, and that contradicted this
+     * product's own audit (§1.6: thirty days, "nothing is lost until the 30
+     * days pass"). The difference is not academic: an immediate purge means
+     * one mis-tap, or one SIM-swapped SMS, permanently destroys the only
+     * record a shop has of what it is owed.
+     */
     const s = await signIn(h);
     const mistyped = await h.app.inject({
       method: 'POST',
@@ -769,7 +778,38 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
       ...jsonAuth(s.accessToken!)({ confirm: 'DELETE' }),
     });
     expect(done.statusCode).toBe(200);
-    expect(JSON.parse(done.body).liveDataErased).toBe(true);
+    const body = JSON.parse(done.body);
+    expect(body.liveDataErased).toBe(false);
+    expect(body.graceDays).toBe(DELETION_GRACE_DAYS);
+    expect(Date.parse(body.erasesAt) - Date.parse(T0)).toBe(DELETION_GRACE_DAYS * 86_400_000);
+
+    // Nothing is gone yet, and the request is recorded on the shop.
+    const dump = h.deps.repo.dump() as {
+      users: unknown[];
+      shops: { deletionRequestedAt: string | null; deletedAt: string | null }[];
+    };
+    expect(dump.users).toHaveLength(1);
+    expect(dump.shops[0]!.deletionRequestedAt).toBe(T0);
+    expect(dump.shops[0]!.deletedAt).toBeNull();
+  });
+
+  it('the job erases it once the grace has run out, and not one day before', async () => {
+    const s = await signIn(h);
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/erase',
+      ...jsonAuth(s.accessToken!)({ confirm: 'DELETE' }),
+    });
+
+    const dayBefore = new Date(
+      Date.parse(T0) + (DELETION_GRACE_DAYS - 1) * 86_400_000,
+    ).toISOString();
+    expect((await purgeDue(h.deps.repo, dayBefore)).erased).toEqual([]);
+
+    const dayAfter = new Date(Date.parse(T0) + (DELETION_GRACE_DAYS + 1) * 86_400_000).toISOString();
+    const report = await purgeDue(h.deps.repo, dayAfter);
+    expect(report.erased).toHaveLength(1);
+    expect(report.failed).toEqual([]);
 
     const dump = h.deps.repo.dump() as {
       users: unknown[];
@@ -779,8 +819,52 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
     expect(dump.users).toHaveLength(0);
     expect(dump.entries).toHaveLength(0);
     // A tombstone remains, carrying no identifying detail - only that it happened.
-    expect(dump.shops[0]!.deletedAt).toBe(T0);
+    expect(dump.shops[0]!.deletedAt).toBe(dayAfter);
     expect(dump.shops[0]!.name).toBe('');
+
+    // Running it again finds nothing: an erased shop is not erased twice.
+    expect((await purgeDue(h.deps.repo, dayAfter)).erased).toEqual([]);
+  });
+
+  it('SIGNING IN CANCELS IT, which is exactly what the copy promises him', async () => {
+    const s = await signIn(h);
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/erase',
+      ...jsonAuth(s.accessToken!)({ confirm: 'DELETE' }),
+    });
+    expect(
+      (h.deps.repo.dump() as { shops: { deletionRequestedAt: string | null }[] }).shops[0]!
+        .deletionRequestedAt,
+    ).toBe(T0);
+
+    // He comes back before the thirty days are up.
+    await signIn(h);
+    expect(
+      (h.deps.repo.dump() as { shops: { deletionRequestedAt: string | null }[] }).shops[0]!
+        .deletionRequestedAt,
+    ).toBeNull();
+
+    const after = new Date(Date.parse(T0) + (DELETION_GRACE_DAYS + 1) * 86_400_000).toISOString();
+    expect((await purgeDue(h.deps.repo, after)).erased).toEqual([]);
+  });
+
+  it('and the cancel route says so plainly, rather than relying on a side effect', async () => {
+    const s = await signIn(h);
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/erase',
+      ...jsonAuth(s.accessToken!)({ confirm: 'DELETE' }),
+    });
+    const res = await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/erase/cancel',
+      // A body, even an empty one: Fastify answers 415 to a POST without a
+      // content-type, and a real client has to send one too.
+      ...jsonAuth(s.accessToken!)({}),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).cancelled).toBe(true);
   });
 
   it('names a grievance officer and a number of days', async () => {

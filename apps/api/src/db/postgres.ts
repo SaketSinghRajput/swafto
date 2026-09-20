@@ -414,6 +414,23 @@ export function pgRepo(sql: SqlClient): Repo {
       await sql.query('UPDATE shops SET deletion_requested_at = $2 WHERE id = $1', [shopId, at]);
     },
 
+    async cancelDeletion(shopId) {
+      // `deleted_at IS NULL` because an erased shop does not come back.
+      await sql.query(
+        'UPDATE shops SET deletion_requested_at = NULL WHERE id = $1 AND deleted_at IS NULL',
+        [shopId],
+      );
+    },
+
+    async shopsDueForPurge(before) {
+      const { rows } = await sql.query(
+        'SELECT id FROM shops WHERE deletion_requested_at IS NOT NULL ' +
+          'AND deleted_at IS NULL AND deletion_requested_at <= $1',
+        [before],
+      );
+      return rows.map((r) => String(r.id));
+    },
+
     async purgeShop(shopId, at) {
       /*
        * ONE TRANSACTION, WITH THE ERASURE FLAG SET LOCALLY.

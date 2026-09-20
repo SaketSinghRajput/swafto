@@ -82,6 +82,18 @@ export const OTP_LIMITS = {
 } as const;
 
 /**
+ * HOW LONG A DELETED ACCOUNT CAN STILL BE RECOVERED.
+ *
+ * Thirty days, from LEGAL-AUDIT §1.6 - which is our own document, so this is
+ * ours rather than external. It is the window in which signing in cancels the
+ * deletion, and it exists because the alternative is that one mis-tap, or one
+ * SIM-swapped SMS, permanently destroys the only record a shop has of what it
+ * is owed. Google Play accepts a grace period; DPDP asks for erasure without
+ * undue delay, and thirty days with a clear notice is the ordinary reading.
+ */
+export const DELETION_GRACE_DAYS = 30;
+
+/**
  * WHICH PRIVACY NOTICE A CONSENT WAS GIVEN AGAINST.
  *
  * A consent record that does not name the notice cannot be honoured once the

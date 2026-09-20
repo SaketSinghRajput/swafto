@@ -1,0 +1,10 @@
+{
+  "name": "@swafto/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The public pages. Today that is one: the account-deletion page Google Play requires to work with the app uninstalled.",
+  "dependencies": {
+    "@swafto/values": "*"
+  }
+}

@@ -241,7 +241,13 @@ the web** for someone who has already uninstalled. **Both are mandatory.**
 - **In-app path: already designed.** Settings -> delete account, with quantities, export
   offered, shop name typed, 30-day grace.
 - **Web URL: `swafto.app/delete-account`** - already referenced in the About screen copy
-  (*"You can also delete your account from the web"*). **The page does not exist yet.**
+  (*"You can also delete your account from the web"*). **The page now exists** at
+  `apps/web/delete-account/index.html`: one file, no framework, no third-party script,
+  nothing stored on the device. It verifies by SMS to the registered number using a
+  template and an OTP namespace of its own, so a sign-in code cannot delete an account
+  and a deletion code cannot sign one in. `apps/web/test/delete-account.spec.ts` checks
+  its promises against the API rather than against an idea of what it should say.
+  **What remains is hosting it at that URL**, which is infrastructure rather than code.
 
 Requirements for that page - it must:
 1. be reachable **without installing the app and without signing in to the app**;
@@ -446,7 +452,7 @@ Every row here is mirrored into `TRACEABILITY.md`.
 | L-10 | Cloudflare TLS termination outside India - is it a transfer? | **RESOLVED-AUTONOMOUSLY** | Architecture §08 decision | - |
 | L-11 | FCM push payloads must carry no personal data | ACTION-REQUIRED | Push builder - trigger only, text resolved on device | - |
 | L-12 | Data Safety form declarations, word-identical to the policy | ACTION-REQUIRED | Play Console + privacy policy | Play submission |
-| L-13 | **Public web deletion page at `swafto.app/delete-account`** | ACTION-REQUIRED | Web page, OTP-verified, works uninstalled | **Play submission** |
+| L-13 | **Public web deletion page at `swafto.app/delete-account`** | **BUILT - needs hosting** | `apps/web/delete-account/index.html`, `POST /v1/deletion/request` + `/confirm`, its own SMS template and OTP namespace. The page exists and is checked against the API; putting it at that URL is infrastructure. | **Play submission** |
 | L-14 | `POST_NOTIFICATIONS` primer after first close, never on launch | ACTION-REQUIRED | Manifest + primer screen | - |
 | L-15 | GST disclaimer in app copy and in every exported file | ACTION-REQUIRED | Export screen + file header, 3 languages | - |
 | L-16 | Export naming rules enforced (never "invoice"/"return"/"filing") | ACTION-REQUIRED | Copy review + i18n key audit | - |

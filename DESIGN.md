@@ -303,9 +303,10 @@ component.
 
 | token | references |
 |---|---|
-| `OTP_TTL_SECONDS` | 2 |
-| `OTP_DIGITS` | 2 |
-| `OTP_LIMITS` | 2 |
+| `OTP_TTL_SECONDS` | 3 |
+| `OTP_DIGITS` | 3 |
+| `OTP_LIMITS` | 3 |
+| `DELETION_GRACE_DAYS` | 2 |
 | `PRIVACY_NOTICE_VERSION` | 2 |
 | `CONSENT_PURPOSES` | 5 |
 | `TOUCH_TARGET_MIN_DP` | 2 |

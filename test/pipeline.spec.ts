@@ -36,7 +36,9 @@ import {
 import { Store, memoryPort, type StoreState } from '../apps/mobile/src/store/index.ts';
 import { Session } from '../apps/mobile/src/app/session.tsx';
 import { CANONICAL_PARTIES, CANONICAL_DATE, canonicalInput } from '@swafto/fixtures';
-import { PRIVACY_NOTICE_VERSION } from '@swafto/values';
+import { PRIVACY_NOTICE_VERSION, DELETION_GRACE_DAYS } from '@swafto/values';
+import { purgeDue } from '../apps/api/src/jobs/purge-due.ts';
+import { OTP_TTL_SECONDS } from '../apps/api/src/rate-limit/limits.ts';
 import { computePrimary, add } from '@swafto/formula-engine';
 
 const KEY = 'test-signing-key-at-least-32-chars!!';
@@ -493,15 +495,112 @@ describe('the DPDP rights work from the app, end to end', () => {
     expect((dump.data.entries as unknown[]).length).toBe(1);
   });
 
-  it('erasure erases, and the handset stops holding a session for a dead account', async () => {
+  it('erasure is SCHEDULED, says when, and the shopkeeper can still come back', async () => {
+    /*
+     * The grace period is the whole point (LEGAL-AUDIT §1.6). A shopkeeper who
+     * taps delete and then realises what he has done has thirty days, and the
+     * app must not destroy his session in the meantime - the session is how he
+     * cancels.
+     */
     const h = handset(s);
     await signIn(s, h);
     enterCashSale(h, '200');
     await h.client.push(h.store.pendingOutbox);
 
+    const receipt = await h.client.erase('DELETE');
+    expect(receipt.liveDataErased).toBe(false);
+    expect(receipt.graceDays).toBeGreaterThan(0);
+    expect(Date.parse(receipt.erasesAt)).toBeGreaterThan(Date.parse(receipt.requestedAt));
+    // His book is still there, and still his.
+    expect(h.client.session).not.toBeNull();
+    expect(await h.client.summary(CANONICAL_DATE)).toBeTruthy();
+
+    expect((await h.client.cancelErase()).cancelled).toBe(true);
+  });
+
+  it('and the job erases it when the grace ends, which is what makes it real', async () => {
+    const h = handset(s);
+    await signIn(s, h);
+    enterCashSale(h, '200');
+    await h.client.push(h.store.pendingOutbox);
     await h.client.erase('DELETE');
-    expect(h.client.session).toBeNull();
+
+    const after = new Date(Date.parse(T0) + (DELETION_GRACE_DAYS + 1) * 86_400_000).toISOString();
+    const report = await purgeDue(s.deps.repo, after);
+    expect(report.erased).toHaveLength(1);
+    expect(report.failed).toEqual([]);
+
+    // The account is gone, so the tokens this handset holds are worthless.
     await expect(h.client.summary(CANONICAL_DATE)).rejects.toBeInstanceOf(Unauthenticated);
+  });
+
+  it('THE WEB PAGE PATH WORKS WITH NO APP AND NO SESSION - Google Play requires it', async () => {
+    /*
+     * Somebody who has uninstalled the app has no token and no device. The web
+     * page verifies by SMS to the registered number, and the code it sends is
+     * NOT a sign-in code: different template, different namespace, so a phished
+     * "your SWAFTO code" cannot erase a shop's book.
+     */
+    const h = handset(s);
+    await signIn(s, h);
+    enterCashSale(h, '200');
+    await h.client.push(h.store.pendingOutbox);
+
+    const asked = await s.app.inject({
+      method: 'POST',
+      url: '/v1/deletion/request',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify({ phone: PHONE, language: 'od' }),
+    });
+    expect(asked.statusCode).toBe(202);
+
+    const sent = s.sms.forPhone(PHONE).at(-1)!;
+    expect(sent.templateId).toBe('otp_account_deletion');
+
+    // The sign-in code cannot delete, and the deletion code cannot sign in.
+    const signInCode = s.sms.forPhone(PHONE).filter((m) => m.templateId === 'otp_signin').at(-1)!
+      .variables[0]!;
+    const wrongCode = await s.app.inject({
+      method: 'POST',
+      url: '/v1/deletion/confirm',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify({ phone: PHONE, code: signInCode, confirm: 'DELETE' }),
+    });
+    expect(wrongCode.statusCode).toBe(401);
+
+    const done = await s.app.inject({
+      method: 'POST',
+      url: '/v1/deletion/confirm',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify({ phone: PHONE, code: sent.variables[0]!, confirm: 'DELETE' }),
+    });
+    expect(done.statusCode).toBe(200);
+    expect(JSON.parse(done.body).liveDataErased).toBe(false);
+
+    // Scheduled, not done - and the job finishes it when the grace ends.
+    const after = new Date(Date.parse(T0) + (DELETION_GRACE_DAYS + 1) * 86_400_000).toISOString();
+    expect((await purgeDue(s.deps.repo, after)).erased).toHaveLength(1);
+  });
+
+  it('the web path tells a stranger nothing, and texts nobody who has no account', async () => {
+    const h = handset(s);
+    await signIn(s, h);
+    const before = s.sms.count();
+
+    const unknown = await s.app.inject({
+      method: 'POST',
+      url: '/v1/deletion/request',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify({ phone: '+919000000000', language: 'en' }),
+    });
+    expect(unknown.statusCode).toBe(202);
+    expect(JSON.parse(unknown.body)).toEqual({ sent: true, expiresInSeconds: OTP_TTL_SECONDS });
+    /*
+     * And NO message went out. Unlike the sign-in request, texting an
+     * unregistered number here would tell a stranger's handset that somebody
+     * is trying to delete their SWAFTO account.
+     */
+    expect(s.sms.count()).toBe(before);
   });
 
   it('the grievance officer is reachable WITHOUT an account, through the notice', async () => {

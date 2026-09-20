@@ -264,6 +264,46 @@ function contract(label: string, make: () => Repo, enabled: () => boolean, n: st
       expect(shop?.name).toBe('');
     });
 
+    maybe()('a deletion request can be cancelled, and only before it happens', async () => {
+      const repo = make();
+      const { shopId } = await seed(repo, n + '0');
+
+      await repo.requestDeletion(shopId, NOW);
+      expect((await repo.findShop(shopId))?.deletionRequestedAt).toBe(NOW);
+
+      await repo.cancelDeletion(shopId);
+      expect((await repo.findShop(shopId))?.deletionRequestedAt).toBeNull();
+
+      // And once it HAS happened, cancelling brings nothing back.
+      await repo.requestDeletion(shopId, NOW);
+      await repo.purgeShop(shopId, '2026-08-15T09:00:00.000Z');
+      await repo.cancelDeletion(shopId);
+      expect((await repo.findShop(shopId))?.deletedAt).toBe('2026-08-15T09:00:00.000Z');
+    });
+
+    maybe()('only shops whose grace has run out are due, and never twice', async () => {
+      const repo = make();
+      const { shopId } = await seed(repo, 'a' + n);
+      const other = await seed(repo, 'b' + n);
+
+      await repo.requestDeletion(shopId, NOW);
+      // The other shop asked later, so an earlier cutoff must not sweep it up.
+      await repo.requestDeletion(other.shopId, '2026-08-01T00:00:00.000Z');
+
+      const due = await repo.shopsDueForPurge('2026-07-20T00:00:00.000Z');
+      expect(due).toContain(shopId);
+      expect(due).not.toContain(other.shopId);
+
+      await repo.purgeShop(shopId, '2026-07-21T00:00:00.000Z');
+      expect(await repo.shopsDueForPurge('2026-07-20T00:00:00.000Z')).not.toContain(shopId);
+    });
+
+    maybe()('a shop that never asked is never due, however late the cutoff', async () => {
+      const repo = make();
+      const { shopId } = await seed(repo, 'c' + n);
+      expect(await repo.shopsDueForPurge('2099-01-01T00:00:00.000Z')).not.toContain(shopId);
+    });
+
     maybe()('a revoked device stays, with the time it was revoked', async () => {
       const repo = make();
       const { shopId, userId } = await seed(repo, n + '9');

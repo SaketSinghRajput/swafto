@@ -259,6 +259,15 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
         });
       }
 
+      /*
+       * SIGNING IN CANCELS A PENDING DELETION, which is exactly what the
+       * deletion copy promises him: "Sign in again any time before then to
+       * cancel - nothing is lost until the 30 days pass." A promise made in
+       * the copy and implemented nowhere is the worst kind, because he acts on
+       * it and finds out at the end of the grace period.
+       */
+      await deps.repo.cancelDeletion(user.shopId);
+
       const deviceId = newId();
       await deps.repo.registerDevice({
         id: deviceId,

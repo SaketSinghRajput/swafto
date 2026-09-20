@@ -205,6 +205,19 @@ export function memoryRepo(): Repo & { readonly dump: () => unknown } {
       if (shop) shops.set(shopId, { ...shop, deletionRequestedAt: at });
     },
 
+    async cancelDeletion(shopId) {
+      const shop = shops.get(shopId);
+      // A shop already erased does not come back; only a PENDING request clears.
+      if (shop && !shop.deletedAt) shops.set(shopId, { ...shop, deletionRequestedAt: null });
+    },
+
+    async shopsDueForPurge(before) {
+      return [...shops.values()]
+        .filter((s) => s.deletionRequestedAt !== null && !s.deletedAt)
+        .filter((s) => s.deletionRequestedAt! <= before)
+        .map((s) => s.id);
+    },
+
     async purgeShop(shopId, at) {
       for (const [id, e] of entries) if (e.shopId === shopId) entries.delete(id);
       for (const [id, p] of parties) if (p.shopId === shopId) parties.delete(id);

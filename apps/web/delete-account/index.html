@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Delete your SWAFTO account</title>
+    <!--
+      THE PAGE GOOGLE PLAY REQUIRES, AND THE ONE A SHOPKEEPER CAN ACTUALLY USE.
+
+      Play's User Data policy: an app that creates accounts must offer deletion
+      from a web URL that works for somebody who has ALREADY UNINSTALLED the app.
+      That person has no app, no session and no device token, so the only thing
+      left to verify them with is the number the account is registered to.
+
+      NO FRAMEWORK, NO BUILD STEP, NO THIRD-PARTY SCRIPT. One file, served as it
+      is. A page whose job is to delete a shop's financial records is the last
+      place to load somebody else's JavaScript - and it is also the page most
+      likely to still be needed in three years, after whatever bundler this
+      repository uses today has been replaced twice.
+
+      NOTHING IS STORED HERE. No cookie, no localStorage, no analytics. The phone
+      number lives in a form field until the request is made and nowhere else.
+
+      IT SCHEDULES RATHER THAN ERASES, and says so in plain words. Thirty days,
+      cancellable by signing in. A web page that erased instantly would be the
+      easiest denial-of-service against a shopkeeper in the whole product.
+
+      THE HINDI AND ODIA COPY IS A DRAFT (H13) and is marked as such in the
+      source. It renders and it fits; nobody on this build reads Odia.
+    -->
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --ink-muted: #5c5c5c;
+        --bg: #ffffff;
+        --surface: #f4f4f2;
+        --border: #d6d6d0;
+        --accent: #e8a33d;
+        --negative: #a4262c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 24px 16px 64px;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        /* 17px is the app's own body floor: the readers are 35-70. */
+        font-size: 17px;
+        line-height: 1.6;
+      }
+      main {
+        max-width: 34rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.6rem;
+        line-height: 1.3;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+      }
+      label {
+        display: block;
+        margin: 1rem 0 0.25rem;
+        font-weight: 600;
+      }
+      input {
+        width: 100%;
+        min-height: 56px; /* the app's touch-target floor, for the same hands */
+        padding: 0 12px;
+        font-size: 17px;
+        color: var(--ink);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      button {
+        min-height: 56px;
+        margin-top: 1rem;
+        padding: 0 20px;
+        font-size: 17px;
+        font-weight: 600;
+        color: #000;
+        background: var(--accent);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button[disabled] {
+        background: var(--surface);
+        color: var(--ink-muted);
+        cursor: not-allowed;
+      }
+      .box {
+        margin-top: 1.5rem;
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .warn {
+        border-left: 4px solid var(--negative);
+      }
+      .muted {
+        color: var(--ink-muted);
+      }
+      .langs button {
+        min-height: 44px;
+        margin: 0 4px 0 0;
+        padding: 0 12px;
+        font-weight: 400;
+        background: var(--surface);
+      }
+      .langs button[aria-pressed='true'] {
+        background: var(--accent);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="langs" role="group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">English</button>
+        <button type="button" data-lang="hi" aria-pressed="false">हिन्दी</button>
+        <button type="button" data-lang="od" aria-pressed="false">ଓଡ଼ିଆ</button>
+      </div>
+
+      <h1 data-t="title">Delete your SWAFTO account</h1>
+      <p data-t="intro">
+        This deletes your book, not just the app. You do not need the app installed to do
+        this.
+      </p>
+
+      <h2 data-t="whatGoesHead">What is deleted</h2>
+      <ul>
+        <li data-t="goes1">Every day you closed, and every entry in it</li>
+        <li data-t="goes2">Every customer and supplier you entered, and what they owe</li>
+        <li data-t="goes3">Your shop name, your mobile number and your devices</li>
+      </ul>
+
+      <h2 data-t="whatStaysHead">What is kept, and for how long</h2>
+      <ul>
+        <li data-t="stays1">
+          A record that the deletion happened, with no name, number or amount in it. We keep
+          it so we can show the deletion was carried out.
+        </li>
+        <li data-t="stays2">
+          Encrypted backups rotate out within 90 days. They are never restored after a
+          deletion.
+        </li>
+      </ul>
+
+      <div class="box warn">
+        <p data-t="grace">
+          <strong>You have 30 days to change your mind.</strong> Nothing is lost until then -
+          sign in to the app again at any time before that day and the deletion is cancelled.
+        </p>
+      </div>
+
+      <h2 data-t="step1Head">1 · Your mobile number</h2>
+      <p class="muted" data-t="step1Help">
+        We send a six-digit code to the number the account is registered to. This code is
+        only for deleting the account; it will not sign you in.
+      </p>
+      <form id="request-form" novalidate>
+        <label for="phone" data-t="phoneLabel">Mobile number</label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          placeholder="+91"
+          required
+        />
+        <button type="submit" id="send" data-t="sendBtn">Send the code</button>
+      </form>
+
+      <section id="step2" hidden>
+        <h2 data-t="step2Head">2 · The code, and the word DELETE</h2>
+        <form id="confirm-form" novalidate>
+          <label for="code" data-t="codeLabel">Six-digit code</label>
+          <input
+            id="code"
+            name="code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="10"
+            required
+          />
+          <label for="confirm" data-t="confirmLabel">Type DELETE to confirm</label>
+          <input id="confirm" name="confirm" type="text" autocomplete="off" required />
+          <button type="submit" id="erase" data-t="eraseBtn">Delete my account</button>
+        </form>
+      </section>
+
+      <div class="box" id="result" hidden role="status" aria-live="polite"></div>
+
+      <h2 data-t="helpHead">If something goes wrong</h2>
+      <p data-t="helpBody">
+        Write to <a href="mailto:grievance@swafto.app">grievance@swafto.app</a>. We answer
+        within 30 days. If we do not resolve it, you may complain to the Data Protection
+        Board of India.
+      </p>
+    </main>
+
+    <script>
+      /*
+       * THE COPY, IN THREE LANGUAGES. `hi` and `od` are a DRAFT pending native
+       * review (H13) - the same state as the app's own strings. English is
+       * authoritative until that review happens.
+       */
+      const COPY = {
+        en: {},
+        hi: {
+          title: 'अपना SWAFTO खाता हटाएँ',
+          intro: 'यह आपका खाता-बही हटाता है, सिर्फ़ ऐप नहीं। इसके लिए ऐप का होना ज़रूरी नहीं है।',
+          whatGoesHead: 'क्या हटेगा',
+          goes1: 'आपके बंद किए हुए सभी दिन और उनकी सभी प्रविष्टियाँ',
+          goes2: 'सभी ग्राहक और सप्लायर, और उनका बकाया',
+          goes3: 'आपकी दुकान का नाम, मोबाइल नंबर और आपके डिवाइस',
+          whatStaysHead: 'क्या रखा जाएगा, और कितने समय',
+          stays1: 'सिर्फ़ यह रिकॉर्ड कि हटाना हुआ था - उसमें कोई नाम, नंबर या रकम नहीं होगी।',
+          stays2:
+            'एन्क्रिप्टेड बैकअप 90 दिनों में हट जाते हैं। हटाने के बाद उन्हें कभी वापस नहीं लाया जाता।',
+          grace:
+            'आपके पास मन बदलने के लिए 30 दिन हैं। तब तक कुछ भी नहीं जाता - उस दिन से पहले कभी भी ऐप में साइन इन करें और हटाना रद्द हो जाएगा।',
+          step1Head: '1 · आपका मोबाइल नंबर',
+          step1Help:
+            'हम रजिस्टर्ड नंबर पर छह अंकों का कोड भेजते हैं। यह कोड सिर्फ़ खाता हटाने के लिए है; इससे साइन इन नहीं होगा।',
+          phoneLabel: 'मोबाइल नंबर',
+          sendBtn: 'कोड भेजें',
+          step2Head: '2 · कोड, और DELETE शब्द',
+          codeLabel: 'छह अंकों का कोड',
+          confirmLabel: 'पुष्टि के लिए DELETE लिखें',
+          eraseBtn: 'मेरा खाता हटाएँ',
+          helpHead: 'अगर कुछ गड़बड़ हो',
+          helpBody:
+            'grievance@swafto.app पर लिखें। हम 30 दिनों में जवाब देते हैं। हल न होने पर आप भारत के डेटा संरक्षण बोर्ड में शिकायत कर सकते हैं।',
+        },
+        od: {
+          title: 'ଆପଣଙ୍କ SWAFTO ଖାତା ହଟାନ୍ତୁ',
+          intro: 'ଏହା ଆପଣଙ୍କ ଖାତା ହଟାଏ, କେବଳ ଆପ୍ ନୁହେଁ। ଏଥିପାଇଁ ଆପ୍ ଦରକାର ନାହିଁ।',
+          whatGoesHead: 'କ’ଣ ହଟିବ',
+          goes1: 'ଆପଣ ବନ୍ଦ କରିଥିବା ସବୁ ଦିନ ଏବଂ ସେଥିରେ ଥିବା ସବୁ ଲେଖା',
+          goes2: 'ସବୁ ଗ୍ରାହକ ଓ ଯୋଗାଣକାରୀ, ଏବଂ ସେମାନଙ୍କ ବାକି',
+          goes3: 'ଆପଣଙ୍କ ଦୋକାନ ନାମ, ମୋବାଇଲ ନମ୍ବର ଏବଂ ଆପଣଙ୍କ ଡିଭାଇସ୍',
+          whatStaysHead: 'କ’ଣ ରହିବ, ଏବଂ କେତେ ଦିନ',
+          stays1: 'କେବଳ ଏହି ରେକର୍ଡ ଯେ ହଟାଯାଇଥିଲା - ସେଥିରେ ନାମ, ନମ୍ବର କିମ୍ବା ଟଙ୍କା ନାହିଁ।',
+          stays2: 'ଏନକ୍ରିପ୍ଟେଡ୍ ବ୍ୟାକଅପ୍ 90 ଦିନ ଭିତରେ ହଟିଯାଏ। ହଟାଇବା ପରେ କେବେ ଫେରାଯାଏ ନାହିଁ।',
+          grace:
+            'ମନ ବଦଳାଇବାକୁ ଆପଣଙ୍କ ପାଖରେ 30 ଦିନ ଅଛି। ସେ ପର୍ଯ୍ୟନ୍ତ କିଛି ଯାଏ ନାହିଁ - ସେ ଦିନ ପୂର୍ବରୁ ଆପ୍‌ରେ ସାଇନ୍ ଇନ୍ କଲେ ହଟାଇବା ବନ୍ଦ ହୋଇଯିବ।',
+          step1Head: '1 · ଆପଣଙ୍କ ମୋବାଇଲ ନମ୍ବର',
+          step1Help:
+            'ରେଜିଷ୍ଟର ହୋଇଥିବା ନମ୍ବରକୁ ଛଅ ଅଙ୍କର କୋଡ୍ ପଠାଯିବ। ଏହି କୋଡ୍ କେବଳ ଖାତା ହଟାଇବା ପାଇଁ; ଏଥିରେ ସାଇନ୍ ଇନ୍ ହେବ ନାହିଁ।',
+          phoneLabel: 'ମୋବାଇଲ ନମ୍ବର',
+          sendBtn: 'କୋଡ୍ ପଠାନ୍ତୁ',
+          step2Head: '2 · କୋଡ୍, ଏବଂ DELETE ଶବ୍ଦ',
+          codeLabel: 'ଛଅ ଅଙ୍କର କୋଡ୍',
+          confirmLabel: 'ନିଶ୍ଚିତ କରିବାକୁ DELETE ଲେଖନ୍ତୁ',
+          eraseBtn: 'ମୋ ଖାତା ହଟାନ୍ତୁ',
+          helpHead: 'କିଛି ଅସୁବିଧା ହେଲେ',
+          helpBody:
+            'grievance@swafto.app କୁ ଲେଖନ୍ତୁ। ଆମେ 30 ଦିନ ଭିତରେ ଉତ୍ତର ଦେଉ। ସମାଧାନ ନ ହେଲେ ଆପଣ ଭାରତର ଡାଟା ସୁରକ୍ଷା ବୋର୍ଡକୁ ଅଭିଯୋଗ କରିପାରିବେ।',
+        },
+      };
+
+      /* English is what the markup already says, so it is captured rather than repeated. */
+      for (const node of document.querySelectorAll('[data-t]')) {
+        COPY.en[node.dataset.t] = node.innerHTML;
+      }
+
+      let language = 'en';
+
+      function setLanguage(next) {
+        language = next;
+        document.documentElement.lang = next === 'od' ? 'or' : next;
+        for (const node of document.querySelectorAll('[data-t]')) {
+          const text = COPY[next][node.dataset.t];
+          if (text) node.innerHTML = text;
+        }
+        for (const b of document.querySelectorAll('.langs button')) {
+          b.setAttribute('aria-pressed', String(b.dataset.lang === next));
+        }
+      }
+
+      for (const b of document.querySelectorAll('.langs button')) {
+        b.addEventListener('click', () => setLanguage(b.dataset.lang));
+      }
+
+      /*
+       * The API origin. Same-origin by default so the page works behind the
+       * same hostname; `data-api` lets staging point elsewhere without a build.
+       */
+      const API = document.currentScript?.dataset.api ?? '';
+
+      const result = document.getElementById('result');
+      function say(message, tone) {
+        result.textContent = message;
+        result.className = tone === 'bad' ? 'box warn' : 'box';
+        result.hidden = false;
+      }
+
+      async function post(path, body) {
+        const response = await fetch(API + path, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+          /* No cookies. There is no session here and there must not appear to be. */
+          credentials: 'omit',
+        });
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null;
+        }
+        return { status: response.status, body: payload };
+      }
+
+      document.getElementById('request-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const phone = document.getElementById('phone').value.trim();
+        if (!phone) return;
+        const send = document.getElementById('send');
+        send.disabled = true;
+        try {
+          const res = await post('/v1/deletion/request', { phone, language });
+          if (res.status === 429) {
+            say(
+              'Too many attempts. Try again in ' + (res.body?.retryAfterSeconds ?? 0) + ' seconds.',
+              'bad',
+            );
+            return;
+          }
+          if (res.status !== 202) {
+            say('Something went wrong. Please try again.', 'bad');
+            return;
+          }
+          /*
+           * The same words whether or not the number has an account. A page
+           * that said "no such account" would let anyone test a phone list
+           * against our user base, from a browser, with no account of their own.
+           */
+          say('If that number has an account, a code is on its way to it.');
+          document.getElementById('step2').hidden = false;
+        } finally {
+          send.disabled = false;
+        }
+      });
+
+      document.getElementById('confirm-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const phone = document.getElementById('phone').value.trim();
+        const code = document.getElementById('code').value.trim();
+        const confirm = document.getElementById('confirm').value.trim();
+        if (confirm !== 'DELETE') {
+          say('Type DELETE exactly, in capitals, to confirm.', 'bad');
+          return;
+        }
+        const erase = document.getElementById('erase');
+        erase.disabled = true;
+        try {
+          const res = await post('/v1/deletion/confirm', { phone, code, confirm });
+          if (res.status === 200) {
+            say(res.body.message);
+            document.getElementById('step2').hidden = true;
+            return;
+          }
+          if (res.status === 401) {
+            say('That code is not right, or it has expired. Ask for a new one.', 'bad');
+            return;
+          }
+          if (res.status === 429) {
+            say(
+              'Too many attempts. Try again in ' + (res.body?.retryAfterSeconds ?? 0) + ' seconds.',
+              'bad',
+            );
+            return;
+          }
+          say('Something went wrong. Please try again.', 'bad');
+        } finally {
+          erase.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

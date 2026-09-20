@@ -183,10 +183,19 @@ export class ApiClient {
     const session = this.#tokens.read();
     if (!session) throw new Unauthenticated();
 
+    /*
+     * A POST ALWAYS CARRIES A BODY, even an empty one. Fastify answers 415 to a
+     * POST with no content-type, so a route that takes no arguments - revoking
+     * a device, cancelling a deletion - failed with an error that looks like a
+     * server misconfiguration and is a missing pair of braces.
+     */
+    const payload = method === 'POST' ? (body ?? {}) : body;
+    const carry = payload === undefined ? {} : { body: payload };
+
     let response = await this.#send({
       method,
       path,
-      ...(body === undefined ? {} : { body }),
+      ...carry,
       headers: { authorization: 'Bearer ' + session.accessToken },
     });
 
@@ -195,7 +204,7 @@ export class ApiClient {
       response = await this.#send({
         method,
         path,
-        ...(body === undefined ? {} : { body }),
+        ...carry,
         headers: { authorization: 'Bearer ' + refreshed.accessToken },
       });
     }
@@ -435,12 +444,32 @@ export class ApiClient {
     return this.#authed('GET', '/v1/me/export');
   }
 
-  /** Erasure. The host confirms first; this does not ask. */
-  async erase(confirmation: string): Promise<unknown> {
-    const result = await this.#authed('POST', '/v1/me/erase', { confirm: confirmation });
-    // The account is gone, so the tokens on this handset are worthless.
-    this.#tokens.write(null);
-    return result;
+  /**
+   * Ask for erasure. It SCHEDULES - thirty days, and signing in cancels it -
+   * so this does not clear the session: the tokens are how he comes back and
+   * changes his mind, and throwing them away here would take that with them.
+   *
+   * The host confirms first. This does not ask.
+   */
+  async erase(confirmation: string): Promise<{
+    requestedAt: string;
+    erasesAt: string;
+    graceDays: number;
+    liveDataErased: boolean;
+    message: string;
+  }> {
+    return (await this.#authed('POST', '/v1/me/erase', { confirm: confirmation })) as {
+      requestedAt: string;
+      erasesAt: string;
+      graceDays: number;
+      liveDataErased: boolean;
+      message: string;
+    };
+  }
+
+  /** Changed his mind inside the grace period. */
+  async cancelErase(): Promise<{ cancelled: boolean }> {
+    return (await this.#authed('POST', '/v1/me/erase/cancel')) as { cancelled: boolean };
   }
 
   /**

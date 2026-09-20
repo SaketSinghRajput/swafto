@@ -74,6 +74,13 @@ const PUBLIC_ROUTES = new Set([
   'POST /v1/auth/otp/verify',
   'POST /v1/auth/refresh',
   'GET /v1/legal/notice',
+  /*
+   * The web deletion path. Play requires it to work for somebody who has
+   * uninstalled the app, so it cannot need a token - it verifies by SMS to the
+   * registered number instead, under its own OTP namespace and its own limits.
+   */
+  'POST /v1/deletion/request',
+  'POST /v1/deletion/confirm',
   'GET /health',
 ]);
 
