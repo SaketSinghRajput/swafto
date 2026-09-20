@@ -22,6 +22,7 @@ const GENERATED = [
   { file: 'docs/governance/VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
   { file: 'docs/benchmarks/BENCHMARKS-RESULTS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
   { file: 'docs/governance/BUILD_STATE.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
+  { file: 'README.md', by: ['tools/check-verifiers.mjs', '--update-md'] },
   { file: 'docs/governance/FINDINGS.md', by: ['tools/check-findings.mjs', '--update-md'] },
 ];
 

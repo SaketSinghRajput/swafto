@@ -176,7 +176,31 @@ failing. It is proven by `npm run mutation:money:prove`, which plants a no-op
 mutation and requires the check to report a survivor.
 
 **It is not an instrument for B4 or B6.** It adjudicates twelve named mutants on one
-file and produces no score. B4 asks for a mutation score over the whole engine at a
+file and produces no score.
+
+### Why extending it to the rest of the engine is the strongest remaining argument
+
+Recorded at iteration 27 per injection 21, so the reasoning survives whether or not
+the work ever happens.
+
+Shape 3 — **executed and never asserted on** — is invisible to coverage by
+construction, and the `stdevMoney` defect proved it: that line sat at 100% coverage
+while the mutant survived. So of the three shapes in the B3 gap, **mutation is the
+only instrument that reaches shape 3 at all**, and `mutation:money` is the only
+mutation instrument in this repository that passes §5.16.
+
+Today it covers one file, `money.ts`. The rest of the engine — `dates.ts` at 66.66%
+branch, `intelligence.ts` at 67.50%, `operational.ts` at 89.47%, `primary.ts` — has no
+shape-3 instrument of any kind. `dates.ts` is the one that would worry me: civil
+calendar arithmetic, an aggregate-shaped surface, and the lowest coverage in the
+engine.
+
+**It is explicitly scheduled AFTER the screens, or not at all.** The ceiling is 40 and
+the committed screen set has no slack. This is recorded as the best available use of
+spare capacity, not as a claim on capacity that does not exist. If iteration 40
+arrives with the screens done and time left, this is what to spend it on; if it does
+not, the handover report says plainly that three engine files have no shape-3
+instrument. B4 asks for a mutation score over the whole engine at a
 90% threshold; that threshold is frozen, unmet and unmeasured. Injection 18 A.2 is
 explicit that this bar is *additional* to B4, not instead of it.
 

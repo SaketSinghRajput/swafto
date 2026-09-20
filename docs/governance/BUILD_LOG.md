@@ -2120,3 +2120,133 @@ NEXT — rejects.json and the B3 re-measurement, naming the shape of every remai
 uncovered line, with n=0 / n=1 / n>=2 for every aggregate. Then the two fixtures and
 the RN scaffold. Checkpoint 1 is live at the end of iteration 26 and four of its five
 items are unstarted, so it will be assessed honestly rather than quietly extended.
+
+---
+
+## 2026-09-20 · Iteration 27 · Injection 21: repository layout
+
+One iteration, as capped. The full move fit, so A.6's smaller version was not needed.
+
+### A.5 · which kind of lock each one is, with the evidence
+
+**`benchmarks.lock` is CONTENT-ONLY, so it was not regenerated.**
+`tools/check-benchmarks-lock.mjs` lines 8-9 read `BENCHMARKS.md`, normalise CRLF and
+hash the TEXT; the lock file holds a bare sha256 with no filename in it. Moving the
+file cannot change that hash. What changed is the path the tool reads from, which is
+a code change, not a lock change.
+
+**The `INJECTIONS/` pin IS path-dependent** - each line is `<sha256>  <filename>` and
+`check-governance` matches by name - **and it was not regenerated either**, because
+`INJECTIONS/` did not move. It was re-pinned once, for the single new file (injection
+21), which is the ordinary per-injection step rather than a reorganisation artifact.
+
+So no lock was regenerated during a reorganisation. That is the thing injection 21's
+preamble warned about, and the honest answer turned out to be that neither needed
+touching.
+
+### A.4 · the proof
+
+Every tracked file hashed by content only - not path, not mtime, not size - before
+and after, sorted, and diffed:
+
+    before : 129 tracked files, 129 distinct content hashes
+    after  : 129 tracked files, 129 distinct content hashes
+    diff   : EMPTY
+
+`git show --stat` on the move commit reads **34 files changed, 0 insertions, 0
+deletions**, and all 34 are recorded as `R`, so history follows each file.
+
+### C · the move created two QUIET failures and one loud one
+
+This is the part worth keeping.
+
+**1. `check:registry` scanned ZERO documents.** `docs` was in its `SKIP_DIRS`, and the
+move put every document inside `docs/`. It was caught *only* by the §5.12.2 guard that
+refuses to pass on an empty corpus. Without that one line it would have exited 0 for
+ever, and the registry - which exists because a single value had three different
+homes - would have been enforcing nothing.
+
+**2. `check:prose` scanned ONE file and exited 0.** Same cause, no empty-corpus guard.
+**233 sentences where the previous run read 9961.** Nothing failed, because it was
+looking at almost nothing. This one was found *purely* by comparing the count, exactly
+as C.4 instructs. It now carries a `MIN_DOCS` floor of its own, set well below the
+real corpus so it catches a collapse rather than policing a number.
+
+**3. A test read `SECURITY-AUDIT.md` by relative URL** and died with ENOENT. Loud, and
+therefore fine.
+
+**And my own fix created a fourth.** The mechanical path rewrite replaced the strings
+*inside* `check-registry`'s `SKIP_FILES`, which are compared by basename - so the
+comparison silently stopped matching, BUILD_LOG came back into the scan, and four
+false disagreements appeared about numbers it exists to record as history. A
+find-and-replace across ten files is itself the kind of change that needs checking.
+
+**One more worth recording: `npm run check:all` stayed green while the suite was red.**
+The chain does not run vitest. A green chain has never meant a green build, and it
+took a file move to make that obvious.
+
+### C.4 · counts before and after, since exit codes prove nothing
+
+| check | before | after | |
+|---|---|---|---|
+| check:registry | 15 documents | 15 | unchanged corpus |
+| check:prose | 19 files / 9961 sentences | 20 / 10735 | the extra file is genuinely new content |
+| check:generated | 9 artifacts | 10 | +README |
+| check:font | 4 Odia strings | 4 | |
+| check:sms | 12 / 12 templates | 12 / 12 | |
+| check:tooling | 29 files | 31 | +docs.mjs, +check-shadow-copies |
+| check:money | 53 files | 55 | the same two |
+| check:shadow | 29 directories | 34 | +5 new docs subdirectories |
+| check:findings | 21 | 21 | |
+| check:verifiers | 23 | 23 | |
+| vitest | 309 tests, 11 files | 309, 11 | |
+
+C.2 - all 17 plantable verifiers still FAIL on their planted defect.
+C.3 - §5.16 re-run: `coverage` still RESPONDS, 85.71 -> 84.70 on a known change;
+`mutation` still DISPROVEN; `check:shadow` and `mutation:money` both still PROVEN.
+
+### The map, and three places the proposed one did not fit
+
+`docs/spec/` was already occupied by the owner's thirteen source documents. Putting
+our derived artifacts on top of them would conflate input with output - the same
+distinction `INJECTIONS/` exists to protect - so the source moved down into
+`docs/spec/source/` and our four derived documents took `docs/spec/`. Nothing reads
+either path from code.
+
+`VERIFIERS.md` and `TRACEABILITY.md` are not in A.2's map: the first is the §5.12
+inventory, so governance; the second maps spec to code, so spec.
+
+`stryker.config.json` stays at the root against "nothing else", because Stryker
+resolves it from the working directory and moving it buys tidiness at the cost of a
+flag on every invocation. `DEPLOY-RUNBOOK.md` is in the map and does not exist here.
+
+### B · the README
+
+Written as an index, and its state block is **generated**, not typed - §5.14 applies
+to the front page exactly as it applies to BUILD_STATE, and the front page is the
+most-read and least-maintained document in any repository. `check:generated` now
+verifies it alongside the other nine.
+
+`tools/docs.mjs` is the one map a future move edits. `docPath()` throws on an unknown
+name or a missing file, because the readers here are written as
+`existsSync(f) ? read(f) : ''` - right for an optional file and catastrophic for a
+required one, as items 1 and 2 above demonstrate.
+
+### Also: the B4 note injection 21's preamble asked for
+
+Recorded beside B4 in BENCHMARKS-RESULTS.md. Shape 3 is invisible to coverage by
+construction, so mutation is the only instrument that reaches it, and `mutation:money`
+is the only mutation instrument here that passes §5.16. Extending it to `dates.ts`,
+`intelligence.ts` and `operational.ts` is the best available use of spare capacity -
+scheduled AFTER the screens or not at all, and the handover report says plainly if it
+does not happen.
+
+Commands:
+  $ npm run check:all           -> 15 checks, all pass
+  $ npm run prove:verifiers     -> 17 of 17 plantable verifiers fail as they should
+  $ npm run responds:verifiers  -> coverage 85.71 -> 84.7; mutation DISPROVEN
+  $ npx vitest run              -> 11 files, 309 passed, 0 skipped
+
+NEXT — rejects.json and the B3 re-measurement with the three shapes named, then the
+two fixtures and the RN scaffold. Checkpoint 1 already fired and was re-cut; the
+committed set is A.3 items 1-3 plus opening cash, and the ceiling stays at 40.
