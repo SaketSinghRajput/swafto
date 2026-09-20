@@ -35,14 +35,60 @@ start rather than rediscovering them:
 | guard | scoped by | does a plant move along it? |
 |---|---|---|
 | append-only trigger | **column** | yes, since iteration 19 - four unconstrained columns, both engines |
-| closed-day trigger (CP-4) | **day state**, and the day named by the row | partly - planted for an entry into a closed day; NOT yet planted for a correction whose `corrects_day_id` is closed while its own `day_id` is open |
-| cross-tenant RLS | **shop_id**, per table | the policy is asserted present on all six tables; a plant that READS across tenants is owed at G8 when routes exist |
+| closed-day trigger (CP-4) | **day state**, and the day named by the row | **yes, since iteration 35** - the guard was re-pointed at `corrects_day_id` instead of `day_id`, which is the exact column swap the axis is about. Six tests failed, in both directions: the correction was wrongly rejected AND the entry into the closed day was wrongly allowed |
+| cross-tenant RLS | **shop_id**, per table, and **where the shop id comes from** | **yes, since iteration 35, and the debt paid off** - see the finding below. The policy was asserted present on all six tables and the READ plant was owed until routes existed. When it was finally run it SURVIVED 228 tests |
 | money lint | **file path and identifier name** | yes - planted in the engine and outside it, and on a money-named vs non-money identifier |
 | rate limiter | **rule identity and identifier value** | yes - per-rule and per-identifier plants, plus the telemetry-only rule |
 | template checker | **language** | partly - the copy-vs-constant plant is English-only, because only English states a duration today. It fires on any language the moment one gains a number |
 | font coverage | **weight**, and **codepoint block** | yes - all three weights checked, and the plant used a codepoint outside the Odia block |
 | check-tooling | **directory name** | NO - and this is how `.stryker-tmp` survived. It walks `tools/` and `scripts/` and skips every name beginning with a dot, so no plant had ever moved along its axis. Closed by `check:shadow`, which scopes by *tracked-ness* instead |
 | check-shadow-copies | **tracked vs untracked** | yes - the plant is an untracked directory holding a package.json and a spec file, re-verified against the real shape under `.stryker-tmp/`, which is gitignored and still fails |
+
+### THE PASS AT ITERATION 35, AND WHAT IT FOUND
+
+Run against the surfaces built since the last pass: the API client, the host
+drain, the consent flow, the deletion path, the web page, and the two checkers
+added in the same iteration.
+
+**FINDING 1 - THE CROSS-TENANT DEFENCE HAD NO TEST, AND A PLANT SURVIVED THE WHOLE
+SUITE.** `shopOf` was changed to prefer a `shopId` taken from the query string or
+the request body over the one in the session claims. That is the textbook
+forged-tenant defect, S-11 by name, and **228 tests passed with it in place**. The
+code was right the whole time; the confidence in it was unearned. Four cases now
+vary the axis the guard is actually written in - where the shop id COMES FROM - and
+two of them kill the plant. The other two guard the body and header routes into the
+same defect, and pass in both states because the schema already refuses one and
+nothing reads the other.
+
+The lesson is the one A12 keeps teaching: *the policy is asserted present* is not a
+test, and a defence nobody has tried to defeat is a belief.
+
+**FINDING 2 - A CHECKER SCOPED BY A HAND-WRITTEN LIST.** `check:naming` read four
+named files. Its plant only ever moved along the TERM axis - a forbidden word in a
+file already on the list - so on the FILE axis it was blind, and the newest code in
+the repository was the code it did not cover. Exactly how `.stryker-tmp` survived
+`check-tooling`. It now walks every source file in the product, and widening it
+immediately found a FALSE POSITIVE: the L-15 disclaimer, *"Not a tax document and
+not prepared for any government submission"*, which is the sentence the audit
+REQUIRES. A checker that forbids the required disclaimer is wrong, so a denial
+before the term is now skipped - with a twenty-character window, and probed to
+confirm that a denial about one thing does not license a claim about another in the
+same sentence.
+
+**FINDING 3 - A TRIPWIRE THAT DID NOT MOVE ALONG ITS OWN AXIS.** `check:push` was
+scoped by a list of known SDK names, which is the list that will not contain the
+SDK somebody reaches for next year. A dependency-name sweep was added and probed
+with three unlisted names - all flagged - and one unrelated package, which was not.
+
+**DISCHARGED - the correction-into-closed-day plant.** Owed since iteration 19 and
+now run: the trigger was re-pointed at `corrects_day_id`, and six tests failed in
+both directions. The guard is scoped by the right column and the suite can tell.
+
+**Nothing found in:** the drain loop's ack ordering (its failure cases were built
+adversarially and each was planted as it was written), the deletion OTP namespace
+(a sign-in code cannot delete and is tested), or the consent log-versus-current
+reading (the defect was found while writing the first end-to-end test and fixed at
+the route).
 
 **A12 APPLIES TO THE CHECKS THAT CHECK THE CHECKS.** The two rows above were added at
 iteration 26 because `check:shadow` found what `check-tooling` structurally could not.

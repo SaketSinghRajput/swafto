@@ -526,6 +526,113 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
     // A different shop sees an empty day, not somebody else's takings.
     expect(JSON.parse(res.body).entryCount).toBe(0);
   });
+
+  /*
+   * S-11, AND THE ADVERSARY PASS FOUND IT UNTESTED.
+   *
+   * A12 asks what a guard is scoped by and whether a plant moves along THAT
+   * axis. The cross-tenant defence is scoped by WHERE THE SHOP ID COMES FROM -
+   * the session claims, never the request - and no test had ever varied that.
+   * The plant proved it: `shopOf` was changed to prefer a `shopId` from the
+   * query string or the body, which is the textbook forged-tenant defect, and
+   * the ENTIRE suite still passed. 228 tests, none of them looking.
+   *
+   * The code was right and the confidence was unearned. These cases earn it.
+   */
+  it('a shopId in the QUERY STRING is ignored - the claims decide, always', async () => {
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push',
+      ...jsonAuth(session.accessToken!)(batchFrom(canonicalInput(), CANONICAL_DATE)),
+    });
+    const mine = JSON.parse(
+      (
+        await h.app.inject({
+          method: 'GET',
+          url: '/v1/days/' + CANONICAL_DATE + '/summary',
+          headers: auth(session.accessToken!),
+        })
+      ).body,
+    ).entryCount;
+    expect(mine).toBeGreaterThan(0);
+
+    const other = await signIn(h, '+919876500003');
+    const forged = await h.app.inject({
+      method: 'GET',
+      url:
+        '/v1/days/' + CANONICAL_DATE + '/summary?shopId=' + encodeURIComponent(session.shopId!),
+      headers: auth(other.accessToken!),
+    });
+    // Either refused outright or answered for HIS OWN shop. Never the other one.
+    if (forged.statusCode === 200) expect(JSON.parse(forged.body).entryCount).toBe(0);
+    else expect(forged.statusCode).toBeGreaterThanOrEqual(400);
+  });
+
+  it('a shopId in the BODY is refused outright, not quietly stripped', async () => {
+    /*
+     * `removeAdditional: false` is what makes this a 400 rather than a silent
+     * strip. A client sending shop_id in a sync push is a client with a wrong
+     * idea of who decides, and the answer should be loud.
+     */
+    const other = await signIn(h, '+919876500004');
+    const res = await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push',
+      ...jsonAuth(other.accessToken!)({
+        shopId: session.shopId,
+        entries: [],
+      }),
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('a shop id in a HEADER changes nothing either', async () => {
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push',
+      ...jsonAuth(session.accessToken!)(batchFrom(canonicalInput(), CANONICAL_DATE)),
+    });
+    const other = await signIn(h, '+919876500005');
+    const res = await h.app.inject({
+      method: 'GET',
+      url: '/v1/days/' + CANONICAL_DATE + '/summary',
+      headers: { ...auth(other.accessToken!), 'x-shop-id': session.shopId! },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).entryCount).toBe(0);
+  });
+
+  it('and the same forgery cannot WRITE into another shop either', async () => {
+    const other = await signIn(h, '+919876500006');
+    const entry = {
+      id: '77777777-7777-4777-8777-000000000001',
+      dayId: CANONICAL_DATE,
+      section: 'cash_sales',
+      amount: 999999,
+      mode: 'cash',
+      createdAt: CANONICAL_DATE + 'T19:00:00.000Z',
+    };
+    await h.app.inject({
+      method: 'POST',
+      url: '/v1/sync/push?shopId=' + encodeURIComponent(session.shopId!),
+      ...jsonAuth(other.accessToken!)({
+        days: [{ date: CANONICAL_DATE, state: 'open' }],
+        entries: [entry],
+      }),
+    });
+
+    // The victim's day is untouched: the write landed in the forger's own shop.
+    const victim = await h.app.inject({
+      method: 'GET',
+      url: '/v1/days/' + CANONICAL_DATE + '/summary',
+      headers: auth(session.accessToken!),
+    });
+    const entries = h.deps.repo.dump() as { entries: { shopId: string; amount: number }[] };
+    expect(entries.entries.filter((e) => e.amount === 999999 && e.shopId === session.shopId)).toEqual(
+      [],
+    );
+    expect(victim.statusCode).toBe(200);
+  });
 });
 
 /* ==================================================================== *

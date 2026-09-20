@@ -71,6 +71,30 @@ for (const file of files) {
   for (const [sign, what] of PUSH_SIGNS) {
     if (text.includes(sign)) found.push({ file, sign, what });
   }
+
+  /*
+   * AND A SWEEP OF THE DEPENDENCY NAMES, because the list above is scoped by
+   * KNOWN PACKAGE and the adversary pass asks whether a plant moves along the
+   * axis a guard is written in. It does not: the SDK somebody reaches for next
+   * year is not on that list, and on that axis the check was blind. A name
+   * sweep is coarse and will one day fire on something harmless - which is the
+   * right failure, because it is loud and takes a minute to dismiss, while the
+   * other one is silent and takes a breach to discover.
+   */
+  if (/(^|[\\/])package\.json$/.test(file)) {
+    const manifest = JSON.parse(text);
+    for (const field of ['dependencies', 'devDependencies', 'peerDependencies']) {
+      for (const name of Object.keys(manifest[field] ?? {})) {
+        if (/firebase|messag|notif|onesignal|push|apns|fcm|pusher|airship/i.test(name)) {
+          found.push({
+            file,
+            sign: name,
+            what: 'a dependency whose NAME suggests notifications, caught by the name sweep rather than the known-SDK list',
+          });
+        }
+      }
+    }
+  }
 }
 
 console.log('  files scanned      : ' + files.length);

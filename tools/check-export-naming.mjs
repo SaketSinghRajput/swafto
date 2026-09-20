@@ -33,19 +33,49 @@
  * somebody what they MAY say is guidance, and a checker that demanded one of
  * five approved phrases would be writing the copy.
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
- * Every file that holds a word a shopkeeper will read. A new surface with copy
- * in it joins this list, and the list is short on purpose - copy lives in few
- * places in this repository, and that is worth keeping true.
+ * EVERY SOURCE FILE IN THE PRODUCT, NOT A LIST OF FOUR.
+ *
+ * THE ADVERSARY PASS CAUGHT THIS ONE, ON ITSELF. A12 asks what a guard is
+ * SCOPED BY and whether a plant moves along that axis. The first version of
+ * this checker was scoped by a hand-written list of four files, and the plant
+ * only ever moved along the TERM axis - a forbidden word inside a file already
+ * on the list. Nothing had ever tested the FILE axis, and on that axis the
+ * checker was blind: a new screen with an inline string, a new route with a
+ * message, a fifth copy surface nobody added to the list, and the rule silently
+ * stops applying to the newest code in the repository.
+ *
+ * That is exactly how `.stryker-tmp` survived `check-tooling`, which is scoped
+ * by directory name. The fix is the same shape: scope by something that cannot
+ * be forgotten. Every source file under the product, walked.
  */
-const COPY_FILES = [
-  'apps/mobile/src/i18n/strings.ts',
-  'apps/api/src/sms/templates.ts',
-  'apps/api/src/dpdp/routes.ts',
-  'apps/web/delete-account/index.html',
-];
+const SOURCE_ROOTS = ['apps/mobile/src', 'apps/api/src', 'apps/web', 'packages'];
+
+const isCopyBearing = (f) =>
+  /\.(ts|tsx|html)$/.test(f) &&
+  !/\.(spec|test)\.(ts|tsx)$/.test(f) &&
+  !/[\/](test|node_modules)[\/]/.test(f);
+
+function walk(dir, out = []) {
+  let entries;
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return out;
+  }
+  for (const e of entries) {
+    if (e === 'node_modules' || e === '.git') continue;
+    const p = join(dir, e);
+    if (statSync(p).isDirectory()) walk(p, out);
+    else if (isCopyBearing(p)) out.push(p);
+  }
+  return out;
+}
+
+const COPY_FILES = SOURCE_ROOTS.flatMap((r) => walk(r));
 
 /**
  * The forbidden terms, transcribed from LEGAL-AUDIT §7 rather than invented
@@ -83,6 +113,26 @@ const stripComments = (text) =>
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/^\s*\/\/.*$/gm, '');
 
+/**
+ * A DENIAL IS NOT A CLAIM, and forbidding one would forbid the disclaimer.
+ *
+ * L-15 requires every export to SAY what it is not: *"A record of entries made
+ * in this shop book. Not a tax document and not prepared for any government
+ * submission."* The first version of this checker flagged that sentence, which
+ * is the checker forbidding the exact words the audit demands - found the
+ * moment its scope widened past four hand-listed files.
+ *
+ * So a hit is skipped when the words immediately before it deny it. The window
+ * is deliberately tiny - the twenty characters before the term - because a
+ * looser one lets "your invoice is ready, this is not a filing" through on the
+ * strength of a denial about something else.
+ */
+const DENIALS = [/\bnot\s+(a|an|your|the)?\s*$/, /\bnever\s+(a|an)?\s*$/, /\bno\s+$/];
+const isDenial = (haystack, at) => {
+  const before = haystack.slice(Math.max(0, at - 20), at + 1);
+  return DENIALS.some((d) => d.test(before));
+};
+
 const offences = [];
 let filesScanned = 0;
 let stringsScanned = 0;
@@ -118,7 +168,9 @@ for (const file of COPY_FILES) {
       const haystack = text.toLowerCase();
       for (const [term, why] of FORBIDDEN) {
         // Word-bounded, so "filing" does not fire on "profiling".
-        if (new RegExp('(^|[^a-z])' + term + '([^a-z]|$)').test(haystack)) {
+        const pattern = new RegExp('(^|[^a-z])' + term + '([^a-z]|$)', 'g');
+        for (const hit of haystack.matchAll(pattern)) {
+          if (isDenial(haystack, hit.index ?? 0)) continue;
           offences.push({ file, line: i + 1, term, why, text: text.slice(0, 70) });
         }
       }
@@ -126,7 +178,7 @@ for (const file of COPY_FILES) {
   });
 }
 
-console.log('  copy surfaces scanned  : ' + filesScanned + ' of ' + COPY_FILES.length);
+console.log('  source files walked    : ' + filesScanned + ' (every .ts/.tsx/.html in the product)');
 console.log('  strings read           : ' + stringsScanned);
 console.log('  forbidden terms        : ' + FORBIDDEN.length + ' (LEGAL-AUDIT section 7)');
 console.log('  permitted, as guidance : ' + PERMITTED.join(', '));
