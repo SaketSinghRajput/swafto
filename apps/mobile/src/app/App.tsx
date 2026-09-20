@@ -31,6 +31,7 @@ import type { Session, ScreenId } from './session.tsx';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { CommitOption } from '../components/EntryForm.tsx';
 import type { Entry, Mode as PaymentMode } from '@swafto/formula-engine';
+import type { ConsentPurpose } from '@swafto/values';
 
 export interface AppProps {
   readonly session: Session;
@@ -39,6 +40,17 @@ export interface AppProps {
    * this file has none, and the sign-in call is the host's, not a screen's.
    */
   readonly onConsent?: (decision: ReturnType<Session['agreeConsent']>) => void;
+  /**
+   * One purpose changed on the consent screen, after the account exists.
+   *
+   * It fires on the TOGGLE rather than on the button, because withdrawal has
+   * to take effect: a screen that collects a withdrawal and posts it only if
+   * he also finds the Save button is friction, and friction is how the
+   * "as easy as giving" requirement is usually broken.
+   */
+  readonly onConsentChange?: (purpose: ConsentPurpose, granted: boolean) => void;
+  /** He asked to see the consent screen. The host fetches what is in force. */
+  readonly onOpenPrivacy?: () => void;
   /** Loading and error belong to whatever is opening the day, not to a screen. */
   readonly status?: LoadStatus;
   readonly onRetry?: () => void;
@@ -77,9 +89,19 @@ export function App({
   status = 'ready',
   onRetry = () => {},
   onConsent = () => {},
+  onConsentChange = () => {},
+  onOpenPrivacy = () => {},
 }: AppProps) {
-  const { screen, language, display, draftPaise, countedPaise, reason, grantedConsents } =
-    session.state;
+  const {
+    screen,
+    language,
+    display,
+    draftPaise,
+    countedPaise,
+    reason,
+    grantedConsents,
+    consentMode,
+  } = session.state;
   const store = session.store;
 
   const common = { status, language, display, onRetry } as const;
@@ -95,9 +117,18 @@ export function App({
       return (
         <ConsentNotice
           {...common}
+          mode={consentMode}
           granted={grantedConsents}
-          onToggle={(purpose) => session.toggleConsent(purpose)}
-          onAgree={() => onConsent(session.agreeConsent())}
+          onToggle={(purpose) => {
+            session.toggleConsent(purpose);
+            if (consentMode === 'manage') {
+              onConsentChange(purpose, session.state.grantedConsents.includes(purpose));
+            }
+          }}
+          onAgree={() => {
+            const decision = session.agreeConsent();
+            if (consentMode === 'signup') onConsent(decision);
+          }}
         />
       );
 
@@ -175,6 +206,7 @@ export function App({
           {...common}
           store={store}
           onCloseDay={() => session.goTo('T11')}
+          onOpenPrivacy={onOpenPrivacy}
           onOpenSection={(s) => session.goTo(FORM_FOR_SECTION[s as Entry['section']] ?? 'T7')}
         />
       );

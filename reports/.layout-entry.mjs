@@ -8749,7 +8749,19 @@ var STRINGS = {
   },
   "consent.agree": { en: "I agree", hi: "\u092E\u0948\u0902 \u0938\u0939\u092E\u0924 \u0939\u0942\u0901", or: "\u0B2E\u0B41\u0B01 \u0B38\u0B39\u0B2E\u0B24" },
   "consent.on": { en: "Yes", hi: "\u0939\u093E\u0901", or: "\u0B39\u0B01" },
-  "consent.off": { en: "No", hi: "\u0928\u0939\u0940\u0902", or: "\u0B28\u0B3E" }
+  "consent.off": { en: "No", hi: "\u0928\u0939\u0940\u0902", or: "\u0B28\u0B3E" },
+  /* ---- X0 again, reached from Today: withdrawal must be as easy ------- */
+  "consent.manage.title": {
+    en: "What you agreed to",
+    hi: "\u0906\u092A\u0928\u0947 \u0915\u093F\u0938\u0915\u0947 \u0932\u093F\u090F \u0939\u093E\u0901 \u0915\u0939\u093E",
+    or: "\u0B06\u0B2A\u0B23 \u0B15\u2019\u0B23 \u0B2A\u0B3E\u0B07\u0B01 \u0B39\u0B01 \u0B15\u0B39\u0B3F\u0B25\u0B3F\u0B32\u0B47"
+  },
+  "consent.save": { en: "Save", hi: "\u0938\u0939\u0947\u091C\u0947\u0902", or: "\u0B38\u0B3E\u0B07\u0B24\u0B28\u0B4D\u0B24\u0B41" },
+  "t1.privacy": {
+    en: "Privacy and what you agreed to",
+    hi: "\u0928\u093F\u091C\u0924\u093E \u0914\u0930 \u0906\u092A\u0915\u0940 \u0938\u0939\u092E\u0924\u093F",
+    or: "\u0B17\u0B4B\u0B2A\u0B28\u0B40\u0B5F\u0B24\u0B3E \u0B13 \u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B38\u0B39\u0B2E\u0B24\u0B3F"
+  }
 };
 function phrase(key, language) {
   const p = STRINGS[key];
@@ -8982,6 +8994,8 @@ function Today({
   },
   onOpenSection = () => {
   },
+  onOpenPrivacy = () => {
+  },
   onRetry = () => {
   }
 }) {
@@ -9006,36 +9020,67 @@ function Today({
       empty: entries.length === 0,
       emptyKey: "t1.empty",
       onRetry,
-      footer: /* @__PURE__ */ jsx6(View_default, { style: { padding: t.space.sm }, children: /* @__PURE__ */ jsx6(
-        Pressable_default,
-        {
-          testID: "t1-close-day",
-          accessibilityRole: "button",
-          accessibilityLabel: s("t1.closeDay"),
-          onPress: onCloseDay,
-          style: {
-            minHeight: t.touchTarget,
-            minWidth: t.touchTarget,
-            borderRadius: t.radius.md,
-            backgroundColor: t.color.accent,
-            alignItems: "center",
-            justifyContent: "center"
-          },
-          children: /* @__PURE__ */ jsx6(
-            Text_default,
-            {
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                fontFamily: t.font.medium,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.onAccent
-              },
-              children: s("t1.closeDay")
-            }
-          )
-        }
-      ) }),
+      footer: /* @__PURE__ */ jsxs3(View_default, { style: { padding: t.space.sm }, children: [
+        /* @__PURE__ */ jsx6(
+          Pressable_default,
+          {
+            testID: "t1-close-day",
+            accessibilityRole: "button",
+            accessibilityLabel: s("t1.closeDay"),
+            onPress: onCloseDay,
+            style: {
+              minHeight: t.touchTarget,
+              minWidth: t.touchTarget,
+              borderRadius: t.radius.md,
+              backgroundColor: t.color.accent,
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            children: /* @__PURE__ */ jsx6(
+              Text_default,
+              {
+                maxFontSizeMultiplier: t.maxFontScale,
+                style: {
+                  fontFamily: t.font.medium,
+                  fontSize: t.type.body,
+                  lineHeight: t.leading(t.type.body),
+                  color: t.color.onAccent
+                },
+                children: s("t1.closeDay")
+              }
+            )
+          }
+        ),
+        /* @__PURE__ */ jsx6(
+          Pressable_default,
+          {
+            testID: "t1-privacy",
+            accessibilityRole: "button",
+            accessibilityLabel: s("t1.privacy"),
+            onPress: onOpenPrivacy,
+            style: {
+              minHeight: t.touchTarget,
+              minWidth: t.touchTarget,
+              marginTop: t.space.xs,
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            children: /* @__PURE__ */ jsx6(
+              Text_default,
+              {
+                maxFontSizeMultiplier: t.maxFontScale,
+                style: {
+                  fontFamily: t.font.regular,
+                  fontSize: t.type.body,
+                  lineHeight: t.leading(t.type.body),
+                  color: t.color.inkMuted
+                },
+                children: s("t1.privacy")
+              }
+            )
+          }
+        )
+      ] }),
       children: [
         totals.filter((row) => row.count > 0).map((row) => /* @__PURE__ */ jsx6(
           Row,
@@ -9757,6 +9802,7 @@ function DayClosed({
 // apps/mobile/src/screens/X0.tsx
 import { jsx as jsx15, jsxs as jsxs9 } from "react/jsx-runtime";
 function ConsentNotice({
+  mode = "signup",
   granted = [],
   status = "ready",
   language = "en",
@@ -9777,13 +9823,13 @@ function ConsentNotice({
       s,
       display,
       status,
-      titleKey: "consent.title",
+      titleKey: mode === "manage" ? "consent.manage.title" : "consent.title",
       onRetry,
       footer: /* @__PURE__ */ jsx15(
         PrimaryButton,
         {
           testID: "x0-agree",
-          label: s("consent.agree"),
+          label: s(mode === "manage" ? "consent.save" : "consent.agree"),
           onPress: onAgree,
           display
         }

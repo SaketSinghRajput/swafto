@@ -253,6 +253,19 @@ export const STRINGS = {
   'consent.agree': { en: 'I agree', hi: 'मैं सहमत हूँ', or: 'ମୁଁ ସହମତ' },
   'consent.on': { en: 'Yes', hi: 'हाँ', or: 'ହଁ' },
   'consent.off': { en: 'No', hi: 'नहीं', or: 'ନା' },
+
+  /* ---- X0 again, reached from Today: withdrawal must be as easy ------- */
+  'consent.manage.title': {
+    en: 'What you agreed to',
+    hi: 'आपने किसके लिए हाँ कहा',
+    or: 'ଆପଣ କ’ଣ ପାଇଁ ହଁ କହିଥିଲେ',
+  },
+  'consent.save': { en: 'Save', hi: 'सहेजें', or: 'ସାଇତନ୍ତୁ' },
+  't1.privacy': {
+    en: 'Privacy and what you agreed to',
+    hi: 'निजता और आपकी सहमति',
+    or: 'ଗୋପନୀୟତା ଓ ଆପଣଙ୍କ ସହମତି',
+  },
 } as const satisfies Record<string, Phrase>;
 
 export type StringKey = keyof typeof STRINGS;

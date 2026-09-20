@@ -111,6 +111,11 @@ export interface SessionState {
    * state in which it could be recorded as refused while the account exists.
    */
   readonly grantedConsents: readonly ConsentPurpose[];
+  /**
+   * Which job X0 is doing: taking consent before an account exists, or showing
+   * what he already agreed to so he can change it.
+   */
+  readonly consentMode: 'signup' | 'manage';
 }
 
 export interface SessionOptions {
@@ -153,6 +158,12 @@ export class Session {
       display: options.display ?? 'comfort',
       lastRefusal: null,
       grantedConsents: [],
+      /*
+       * Signing up until something says otherwise. `openConsentSettings` is the
+       * only way into manage mode, because it is the only path that has the
+       * server's current answers to show him.
+       */
+      consentMode: 'signup',
     };
   }
 
@@ -318,6 +329,27 @@ export class Session {
   }
 
   /**
+   * Open the consent screen from Today, showing what is in force NOW.
+   *
+   * `granted` comes from the server rather than from memory: this handset may
+   * not be the one that made the last change, and showing a stale answer on a
+   * consent screen is showing him a decision he did not make.
+   */
+  openConsentSettings(granted: readonly ConsentPurpose[]): void {
+    this.#digits = '';
+    this.#state = {
+      ...this.#state,
+      screen: 'X0',
+      consentMode: 'manage',
+      grantedConsents: granted.filter((p) =>
+        CONSENT_PURPOSES.some((c) => c.key === p && !c.required),
+      ),
+      draftPaise: null,
+      lastRefusal: null,
+    };
+  }
+
+  /**
    * X0: turn one optional purpose on or off.
    *
    * THE REQUIRED PURPOSE IS NOT TOGGLEABLE, and the refusal is silent rather
@@ -348,7 +380,7 @@ export class Session {
     const granted = CONSENT_PURPOSES.filter(
       (p) => p.required || this.#state.grantedConsents.includes(p.key),
     ).map((p) => p.key);
-    this.#state = { ...this.#state, screen: 'T1', lastRefusal: null };
+    this.#state = { ...this.#state, screen: 'T1', consentMode: 'signup', lastRefusal: null };
     return {
       noticeVersion: this.#options.noticeVersion ?? PRIVACY_NOTICE_VERSION,
       locale: this.#state.language,

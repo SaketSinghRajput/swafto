@@ -380,6 +380,60 @@ describe('consent is collected before the account, and reports exactly what he c
     expect(s.state.grantedConsents).toEqual([optional[0]]);
   });
 
+  it('WITHDRAWAL IS REACHABLE FROM TODAY, which is what makes it as easy', () => {
+    /*
+     * Before this there was no way back to the consent screen at all: giving
+     * took one tap during sign-in and withdrawing took none, because there was
+     * nowhere to do it. That is the requirement broken by omission.
+     */
+    const s = freshSession();
+    const opened: number[] = [];
+    const tree = render(<App session={s} onOpenPrivacy={() => opened.push(1)} />);
+    byTestId(tree, 't1-privacy').props.onPress();
+    expect(opened).toEqual([1]);
+  });
+
+  it('opening it from Today shows what the SERVER says is in force', () => {
+    const s = freshSession();
+    s.openConsentSettings(['sms_reminders']);
+    expect(s.state.screen).toBe('X0');
+    expect(s.state.consentMode).toBe('manage');
+    expect(s.state.grantedConsents).toEqual(['sms_reminders']);
+
+    const tree = render(<App session={s} />);
+    expect(byTestId(tree, 'x0-toggle-sms_reminders').props?.accessibilityState).toEqual({
+      checked: true,
+    });
+  });
+
+  it('a withdrawal is reported the moment he taps, not when he finds a button', () => {
+    const s = freshSession();
+    s.openConsentSettings(['sms_reminders']);
+    const changes: [string, boolean][] = [];
+    const tree = render(<App session={s} onConsentChange={(p, on) => changes.push([p, on])} />);
+
+    byTestId(tree, 'x0-toggle-sms_reminders').props.onPress();
+    expect(changes).toEqual([['sms_reminders', false]]);
+    expect(s.state.grantedConsents).toEqual([]);
+  });
+
+  it('and in manage mode the button does NOT re-post a sign-up decision', () => {
+    const s = freshSession();
+    s.openConsentSettings([]);
+    const decisions: unknown[] = [];
+    const tree = render(<App session={s} onConsent={(d) => decisions.push(d)} />);
+    byTestId(tree, 'x0-agree').props.onPress();
+    expect(decisions).toEqual([]);
+    expect(s.state.screen).toBe('T1');
+  });
+
+  it('a purpose the server reports but which is not optional is not shown as a choice', () => {
+    // `account_and_ledger` is always in force; it is not a switch he can flip.
+    const s = freshSession();
+    s.openConsentSettings(['account_and_ledger', 'crash_diagnostics']);
+    expect(s.state.grantedConsents).toEqual(['crash_diagnostics']);
+  });
+
   it('agreeing hands the decision OUT - the app posts nothing by itself', () => {
     const s = consenting();
     const sent: unknown[] = [];

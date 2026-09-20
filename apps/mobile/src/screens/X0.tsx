@@ -18,6 +18,12 @@
  * switches say. A single button that turns everything on is the commonest way
  * this requirement is broken while appearing to be met.
  *
+ * IT IS ALSO THE WITHDRAWAL SCREEN. DPDP §1.2 says withdrawal must be as easy
+ * as giving was, and the usual way that requirement is broken is not refusal
+ * but friction: consent is a tap and withdrawal is an email. Reached from
+ * Today, this is the SAME screen with the same switches - which makes the two
+ * equally easy by construction rather than by policy.
+ *
  * THE ODIA AND HINDI COPY IS A DRAFT, tracked as H13. It renders, it fits, and
  * nobody here can read it - which is why the notice from the API carries a
  * `reviewState` and why this screen is on the contact sheet.
@@ -30,6 +36,11 @@ import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/values';
 
 
 export interface ConsentNoticeProps {
+  /**
+   * `signup` is the notice before the account exists; `manage` is the same
+   * screen reached from Today, where the choices already have answers.
+   */
+  readonly mode?: 'signup' | 'manage';
   /** Which optional purposes are ON. Absent means off - never pre-ticked. */
   readonly granted?: readonly ConsentPurpose[];
   readonly status?: LoadStatus;
@@ -41,6 +52,7 @@ export interface ConsentNoticeProps {
 }
 
 export function ConsentNotice({
+  mode = 'signup',
   granted = [],
   status = 'ready',
   language = 'en',
@@ -58,12 +70,12 @@ export function ConsentNotice({
       s={s}
       display={display}
       status={status}
-      titleKey="consent.title"
+      titleKey={mode === 'manage' ? 'consent.manage.title' : 'consent.title'}
       onRetry={onRetry}
       footer={
         <PrimaryButton
           testID="x0-agree"
-          label={s('consent.agree')}
+          label={s(mode === 'manage' ? 'consent.save' : 'consent.agree')}
           onPress={onAgree}
           display={display}
         />

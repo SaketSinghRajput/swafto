@@ -441,7 +441,7 @@ Every row here is mirrored into `TRACEABILITY.md`.
 | Ref | Item | Status | Artifact | Blocks |
 |-----|------|--------|----------|--------|
 | L-01 | Consent notice screen before OTP, in 3 languages | **BUILT - copy pending H13** | X0 `ConsentNotice` in en/hi/or, `GET /v1/legal/notice`, `consents` table | Play submission |
-| L-02 | Granular consent + withdrawal as easy as giving | **PART-BUILT - withdrawal unreachable in the app** | X0 per-purpose toggles, `POST /v1/me/consent` (the same call both ways); no settings route to it yet | - |
+| L-02 | Granular consent + withdrawal as easy as giving | **BUILT - copy pending H13** | X0 per-purpose toggles, reached again from Today (`t1-privacy`) in manage mode; `POST /v1/me/consent` is the same call both ways, and the toggle posts on the tap rather than on a Save button | - |
 | L-03 | Party data - Fiduciary vs Processor analysis | **RESOLVED-AUTONOMOUSLY** | Terms §9.2.3 | Terms |
 | L-04 | Per-party export and redaction | ACTION-REQUIRED | P2/P3 screens, `GET /v1/parties/:id/export` | - |
 | L-05 | Retention policy - inactivity period | **RESOLVED-AUTONOMOUSLY** | Privacy policy §5 | Privacy policy |

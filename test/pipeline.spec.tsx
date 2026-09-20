@@ -35,6 +35,8 @@ import {
 } from '../apps/mobile/src/net/client.ts';
 import { Store, memoryPort, type StoreState } from '../apps/mobile/src/store/index.ts';
 import { Session } from '../apps/mobile/src/app/session.tsx';
+import { App } from '../apps/mobile/src/app/App.tsx';
+import { render, byTestId } from '../apps/mobile/test/render.tsx';
 import { CANONICAL_PARTIES, CANONICAL_DATE, canonicalInput } from '@swafto/fixtures';
 import { PRIVACY_NOTICE_VERSION, DELETION_GRACE_DAYS } from '@swafto/values';
 import { purgeDue } from '../apps/api/src/jobs/purge-due.ts';
@@ -469,6 +471,38 @@ describe('the DPDP rights work from the app, end to end', () => {
     const body = await h.client.consents();
     const sms = body.consents.filter((c) => c.purpose === 'sms_reminders');
     expect(sms.map((c) => c.granted)).toEqual([true, false, true]);
+  });
+
+  it('A WITHDRAWAL MADE ON THE SCREEN REACHES THE SERVER - the whole point of L-02', async () => {
+    /*
+     * Everything else about withdrawal is tested on one side or the other: the
+     * screen reports a toggle, the route records it. This is the only case
+     * that puts a finger on the switch and then asks the server what it thinks
+     * - which is the question the shopkeeper is actually asking.
+     */
+    const h = handset(s);
+    h.session.toggleConsent('sms_reminders');
+    await signIn(s, h);
+    expect(await h.client.grantedNow()).toContain('sms_reminders');
+
+    // He opens it from Today, with what the server says is in force.
+    h.session.goTo('T1');
+    h.session.openConsentSettings(await h.client.grantedNow());
+
+    // And taps the switch. The host posts what the screen reports.
+    const posted: Promise<unknown>[] = [];
+    const tree = render(
+      <App
+        session={h.session}
+        onConsentChange={(purpose, granted) => {
+          posted.push(h.client.setConsent(purpose, granted, 'or'));
+        }}
+      />,
+    );
+    byTestId(tree, 'x0-toggle-sms_reminders').props.onPress();
+    await Promise.all(posted);
+
+    expect(await h.client.grantedNow()).not.toContain('sms_reminders');
   });
 
   it('the account consent cannot be withdrawn while the account exists', async () => {

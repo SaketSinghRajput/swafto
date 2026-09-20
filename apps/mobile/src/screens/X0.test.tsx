@@ -146,6 +146,43 @@ describe('the consent is specific - DPDP 1.2 as assertions', () => {
   });
 });
 
+describe('the same screen is the WITHDRAWAL screen - DPDP 1.2, as easy as giving', () => {
+  it('reached from Today it shows what is in force, with the same switches', () => {
+    const tree = render(<ConsentNotice mode="manage" granted={OPTIONAL} />);
+    for (const key of OPTIONAL) {
+      expect(byTestId(tree, 'x0-toggle-' + key).props?.accessibilityState, key).toEqual({
+        checked: true,
+      });
+    }
+  });
+
+  it('turning one off is ONE TAP, the same tap that turned it on', () => {
+    /*
+     * The requirement is not that withdrawal is possible - it is that it is as
+     * easy. One control, one tap, either direction, on the same screen. A
+     * separate "manage consent" flow with its own confirmations would satisfy
+     * the letter and break the rule.
+     */
+    const off: string[] = [];
+    const tree = render(
+      <ConsentNotice mode="manage" granted={OPTIONAL} onToggle={(p) => off.push(p)} />,
+    );
+    byTestId(tree, 'x0-toggle-' + OPTIONAL[0]).props.onPress();
+    expect(off).toEqual([OPTIONAL[0]]);
+  });
+
+  it('it says what it is, and its button is not "I agree" a second time', () => {
+    const tree = render(<ConsentNotice mode="manage" />);
+    expect(text(byTestId(tree, 'x0-title'))).toBe(phrase('consent.manage.title', 'en'));
+    expect(text(byTestId(tree, 'x0-agree'))).toBe(phrase('consent.save', 'en'));
+  });
+
+  it('the required purpose still has no switch here either', () => {
+    const tree = render(<ConsentNotice mode="manage" granted={OPTIONAL} />);
+    for (const key of REQUIRED) expect(testIDs(tree), key).not.toContain('x0-toggle-' + key);
+  });
+});
+
 describe('X0 in every language, including the adversarial worst case', () => {
   for (const language of ['en', 'hi', 'or'] as readonly Language[]) {
     it(language + ': the title, the notice and the button are in that language', () => {

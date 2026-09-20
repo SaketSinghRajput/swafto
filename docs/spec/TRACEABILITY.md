@@ -87,7 +87,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | Ref | Requirement | Artifact | Owner | Status |
 |-----|-------------|----------|-------|--------|
 | L-01 | Consent notice before OTP, 3 languages | X0 `ConsentNotice` (en/hi/or), `GET /v1/legal/notice`, `consents` table | Eng | WIP - built and tested; the Odia and Hindi copy is a DRAFT until H13 native review |
-| L-02 | Granular consent + easy withdrawal | X0 per-purpose toggles, `POST /v1/me/consent` (grant and withdraw are the same call), `GET /v1/me/consents` | Eng | WIP - granting is built; in-app WITHDRAWAL has no screen to reach it from yet |
+| L-02 | Granular consent + easy withdrawal | X0 per-purpose toggles in manage mode, reached from T1; `POST /v1/me/consent` (grant and withdraw are the same call), `GET /v1/me/consents` returning `current` as well as the log | Eng | WIP - built end to end; the Odia and Hindi copy is DRAFT until H13 |
 | L-03 | Party data Fiduciary vs Processor analysis | Terms clause | AD-005/006 | RESOLVED |
 | L-04 | Per-party export and redaction | P2/P3, `GET /v1/parties/:id/export` | Eng | TODO |
 | L-05 | Retention / inactivity period | Privacy policy | AD-003/007 | RESOLVED |

@@ -44,6 +44,15 @@ export interface TodayProps {
   readonly display?: DisplayMode;
   readonly onCloseDay?: () => void;
   readonly onOpenSection?: (section: string) => void;
+  /**
+   * The way to the consent screen once the account exists.
+   *
+   * DPDP §1.2 requires withdrawal to be AS EASY as giving. Giving was one tap
+   * on X0 during sign-in; without this there was no way back to that screen at
+   * all, so withdrawal was infinitely harder - which is the requirement broken
+   * by omission rather than by refusal.
+   */
+  readonly onOpenPrivacy?: () => void;
   readonly onRetry?: () => void;
 }
 
@@ -54,6 +63,7 @@ export function Today({
   display = 'comfort',
   onCloseDay = () => {},
   onOpenSection = () => {},
+  onOpenPrivacy = () => {},
   onRetry = () => {},
 }: TodayProps) {
   const t = tokens(display);
@@ -110,6 +120,37 @@ export function Today({
               }}
             >
               {s('t1.closeDay')}
+            </Text>
+          </Pressable>
+
+          {/*
+            Quiet, and present. It is not competing with closing the day - that
+            is the one action this screen is for - but it is one tap away, on
+            the screen he opens every morning.
+          */}
+          <Pressable
+            testID="t1-privacy"
+            accessibilityRole="button"
+            accessibilityLabel={s('t1.privacy')}
+            onPress={onOpenPrivacy}
+            style={{
+              minHeight: t.touchTarget,
+              minWidth: t.touchTarget,
+              marginTop: t.space.xs,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text
+              maxFontSizeMultiplier={t.maxFontScale}
+              style={{
+                fontFamily: t.font.regular,
+                fontSize: t.type.body,
+                lineHeight: t.leading(t.type.body),
+                color: t.color.inkMuted,
+              }}
+            >
+              {s('t1.privacy')}
             </Text>
           </Pressable>
         </View>
