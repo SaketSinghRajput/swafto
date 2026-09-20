@@ -54,12 +54,29 @@ const PARSER_FOR = {
 
 type Section = keyof typeof PARSER_FOR;
 
+/**
+ * A UUID, as a PATTERN rather than `format: 'uuid'`.
+ *
+ * Ajv ignores an unknown format silently unless `ajv-formats` is installed and
+ * wired in, which would mean a schema that looks strict and checks nothing. A
+ * pattern is built in, so it cannot be quietly inert.
+ */
+const UUID_PATTERN =
+  '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
+
 const entrySchema = {
   type: 'object',
   required: ['id', 'dayId', 'section', 'amount', 'mode', 'createdAt'],
   additionalProperties: false,
   properties: {
-    id: { type: 'string', minLength: 1, maxLength: 64 },
+    /*
+     * A UUID, because the column is one. Without this the schema accepted any
+     * 64-character string, the insert then failed with a driver error, and the
+     * client got a 500 for something that should have been a clean 400. Found
+     * by the repository equivalence run, which is the only test that had ever
+     * put a client-minted id in front of a real database.
+     */
+    id: { type: 'string', pattern: UUID_PATTERN },
     dayId: { type: 'string', minLength: 10, maxLength: 10 },
     section: { type: 'string', enum: Object.keys(PARSER_FOR) },
     /*
@@ -114,7 +131,7 @@ export function registerSyncRoutes(app: FastifyInstance, deps: AppDeps): void {
                 required: ['id', 'kind', 'name'],
                 additionalProperties: false,
                 properties: {
-                  id: { type: 'string', minLength: 1, maxLength: 64 },
+                  id: { type: 'string', pattern: UUID_PATTERN },
                   kind: { type: 'string', enum: ['customer', 'supplier'] },
                   name: { type: 'string', minLength: 1, maxLength: 120 },
                   phone: { type: 'string', minLength: 8, maxLength: 16 },

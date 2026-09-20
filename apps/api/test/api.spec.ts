@@ -70,6 +70,31 @@ const json = (payload: unknown) => ({
   payload: JSON.stringify(payload),
 });
 
+
+/**
+ * A deterministic UUID from a fixture id.
+ *
+ * The fixtures use readable ids like `c-04` because a mobile test reads better
+ * that way. The API columns are UUIDs, so a real client sends UUIDs - and until
+ * the repository equivalence run, the API tests pushed `c-04` at a permissive
+ * in-memory repository and passed, while the same request would have failed
+ * against Postgres. Mapping here keeps the fixtures readable and the requests
+ * realistic.
+ */
+const asUuid = (fixtureId: string): string => {
+  let h = 0;
+  for (const ch of fixtureId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const hex = h.toString(16).padStart(8, '0');
+  return hex + '-0000-4000-8000-' + hex.padStart(12, '0');
+};
+
+/** A fixture entry as a client would send it: same figures, a real id. */
+const wire = (e: { id: string; partyId?: string }) => ({
+  ...e,
+  id: asUuid(e.id),
+  ...(e.partyId ? { partyId: asUuid(e.partyId) } : {}),
+});
+
 const auth = (token: string) => ({ authorization: 'Bearer ' + token });
 
 /**
@@ -337,8 +362,8 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
 
   const batchFrom = (input: DayInput, date: string) => ({
     days: [{ date, state: 'open' as const, openingCash: input.day.openingCash ?? 0 }],
-    parties: CANONICAL_PARTIES.map((p) => ({ id: p.id, kind: p.kind, name: p.name })),
-    entries: input.entries.map((e) => ({ ...e })),
+    parties: CANONICAL_PARTIES.map((p) => ({ id: asUuid(p.id), kind: p.kind, name: p.name })),
+    entries: input.entries.map(wire),
   });
 
   beforeEach(async () => {
@@ -404,7 +429,7 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
         entries: [
           {
             // A credit sale naming nobody: P7 would count money no one can be asked for.
-            id: 'bad-1',
+            id: asUuid('bad-1'),
             dayId: CANONICAL_DATE,
             section: 'udhar_sales',
             amount: 10000,
@@ -429,9 +454,9 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
       ...jsonAuth(session.accessToken!)({
         days: [{ date: CANONICAL_DATE, state: 'open' }],
         entries: [
-          { ...good },
+          wire(good),
           {
-            id: 'bad-2',
+            id: asUuid('bad-2'),
             dayId: CANONICAL_DATE,
             section: 'withdrawal',
             amount: 100,
@@ -467,7 +492,7 @@ describe('G7 - sync is idempotent, and the shop comes from the token', () => {
       ...jsonAuth(session.accessToken!)({
         entries: [
           {
-            id: 'late-1',
+            id: asUuid('late-1'),
             dayId: CANONICAL_DATE,
             section: 'cash_sales',
             amount: 5000,
@@ -538,8 +563,8 @@ describe('G8 - every figure the API returns is the engine figure', () => {
       url: '/v1/sync/push',
       ...jsonAuth(session.accessToken!)({
         days: [{ date, state: 'open', openingCash: input.day.openingCash ?? 0 }],
-        parties: parties.map((p) => ({ id: p.id, kind: p.kind, name: p.name })),
-        entries: input.entries.map((e) => ({ ...e })),
+        parties: parties.map((p) => ({ id: asUuid(p.id), kind: p.kind, name: p.name })),
+        entries: input.entries.map(wire),
       }),
     });
 
@@ -632,7 +657,7 @@ describe('G8 - every figure the API returns is the engine figure', () => {
     await push(canonicalInput(), CANONICAL_DATE, CANONICAL_PARTIES);
     const res = await h.app.inject({
       method: 'GET',
-      url: '/v1/parties/' + CANONICAL_PARTIES[0]!.id + '/export',
+      url: '/v1/parties/' + asUuid(CANONICAL_PARTIES[0]!.id) + '/export',
       headers: auth(session.accessToken!),
     });
     expect(res.statusCode).toBe(200);
@@ -889,8 +914,8 @@ describe('POST /v1/days/:date/close', () => {
       url: '/v1/sync/push',
       ...jsonAuth(session.accessToken)({
         days: [{ date: CANONICAL_DATE, state: 'open', openingCash: input.day.openingCash ?? 0 }],
-        parties: CANONICAL_PARTIES.map((p) => ({ id: p.id, kind: p.kind, name: p.name })),
-        entries: input.entries.map((e) => ({ ...e })),
+        parties: CANONICAL_PARTIES.map((p) => ({ id: asUuid(p.id), kind: p.kind, name: p.name })),
+        entries: input.entries.map(wire),
       }),
     });
     // What the ENGINE says the drawer should hold, given exactly what the server has.

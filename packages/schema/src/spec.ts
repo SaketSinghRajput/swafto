@@ -78,6 +78,24 @@ export type PartyKind = (typeof PARTY_KINDS)[number];
 export const SOURCES = ['manual', 'imported'] as const;
 export type Source = (typeof SOURCES)[number];
 
+/**
+ * DPDP §1.2 — the purposes a shopkeeper can agree to, separately.
+ *
+ * SEPARATE PURPOSES ARE THE REQUIREMENT, not a nicety. Consent has to be
+ * specific, so "use the app" cannot be one switch covering the ledger, the SMS
+ * and the crash reports. Only the first is required for the account to exist;
+ * the other two are refusable without losing anything.
+ */
+export const CONSENT_PURPOSES = [
+  'account_and_ledger',
+  'sms_reminders',
+  'crash_diagnostics',
+] as const;
+export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
+
+/** The three languages, as the shops table already spells them. */
+export const LANGUAGES = ['od', 'hi', 'en'] as const;
+
 /* ------------------------------------------------------------------ *
  * Dialect primitives
  * ------------------------------------------------------------------ */
@@ -92,6 +110,8 @@ const t = {
   timestamp: (d: Dialect) => (d === 'sqlite' ? 'TEXT' : 'TIMESTAMPTZ'),
   /** A calendar date, 'YYYY-MM-DD'. Client-assigned; never rewritten (ADR-004). */
   date: (d: Dialect) => (d === 'sqlite' ? 'TEXT' : 'DATE'),
+  /** SQLite has no boolean; 0 and 1 in an INTEGER is how it has always spelled one. */
+  bool: (d: Dialect) => (d === 'sqlite' ? 'INTEGER' : 'BOOLEAN'),
 };
 
 const inList = (col: string, values: readonly string[]) =>
@@ -240,6 +260,32 @@ export function tablesDDL(d: Dialect): string[] {
     //
     // This is the one store the architecture document does not name but D8 requires:
     // a skip has no entry to record it, so it needs somewhere to live.
+
+    /*
+     * DPDP §1.2 — CONSENT, AND EVERY CHANGE OF IT.
+     *
+     * APPEND-ONLY, AND THAT IS THE ENTIRE DESIGN. A withdrawal is a NEW ROW, not
+     * an update of the grant. A consents table that can be overwritten cannot
+     * answer "what did he agree to, in which language, on which day" - which is
+     * the only question a consent record exists to answer, and the one an auditor
+     * will ask. Updating in place would leave a fiduciary able to say only what
+     * the current state is, which is not what the Act asks for.
+     *
+     * The notice VERSION is stored on every row so that changing the notice and
+     * re-asking is something the data can express, rather than something that has
+     * to be reconstructed from deployment dates.
+     */
+    `CREATE TABLE consents (
+  id             ${uuid} PRIMARY KEY,
+  user_id        ${uuid} NOT NULL REFERENCES users(id),
+  purpose        ${t.text()} NOT NULL,
+  granted        ${t.bool(d)} NOT NULL,
+  notice_version ${t.text()} NOT NULL,
+  locale         ${t.text()} NOT NULL,
+  at             ${ts} NOT NULL,
+  CONSTRAINT consents_purpose_ck CHECK (${inList('purpose', CONSENT_PURPOSES)}),
+  CONSTRAINT consents_locale_ck  CHECK (${inList('locale', LANGUAGES)})
+)`,
     //
     // Deliberately NOT append-only. A skip is a UI state, not a financial fact, and
     // both E3 (an entry un-skips a section) and E6 (deleting the last line returns a
@@ -374,8 +420,31 @@ END`,
     ];
   }
   return [
+    /*
+     * APPEND-ONLY, WITH EXACTLY ONE WAY THROUGH IT: ERASURE.
+     *
+     * D1 says entries are never updated and never deleted, and that has to stay
+     * true - a correction is a new row, for ever. But DPDP §1.6 gives a person
+     * the right to have their data erased, and a right that the schema makes
+     * impossible is not a right. The two are not in conflict: one governs how a
+     * shopkeeper edits his book, the other governs whether the book may go on
+     * existing at all.
+     *
+     * So the trigger permits a DELETE only while `swafto.erasure` is set on the
+     * CURRENT TRANSACTION. `SET LOCAL` means it cannot leak past a COMMIT, it
+     * cannot be left on, and it cannot be set by a query that only READS. An
+     * ordinary delete - the accident this trigger exists to stop - has no such
+     * flag and still fails.
+     *
+     * Found by the repository equivalence run, which tried to erase a shop
+     * against a real database and could not: the DPDP endpoint would have
+     * returned a 500 in production while passing every test in memory.
+     */
     `CREATE OR REPLACE FUNCTION entries_append_only() RETURNS TRIGGER AS $$
 BEGIN
+  IF TG_OP = 'DELETE' AND current_setting('swafto.erasure', true) = 'on' THEN
+    RETURN OLD;
+  END IF;
   RAISE EXCEPTION 'entries is append-only: post a correction entry, never % (architecture 07.04)', TG_OP;
 END;
 $$ LANGUAGE plpgsql`,
@@ -417,18 +486,41 @@ FOR EACH ROW EXECUTE FUNCTION entries_reject_closed_day()`,
  */
 export function tenancyDDL(d: Dialect): string[] {
   if (d !== 'postgres') return [];
-  const scoped = ['entries', 'days', 'parties', 'section_skips', 'devices', 'users'];
+
+  /*
+   * HOW EACH TABLE REACHES ITS SHOP, WHICH IS NOT ALWAYS A `shop_id` COLUMN.
+   *
+   * Most of these carry the shop directly. `consents` does not - it hangs off a
+   * user - and the first version of this generated `shop_id = ...` for it
+   * anyway, which is a migration that fails on a column that does not exist.
+   * Expressing the relationship per table means adding a table forces somebody
+   * to say how it is scoped, rather than inheriting an assumption.
+   */
+  const scopedBy: Record<string, string> = {
+    entries: `shop_id = current_setting('swafto.shop_id', true)::uuid`,
+    days: `shop_id = current_setting('swafto.shop_id', true)::uuid`,
+    parties: `shop_id = current_setting('swafto.shop_id', true)::uuid`,
+    section_skips: `shop_id = current_setting('swafto.shop_id', true)::uuid`,
+    devices: `shop_id = current_setting('swafto.shop_id', true)::uuid`,
+    users: `shop_id = current_setting('swafto.shop_id', true)::uuid`,
+    consents: `user_id IN (SELECT id FROM users WHERE shop_id = current_setting('swafto.shop_id', true)::uuid)`,
+  };
+
   const out: string[] = [];
-  for (const table of scoped) {
+  for (const [table, predicate] of Object.entries(scopedBy)) {
     out.push(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
     out.push(`ALTER TABLE ${table} FORCE ROW LEVEL SECURITY`);
-    out.push(
-      `CREATE POLICY ${table}_tenant_isolation ON ${table}
-  USING (shop_id = current_setting('swafto.shop_id', true)::uuid)`,
-    );
+    out.push(`CREATE POLICY ${table}_tenant_isolation ON ${table}
+  USING (${predicate})`);
   }
-  // Belt and braces with the trigger — §07.04 says forever.
+  // Belt and braces with the trigger - §07.04 says forever.
   out.push(`REVOKE UPDATE, DELETE ON entries FROM PUBLIC`);
+  /*
+   * Consents are append-only for the same reason entries are: a withdrawal that
+   * overwrote the grant would destroy the only record of what he agreed to, and
+   * that record is what DPDP §1.2 exists to require.
+   */
+  out.push(`REVOKE UPDATE, DELETE ON consents FROM PUBLIC`);
   return out;
 }
 
@@ -450,6 +542,8 @@ export function migrationDown(d: Dialect): string[] {
     'rate_events',
     'outbox',
     'section_skips',
+    // Before users: it references them. Reverse dependency order is the rule here.
+    'consents',
     'entries',
     'days',
     'parties',

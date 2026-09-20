@@ -91,6 +91,31 @@ export class WriteRefused extends Error {
   }
 }
 
+
+/**
+ * IDS ARE UUIDS, AND THAT IS A DATABASE FACT BEFORE IT IS A PREFERENCE.
+ *
+ * `entries.id`, `parties.id`, `shops.id` and the rest are `UUID` columns. An id
+ * of any other shape is not "unusual", it is a row Postgres will refuse - and
+ * the in-memory repository accepted anything, so a route test could pass with
+ * `'entry-1'` and the same request would fail in production with a driver error
+ * rather than a clean refusal.
+ *
+ * Found by the equivalence run on its first outing, which is what it is for.
+ */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function assertUuid(value: string, what: string): void {
+  if (!UUID.test(value)) {
+    throw new WriteRefused(
+      what + '_not_uuid',
+      what +
+        ' must be a UUID: the column is a UUID and the database refuses anything ' +
+        'else. Got: ' +
+        value,
+    );
+  }
+}
 export interface Repo {
   /* ---- identity ------------------------------------------------------- */
   findUserByPhone(phone: string): Promise<UserRow | null>;

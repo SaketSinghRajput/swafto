@@ -97,6 +97,7 @@ describe('G4 · Postgres migrations and append-only', () => {
     // NOTE: outbox is device-local and must NOT exist on the server (architecture D4).
     // rate_events is its mirror image: server-only, and must NOT exist on the device.
     expect(names).toEqual([
+      'consents',
       'days',
       'devices',
       'entries',
@@ -167,10 +168,12 @@ describe('G4 · Postgres migrations and append-only', () => {
          FROM pg_class c
          JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public'
-          AND c.relname IN ('entries','days','parties','section_skips','devices','users')
+          AND c.relname IN ('entries','days','parties','section_skips','devices','users','consents')
         ORDER BY c.relname`,
     );
-    expect(res.rows.length).toBe(6);
+    // Seven since iteration 39: consents joined the tenant-scoped set, scoped
+    // through its user rather than by a shop_id column it does not have.
+    expect(res.rows.length).toBe(7);
     for (const r of res.rows) {
       expect(r.relrowsecurity, `${r.relname} RLS`).toBe(true);
       expect(r.relforcerowsecurity, `${r.relname} FORCE RLS`).toBe(true);

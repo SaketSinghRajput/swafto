@@ -15,6 +15,8 @@ DROP TABLE IF EXISTS outbox;
 
 DROP TABLE IF EXISTS section_skips;
 
+DROP TABLE IF EXISTS consents;
+
 DROP TABLE IF EXISTS entries;
 
 DROP TABLE IF EXISTS days;

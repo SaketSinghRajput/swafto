@@ -104,6 +104,18 @@ CREATE TABLE entries (
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
+CREATE TABLE consents (
+  id             UUID PRIMARY KEY,
+  user_id        UUID NOT NULL REFERENCES users(id),
+  purpose        TEXT NOT NULL,
+  granted        BOOLEAN NOT NULL,
+  notice_version TEXT NOT NULL,
+  locale         TEXT NOT NULL,
+  at             TIMESTAMPTZ NOT NULL,
+  CONSTRAINT consents_purpose_ck CHECK (purpose IN ('account_and_ledger', 'sms_reminders', 'crash_diagnostics')),
+  CONSTRAINT consents_locale_ck  CHECK (locale IN ('od', 'hi', 'en'))
+);
+
 CREATE TABLE section_skips (
   shop_id     UUID NOT NULL REFERENCES shops(id),
   day_id      DATE NOT NULL,
@@ -136,6 +148,9 @@ CREATE INDEX rate_events_bucket_idx ON rate_events (bucket, at);
 
 CREATE OR REPLACE FUNCTION entries_append_only() RETURNS TRIGGER AS $$
 BEGIN
+  IF TG_OP = 'DELETE' AND current_setting('swafto.erasure', true) = 'on' THEN
+    RETURN OLD;
+  END IF;
   RAISE EXCEPTION 'entries is append-only: post a correction entry, never % (architecture 07.04)', TG_OP;
 END;
 $$ LANGUAGE plpgsql;
@@ -215,4 +230,13 @@ ALTER TABLE users FORCE ROW LEVEL SECURITY;
 CREATE POLICY users_tenant_isolation ON users
   USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
 
+ALTER TABLE consents ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE consents FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY consents_tenant_isolation ON consents
+  USING (user_id IN (SELECT id FROM users WHERE shop_id = current_setting('swafto.shop_id', true)::uuid));
+
 REVOKE UPDATE, DELETE ON entries FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON consents FROM PUBLIC;

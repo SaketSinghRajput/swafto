@@ -104,6 +104,18 @@ CREATE TABLE entries (
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
+CREATE TABLE consents (
+  id             TEXT PRIMARY KEY,
+  user_id        TEXT NOT NULL REFERENCES users(id),
+  purpose        TEXT NOT NULL,
+  granted        INTEGER NOT NULL,
+  notice_version TEXT NOT NULL,
+  locale         TEXT NOT NULL,
+  at             TEXT NOT NULL,
+  CONSTRAINT consents_purpose_ck CHECK (purpose IN ('account_and_ledger', 'sms_reminders', 'crash_diagnostics')),
+  CONSTRAINT consents_locale_ck  CHECK (locale IN ('od', 'hi', 'en'))
+);
+
 CREATE TABLE section_skips (
   shop_id     TEXT NOT NULL REFERENCES shops(id),
   day_id      TEXT NOT NULL,

@@ -69,8 +69,11 @@ describe('G4 · migrations run up, down, and up again (SQLite)', () => {
         .all() as { name: string }[]
     ).map((r) => r.name);
 
-    // D1-D5 plus section_skips (required by D8) and outbox (device-local only).
+    // D1-D5 plus section_skips (required by D8), outbox (device-local only) and
+    // consents (DPDP §1.2, added at iteration 39 when the server grew the
+    // endpoints that record one).
     expect(tables).toEqual([
+      'consents',
       'days',
       'devices',
       'entries',

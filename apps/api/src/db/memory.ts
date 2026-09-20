@@ -16,6 +16,7 @@
 import type { Entry, IsoDate, Party } from '@swafto/formula-engine';
 import {
   WriteRefused,
+  assertUuid,
   type ConsentRow,
   type DayRow,
   type DeviceRow,
@@ -124,6 +125,9 @@ export function memoryRepo(): Repo & { readonly dump: () => unknown } {
     },
 
     async appendEntry(shopId, entry) {
+      // Postgres would refuse a non-UUID id with a driver error rather than a
+      // clean refusal. Refusing it here keeps the two repositories honest.
+      assertUuid(entry.id, 'entry id');
       const existing = entries.get(entry.id);
       if (existing) {
         /*
@@ -177,6 +181,7 @@ export function memoryRepo(): Repo & { readonly dump: () => unknown } {
     },
 
     async upsertParty(shopId, party) {
+      assertUuid(party.id, 'party id');
       parties.set(party.id, { ...party, shopId });
     },
 
