@@ -1680,3 +1680,134 @@ re-running is exactly the drift it exists to catch.
 
 NEXT — the canonical value registry, then the mutation harness and the twelve
 arithmetic survivors.
+
+---
+
+## 2026-09-20 · Iteration 23 · Injection 17: the canonical value registry
+
+**Recorded late, at iteration 24.** The work shipped as commit `e167882` and this
+heading was never appended, so `check:verifiers` derived the iteration as 22 for a
+whole iteration. The gap is left visible rather than back-dated: an append-only log
+that silently acquires a missing entry is worth less than one that admits it.
+
+`packages/values` became the single home for every value that lives in more than one
+place — A.1's point that it is a MODULE, not a document. External values carry their
+authority and the date it was established. `check:registry` enforces four directions:
+no document may disagree, no code may keep its own literal, no new hand-typed
+`Label: number` field, and every external value must name a source.
+
+56dp and 17sp are filed as OURS, not external: they are stricter than the platform's
+48dp because of who this app is for.
+
+---
+
+## 2026-09-20 · Iteration 24 · Injection 18: survivors are findings, scores are not
+
+### The answer to the one number the owner said he would watch
+
+**One of the twelve was real.** Eleven of the twelve arithmetic-operator survivors in
+`money.ts` are killed by tests that already existed. The twelfth was a genuine hole:
+
+    stdevMoney:  Math.sqrt(acc / values.length)  ->  Math.sqrt(acc * values.length)
+
+`stdevMoney` had exactly one test. It passed `[]` and `[500]`, and **both return
+early** — null at line 171, zero at line 172. The division on line 179 had never been
+run by a test that checks its result. Every rupee of cash-discipline scoring goes
+through that line.
+
+It is not an equivalent mutant, and the distinction is the whole of A.3. For a single
+value `n = 1`, so `acc / n` and `acc * n` genuinely cannot be told apart — which is
+exactly why the one existing test could not tell them apart. From two values up they
+diverge. Uncovered, not indistinguishable. So it got tests, four of them, pinning the
+population divisor, the rounding, zero spread and shift-invariance.
+
+A.5 says a real survivor in the money path outranks Form A. It did, and it was fixed
+before a screen renders a figure through these helpers.
+
+### I had this wrong, and the correction is the interesting part
+
+Earlier this session I reported all twelve as killed. That measurement was taken
+against a polluted tree and it was wrong. Three separate instrument defects stood
+between the question and the answer, and each would have produced a confident,
+entirely false result:
+
+1. **Twelve kills from twelve runs that never happened.** `execFileSync` cannot spawn
+   a `.cmd` without a shell — blocked since CVE-2024-27980 — and fails with *empty*
+   stdout, indistinguishable from a suite that ran and printed nothing. A fallback
+   then returned `1`, which is precisely the value §5.9 reads as "killed by one test,
+   nearly as fragile as a survivor". It printed that for all twelve, unanimously.
+   `shell: true` would have fixed it and is banned by check-tooling since iteration
+   15; resolving vitest's entry and handing it to node needs no shell.
+
+2. **Kills credited to a database that was not listening.** Raw failure counts let
+   flaky Postgres suites stand in for real detections. Fixed by subtracting an
+   unmutated baseline *by test name*, so a mutant is credited only with failures that
+   are new.
+
+3. **A stale Stryker sandbox was a second copy of the repository.**
+   `.stryker-tmp/sandbox-2dFJHU/` was untracked, un-ignored, and discovered by vitest.
+   Every test ran twice — 606 reported for a 303-test suite — and the two copies of
+   `postgres.spec.ts` raced each other against the same database. **That is the
+   intermittent G4 failure seen since iteration 17.** Removed and gitignored. With it
+   gone the suite is 11 files, 309 tests, all passing.
+
+The no-op plant caught the first two. A smoke test would have caught neither, because
+both produce a green, plausible, completely fabricated table.
+
+### The survivor set, not the score (A.1)
+
+Baseline before any fix, in `reports/mutation/baseline-survivors.json`: 131 survivors,
+12 of them arithmetic operators in the audited helpers. After: **zero survivors, zero
+equivalence claims.** The full table with per-mutant detection counts is in
+BENCHMARKS-RESULTS.md, which records the SET rather than a percentage.
+
+### §5.9 over the result (A.4)
+
+Detection counts now run 2 to 19. The first honest adjudication found three mutants
+killed by exactly one test each — as fragile as survivors. Two were fixed by the
+`stdevMoney` tests. The third was `medianMoney`'s comparator, which got two tests
+pinning numeric ordering rather than one arrangement of it: JS's default sort is
+lexicographic, and negatives separate ascending order from a comparator returning a
+sum. **Minimum detection count is now 2.**
+
+### B4 and B6 are NOT INSTRUMENTED — correcting iteration 20
+
+Iteration 20 recorded them as instrumented with a provisional reading. That was the
+wrong test. Stryker exists, runs, and reports a number; the number is about Stryker.
+It called all twelve money mutants Survived when eleven die to tests that predate it.
+
+Two disproofs, either sufficient alone: its dry run finds 170 of 303 tests and the
+missing 133 are **not** the cause, because the 170 it does see already contain the
+killing tests; and with `coverageAnalysis: all` it logs "Ran all tests for this
+mutant" and then reports 8.96 tests per mutant on average.
+
+INSTRUMENTED drops from 16 to 14 of 40. That is the honest direction for that number
+to move this iteration.
+
+`mutation:money` does **not** replace them. It adjudicates twelve named mutants on one
+file and produces no score. B4's 90% threshold is frozen, unmet and unmeasured, and
+A.2 is explicit that this bar is additional to it, not instead of it.
+
+### B · the quotation exemption (done before A)
+
+Narrowed to quoted **AND** attributed to a named artifact, re-tested with quoted spans
+stripped so prose that merely mentions an old number still fails. The exemption count
+is printed every run and counts only exemptions that actually suppressed a match —
+which took it from 24 to 1, because the 24 counted lines where no rule would have
+matched at all. A count that looks like a widening hole while measuring nothing is
+worse than no count. Negative-tested three ways: quoted-but-unattributed fails,
+attributed-but-unquoted fails, a real quotation passes.
+
+The same shape was then applied to the DB-bound exclusion in the new harness: narrow,
+printed, and guarded by a check that fails if either excluded spec ever references the
+module under mutation.
+
+Commands:
+  $ npm run check:all             -> 14 checks, all pass
+  $ npm run mutation:money        -> 12 planted, 12 killed, 0 survivors
+  $ npm run mutation:money:prove  -> a no-op is reported as a survivor
+  $ npx vitest run                -> 11 files, 309 passed, 0 skipped
+
+NEXT — rejects.json and the B3 re-measurement. Per injection 18 C the mutation diff
+waits until after it lands, so it is measured once against the real suite. Then the
+two fixtures, then Form A over three iterations, with the checkpoint at 26.

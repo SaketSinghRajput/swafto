@@ -221,7 +221,18 @@ export const VERIFIERS = [
     benchmarks: ['B4', 'B6'],
     defect: null,
     provenBy:
-      'It IS a defect-planting harness - 145 planted mutants on money.ts alone - so proving it can fail is the thing it does on every run. What is NOT yet proven is that it sees the whole suite: its dry run finds 170 of 303 tests, so its first reading of 9.66% is a statement about the harness, not the engine. Recorded as provisional in BENCHMARKS-RESULTS.md rather than as a B4 measurement.',
+      'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run finds 170 of 303 tests, and the 133 it misses are NOT the cause, because the 170 it does see already contain the killing tests; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
+  },
+  {
+    id: 'money-mutants',
+    command: 'npm run mutation:money',
+    file: 'tools/check-money-mutants.mjs',
+    claims:
+      'ZERO unexplained survivors among the twelve arithmetic mutants of the audited money helpers - stricter than B4 and additional to it (injection 18 A.2). Each mutant is planted for real, judged against the suite, and either killed or carrying a written equivalence argument. It does NOT produce a score and is not an instrument for B4 or B6.',
+    benchmarks: [],
+    defect: null,
+    provenBy:
+      'npm run mutation:money:prove plants a NO-OP mutation - text replaced by itself - which cannot change behaviour and therefore cannot be killed. The check must report it as a survivor and exit non-zero, and does. This is not decoration: the first version of this tool reported twelve kills from twelve vitest runs that never executed, because execFileSync cannot spawn a .cmd without a shell and failed with empty output. A second version credited kills to Postgres suites failing for want of a database. A no-op plant catches both; a smoke test catches neither.',
   },
   {
     id: 'registry',
@@ -333,10 +344,20 @@ export const BENCHMARKS = {
   B1: { verifier: 'vectors-node' },
   B2: { verifier: 'vectors-divergence' },
   B3: { verifier: 'coverage' },
+  /*
+   * B4 AND B6 ARE NOT INSTRUMENTED, correcting an earlier claim that they were.
+   *
+   * "The instrument exists and runs" was the wrong test. Stryker exists and runs and
+   * reports a number; the number is about Stryker. It called all twelve money mutants
+   * Survived when the suite kills eleven of them outright. §5.13 asks for an
+   * instrument, and a thing that produces a confident wrong reading is not one.
+   *
+   * They are recorded as measurable-now rather than blocked, because nothing is
+   * missing but a working harness - the subject has existed since G2.
+   */
   B4: {
-    verifier: 'mutation',
-    partial:
-      'The instrument exists and runs. Its first reading is NOT a valid measurement: the harness sees 170 of 303 tests. Fixing that comes before any number is claimed.',
+    state: 'measurable-now',
+    why: 'NOT INSTRUMENTED. Stryker reports a number that is false: it called all twelve money-helper arithmetic mutants Survived, and mutation:money proves every one of them dies. No B4 figure may be claimed from it. mutation:money is NOT a substitute - it adjudicates twelve named mutants on one file and produces no score.',
   },
   B5: {
     verifier: 'coverage',
@@ -344,8 +365,8 @@ export const BENCHMARKS = {
       'The backend is small and growing, so 91.26% today is over a small denominator. The instrument exists and moves with the subject, which is what §5.13 asks.',
   },
   B6: {
-    verifier: 'mutation',
-    partial: 'Same instrument and same harness shortfall as B4.',
+    state: 'measurable-now',
+    why: 'NOT INSTRUMENTED. Same harness as B4 and the same disproof. The backend has no equivalent of mutation:money, so the money helpers are the only surface in this build with a trustworthy mutation verdict.',
   },
   B7: { state: 'blocked', blockedOn: 'any React Native app code', gate: 'G10' },
   B8: { state: 'blocked', blockedOn: 'the sync API', gate: 'G7' },
@@ -553,7 +574,23 @@ const JUDGEMENTS = [
     what: "B3's attempts narrative - the gap is in rejection arms",
     made: 19,
   },
+  /*
+   * STILL 13, and deliberately. Bumping this to 24 would clear the STALE warning
+   * without re-stating anything, which is the §5.14 failure in its purest form: a
+   * status that is true because a field says so. It stays stale until the severities
+   * are actually re-derived, and the warning is the mechanism working.
+   */
   { where: 'FINDINGS.md', what: 'the severity implied by each finding’s wording', made: 13 },
+  {
+    where: 'BENCHMARKS-RESULTS.md',
+    what: 'that the twelve money mutants are ALL killed - re-adjudicate whenever money.ts or its tests change',
+    made: 24,
+  },
+  {
+    where: 'tools/check-money-mutants.mjs',
+    what: 'that the two DB-bound specs cannot observe money.ts, which is what makes excluding them safe',
+    made: 24,
+  },
   { where: 'REVIEW.md', what: "the A12 audit's two 'partly' verdicts and their owed plants", made: 20 },
 ];
 

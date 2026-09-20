@@ -165,6 +165,27 @@ export const FINDINGS = [
     fixed: () => false,
     open: '§5.14.5 requires each one built or the claim removed. Not started. The rows are TODO, so naming a planned artifact is a plan rather than a lie - but the claims must still resolve or go.',
   },
+  {
+    id: 'V-8',
+    what: 'stdevMoney never had its computation tested - both existing cases returned early',
+    premise:
+      'planted `Math.sqrt(acc / values.length)` -> `* values.length` and the whole suite stayed green',
+    /*
+     * The predicate is the TEST, not a note saying a test was added. A finding that is
+     * fixed because a file says "fixed" is the §5.14 defect; this one holds only while
+     * a case that distinguishes n=1 from n>1 is actually present.
+     */
+    fixed: all(
+      contains('packages/formula-engine/test/money.spec.ts', 'stdevMoney([0, 100])'),
+      contains('packages/formula-engine/test/money.spec.ts', 'stdevMoney([100, 200, 300, 400])'),
+    ),
+  },
+  {
+    id: 'V-9',
+    what: 'a stale Stryker sandbox was a second copy of the repo, so vitest ran every test twice and two copies of postgres.spec.ts raced the same database',
+    premise: 'vitest reported 606 tests for a 303-test suite, and .stryker-tmp/ was untracked',
+    fixed: all(() => !existsSync('.stryker-tmp'), contains('.gitignore', '.stryker-tmp/')),
+  },
 ];
 
 /* ---- derive ------------------------------------------------------------- */

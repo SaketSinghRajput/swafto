@@ -18,7 +18,7 @@ twice to findings about that very failure:
 | **F-10** | premise FALSE and fix never applied - two errors cancelling into a pass |
 | **F-06** | found an unapplied fix, then ITS OWN fix was recorded as applied and was not |
 
-**15 fixed · 1 open · 1 withdrawn**, as derived
+**17 fixed · 1 open · 1 withdrawn**, as derived
 on the last run.
 
 | id | status | finding | premise established by |
@@ -40,6 +40,8 @@ on the last run.
 | V-5 | **FIXED** | BENCHMARKS-RESULTS.md, referenced by the frozen BENCHMARKS.md since iteration 6, did not exist | ls BENCHMARKS-RESULTS.md -> No such file or directory |
 | V-6 | **FIXED** | Three gate evidence numbers were stale: G0 said 526 lines, G1 said 12 ADRs, G5 had no re-derivable count | re-derived all five cheap gate numbers; three disagreed with the record |
 | V-7 | **OPEN** | TRACEABILITY names 8 engine functions and 18 vectors that do not exist | resolved every backticked name against engine exports and vectors.json |
+| V-8 | **FIXED** | stdevMoney never had its computation tested - both existing cases returned early | planted `Math.sqrt(acc / values.length)` -> `* values.length` and the whole suite stayed green |
+| V-9 | **FIXED** | a stale Stryker sandbox was a second copy of the repo, so vitest ran every test twice and two copies of postgres.spec.ts raced the same database | vitest reported 606 tests for a 303-test suite, and .stryker-tmp/ was untracked |
 
 ## Notes
 

@@ -38,6 +38,8 @@
     "check:traceability": "node tools/check-traceability.mjs",
     "check:secrets": "node tools/check-secrets.mjs",
     "mutation": "stryker run",
+    "mutation:money": "node tools/check-money-mutants.mjs",
+    "mutation:money:prove": "node tools/check-money-mutants.mjs --prove",
     "check:findings": "node tools/check-findings.mjs",
     "check:registry": "node tools/check-registry.mjs"
   },

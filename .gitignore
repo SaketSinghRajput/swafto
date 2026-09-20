@@ -22,3 +22,7 @@ ios/Pods/
 .sms-segments.json
 nul
 .detection-tmp.json
+
+# Stryker sandboxes: full copies of the repo. Left behind, vitest discovers them and
+# runs every test twice, and the mutation harness reads doubled counts.
+.stryker-tmp/

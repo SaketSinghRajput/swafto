@@ -31,7 +31,8 @@ requires the command to fail, restores the file and verifies the restore.
 | `vectors-node` | `npm run test:vectors:node` | `tools/run-vectors.mjs` | Every golden vector produces its expected values under Node. | plants a defect in `packages/formula-engine/src/primary.ts` |
 | `vectors-divergence` | `npm run test:vectors:diff` | `tools/diff-vectors.mjs` | Node and Hermes agree on every value of every vector (B2). | G5, by injecting a runtime-specific divergence. A source edit cannot fake it: the mutation has to behave DIFFERENTLY on each engine, so it is not plantable from one file. |
 | `unit` | `npx vitest run` | `packages/formula-engine/test/vectors.spec.ts` | All specs pass, including the 63 golden vectors, now executed INSIDE the runner so coverage can see them. | plants a defect in `packages/schema/src/spec.ts` |
-| `mutation` | `npm run mutation` | `stryker.config.json` | Mutation score for the formula engine (B4) and the backend (B6) - how many deliberately broken variants of the code the suite actually kills. | It IS a defect-planting harness - 145 planted mutants on money.ts alone - so proving it can fail is the thing it does on every run. What is NOT yet proven is that it sees the whole suite: its dry run finds 170 of 303 tests, so its first reading of 9.66% is a statement about the harness, not the engine. Recorded as provisional in BENCHMARKS-RESULTS.md rather than as a B4 measurement. |
+| `mutation` | `npm run mutation` | `stryker.config.json` | Mutation score for the formula engine (B4) and the backend (B6) - how many deliberately broken variants of the code the suite actually kills. | NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run finds 170 of 303 tests, and the 133 it misses are NOT the cause, because the 170 it does see already contain the killing tests; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself. |
+| `money-mutants` | `npm run mutation:money` | `tools/check-money-mutants.mjs` | ZERO unexplained survivors among the twelve arithmetic mutants of the audited money helpers - stricter than B4 and additional to it (injection 18 A.2). Each mutant is planted for real, judged against the suite, and either killed or carrying a written equivalence argument. It does NOT produce a score and is not an instrument for B4 or B6. | npm run mutation:money:prove plants a NO-OP mutation - text replaced by itself - which cannot change behaviour and therefore cannot be killed. The check must report it as a survivor and exit non-zero, and does. This is not decoration: the first version of this tool reported twelve kills from twelve vitest runs that never executed, because execFileSync cannot spawn a .cmd without a shell and failed with empty output. A second version credited kills to Postgres suites failing for want of a database. A no-op plant catches both; a smoke test catches neither. |
 | `registry` | `npm run check:registry` | `tools/check-registry.mjs` | Every value that lives in more than one place has ONE home in @swafto/values. No document states a number that disagrees with it, no code keeps its own literal, and every externally-sourced value carries its authority and date. | plants a defect in `DEVICE-CHECKLIST.md` |
 | `findings` | `npm run check:findings` | `tools/check-findings.mjs` | §5.14 - every adversary finding’s status is DERIVED from a predicate against the repository, never asserted. A finding that does not verify as fixed and carries no explanation fails the build. | plants a defect in `TECH-DECISIONS.md` |
 | `secrets` | `npm run check:secrets` | `tools/check-secrets.mjs` | No AWS key, private key block, provider token, JWT, remote database password or hard-coded credential anywhere in the repository (B35, repo half). | plants a defect in `REVIEW.md` |
@@ -42,7 +43,7 @@ requires the command to fail, restores the file and verifies the restore.
 
 ## Benchmark coverage
 
-A benchmark with no instrument **cannot be claimed met**. 24 of
+A benchmark with no instrument **cannot be claimed met**. 26 of
 40 have none yet; each carries the gate it is owed at, in
 `tools/check-verifiers.mjs`.
 
@@ -51,9 +52,9 @@ A benchmark with no instrument **cannot be claimed met**. 24 of
 | B1 | `vectors-node` |
 | B2 | `vectors-divergence` |
 | B3 | `coverage` |
-| B4 | `mutation` |
+| B4 | **none yet** |
 | B5 | `coverage` |
-| B6 | `mutation` |
+| B6 | **none yet** |
 | B7 | **none yet** |
 | B8 | **none yet** |
 | B9 | **none yet** |

@@ -114,22 +114,55 @@ if (files.length === 0) {
 }
 
 let claims = 0;
+/**
+ * B.2 - an exemption COUNT, printed every run. Not a failure: a number. A count that
+ * grows is the visible form of a hole widening, and the failure mode hit five times
+ * in this build is silence rather than error.
+ */
+let exemptions = 0;
 for (const f of files) {
   for (const [i, line] of read(f).split('\n').entries()) {
     for (const rule of RULES) {
       if (rule.needs && !rule.needs.test(line)) continue;
       if (rule.not && rule.not.test(line)) continue;
       /*
-       * A QUOTATION IS NOT A CLAIM. SPEC-DIGEST C-8 quotes TB6's superseded
-       * "5-minute TTL" in order to rule against it; rewriting that to the current
-       * value would destroy the record of the disagreement being resolved. The
-       * narrow test is a quoted or blockquoted span PLUS a word that marks it as
-       * historical, so ordinary prose stating a wrong number is still caught.
+       * A QUOTATION IS NOT A CLAIM - BUT AN EXEMPTION IS A HOLE, AND HOLES GROW.
+       *
+       * SPEC-DIGEST C-8 quotes TB6's superseded "5-minute TTL" in order to rule
+       * against it; rewriting that to the current value would destroy the record of a
+       * disagreement being resolved. So the exemption is right. It is also the same
+       * shape as the INJECTIONS/ exemption at iteration 17, which made that directory
+       * the one place a banned token could hide and had to be closed with a hash lock.
+       *
+       * TWO CONDITIONS, BOTH REQUIRED (B.1):
+       *   1. the number is INSIDE quote marks - "..." or *"..."* - on that line, and
+       *   2. the line ATTRIBUTES the quote to a named artifact.
+       *
+       * Prose that merely mentions an old number is not a quotation and still fails.
+       * The earlier version accepted any blockquote containing a history word, which
+       * would have exempted a whole quoted BLOCK including its surrounding claims.
        */
-      if (/\*"|^\s*>/.test(line) && /superseded|until iteration|written at|said|previously/i.test(line)) {
-        continue;
+      const attributed =
+        /\b(SECURITY-AUDIT|SMS-TEMPLATES|BENCHMARKS|TECH-DECISIONS|SPEC-DIGEST|BUILD_LOG|ADR-\d+|AD-\d+|TB\d+|injection \d+)\b/.test(
+          line,
+        );
+      const stripped = line.replace(/"[^"]{1,200}"/g, ' ');
+      const hidQuoted = attributed && stripped !== line;
+
+      /*
+       * THE COUNT ONLY RISES WHEN THE EXEMPTION ACTUALLY SUPPRESSED SOMETHING.
+       * Counting every attributed line that merely contains quotes reported 24, most
+       * of which were lines where no rule would have matched at all - a number that
+       * looks like a widening hole while measuring nothing. B.2 wants the count to
+       * mean "times a real match was let through".
+       */
+      const subject = hidQuoted ? stripped : line;
+      if (hidQuoted) {
+        const inFull = [...line.matchAll(rule.re)].length;
+        const inStripped = [...stripped.matchAll(rule.re)].length;
+        if (inFull > inStripped) exemptions += inFull - inStripped;
       }
-      for (const m of line.matchAll(rule.re)) {
+      for (const m of subject.matchAll(rule.re)) {
         const got = Number(m[1] ?? m[2]);
         if (!Number.isFinite(got)) continue;
         claims += 1;
@@ -212,6 +245,7 @@ for (const [name, v] of Object.entries(EXTERNAL_VALUES)) {
 
 console.log(`  documents scanned      : ${files.length}`);
 console.log(`  value claims checked   : ${claims}`);
+console.log(`  quotation exemptions   : ${exemptions} (quoted AND attributed; B.2)`);
 console.log(`  code files scanned     : ${scanned}`);
 console.log(`  hand-typed fields      : ${handTyped} (BUILD_LOG exempt - it records history)`);
 console.log(

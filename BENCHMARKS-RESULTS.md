@@ -91,31 +91,121 @@ which targets exactly these arms.
 
 ---
 
-## PROVISIONAL · B4 and B6 · the mutation harness sees 170 of 303 tests
+## NOT INSTRUMENTED · B4 and B6 · the mutation harness reports a false number
 
-**Instrument built at iteration 20. Its first reading is 9.66% on `money.ts`, and
-that number is NOT a measurement of B4.**
+**Correcting iteration 20, which recorded these as instrumented with a provisional
+reading. They are not instrumented. The reading was not merely imprecise; it was
+wrong, and the way it was wrong is the point.**
 
-Stryker's dry run reports `Ran 170 tests`. The suite has 303. The 170 are the five
-formula-engine and rejects specs; it never sees `sms-templates` (84),
-`append-only` (20), `rate-limit` (15), `closed-day-guard` (7), `postgres` (6) or the
-lint rule (1). Every mutant is therefore being judged by roughly half the suite, and
-the half that is missing includes every database guard.
+Stryker reported **all twelve arithmetic mutants in the audited money helpers as
+Survived**. Eleven of the twelve are killed by tests that already existed. The
+twelfth was a real hole and is now covered. Not one of the twelve survives today.
 
-**This is the B3 lesson arriving exactly on schedule**, which is the argument for
-§5.13 in one line: a benchmark measured for the first time tells you about your
-harness. B3 read 57.73% and moved 28 points on an unchanged engine. B4 reads 9.66%
-and the harness is demonstrably incomplete, so the number is recorded here as
-PROVISIONAL and is not claimed against the 90% threshold.
+Two independent disproofs, either sufficient on its own:
 
-**Recorded anyway, per A.4**, because a bad number is worth more than a missing one -
-and this one already says something specific even while provisional: of 145 mutants
-on `money.ts`, 12 arithmetic-operator survivors sit in the audited money helpers. If
-that survives the harness fix, it is a real finding about the money path and not
-about Stryker.
+1. **The dry run finds 170 of 303 tests — and the shortfall is NOT the cause.**
+   The 170 it does see already contain the killing tests. Running a planted mutant
+   against exactly that 170-set produces failures. So the missing 133 do not explain
+   a single one of the twelve.
+2. **With `coverageAnalysis: all` it says one thing and does another.** It logs
+   `Ran all tests for this mutant` for every mutant and then reports
+   `Ran 8.96 tests per mutant on average`, still scoring 9.66%.
 
-**Next: fix the harness, then re-measure. Do not report a mutation score before
-then.** Attempts recorded: 0 of 3 - a provisional reading is not an attempt.
+A harness that selects a handful of tests per mutant while claiming to run them all
+is not a weak instrument, it is a broken one, and 9.66% is a statement about Stryker.
+
+**No B4 or B6 figure may be claimed from it.** Attempts recorded: 0 of 3 — a reading
+from a disproven instrument is not an attempt.
+
+### What replaced it, and what it does NOT replace
+
+`npm run mutation:money` (`tools/check-money-mutants.mjs`) plants each of the twelve
+mutants for real, runs the suite, and requires a failure that was not already
+failing. It is proven by `npm run mutation:money:prove`, which plants a no-op
+mutation and requires the check to report a survivor.
+
+**It is not an instrument for B4 or B6.** It adjudicates twelve named mutants on one
+file and produces no score. B4 asks for a mutation score over the whole engine at a
+90% threshold; that threshold is frozen, unmet and unmeasured. Injection 18 A.2 is
+explicit that this bar is *additional* to B4, not instead of it.
+
+### THE SURVIVOR SET, NOT THE SCORE (A.1)
+
+Baseline recorded before any fix, from `reports/mutation/baseline-survivors.json`:
+131 survivors, of which 12 arithmetic operators inside the audited helpers.
+
+Adjudicated individually (A.2), each planted and judged against the suite. The number
+is the count of tests that fail under the mutant and do not fail without it:
+
+| # | Mutant | Verdict | Killed by |
+|---|---|---|---|
+| 1 | `ratio`: `* 10000 / denom` → `* denom` | killed | 8 |
+| 2 | `ratio`: `* 10000` → `/ 10000` | killed | 8 |
+| 3 | `divideMoney`: `amount / divisor` → `*` | killed | 3 |
+| 4 | `medianMoney`: `sort(a - b)` → `a + b` | killed | 2 |
+| 5 | `medianMoney`: `s[mid - 1]` → `s[mid + 1]` | killed | 2 |
+| 6 | `medianMoney`: `length >> 1` → `<< 1` | killed | 19 |
+| 7 | `meanMoney`: `sum / length` → `*` | killed | 5 |
+| 8 | `stdevMoney`: `v - mean` → `v + mean` | killed | 5 |
+| 9 | `stdevMoney`: `d * d` → `d / d` | killed | 14 |
+| 10 | **`stdevMoney`: `sqrt(acc / length)` → `* length`** | **SURVIVED, now killed** | **2** |
+| 11 | `formatPaise`: `floor(abs / 100)` → `* 100` | killed | 6 |
+| 12 | `formatPaise`: `abs % 100` → `* 100` | killed | 6 |
+
+**Zero survivors. Zero equivalence claims.** Under A.3 an equivalence argument must be
+written into the mutant itself; none was needed, because none is equivalent.
+
+### Number 10 was real, and A.5 applied
+
+`stdevMoney` had exactly one test. It passed `[]` and `[500]`, and **both return early**
+— `[]` gives null at line 171 and a single value gives 0 at line 172. The division on
+line 179 had never been executed by a test that checks its result.
+
+It is not an equivalent mutant, and the distinction matters. For one value `n = 1`, so
+`acc / n` and `acc * n` are genuinely indistinguishable — which is precisely why the
+one existing test could not tell them apart. From two values up they diverge. So this
+was an uncovered line, not an indistinguishable one, and A.3 says what that needs: a
+test.
+
+Four were added, pinning the population divisor (`n`, not `n − 1`), the rounding, the
+zero-spread case and shift-invariance. Per A.5 this took priority over Form A and was
+fixed before any screen renders a figure through these helpers.
+
+### The §5.9 reading (A.4)
+
+Detection counts range from 2 to 19. On the first full adjudication three mutants were
+killed by exactly one test each — as fragile as a survivor, by §5.9. Two were fixed by
+the `stdevMoney` tests above. The third, `medianMoney`'s comparator, got two tests that
+pin numeric ordering rather than one arrangement of it: JS's default sort is
+lexicographic, and negative values separate ascending order from a comparator that
+returns a sum. **The minimum detection count is now 2.**
+
+### Two defects in the new harness, both caught by the no-op plant
+
+Recorded because they are the argument for §5.12 and would each have produced a
+confident, wholly false result:
+
+1. **Twelve kills from twelve runs that never happened.** `execFileSync` cannot spawn
+   a `.cmd` without a shell (blocked since CVE-2024-27980) and fails with *empty*
+   stdout, which is indistinguishable from a suite that ran and printed nothing. A
+   fallback then returned `1`, and `1` is exactly the value §5.9 reads as "killed by
+   one test, nearly as fragile as a survivor". It reported that for all twelve,
+   unanimously. `shell: true` would have fixed it and is forbidden by check-tooling;
+   resolving vitest's entry and handing it to node needs no shell.
+2. **Kills credited to a database that was not listening.** Raw failure counts let
+   flaky Postgres suites stand in for real detections — the no-op plant scored 8
+   phantom kills. Fixed by subtracting an unmutated baseline by test name, and by
+   excluding the two DB-bound specs under a guard that fails if either ever
+   references the module under mutation.
+
+### A third finding, outside the mutation work
+
+`.stryker-tmp/sandbox-2dFJHU/` — a full copy of the repository left behind by an
+earlier Stryker run — was untracked, un-ignored, and **discovered by vitest**. Every
+test ran twice (`606` reported for a 303-test suite), and the two copies of
+`postgres.spec.ts` raced each other against the same database, which is the
+intermittent G4 failure seen since iteration 17. Removed and added to `.gitignore`.
+With it gone the suite is **11 files, 309 tests, all passing**.
 
 ---
 
@@ -123,7 +213,7 @@ then.** Attempts recorded: 0 of 3 - a provisional reading is not an attempt.
 
 ## The partition (§5.13 A.1)
 
-**16 of 40 instrumented. 0 overdue. 24 blocked.**
+**14 of 40 instrumented. 2 overdue. 24 blocked.**
 
 OVERDUE means the subject already EXISTS and nothing measures it - a present
 failure under §5.13, not a future task. BLOCKED names the artifact whose
@@ -134,9 +224,9 @@ existence unblocks it, and the gate that artifact arrives at.
 | B1 | instrumented | `vectors-node` | - |
 | B2 | instrumented | `vectors-divergence` | - |
 | B3 | instrumented | `coverage` | - |
-| B4 | instrumented | `mutation` | The instrument exists and runs. Its first reading is NOT a valid measurement: the harness sees 170 of 303 tests. Fixing that comes before any number is claimed. |
+| B4 | **OVERDUE** | - | NOT INSTRUMENTED. Stryker reports a number that is false: it called all twelve money-helper arithmetic mutants Survived, and mutation:money proves every one of them dies. No B4 figure may be claimed from it. mutation:money is NOT a substitute - it adjudicates twelve named mutants on one file and produces no score. |
 | B5 | instrumented | `coverage` | The backend is small and growing, so 91.26% today is over a small denominator. The instrument exists and moves with the subject, which is what §5.13 asks. |
-| B6 | instrumented | `mutation` | Same instrument and same harness shortfall as B4. |
+| B6 | **OVERDUE** | - | NOT INSTRUMENTED. Same harness as B4 and the same disproof. The backend has no equivalent of mutation:money, so the money helpers are the only surface in this build with a trustworthy mutation verdict. |
 | B7 | blocked | - | needs **any React Native app code**, at G10 |
 | B8 | blocked | - | needs **the sync API**, at G7 |
 | B9 | blocked | - | needs **the app, to run 30 days against**, at G17 |

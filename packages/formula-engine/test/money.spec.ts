@@ -126,6 +126,43 @@ describe('"no data" and "zero rupees" are different statements', () => {
   });
 });
 
+/**
+ * THESE TESTS EXIST BECAUSE A MUTANT SURVIVED.
+ *
+ * `Math.sqrt(acc / values.length)` was mutated to `acc * values.length` and the whole
+ * suite stayed green. The only direct tests for stdevMoney passed `[]` and `[500]`,
+ * and both return early - the division on the last line had never been executed by a
+ * test that checks its result.
+ *
+ * Note WHY this is not equivalent-mutant territory: for a single value n = 1 and
+ * `acc / n` really is `acc * n`, which is exactly why the one existing test could not
+ * tell them apart. From two values up they diverge, so this is an uncovered line
+ * rather than an indistinguishable one - injection 18 A.3.
+ */
+describe('stdevMoney computes a population standard deviation', () => {
+  it('spreads two values around their mean', () => {
+    // mean 50; deviations -50 and +50; acc 5000; 5000/2 = 2500; sqrt = 50.
+    // The surviving mutant computed 5000*2 = 10000, sqrt = 100.
+    expect(stdevMoney([0, 100])).toBe(50);
+  });
+
+  it('divides by n, not by n-1, and rounds half away from zero', () => {
+    // mean 250; acc 50000; 50000/4 = 12500; sqrt = 111.80... -> 112.
+    // Dividing by n-1 would give 12909 -> 129. The mutant gave sqrt(200000) -> 447.
+    expect(stdevMoney([100, 200, 300, 400])).toBe(112);
+  });
+
+  it('is zero when every value is identical, however many there are', () => {
+    expect(stdevMoney([700, 700, 700])).toBe(0);
+  });
+
+  it('is unaffected by shifting the whole series', () => {
+    // A standard deviation measures spread, not level. This also pins the subtraction
+    // in `v - mean`: adding the mean instead would make the two disagree.
+    expect(stdevMoney([100, 200, 300, 400])).toBe(stdevMoney([1100, 1200, 1300, 1400]));
+  });
+});
+
 describe('medianMoney', () => {
   it('takes the middle of an odd-length series', () => {
     expect(medianMoney([300, 100, 200])).toBe(200);
@@ -137,6 +174,26 @@ describe('medianMoney', () => {
     const input = [300, 100, 200];
     medianMoney(input);
     expect(input).toEqual([300, 100, 200]);
+  });
+
+  /**
+   * §5.9 / injection 18 A.4 - a mutant killed by exactly one test is nearly as
+   * fragile as one that survives. Changing the comparator from `a - b` to `a + b`
+   * was caught by a single test; delete that test for an unrelated reason and a
+   * median that does not sort ships silently.
+   *
+   * These two pin the ORDERING itself rather than one arrangement of it. A comparator
+   * that returns a sum orders by magnitude-with-sign in a way that differs from
+   * ascending order as soon as negatives are present, and JS's default sort is
+   * lexicographic, which puts 1000 before 200.
+   */
+  it('sorts numerically, not lexicographically', () => {
+    expect(medianMoney([1000, 200, 30])).toBe(200);
+  });
+
+  it('orders negatives below zero, as a refund should sit below no movement', () => {
+    expect(medianMoney([500, -100, 0])).toBe(0);
+    expect(medianMoney([-500, -100, -300])).toBe(-300);
   });
 });
 

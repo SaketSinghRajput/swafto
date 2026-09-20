@@ -1,0 +1,657 @@
+[
+  {
+    "id": "packages/formula-engine/src/money.ts:34:14",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:32:52",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:40:94",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:42:7",
+    "mutator": "StringLiteral",
+    "replacement": "``"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:43:9",
+    "mutator": "StringLiteral",
+    "replacement": "``"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:97:58",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:98:10",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:98:10",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:98:10",
+    "mutator": "EqualityOperator",
+    "replacement": "x <= 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:98:18",
+    "mutator": "UnaryOperator",
+    "replacement": "+Math.round(-x)"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:98:30",
+    "mutator": "UnaryOperator",
+    "replacement": "+x"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:98:10",
+    "mutator": "EqualityOperator",
+    "replacement": "x >= 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:102:78",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:103:31",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:104:33",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:106:5",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:106:5",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:106:5",
+    "mutator": "EqualityOperator",
+    "replacement": "denominatorPaise !== 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:108:31",
+    "mutator": "ArithmeticOperator",
+    "replacement": "numeratorPaise * 10000 * denominatorPaise"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:108:32",
+    "mutator": "ArithmeticOperator",
+    "replacement": "numeratorPaise / 10000"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:120:10",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:109:10",
+    "mutator": "ObjectLiteral",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:121:3",
+    "mutator": "CallExpression",
+    "replacement": ";"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:7",
+    "mutator": "LogicalOperator",
+    "replacement": "!Number.isFinite(divisor) && divisor === 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:7",
+    "mutator": "BooleanLiteral",
+    "replacement": "Number.isFinite(divisor)"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:36",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:51",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:122:36",
+    "mutator": "EqualityOperator",
+    "replacement": "divisor !== 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:123:22",
+    "mutator": "StringLiteral",
+    "replacement": "``"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:125:15",
+    "mutator": "ArithmeticOperator",
+    "replacement": "amount * divisor"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:127:5",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:127:5",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:127:5",
+    "mutator": "EqualityOperator",
+    "replacement": "rounding !== 'floor'"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:127:18",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:129:9",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:129:9",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:129:9",
+    "mutator": "EqualityOperator",
+    "replacement": "rounding !== 'ceil'"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:129:22",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:132:27",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:142:56",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:143:17",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:144:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:144:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:144:7",
+    "mutator": "EqualityOperator",
+    "replacement": "values.length !== 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:155:69",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:156:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:156:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:156:7",
+    "mutator": "EqualityOperator",
+    "replacement": "values.length !== 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:157:13",
+    "mutator": "MethodExpression",
+    "replacement": "[...values].map(v => assertPaise(v))"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:157:13",
+    "mutator": "ArrayDeclaration",
+    "replacement": "[]"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:157:29",
+    "mutator": "ArrowFunction",
+    "replacement": "() => undefined"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:157:57",
+    "mutator": "ArrowFunction",
+    "replacement": "() => undefined"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:157:67",
+    "mutator": "ArithmeticOperator",
+    "replacement": "a + b"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:159:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:159:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:159:7",
+    "mutator": "EqualityOperator",
+    "replacement": "s.length % 2 !== 1"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:159:7",
+    "mutator": "ArithmeticOperator",
+    "replacement": "s.length * 2"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:160:28",
+    "mutator": "ArithmeticOperator",
+    "replacement": "mid + 1"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:160:52",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:170:68",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:171:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:171:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:171:7",
+    "mutator": "EqualityOperator",
+    "replacement": "values.length !== 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:172:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:172:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:173:16",
+    "mutator": "ArithmeticOperator",
+    "replacement": "sum(values) * values.length"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:172:7",
+    "mutator": "EqualityOperator",
+    "replacement": "values.length !== 1"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:175:27",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:176:15",
+    "mutator": "ArithmeticOperator",
+    "replacement": "v + mean"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:177:5",
+    "mutator": "AssignmentOperator",
+    "replacement": "acc -= d * d"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:177:12",
+    "mutator": "ArithmeticOperator",
+    "replacement": "d / d"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:179:54",
+    "mutator": "ArithmeticOperator",
+    "replacement": "acc * values.length"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:179:77",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:202:11",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:203:3",
+    "mutator": "CallExpression",
+    "replacement": ";"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:204:20",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:204:20",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:204:20",
+    "mutator": "EqualityOperator",
+    "replacement": "amount <= 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:204:20",
+    "mutator": "EqualityOperator",
+    "replacement": "amount >= 0"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:206:29",
+    "mutator": "ArithmeticOperator",
+    "replacement": "abs * 100"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:207:20",
+    "mutator": "ArithmeticOperator",
+    "replacement": "abs * 100"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:211:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:211:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:211:7",
+    "mutator": "EqualityOperator",
+    "replacement": "digits.length < 3"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:211:7",
+    "mutator": "EqualityOperator",
+    "replacement": "digits.length > 3"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:211:27",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:213:10",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:214:19",
+    "mutator": "MethodExpression",
+    "replacement": "digits"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:214:32",
+    "mutator": "UnaryOperator",
+    "replacement": "+3"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:215:16",
+    "mutator": "MethodExpression",
+    "replacement": "digits"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:215:32",
+    "mutator": "UnaryOperator",
+    "replacement": "+3"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:216:29",
+    "mutator": "ArrayDeclaration",
+    "replacement": "[\"Stryker was here\"]"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:217:12",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:217:12",
+    "mutator": "EqualityOperator",
+    "replacement": "rest.length >= 2"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:217:12",
+    "mutator": "EqualityOperator",
+    "replacement": "rest.length <= 2"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:217:29",
+    "mutator": "BlockStatement",
+    "replacement": "{}"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:218:21",
+    "mutator": "MethodExpression",
+    "replacement": "rest"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:218:32",
+    "mutator": "UnaryOperator",
+    "replacement": "+2"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:219:14",
+    "mutator": "MethodExpression",
+    "replacement": "rest"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:219:28",
+    "mutator": "UnaryOperator",
+    "replacement": "+2"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:221:9",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:221:9",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:221:22",
+    "mutator": "CallExpression",
+    "replacement": ";"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:222:15",
+    "mutator": "StringLiteral",
+    "replacement": "``"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:222:29",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:16",
+    "mutator": "StringLiteral",
+    "replacement": "``"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:30",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:30",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:30",
+    "mutator": "EqualityOperator",
+    "replacement": "fraction <= 10"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:30",
+    "mutator": "EqualityOperator",
+    "replacement": "fraction >= 10"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:46",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:225:52",
+    "mutator": "StringLiteral",
+    "replacement": "\"Stryker was here!\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:226:27",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:226:49",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:226:55",
+    "mutator": "StringLiteral",
+    "replacement": "\"Stryker was here!\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:227:18",
+    "mutator": "ConditionalExpression",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:227:18",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:227:18",
+    "mutator": "EqualityOperator",
+    "replacement": "opts.withSymbol !== false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:227:46",
+    "mutator": "StringLiteral",
+    "replacement": "\"Stryker was here!\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:227:38",
+    "mutator": "BooleanLiteral",
+    "replacement": "true"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:227:51",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:228:10",
+    "mutator": "StringLiteral",
+    "replacement": "``"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:39:52",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:40:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:40:7",
+    "mutator": "LogicalOperator",
+    "replacement": "typeof value !== 'number' && !Number.isInteger(value)"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:40:7",
+    "mutator": "ConditionalExpression",
+    "replacement": "false"
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:53:27",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:60:27",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  },
+  {
+    "id": "packages/formula-engine/src/money.ts:66:27",
+    "mutator": "StringLiteral",
+    "replacement": "\"\""
+  }
+]
