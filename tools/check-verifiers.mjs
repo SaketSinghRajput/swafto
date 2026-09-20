@@ -226,6 +226,25 @@ export const VERIFIERS = [
       'NOTHING. This entry is retained to record that it is NOT a working instrument. It reported all twelve arithmetic mutants in money.ts as Survived; eleven are killed by tests that predate this iteration and the twelfth by tests written because of it. Two independent checks: its dry run loads 275 of the 309 tests (re-derived clean at iteration 25; the figure first recorded, 170 of 303, is not reproducible), and the 34 it misses are NOT the cause, because the tests it does load already contain the killing ones; and with coverageAnalysis set to "all" it prints "Ran all tests for this mutant" and then reports 8.96 tests per mutant on average. A harness that selects a handful of tests while claiming to run them all cannot measure B4 or B6, and its 9.66% is a statement about itself.',
   },
   {
+    id: 'tasks',
+    command: 'npm run check:tasks',
+    file: 'tools/gen-tasks.mjs',
+    claims:
+      'TASKS.md matches a fresh generation, so every checkbox is derived from a predicate rather than ticked by hand. Also: no cycle in the dependency graph, no task without a predicate that is not marked JUDGEMENT, no duplicate or reused id, and no human task appearing as a blocker.',
+    benchmarks: [],
+    /*
+     * The plant is a DUPLICATE ID, which is A.2's failure: ids are permanent and
+     * never reused, and a reused one silently merges two tasks' state. All five
+     * failure modes were negative-tested at iteration 29; this is the one a
+     * plant can express as a single find-and-replace.
+     */
+    defect: {
+      file: 'tools/tasks.data.mjs',
+      find: "    id: 'P-004',",
+      replace: "    id: 'P-001',",
+    },
+  },
+  {
     id: 'plan',
     command: 'npm run check:plan',
     file: 'tools/gen-plan.mjs',
@@ -539,6 +558,11 @@ const RESPONSES = {
    * does print a number, "sources changed", and its plant moves that number from
    * zero to one in a known direction. Recorded rather than left implicit.
    */
+  tasks: {
+    plantIsResponse:
+      'its numbers are the done/ready/blocked counts, and a duplicate id moves them. The plant merges two tasks and the count drops.',
+  },
+
   plan: {
     plantIsResponse:
       'its number is "sources changed", zero-thresholded. The plant edits a source; the count moves 0 -> 1.',

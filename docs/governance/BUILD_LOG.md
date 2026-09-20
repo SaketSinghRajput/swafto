@@ -2335,3 +2335,94 @@ Commands:
 
 NEXT — rejects.json and the B3 re-measurement with the three shapes named, then the
 two fixtures and the RN scaffold.
+
+---
+
+## 2026-09-20 · Iteration 29 · Injection 23: TASKS.md
+
+124 tasks, every checkbox derived from a predicate. Ten committed screens, each a
+parent with the §B.6 bar as eight children, so "half a screen is not a screen" is
+enforceable rather than a slogan.
+
+### The line that justifies the whole file
+
+> **BLOCKED: 96, and the one blocking the most others is `P-006` — 101 downstream**
+
+`P-006` is the React Native scaffold. It is not the task that feels most urgent —
+rejects.json and the B3 re-measurement do, and they are what the queue names next —
+but it transitively blocks 101 of 124 tasks. That is the real critical path, and it
+is not something I would have identified by judgement.
+
+**NEXT: `P-001`**, grow rejects.json. READY: 7.
+
+### E · the test of whether it worked
+
+Wiped all nine ticks, replaced every box with a mangled marker, regenerated: **the
+file came back byte-identical.** Nothing in it was being remembered.
+
+### A.1 caught two false ticks, which is the point
+
+The first generation produced two boxes nobody could check - the friendliest-looking
+instance of the pattern, exactly as predicted:
+
+1. **`I-009` (instrument B24, APK size) ticked DONE.** Its predicate looked for
+   `benchmarks: ['B24']` in the verifier inventory, and the FONT verifier carries B24
+   while measuring the font's share of the budget. No APK exists. The predicate now
+   reads the generated partition and requires the row to say "instrumented" with an
+   empty caveat column.
+2. **Every `-TRACE` child used substring matching**, so `T1` would tick whenever
+   `T10` through `T17` were mentioned anywhere. Now word-bounded.
+
+The nine that remain DONE are true: the `stdevMoney` aggregate cases exist, and
+TRACEABILITY genuinely names eight of the ten committed screens against feature rows.
+`T5` and `T6` correctly do not tick, which is the discrimination that shows the
+predicate is doing work.
+
+### A.2 · the id is permanent, the order is derived
+
+Ids are assigned once: `P-001`, `S-010-WIRED`, `I-004`, `Z-003`, `HU-012`. ORDER is a
+topological sort recomputed every run. Screen parents are numbered in tens so a screen
+can be inserted between two others without touching an id.
+
+A cycle is a hard failure rather than a best effort, because an order that silently
+drops a task is worse than no order.
+
+### D.2 · all five failure modes negative-tested
+
+    ok   a CYCLE in the dependency graph
+    ok   a task with NO PREDICATE and no JUDGEMENT
+    ok   a DUPLICATE id
+    ok   a HUMAN task used as a blocker
+    ok   a HAND-TICKED box in TASKS.md
+
+Files restored and the restore verified. The fourth matters most: human tasks are
+DEFERRED by definition and the generator refuses to let one block anything, so nothing
+in the build can become unable to proceed because a person has not acted.
+
+### PROJECTION contradicted itself, and deriving the screen set found it
+
+Line 107 said "COMMITTED - A.3 items 1 to 5" and line 235's iteration-26 re-cut said
+"items 1 to 3". Both confident, both labelled COMMITTED, three iterations apart.
+`check:prose` could not see it: its rule is a resolved status beside an unresolved one,
+not two claims that simply disagree. The superseded section is now marked and the live
+set is items 1 to 3 plus opening cash.
+
+That is a gap in `check:prose` worth naming rather than patching in passing - a
+contradiction between two assertions of the same KIND is invisible to it.
+
+### One judgement, recorded as one
+
+PROJECTION describes its committed items in prose - "the four form archetypes" - and
+never states screen ids. Mapping that prose onto build-map ids is a judgement, dated
+at this iteration in `tasks.data.mjs` rather than presented as derived. The generator
+asserts every id exists in the build map, so a typo fails the build instead of
+silently shrinking the committed set.
+
+Commands:
+  $ npm run tasks        -> 124 tasks · 10 parents x 8 children · 9 done, 7 ready, 96 blocked
+  $ npm run check:tasks  -> every box derived, no cycle, no duplicate id, no human blocker
+  $ npm run check:all    -> 17 checks, all pass
+  $ npx vitest run       -> 309 passed, 0 skipped
+
+NEXT — read TASKS.md's NEXT line: `P-001`, grow rejects.json. Then the B3
+re-measurement with the three shapes named.

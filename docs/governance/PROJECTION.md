@@ -104,6 +104,14 @@ Even at twelve iterations for screens I am not confident of sixteen, and the est
 history in this build runs optimistic - the font work was "bundle a file" and became
 three iterations across two injections.
 
+> **SUPERSEDED at iteration 26 by the re-cut below, and marked at iteration 29 when
+> deriving TASKS.md tripped over it.** This section and the re-cut both said
+> "COMMITTED" and named different sets, so the file contradicted itself for three
+> iterations. `check:prose` could not see it: its rule is a resolved status beside an
+> unresolved one, not two confident claims that disagree. **The live committed set is
+> A.3 items 1 to 3 plus opening cash**, in "The re-cut" below. The paragraph that
+> follows is the iteration-21 plan, kept because the reasoning under it still holds.
+
 **COMMITTED - A.3 items 1 to 5, about eleven screens.** The day close end to end: the
 four form archetypes, the nine-section list with its three row states, the cash check
 with counting, difference, balanced and the closed-day summary, opening cash and first

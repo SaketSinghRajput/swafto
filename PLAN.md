@@ -523,6 +523,6 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 0fa730ff4c3229ee  techDecisions  docs/spec/TECH-DECISIONS.md
 1352e51ba2027971  derivedConstraints  docs/governance/DERIVED-CONSTRAINTS.md
-b7af6129d7af537c  projection  docs/governance/PROJECTION.md
+bc240b2330764c0b  projection  docs/governance/PROJECTION.md
 731391dfd0488fa3  prose  tools/plan-prose.md
 <!-- PLANHASH:END -->
