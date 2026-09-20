@@ -8033,8 +8033,17 @@ function computePrimary(input) {
   };
 }
 
+// packages/schema/src/spec.ts
+var CONSENT_PURPOSES = [
+  "account_and_ledger",
+  "sms_reminders",
+  "crash_diagnostics"
+];
+
 // packages/values/src/index.ts
 var external = (v) => v;
+var REQUIRED_PURPOSES = ["account_and_ledger"];
+var CONSENT_PURPOSES2 = CONSENT_PURPOSES.map((key) => ({ key, required: REQUIRED_PURPOSES.includes(key) }));
 var TOUCH_TARGET_MIN_DP = 56;
 var BODY_TEXT_MIN_SP = 17;
 var CHROME_FONT_SCALE_CAP = 1.5;
@@ -8708,7 +8717,39 @@ var STRINGS = {
   /* ---- the three states a section can be in (D8) ---------------------- */
   "state.entered": { en: "entered", hi: "\u0926\u0930\u094D\u091C", or: "\u0B32\u0B47\u0B16\u0B3E\u0B2F\u0B3E\u0B07\u0B1B\u0B3F" },
   "state.skipped": { en: "nothing today", hi: "\u0906\u091C \u0915\u0941\u091B \u0928\u0939\u0940\u0902", or: "\u0B06\u0B1C\u0B3F \u0B15\u0B3F\u0B1B\u0B3F \u0B28\u0B3E\u0B39\u0B3F\u0B01" },
-  "state.untouched": { en: "not yet", hi: "\u0905\u092D\u0940 \u0928\u0939\u0940\u0902", or: "\u0B0F\u0B2A\u0B30\u0B4D\u0B2F\u0B4D\u0B5F\u0B28\u0B4D\u0B24 \u0B28\u0B41\u0B39\u0B47\u0B01" }
+  "state.untouched": { en: "not yet", hi: "\u0905\u092D\u0940 \u0928\u0939\u0940\u0902", or: "\u0B0F\u0B2A\u0B30\u0B4D\u0B2F\u0B4D\u0B5F\u0B28\u0B4D\u0B24 \u0B28\u0B41\u0B39\u0B47\u0B01" },
+  /* ---- X0 · the consent notice, shown before an account exists -------- */
+  "consent.title": { en: "Before we start", hi: "\u0936\u0941\u0930\u0942 \u0915\u0930\u0928\u0947 \u0938\u0947 \u092A\u0939\u0932\u0947", or: "\u0B06\u0B30\u0B2E\u0B4D\u0B2D \u0B2A\u0B42\u0B30\u0B4D\u0B2C\u0B30\u0B41" },
+  "consent.intro": {
+    en: "This is what SWAFTO keeps, and why. Nothing is kept for any other reason.",
+    hi: "SWAFTO \u092F\u0939 \u0930\u0916\u0924\u093E \u0939\u0948, \u0914\u0930 \u0907\u0938\u0940\u0932\u093F\u090F \u0930\u0916\u0924\u093E \u0939\u0948\u0964 \u0915\u093F\u0938\u0940 \u0914\u0930 \u0915\u093E\u0930\u0923 \u0938\u0947 \u0915\u0941\u091B \u0928\u0939\u0940\u0902 \u0930\u0916\u093E \u091C\u093E\u0924\u093E\u0964",
+    or: "SWAFTO \u0B0F\u0B39\u0B3E \u0B30\u0B16\u0B47, \u0B0F\u0B2C\u0B02 \u0B0F\u0B25\u0B3F\u0B2A\u0B3E\u0B07\u0B01 \u0B30\u0B16\u0B47\u0964 \u0B05\u0B28\u0B4D\u0B5F \u0B15\u0B4C\u0B23\u0B38\u0B3F \u0B15\u0B3E\u0B30\u0B23\u0B30\u0B41 \u0B15\u0B3F\u0B1B\u0B3F \u0B30\u0B16\u0B3E\u0B2F\u0B3E\u0B0F \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964"
+  },
+  "consent.required": { en: "Needed to keep your book", hi: "\u0916\u093E\u0924\u093E \u0930\u0916\u0928\u0947 \u0915\u0947 \u0932\u093F\u090F \u091C\u093C\u0930\u0942\u0930\u0940", or: "\u0B16\u0B3E\u0B24\u0B3E \u0B30\u0B16\u0B3F\u0B2C\u0B3E\u0B15\u0B41 \u0B06\u0B2C\u0B36\u0B4D\u0B5F\u0B15" },
+  "consent.optional": { en: "Your choice", hi: "\u0906\u092A\u0915\u0940 \u092E\u0930\u094D\u091C\u093C\u0940", or: "\u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B07\u0B1A\u0B4D\u0B1B\u0B3E" },
+  "consent.purpose.account_and_ledger": {
+    en: "Your number, your shop name, and the entries you type",
+    hi: "\u0906\u092A\u0915\u093E \u0928\u0902\u092C\u0930, \u0926\u0941\u0915\u093E\u0928 \u0915\u093E \u0928\u093E\u092E, \u0914\u0930 \u0906\u092A\u0915\u0940 \u0926\u0930\u094D\u091C \u0915\u0940 \u0917\u0908 \u092C\u093E\u0924\u0947\u0902",
+    or: "\u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B28\u0B2E\u0B4D\u0B2C\u0B30, \u0B26\u0B4B\u0B15\u0B3E\u0B28 \u0B28\u0B3E\u0B2E, \u0B0F\u0B2C\u0B02 \u0B06\u0B2A\u0B23 \u0B32\u0B47\u0B16\u0B3F\u0B25\u0B3F\u0B2C\u0B3E \u0B2C\u0B3F\u0B37\u0B5F"
+  },
+  "consent.purpose.sms_reminders": {
+    en: "Send me reminders by SMS",
+    hi: "\u092E\u0941\u091D\u0947 SMS \u0938\u0947 \u092F\u093E\u0926 \u0926\u093F\u0932\u093E\u090F\u0901",
+    or: "\u0B2E\u0B4B\u0B24\u0B47 SMS \u0B30\u0B47 \u0B2E\u0B28\u0B47 \u0B2A\u0B15\u0B3E\u0B28\u0B4D\u0B24\u0B41"
+  },
+  "consent.purpose.crash_diagnostics": {
+    en: "Send crash reports, never with money or names",
+    hi: "\u0915\u094D\u0930\u0948\u0936 \u0930\u093F\u092A\u094B\u0930\u094D\u091F \u092D\u0947\u091C\u0947\u0902, \u092A\u0948\u0938\u0947 \u092F\u093E \u0928\u093E\u092E \u0915\u092D\u0940 \u0928\u0939\u0940\u0902",
+    or: "\u0B15\u0B4D\u0B30\u0B3E\u0B38 \u0B30\u0B3F\u0B2A\u0B4B\u0B30\u0B4D\u0B1F \u0B2A\u0B20\u0B3E\u0B28\u0B4D\u0B24\u0B41, \u0B1F\u0B19\u0B4D\u0B15\u0B3E \u0B15\u0B3F\u0B2E\u0B4D\u0B2C\u0B3E \u0B28\u0B3E\u0B2E \u0B15\u0B47\u0B2C\u0B47 \u0B28\u0B41\u0B39\u0B47\u0B01"
+  },
+  "consent.rights": {
+    en: "You can see everything we hold, correct it, or have it erased. You can change any of these choices later, as easily as now.",
+    hi: "\u0906\u092A \u0938\u092C \u0915\u0941\u091B \u0926\u0947\u0916 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902, \u0938\u0941\u0927\u093E\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902, \u092F\u093E \u092E\u093F\u091F\u0935\u093E \u0938\u0915\u0924\u0947 \u0939\u0948\u0902\u0964 \u092F\u0947 \u091A\u0941\u0928\u093E\u0935 \u092C\u093E\u0926 \u092E\u0947\u0902 \u092D\u0940 \u0909\u0924\u0928\u0940 \u0939\u0940 \u0906\u0938\u093E\u0928\u0940 \u0938\u0947 \u092C\u0926\u0932 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902\u0964",
+    or: "\u0B06\u0B2A\u0B23 \u0B38\u0B2C\u0B41\u0B15\u0B3F\u0B1B\u0B3F \u0B26\u0B47\u0B16\u0B3F\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47, \u0B38\u0B02\u0B36\u0B4B\u0B27\u0B28 \u0B15\u0B30\u0B3F\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47, \u0B15\u0B3F\u0B2E\u0B4D\u0B2C\u0B3E \u0B39\u0B1F\u0B3E\u0B07\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47\u0964 \u0B0F\u0B39\u0B3F \u0B2A\u0B38\u0B28\u0B4D\u0B26 \u0B2A\u0B30\u0B47 \u0B2E\u0B27\u0B4D\u0B5F \u0B38\u0B39\u0B1C\u0B30\u0B47 \u0B2C\u0B26\u0B33\u0B3E\u0B07\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47\u0964"
+  },
+  "consent.agree": { en: "I agree", hi: "\u092E\u0948\u0902 \u0938\u0939\u092E\u0924 \u0939\u0942\u0901", or: "\u0B2E\u0B41\u0B01 \u0B38\u0B39\u0B2E\u0B24" },
+  "consent.on": { en: "Yes", hi: "\u0939\u093E\u0901", or: "\u0B39\u0B01" },
+  "consent.off": { en: "No", hi: "\u0928\u0939\u0940\u0902", or: "\u0B28\u0B3E" }
 };
 function phrase(key, language) {
   const p = STRINGS[key];
@@ -9713,20 +9754,188 @@ function DayClosed({
   );
 }
 
+// apps/mobile/src/screens/X0.tsx
+import { jsx as jsx15, jsxs as jsxs9 } from "react/jsx-runtime";
+function ConsentNotice({
+  granted = [],
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onToggle = () => {
+  },
+  onAgree = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  return /* @__PURE__ */ jsxs9(
+    Shell,
+    {
+      id: "x0",
+      s,
+      display,
+      status,
+      titleKey: "consent.title",
+      onRetry,
+      footer: /* @__PURE__ */ jsx15(
+        PrimaryButton,
+        {
+          testID: "x0-agree",
+          label: s("consent.agree"),
+          onPress: onAgree,
+          display
+        }
+      ),
+      children: [
+        /* @__PURE__ */ jsx15(
+          Text_default,
+          {
+            testID: "x0-intro",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              padding: t.space.md,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.ink
+            },
+            children: s("consent.intro")
+          }
+        ),
+        CONSENT_PURPOSES2.map(({ key, required }) => {
+          const on = required || granted.includes(key);
+          return /* @__PURE__ */ jsxs9(
+            View_default,
+            {
+              testID: "x0-purpose-" + key,
+              style: {
+                paddingHorizontal: t.space.md,
+                paddingVertical: t.space.sm,
+                borderBottomWidth: t.hairline,
+                borderBottomColor: t.color.border
+              },
+              children: [
+                /* @__PURE__ */ jsx15(
+                  Text_default,
+                  {
+                    maxFontSizeMultiplier: t.maxFontScale,
+                    style: {
+                      fontFamily: t.font.regular,
+                      fontSize: t.type.body,
+                      lineHeight: t.leading(t.type.body),
+                      color: t.color.ink
+                    },
+                    children: s("consent.purpose." + key)
+                  }
+                ),
+                required ? /* @__PURE__ */ jsx15(
+                  Text_default,
+                  {
+                    testID: "x0-required-" + key,
+                    maxFontSizeMultiplier: t.maxFontScale,
+                    style: {
+                      fontFamily: t.font.regular,
+                      fontSize: t.type.label,
+                      lineHeight: t.leading(t.type.label),
+                      color: t.color.inkMuted
+                    },
+                    children: s("consent.required")
+                  }
+                ) : (
+                  /*
+                   * A real switch, with its state in the accessibility tree as well
+                   * as in its label. A control whose only signal is a colour is one
+                   * a screen reader cannot report and this reader may not see.
+                   */
+                  /* @__PURE__ */ jsx15(
+                    Pressable_default,
+                    {
+                      testID: "x0-toggle-" + key,
+                      accessibilityRole: "switch",
+                      accessibilityLabel: s("consent.purpose." + key),
+                      accessibilityState: { checked: on },
+                      onPress: () => onToggle(key),
+                      style: {
+                        minHeight: t.touchTarget,
+                        minWidth: t.touchTarget,
+                        marginTop: t.space.xs,
+                        paddingHorizontal: t.space.md,
+                        borderRadius: t.radius.md,
+                        borderWidth: t.hairline,
+                        borderColor: on ? t.color.accent : t.color.border,
+                        /*
+                         * ON IS FILLED, NOT OUTLINED. The first version of this screen
+                         * showed the two states as a grey border and an orange one, and
+                         * the contact sheet answered that question the moment somebody
+                         * looked at it: in shop daylight, on a INR 7,000 panel, at
+                         * arm's length, a border colour is not a state. The fill is.
+                         */
+                        backgroundColor: on ? t.color.accent : t.color.bg,
+                        alignSelf: "flex-start",
+                        justifyContent: "center"
+                      },
+                      children: /* @__PURE__ */ jsx15(
+                        Text_default,
+                        {
+                          maxFontSizeMultiplier: t.maxFontScale,
+                          style: {
+                            fontFamily: t.font.medium,
+                            fontSize: t.type.body,
+                            lineHeight: t.leading(t.type.body),
+                            color: on ? t.color.onAccent : t.color.ink
+                          },
+                          children: s("consent.optional") + ": " + s(on ? "consent.on" : "consent.off")
+                        }
+                      )
+                    }
+                  )
+                )
+              ]
+            },
+            key
+          );
+        }),
+        /* @__PURE__ */ jsx15(
+          Text_default,
+          {
+            testID: "x0-rights",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              padding: t.space.md,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.inkMuted
+            },
+            children: s("consent.rights")
+          }
+        )
+      ]
+    }
+  );
+}
+
 // apps/mobile/src/store/index.ts
 function memoryPort(initial) {
   let state = initial;
-  const outbox = [];
+  let outbox = [];
   return {
     appendAtomically(entry, row) {
       state = { ...state, entries: [...state.entries, entry] };
       outbox.push(row);
     },
-    putDay(day) {
+    putDay(day, row) {
       state = { ...state, day };
+      outbox = [...outbox.filter((r) => r.id !== row.id), row];
     },
     load: () => state,
-    pendingOutbox: () => outbox
+    pendingOutbox: () => outbox,
+    ackOutbox(ids) {
+      const done = new Set(ids);
+      outbox = outbox.filter((r) => !done.has(r.id));
+    }
   };
 }
 var AppendOnlyViolation = class extends Error {
@@ -9748,13 +9957,20 @@ var DayClosedViolation = class extends Error {
 var Store = class {
   #state;
   #port;
+  /**
+   * WHEN A ROW WAS QUEUED, AND WHEN A DAY WAS CLOSED. Injected, because a test
+   * that cannot fix the clock cannot assert on either, and because the one
+   * place a real clock belongs is the composition root.
+   */
+  #now;
   /** Bumped on every write, so a test can prove a screen re-derived rather than cached. */
   #revision = 0;
-  constructor(port) {
+  constructor(port, now = () => (/* @__PURE__ */ new Date()).toISOString()) {
     const loaded = port.load();
     if (!loaded) throw new Error("the persistence port returned no state");
     this.#port = port;
     this.#state = loaded;
+    this.#now = now;
   }
   get revision() {
     return this.#revision;
@@ -9764,6 +9980,14 @@ var Store = class {
   }
   get pendingOutbox() {
     return this.#port.pendingOutbox();
+  }
+  /** Drop what the server has taken. Anything not named stays queued. */
+  ackOutbox(ids) {
+    this.#port.ackOutbox(ids);
+  }
+  /** One queued row per day, carrying the whole record. */
+  #dayRow(day, at) {
+    return { id: "ob-day-" + day.date, kind: "day", payload: day, queuedAt: at };
   }
   /** Exactly what the engine needs, assembled on demand. Never stored. */
   get input() {
@@ -9849,7 +10073,7 @@ var Store = class {
       );
     }
     const day = { ...this.#state.day, openingCash: assertPaise(amount, "openingCash") };
-    this.#port.putDay(day);
+    this.#port.putDay(day, this.#dayRow(day, this.#now()));
     this.#state = { ...this.#state, day };
     this.#revision += 1;
   }
@@ -9865,6 +10089,7 @@ var Store = class {
     if (this.#state.day.state === "closed" && entry.dayId === this.#state.day.date) {
       throw new DayClosedViolation(entry.dayId);
     }
+    this.#port.putDay(this.#state.day, this.#dayRow(this.#state.day, entry.createdAt));
     const row = {
       id: `ob-${entry.id}`,
       kind: "entry",
@@ -9897,13 +10122,21 @@ var Store = class {
         "the count does not match the expected figure, and closing without a reason would record a difference nobody can account for later."
       );
     }
+    const at = this.#now();
     const day = {
       ...this.#state.day,
       state: "closed",
       countedCash,
+      /*
+       * WHEN IT WAS CLOSED, RECORDED HERE. The server stamps its own time when
+       * a close arrives through its route, but a day closed offline reaches it
+       * hours later - and the time that matters to a shopkeeper is the one on
+       * the phone in his hand when he finished counting.
+       */
+      closedAt: at,
       ...differenceReason ? { differenceReason } : {}
     };
-    this.#port.putDay(day);
+    this.#port.putDay(day, this.#dayRow(day, at));
     this.#state = { ...this.#state, day };
     this.#revision += 1;
   }
@@ -10032,7 +10265,7 @@ var adversarialInput = () => ({
 });
 
 // apps/mobile/src/screens/registry.tsx
-import { jsx as jsx15 } from "react/jsx-runtime";
+import { jsx as jsx16 } from "react/jsx-runtime";
 var storeOf = (input, parties, shopId) => {
   const state = {
     shopId,
@@ -10093,13 +10326,13 @@ var standardCases = (screen, title, render2, options = {}) => {
   ];
 };
 var SCREEN_CASES = [
-  ...standardCases("T5", "T5 Day close list", (store, language, display) => /* @__PURE__ */ jsx15(DayCloseList, { store, language, display })),
-  ...standardCases("T6", "T6 Opening cash", (_store, language, display) => /* @__PURE__ */ jsx15(OpeningCash, { language, display, draftPaise: 25e4 })),
-  ...standardCases("T8", "T8 Form B - party and amount", (store, language, display) => /* @__PURE__ */ jsx15(FormB, { store, language, display, draftPaise: 45e3 })),
-  ...standardCases("T9", "T9 Form C - expense", (store, language, display) => /* @__PURE__ */ jsx15(FormC, { store, language, display, draftPaise: 12500 })),
-  ...standardCases("T10", "T10 Form D - money you took", (store, language, display) => /* @__PURE__ */ jsx15(FormD, { store, language, display, draftPaise: 5e5 })),
-  ...standardCases("T11", "T11 Cash check - counting", (store, language, display) => /* @__PURE__ */ jsx15(CashCheck, { store, language, display, countedPaise: 199237 })),
-  ...standardCases("T12", "T12 Cash check - the difference", (store, language, display) => /* @__PURE__ */ jsx15(
+  ...standardCases("T5", "T5 Day close list", (store, language, display) => /* @__PURE__ */ jsx16(DayCloseList, { store, language, display })),
+  ...standardCases("T6", "T6 Opening cash", (_store, language, display) => /* @__PURE__ */ jsx16(OpeningCash, { language, display, draftPaise: 25e4 })),
+  ...standardCases("T8", "T8 Form B - party and amount", (store, language, display) => /* @__PURE__ */ jsx16(FormB, { store, language, display, draftPaise: 45e3 })),
+  ...standardCases("T9", "T9 Form C - expense", (store, language, display) => /* @__PURE__ */ jsx16(FormC, { store, language, display, draftPaise: 12500 })),
+  ...standardCases("T10", "T10 Form D - money you took", (store, language, display) => /* @__PURE__ */ jsx16(FormD, { store, language, display, draftPaise: 5e5 })),
+  ...standardCases("T11", "T11 Cash check - counting", (store, language, display) => /* @__PURE__ */ jsx16(CashCheck, { store, language, display, countedPaise: 199237 })),
+  ...standardCases("T12", "T12 Cash check - the difference", (store, language, display) => /* @__PURE__ */ jsx16(
     CashDifference,
     {
       store,
@@ -10108,7 +10341,30 @@ var SCREEN_CASES = [
       countedPaise: 15e4
     }
   )),
-  ...standardCases("T14", "T14 Day closed", (store, language, display) => /* @__PURE__ */ jsx15(DayClosed, { store, language, display })),
+  ...standardCases("T14", "T14 Day closed", (store, language, display) => /* @__PURE__ */ jsx16(DayClosed, { store, language, display })),
+  /*
+   * X0 takes no store, and that is the point of it: it is shown before an account
+   * exists, so there is no shop, no day and nothing to read. It joins the
+   * standard four so the contrast, target-size and Odia instruments cover it like
+   * any other screen - the consent notice is the one screen every user must read.
+   */
+  ...standardCases("X0", "X0 Consent notice", (_store, language, display) => /* @__PURE__ */ jsx16(ConsentNotice, { language, display })),
+  {
+    id: "X0-granted",
+    screen: "X0",
+    caption: "X0 Consent notice - both optional purposes turned on",
+    language: "or",
+    display: "comfort",
+    sheet: true,
+    element: () => /* @__PURE__ */ jsx16(
+      ConsentNotice,
+      {
+        language: "or",
+        display: "comfort",
+        granted: CONSENT_PURPOSES2.filter((p) => !p.required).map((p) => p.key)
+      }
+    )
+  },
   {
     id: "T1-canonical",
     screen: "T1",
@@ -10116,7 +10372,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(Today, { store: canonicalStore(), language: "en", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(Today, { store: canonicalStore(), language: "en", display: "comfort" })
   },
   {
     id: "T1-adversarial",
@@ -10125,7 +10381,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(Today, { store: adversarialStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(Today, { store: adversarialStore(), language: "or", display: "comfort" })
   },
   {
     id: "T1-adversarial-focus",
@@ -10134,7 +10390,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx15(Today, { store: adversarialStore(), language: "or", display: "focus" })
+    element: () => /* @__PURE__ */ jsx16(Today, { store: adversarialStore(), language: "or", display: "focus" })
   },
   {
     id: "T1-empty",
@@ -10143,7 +10399,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(Today, { store: emptyStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(Today, { store: emptyStore(), language: "or", display: "comfort" })
   },
   {
     id: "T1-longest",
@@ -10152,7 +10408,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx15(Today, { store: adversarialStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx16(Today, { store: adversarialStore(), language: "longest", display: "focus" })
   },
   {
     id: "T1-error",
@@ -10161,7 +10417,7 @@ var SCREEN_CASES = [
     language: "hi",
     display: "comfort",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx15(Today, { store: canonicalStore(), status: "error", language: "hi", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(Today, { store: canonicalStore(), status: "error", language: "hi", display: "comfort" })
   },
   {
     id: "T7-canonical",
@@ -10170,7 +10426,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), language: "en", display: "comfort", draftPaise: 4500 })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: canonicalStore(), language: "en", display: "comfort", draftPaise: 4500 })
   },
   {
     id: "T7-adversarial",
@@ -10179,7 +10435,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "or", display: "comfort", draftPaise: 12345678 })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: adversarialStore(), language: "or", display: "comfort", draftPaise: 12345678 })
   },
   {
     id: "T7-adversarial-focus",
@@ -10188,7 +10444,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "or", display: "focus", draftPaise: 12345678 })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: adversarialStore(), language: "or", display: "focus", draftPaise: 12345678 })
   },
   {
     id: "T7-longest",
@@ -10197,7 +10453,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "longest", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: adversarialStore(), language: "longest", display: "comfort" })
   },
   {
     id: "T7-empty",
@@ -10206,7 +10462,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: emptyStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: emptyStore(), language: "or", display: "comfort" })
   },
   {
     id: "T7-error",
@@ -10215,7 +10471,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), status: "error", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: canonicalStore(), status: "error", language: "or", display: "comfort" })
   },
   {
     id: "T7-loading",
@@ -10225,7 +10481,7 @@ var SCREEN_CASES = [
     display: "comfort",
     // Measured but not on the sheet: a spinner and a line of text is not worth a panel.
     sheet: false,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), status: "loading", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: canonicalStore(), status: "loading", language: "or", display: "comfort" })
   },
   {
     id: "T7-hindi",
@@ -10234,7 +10490,7 @@ var SCREEN_CASES = [
     language: "hi",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: canonicalStore(), language: "hi", display: "focus" })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: canonicalStore(), language: "hi", display: "focus" })
   },
   {
     id: "T7-longest-focus",
@@ -10243,7 +10499,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx15(FormA, { store: adversarialStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx16(FormA, { store: adversarialStore(), language: "longest", display: "focus" })
   }
 ];
 var COVERED_SCREENS = [...new Set(SCREEN_CASES.map((c) => c.screen))];

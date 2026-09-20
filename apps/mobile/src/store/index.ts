@@ -64,25 +64,53 @@ export interface OutboxRow {
  */
 export interface PersistencePort {
   appendAtomically(entry: Entry, outbox: OutboxRow): void;
-  putDay(day: DayRecord): void;
+  /**
+   * A day change and its outbox row, together, for the same reason an entry and
+   * its row go together.
+   *
+   * IT TOOK AN OUTBOX ROW LATE, AND THAT WAS A REAL DEFECT. `putDay` used to
+   * write the day and queue nothing, so opening cash and the close itself -
+   * the two figures the whole product exists to record - reached the server
+   * only if an entry happened to be queued beside them. A day closed on a phone
+   * that then broke was a day the server never heard about.
+   */
+  putDay(day: DayRecord, outbox: OutboxRow): void;
   load(): StoreState | null;
   pendingOutbox(): readonly OutboxRow[];
+  /**
+   * Forget the rows the server has accepted. Called only after a 2xx, so a
+   * failed drain leaves the queue exactly as it was - which is what makes a
+   * retry safe rather than lossy.
+   */
+  ackOutbox(ids: readonly string[]): void;
 }
 
 /** An in-memory port, for tests and for first run before SQLite is wired. */
 export function memoryPort(initial: StoreState): PersistencePort {
   let state = initial;
-  const outbox: OutboxRow[] = [];
+  let outbox: OutboxRow[] = [];
   return {
     appendAtomically(entry, row) {
       state = { ...state, entries: [...state.entries, entry] };
       outbox.push(row);
     },
-    putDay(day) {
+    putDay(day, row) {
       state = { ...state, day };
+      /*
+       * A DAY ROW REPLACES ITS PENDING SELF. A day record is the whole state of
+       * the day rather than a delta, and `upsertDay` on the server replaces it
+       * wholesale - so queueing "opened" and then "closed" separately would send
+       * a superseded figure first for no benefit. Entries are deltas and are
+       * never replaced, which is why only this path dedupes.
+       */
+      outbox = [...outbox.filter((r) => r.id !== row.id), row];
     },
     load: () => state,
     pendingOutbox: () => outbox,
+    ackOutbox(ids) {
+      const done = new Set(ids);
+      outbox = outbox.filter((r) => !done.has(r.id));
+    },
   };
 }
 
@@ -110,14 +138,21 @@ export class DayClosedViolation extends Error {
 export class Store {
   #state: StoreState;
   readonly #port: PersistencePort;
+  /**
+   * WHEN A ROW WAS QUEUED, AND WHEN A DAY WAS CLOSED. Injected, because a test
+   * that cannot fix the clock cannot assert on either, and because the one
+   * place a real clock belongs is the composition root.
+   */
+  readonly #now: () => string;
   /** Bumped on every write, so a test can prove a screen re-derived rather than cached. */
   #revision = 0;
 
-  constructor(port: PersistencePort) {
+  constructor(port: PersistencePort, now: () => string = () => new Date().toISOString()) {
     const loaded = port.load();
     if (!loaded) throw new Error('the persistence port returned no state');
     this.#port = port;
     this.#state = loaded;
+    this.#now = now;
   }
 
   get revision(): number {
@@ -130,6 +165,16 @@ export class Store {
 
   get pendingOutbox(): readonly OutboxRow[] {
     return this.#port.pendingOutbox();
+  }
+
+  /** Drop what the server has taken. Anything not named stays queued. */
+  ackOutbox(ids: readonly string[]): void {
+    this.#port.ackOutbox(ids);
+  }
+
+  /** One queued row per day, carrying the whole record. */
+  #dayRow(day: DayRecord, at: string): OutboxRow {
+    return { id: 'ob-day-' + day.date, kind: 'day', payload: day, queuedAt: at };
   }
 
   /** Exactly what the engine needs, assembled on demand. Never stored. */
@@ -223,7 +268,7 @@ export class Store {
       );
     }
     const day = { ...this.#state.day, openingCash: assertPaise(amount, 'openingCash') };
-    this.#port.putDay(day);
+    this.#port.putDay(day, this.#dayRow(day, this.#now()));
     this.#state = { ...this.#state, day };
     this.#revision += 1;
   }
@@ -240,6 +285,19 @@ export class Store {
     if (this.#state.day.state === 'closed' && entry.dayId === this.#state.day.date) {
       throw new DayClosedViolation(entry.dayId);
     }
+    /*
+     * THE DAY GOES WITH IT. "An entry cannot precede its day" is the server's
+     * rule and it is the right one - but nothing was queueing the day, so the
+     * FIRST entry of every day was refused with `entries_day_fk` and sat in the
+     * outbox forever. Both halves were individually correct: the app queued
+     * what changed, and a day nobody had changed yet had never been sent.
+     *
+     * Queueing it here costs one row per day - `putDay` replaces its pending
+     * self - and makes the ordering guarantee hold by construction rather than
+     * by the shopkeeper happening to set an opening figure first.
+     */
+    this.#port.putDay(this.#state.day, this.#dayRow(this.#state.day, entry.createdAt));
+
     const row: OutboxRow = {
       id: `ob-${entry.id}`,
       kind: 'entry',
@@ -274,13 +332,21 @@ export class Store {
           'would record a difference nobody can account for later.',
       );
     }
+    const at = this.#now();
     const day: DayRecord = {
       ...this.#state.day,
       state: 'closed',
       countedCash,
+      /*
+       * WHEN IT WAS CLOSED, RECORDED HERE. The server stamps its own time when
+       * a close arrives through its route, but a day closed offline reaches it
+       * hours later - and the time that matters to a shopkeeper is the one on
+       * the phone in his hand when he finished counting.
+       */
+      closedAt: at,
       ...(differenceReason ? { differenceReason } : {}),
     };
-    this.#port.putDay(day);
+    this.#port.putDay(day, this.#dayRow(day, at));
     this.#state = { ...this.#state, day };
     this.#revision += 1;
   }

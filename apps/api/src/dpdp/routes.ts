@@ -7,7 +7,7 @@
  * until this file existed each of them was a paragraph:
  *
  *   §1.1  an itemised notice, before processing            GET  /v1/legal/notice
- *   §1.2  consent, and withdrawal as easy as giving        POST /v1/consent
+ *   §1.2  consent, and withdrawal as easy as giving        POST /v1/me/consent
  *   §1.5  access and correction                            GET  /v1/me/export
  *   §1.6  erasure, and retention that ends                 POST /v1/me/erase
  *   §1.7  a named grievance officer with an SLA            GET  /v1/me/grievance
@@ -31,19 +31,17 @@
 import type { FastifyInstance } from 'fastify';
 import type { AppDeps } from '../app.ts';
 import { newId } from '../auth/tokens.ts';
+import { PRIVACY_NOTICE_VERSION as NOTICE_VERSION } from '@swafto/values';
+import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
 
 /**
- * The notice version, carried on every consent record - so changing the notice and
- * re-asking is something the data can express, and something an auditor can see.
+ * The notice version and the purpose list both come from the registry, and both
+ * used to be typed here as well. That is the defect the registry exists to
+ * prevent: the app stamps a version onto a consent, this file stamps one onto
+ * the row, and two literals four packages apart agree until the day they do not.
  */
-export const NOTICE_VERSION = '2026-09-1';
-
-export const CONSENT_PURPOSES = [
-  'account_and_ledger',
-  'sms_reminders',
-  'crash_diagnostics',
-] as const;
-export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
+export { PRIVACY_NOTICE_VERSION as NOTICE_VERSION } from '@swafto/values';
+export { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
 
 /**
  * The itemised notice. ITEMISED is the operative word: the DPDP Rules require the
@@ -117,7 +115,7 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
    * would leave a shopkeeper holding an account nobody is permitted to process.
    */
   app.post(
-    '/v1/consent',
+    '/v1/me/consent',
     {
       schema: {
         body: {
@@ -167,13 +165,33 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
   );
 
   /** The consent history, in full. Append-only, so this IS the audit trail. */
+  /**
+   * What he agreed to, and what he agrees to NOW - both, because they are not
+   * the same question and each has a different job.
+   *
+   * `consents` is the append-only log: every grant and every withdrawal, with
+   * its time, its language and the notice version. That is the audit trail, and
+   * it is what answers "what did he agree to, when".
+   *
+   * `current` is the latest row per purpose, and it is what governs processing.
+   * DERIVING IT HERE RATHER THAN IN EACH CLIENT is deliberate: the log lists a
+   * withdrawn purpose as a `granted: true` row followed by a `granted: false`
+   * one, and a caller that filters for `granted` sees a purpose the shopkeeper
+   * has withdrawn. That reading is one line of plausible code away, it is a
+   * processing-without-consent breach, and it is exactly the mistake the first
+   * end-to-end test made.
+   */
   app.get('/v1/me/consents', async (req, reply) => {
     const userId = req.claims?.sub;
     if (!userId) return reply.code(401).send({ error: 'unauthenticated' });
-    return reply.code(200).send({
-      noticeVersion: NOTICE_VERSION,
-      consents: await deps.repo.consentsFor(userId),
-    });
+    const log = await deps.repo.consentsFor(userId);
+
+    const current: Record<string, boolean> = {};
+    // The log is ordered oldest-first by the repository contract; the last word
+    // on a purpose wins, and ties fall to the later row for the same reason.
+    for (const row of log) current[row.purpose] = row.granted;
+
+    return reply.code(200).send({ noticeVersion: NOTICE_VERSION, current, consents: log });
   });
 
   /**

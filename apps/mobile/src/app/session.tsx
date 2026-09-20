@@ -40,9 +40,36 @@ import type { Store } from '../store/index.ts';
 import type { KeypadKey } from '../components/Keypad.tsx';
 import type { CommitOption } from '../components/EntryForm.tsx';
 import type { Language } from '../i18n/strings.ts';
+import { CONSENT_PURPOSES, PRIVACY_NOTICE_VERSION, type ConsentPurpose } from '@swafto/values';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
 
-export type ScreenId = 'T1' | 'T5' | 'T6' | 'T7' | 'T8' | 'T9' | 'T10' | 'T11' | 'T12' | 'T14';
+export type ScreenId =
+  | 'X0'
+  | 'T1'
+  | 'T5'
+  | 'T6'
+  | 'T7'
+  | 'T8'
+  | 'T9'
+  | 'T10'
+  | 'T11'
+  | 'T12'
+  | 'T14';
+
+/**
+ * What the consent screen produces: one decision per purpose, plus the version
+ * of the notice he was actually shown.
+ *
+ * THE VERSION IS PART OF THE DECISION. A consent record that does not say WHICH
+ * notice was agreed to cannot answer the only question that matters when the
+ * notice changes - and the notice will change. The API demands it on every
+ * consent write for the same reason.
+ */
+export interface ConsentDecision {
+  readonly noticeVersion: string;
+  readonly locale: Language;
+  readonly granted: readonly ConsentPurpose[];
+}
 
 /** The parser that owns each section. The section decides; the caller never does. */
 const PARSER_FOR = {
@@ -78,6 +105,12 @@ export interface SessionState {
    * can appear beside the input rather than as a banner he must map back to a box.
    */
   readonly lastRefusal: { readonly field: string; readonly message: string } | null;
+  /**
+   * The optional purposes he has turned ON, and nothing else. The required one
+   * is not held here: it is not a choice, and keeping it out means there is no
+   * state in which it could be recorded as refused while the account exists.
+   */
+  readonly grantedConsents: readonly ConsentPurpose[];
 }
 
 export interface SessionOptions {
@@ -89,6 +122,17 @@ export interface SessionOptions {
   readonly newId: () => string;
   /** Which party a party-shaped entry is for. The picker is a later screen. */
   readonly selectedPartyId?: () => string | undefined;
+  /**
+   * Which screen the session opens on. The host decides: X0 when there is no
+   * account yet, T1 when there is. This class does not know whether a token
+   * exists, and should not - that is the host's question.
+   */
+  readonly screen?: ScreenId;
+  /**
+   * The version of the notice this build ships, so a decision carries the
+   * version he was actually shown rather than whatever the server says later.
+   */
+  readonly noticeVersion?: string;
 }
 
 export class Session {
@@ -101,13 +145,14 @@ export class Session {
     this.#store = store;
     this.#options = options;
     this.#state = {
-      screen: 'T1',
+      screen: options.screen ?? 'T1',
       draftPaise: null,
       countedPaise: null,
       reason: null,
       language: options.language ?? 'en',
       display: options.display ?? 'comfort',
       lastRefusal: null,
+      grantedConsents: [],
     };
   }
 
@@ -270,6 +315,45 @@ export class Session {
     this.#digits = '';
     this.#state = { ...this.#state, draftPaise: null, screen: 'T1', lastRefusal: null };
     return true;
+  }
+
+  /**
+   * X0: turn one optional purpose on or off.
+   *
+   * THE REQUIRED PURPOSE IS NOT TOGGLEABLE, and the refusal is silent rather
+   * than an error, because the screen renders no control for it - a caller
+   * reaching this line is a bug in the caller, not something to show him.
+   */
+  toggleConsent(purpose: ConsentPurpose): void {
+    const optional = CONSENT_PURPOSES.some((p) => p.key === purpose && !p.required);
+    if (!optional) return;
+    const on = this.#state.grantedConsents.includes(purpose);
+    this.#state = {
+      ...this.#state,
+      grantedConsents: on
+        ? this.#state.grantedConsents.filter((p) => p !== purpose)
+        : [...this.#state.grantedConsents, purpose],
+    };
+  }
+
+  /**
+   * X0: he agreed. Returns exactly what he agreed to, for the caller to send.
+   *
+   * IT DOES NOT CALL ANYTHING. There is no network in this class and adding one
+   * here would put the one legally-significant write in the app behind a method
+   * no test can observe. The host takes this decision, posts it, and only then
+   * is there an account - which is the order the API enforces anyway.
+   */
+  agreeConsent(): ConsentDecision {
+    const granted = CONSENT_PURPOSES.filter(
+      (p) => p.required || this.#state.grantedConsents.includes(p.key),
+    ).map((p) => p.key);
+    this.#state = { ...this.#state, screen: 'T1', lastRefusal: null };
+    return {
+      noticeVersion: this.#options.noticeVersion ?? PRIVACY_NOTICE_VERSION,
+      locale: this.#state.language,
+      granted,
+    };
   }
 
   /** T5: he says a section is empty, which is not the same as not reaching it. */

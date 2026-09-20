@@ -26,6 +26,7 @@ import { FormD } from '../screens/T10.tsx';
 import { CashCheck } from '../screens/T11.tsx';
 import { CashDifference } from '../screens/T12.tsx';
 import { DayClosed } from '../screens/T14.tsx';
+import { ConsentNotice } from '../screens/X0.tsx';
 import type { Session, ScreenId } from './session.tsx';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { CommitOption } from '../components/EntryForm.tsx';
@@ -33,6 +34,11 @@ import type { Entry, Mode as PaymentMode } from '@swafto/formula-engine';
 
 export interface AppProps {
   readonly session: Session;
+  /**
+   * What happens when he agrees. The decision goes to whoever owns the network -
+   * this file has none, and the sign-in call is the host's, not a screen's.
+   */
+  readonly onConsent?: (decision: ReturnType<Session['agreeConsent']>) => void;
   /** Loading and error belong to whatever is opening the day, not to a screen. */
   readonly status?: LoadStatus;
   readonly onRetry?: () => void;
@@ -66,8 +72,14 @@ const SALES_COMMIT: Record<'cash' | 'upi' | 'udhar', CommitOption> = {
   udhar: { labelKey: 'formA.mode.udhar', section: 'udhar_sales', mode: 'udhar' },
 };
 
-export function App({ session, status = 'ready', onRetry = () => {} }: AppProps) {
-  const { screen, language, display, draftPaise, countedPaise, reason } = session.state;
+export function App({
+  session,
+  status = 'ready',
+  onRetry = () => {},
+  onConsent = () => {},
+}: AppProps) {
+  const { screen, language, display, draftPaise, countedPaise, reason, grantedConsents } =
+    session.state;
   const store = session.store;
 
   const common = { status, language, display, onRetry } as const;
@@ -79,6 +91,16 @@ export function App({ session, status = 'ready', onRetry = () => {} }: AppProps)
   } as const;
 
   switch (screen) {
+    case 'X0':
+      return (
+        <ConsentNotice
+          {...common}
+          granted={grantedConsents}
+          onToggle={(purpose) => session.toggleConsent(purpose)}
+          onAgree={() => onConsent(session.agreeConsent())}
+        />
+      );
+
     case 'T5':
       return (
         <DayCloseList

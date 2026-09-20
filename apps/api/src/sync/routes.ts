@@ -171,12 +171,58 @@ export function registerSyncRoutes(app: FastifyInstance, deps: AppDeps): void {
       let inserted = 0;
       let alreadyPresent = 0;
 
-      /* ---- days first: an entry cannot precede its day ------------------ */
+      /*
+       * ---- days, IN TWO PASSES, and the reason is the offline case -------
+       *
+       * An entry cannot precede its day, so days have to be written first. But
+       * a day that arrives CLOSED, written first, freezes the day before its
+       * own entries land beside it - and every entry in the batch comes back
+       * `entries_closed_day`. That is not an edge case: it is the ordinary
+       * shape of an offline-first product. A shopkeeper with no signal all day
+       * enters twenty rows, closes, and the phone syncs afterwards. The whole
+       * day would be refused and the outbox would retry it forever.
+       *
+       * So a close is applied in two steps: the day is made to EXIST first,
+       * open, and the close is applied after its entries. A day the server has
+       * ALREADY closed is never reopened - that is D7, it is checked by the
+       * repository, and it stays refused.
+       *
+       * Found by the first test that ever drove the real client against the
+       * real API; neither side's own suite could see it.
+       */
+      const closing = new Set<string>();
+
       for (const day of body.days ?? []) {
         try {
           parseIsoDate(day.date);
           // Refuses a float or a negative, and names the field if it refuses.
           if (day.countedCash !== undefined) captureCountedCash(day.countedCash);
+
+          const existing = await deps.repo.findDay(shopId, day.date as IsoDate);
+          if (existing?.state === 'closed') {
+            // Already frozen. Re-sending it is a harmless replay; its entries
+            // are refused below, which is exactly what D7 requires.
+            daysWritten += 1;
+            continue;
+          }
+
+          if (day.state === 'closed') {
+            closing.add(day.date);
+            await deps.repo.upsertDay({
+              shopId,
+              date: day.date as IsoDate,
+              // Provisional: the state this day was in while its entries were
+              // typed. The close follows once they are in.
+              state: 'open',
+              openingCash: day.openingCash ?? null,
+              countedCash: null,
+              differenceReason: null,
+              closedAt: null,
+              createdAt: now,
+            });
+            continue;
+          }
+
           await deps.repo.upsertDay({
             shopId,
             date: day.date as IsoDate,
@@ -279,6 +325,33 @@ export function registerSyncRoutes(app: FastifyInstance, deps: AppDeps): void {
        * The body is a pure function of what is now stored, so replaying the same
        * batch produces the same bytes - which is what B8 measures.
        */
+      /*
+       * ---- and now the closes, after the entries they belong with --------
+       *
+       * A day is only reported as written once this succeeds. If it does not,
+       * the day stays open on the server and the row stays queued on the
+       * phone, which is the safe direction: a day closed twice is idempotent,
+       * a day reported closed and left open is a figure nobody can find.
+       */
+      for (const day of body.days ?? []) {
+        if (!closing.has(day.date)) continue;
+        try {
+          await deps.repo.upsertDay({
+            shopId,
+            date: day.date as IsoDate,
+            state: 'closed',
+            openingCash: day.openingCash ?? null,
+            countedCash: day.countedCash ?? null,
+            differenceReason: day.differenceReason ?? null,
+            closedAt: day.closedAt ?? null,
+            createdAt: now,
+          });
+          daysWritten += 1;
+        } catch (e) {
+          rejected.push({ id: day.date, field: 'state', message: (e as Error).message });
+        }
+      }
+
       return reply.code(200).send({
         daysWritten,
         entriesAccepted: inserted + alreadyPresent,

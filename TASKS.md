@@ -31,14 +31,14 @@ ORDER is a topological sort over the dependency graph, recomputed every run.
 | 003 | `P-003` | [x] Add n=0, n=1 and n>=2 cases for every aggregate in the engine | stdevMoney was invisible at n<=1 by construction. That is a property of aggregates, not a quirk. | NONE | - | DONE | B4 | 1 (made at 29) |
 | 017 | `P-004` | [x] Build the canonical fixture shop | Every screen renders against it. Without it no screen test can assert a figure. | NONE | - | DONE | - | 1 (made at 29) |
 | 018 | `P-005` | [x] Build the adversarial fixture shop | Longest party names, lakh-scale figures, a gap day, a correction against a closed day. | NONE | - | DONE | - | 1 (made at 29) |
-| 019 | `P-006` | [x] Scaffold the React Native project with design tokens and the bundled fonts | Nothing renders until this exists, and ten screens on an unchecked token set is ten screens to redo. | NONE | 82 | DONE | B24 | 1 (made at 29) |
-| 020 | `P-007` | [x] Wire the local store so a screen reads real entries through the engine | A screen fed a literal is a mock. Every screen wired-figure predicate depends on this. | `P-006` | 80 | DONE | - | 1 (made at 29) |
+| 019 | `P-006` | [x] Scaffold the React Native project with design tokens and the bundled fonts | Nothing renders until this exists, and ten screens on an unchecked token set is ten screens to redo. | NONE | 90 | DONE | B24 | 1 (made at 29) |
+| 020 | `P-007` | [x] Wire the local store so a screen reads real entries through the engine | A screen fed a literal is a mock. Every screen wired-figure predicate depends on this. | `P-006` | 88 | DONE | - | 1 (made at 29) |
 | 021 | `P-008` | [x] Build the seven input parsers TRACEABILITY already names | V-7: TRACEABILITY names parseSalesEntry and six others, none exists. No entry screen works without them. | NONE | - | DONE | B39 | 2 (made at 29) |
 | 022 | `P-009` | [x] Build the <Money> component and a check that no bare <Text> renders a figure | DC-005: Anek Odia digits are proportional, so a money column does not line up without tnum. Solvable one Text at a time, which is the danger - ADR-018. | `P-006` | - | DONE | B32 | 1 (made at 33) |
 
 ## Screens — the committed set
 
-10 screens, each a parent with the §B.6 bar as eight
+11 screens, each a parent with the §B.6 bar as eight
 children. **The parent is DONE only when all eight children are**, which is what makes
 "half a screen is not a screen" enforceable rather than a slogan.
 
@@ -136,7 +136,16 @@ made at iteration 33.
 | 119 | `S-100-STATES` | [x] T6 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | DONE | - | - |
 | 120 | `S-100-TRACE` | [x] T6 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
 | 121 | `S-100-WIRED` | [x] T6 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | DONE | - | - |
-| 122 | `S-100` | [x] Build T6 — Opening cash | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-100-WIRED` `S-100-FIXTURES` `S-100-STATES` `S-100-I18N` `S-100-A11Y` `S-100-KEYPAD` `S-100-SHOTS` `S-100-TRACE` `S-090` | - | DONE | B38 | 1 (made at 29) |
+| 122 | `S-100` | [x] Build T6 — Opening cash | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-100-WIRED` `S-100-FIXTURES` `S-100-STATES` `S-100-I18N` `S-100-A11Y` `S-100-KEYPAD` `S-100-SHOTS` `S-100-TRACE` `S-090` | 1 | DONE | B38 | 1 (made at 29) |
+| 123 | `S-110-A11Y` | [x] X0 · contrast, touch target and text size checks pass for this screen | Shop daylight and one thumb. The values come from the registry, never from the test. | `P-006` `P-007` | 1 | DONE | - | - |
+| 124 | `S-110-FIXTURES` | [x] X0 · renders against BOTH fixtures, canonical and adversarial | The adversarial shop is where long party names and lakh-scale figures break a layout. | `P-006` `P-007` | 1 | DONE | - | - |
+| 125 | `S-110-I18N` | [x] X0 · passes in three languages, longest-string mode, maximum font scale | Odia is the longest of the three and the one nobody on this build can proofread. | `P-006` `P-007` | 1 | DONE | - | - |
+| 126 | `S-110-KEYPAD` | [x] X0 · keypad present only if this is an entry screen, and never beside a bottom nav | That pair has been specified wrongly before; a per-screen assertion makes it visible. | `P-006` `P-007` | 1 | DONE | - | - |
+| 127 | `S-110-SHOTS` | [x] X0 · screenshots captured for both fixtures and committed | The contact sheet is the only artifact a human can judge by looking. | `P-006` `P-007` | 1 | DONE | - | - |
+| 128 | `S-110-STATES` | [x] X0 · all four states exist: loading, empty, error, loaded | A screen with no empty state shows a blank panel on a shop first day. | `P-006` `P-007` | 1 | DONE | - | - |
+| 129 | `S-110-TRACE` | [x] X0 · its TRACEABILITY row names the feature IDs it displays | A screen nobody can trace to a feature is a screen nobody can verify. | `P-006` `P-007` | 1 | DONE | - | - |
+| 130 | `S-110-WIRED` | [x] X0 · every displayed figure traced to the engine through the real store | A figure that is not wired is a figure that will not move when the day does. | `P-006` `P-007` | 1 | DONE | - | - |
+| 131 | `S-110` | [x] Build X0 — Consent notice | Half a screen is not a screen. This parent is DONE only when all eight children are. | `S-110-WIRED` `S-110-FIXTURES` `S-110-STATES` `S-110-I18N` `S-110-A11Y` `S-110-KEYPAD` `S-110-SHOTS` `S-110-TRACE` `S-100` | - | DONE | B38 | 1 (made at 29) |
 
 ## Instruments — due the moment anything renders
 
@@ -161,10 +170,10 @@ and it moves when the world provably moves (§5.16).
 
 | ORDER | ID | TASK | WHY | BLOCKED BY | BLOCKS | STATE | BENCHMARKS | ESTIMATE |
 |---|---|---|---|---|---|---|---|---|
-| 123 | `Z-001` | [ ] Run the adversary pass at its §6.1 cadence | An empty adversary pass is not reassurance; the cadence exists so it is not skipped when busy. | NONE | - | READY | - | 1 (made at 29) |
-| 124 | `Z-002` | [x] Pre-stop check at iteration 35 | The last point at which the screen set can be re-cut and the cut still mean anything. | NONE | 1 | DONE | - | 1 (made at 29) |
-| 125 | `Z-003` | [ ] Final full verification: check:all, prove, responds, mutation, vectors on both runtimes | The handover claims a state. This is the command set that makes the claim checkable. | `Z-002` | 1 | READY | - | 1 (made at 29) |
-| 126 | `Z-004` | [ ] Write the handover report with its six required sections | The build stops at the ceiling regardless. This is what makes the work usable by someone else. | `Z-003` | - | BLOCKED | - | 1 (made at 29) |
+| 132 | `Z-001` | [ ] Run the adversary pass at its §6.1 cadence | An empty adversary pass is not reassurance; the cadence exists so it is not skipped when busy. | NONE | - | READY | - | 1 (made at 29) |
+| 133 | `Z-002` | [x] Pre-stop check at iteration 35 | The last point at which the screen set can be re-cut and the cut still mean anything. | NONE | 1 | DONE | - | 1 (made at 29) |
+| 134 | `Z-003` | [ ] Final full verification: check:all, prove, responds, mutation, vectors on both runtimes | The handover claims a state. This is the command set that makes the claim checkable. | `Z-002` | 1 | READY | - | 1 (made at 29) |
+| 135 | `Z-004` | [ ] Write the handover report with its six required sections | The build stops at the ceiling regardless. This is what makes the work usable by someone else. | `Z-003` | - | BLOCKED | - | 1 (made at 29) |
 
 ## Human — referenced, never duplicated
 

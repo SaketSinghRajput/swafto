@@ -74,12 +74,24 @@ describe('append-only is refused here as well as in the database', () => {
 });
 
 describe('the outbox is part of the write, not a consequence of it', () => {
-  it('queues a row for every appended entry', () => {
+  it('queues a row for every appended entry, and the day it belongs to', () => {
     const store = freshStore();
-    const before = store.pendingOutbox.length;
+    const entriesBefore = store.pendingOutbox.filter((r) => r.kind === 'entry').length;
     store.append(sale('ob-test', 700));
-    expect(store.pendingOutbox.length).toBe(before + 1);
-    expect(store.pendingOutbox.at(-1)!.payload).toMatchObject({ id: 'ob-test' });
+
+    const rows = store.pendingOutbox;
+    expect(rows.filter((r) => r.kind === 'entry')).toHaveLength(entriesBefore + 1);
+    expect(rows.at(-1)!.payload).toMatchObject({ id: 'ob-test' });
+    /*
+     * The day goes with it. The server refuses an entry for a day it has never
+     * heard of - correctly - and until this row existed the FIRST entry of
+     * every day was refused and retried forever.
+     */
+    expect(rows.filter((r) => r.kind === 'day')).toHaveLength(1);
+
+    // A second entry does not queue a second copy of the same day.
+    store.append(sale('ob-test-2', 800));
+    expect(store.pendingOutbox.filter((r) => r.kind === 'day')).toHaveLength(1);
   });
 
   it('queues nothing when the append is refused', () => {
@@ -88,6 +100,77 @@ describe('the outbox is part of the write, not a consequence of it', () => {
     const after = store.pendingOutbox.length;
     expect(() => store.append(sale('once', 100))).toThrow();
     expect(store.pendingOutbox.length).toBe(after);
+  });
+
+  it('QUEUES THE DAY TOO - closing was invisible to the server until it did', () => {
+    /*
+     * The defect this case exists for: `putDay` wrote the day and queued
+     * nothing, so the opening cash and the close - the two figures the product
+     * is for - reached the server only if an entry happened to be queued
+     * alongside. A day closed on a phone that then broke was a day the server
+     * never heard about, and nothing failed.
+     */
+    const store = freshStore();
+    store.close(store.expectedCash().value);
+    const row = store.pendingOutbox.find((r) => r.kind === 'day');
+    expect(row).toBeTruthy();
+    expect(row!.payload).toMatchObject({ state: 'closed', date: CANONICAL_DATE });
+  });
+
+  it('one row per day, carrying the latest record rather than every step', () => {
+    const base = canonicalInput();
+    const store = new Store(
+      memoryPort({
+        shopId: 'shop-canonical',
+        day: { ...base.day, openingCash: null },
+        entries: base.entries,
+        parties: CANONICAL_PARTIES,
+        priorCreditOutstanding: base.priorCreditOutstanding,
+        priorSupplierOutstanding: base.priorSupplierOutstanding,
+        skippedSections: [],
+      }),
+      () => `${CANONICAL_DATE}T19:30:00.000Z`,
+    );
+    store.setOpeningCash(100000);
+    store.close(store.expectedCash().value);
+    const dayRows = store.pendingOutbox.filter((r) => r.kind === 'day');
+    // A day record is the whole state, not a delta: the superseded one is noise.
+    expect(dayRows).toHaveLength(1);
+    expect(dayRows[0]!.payload).toMatchObject({ state: 'closed', openingCash: 100000 });
+  });
+
+  it('records WHEN it was closed, from the injected clock', () => {
+    const at = `${CANONICAL_DATE}T20:15:00.000Z`;
+    const base = canonicalInput();
+    const store = new Store(
+      memoryPort({
+        shopId: 'shop-canonical',
+        day: base.day,
+        entries: base.entries,
+        parties: CANONICAL_PARTIES,
+        priorCreditOutstanding: base.priorCreditOutstanding,
+        priorSupplierOutstanding: base.priorSupplierOutstanding,
+        skippedSections: [],
+      }),
+      () => at,
+    );
+    store.close(store.expectedCash().value);
+    expect(store.state.day.closedAt).toBe(at);
+  });
+
+  it('acking drops only what the server took, and a failed drain loses nothing', () => {
+    const store = freshStore();
+    store.append(sale('ack-1', 100));
+    store.append(sale('ack-2', 200));
+    const [first, second] = store.pendingOutbox.slice(-2);
+
+    store.ackOutbox([first!.id]);
+    expect(store.pendingOutbox.map((r) => r.id)).toContain(second!.id);
+    expect(store.pendingOutbox.map((r) => r.id)).not.toContain(first!.id);
+
+    // An id the server never acknowledged is not quietly forgotten.
+    store.ackOutbox(['ob-never-sent']);
+    expect(store.pendingOutbox.map((r) => r.id)).toContain(second!.id);
   });
 });
 

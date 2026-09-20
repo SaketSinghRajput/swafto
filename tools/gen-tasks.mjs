@@ -23,6 +23,7 @@ import {
   INSTRUMENTS,
   SCREEN_CHILDREN,
   COMMITTED_SCREENS,
+  MANDATED_SCREENS,
   contains,
 } from './tasks.data.mjs';
 
@@ -60,14 +61,35 @@ const screenNames = (() => {
 
 const all = TASKS.map((t) => ({ ...t, group: t.id.startsWith('Z') ? 'CLOSEOUT' : 'PREP' }));
 
-/* C.2 · each committed screen becomes a parent plus the eight §B.6 children. */
+/*
+ * C.2 · each screen becomes a parent plus the eight §B.6 children.
+ *
+ * TWO SOURCES, ONE BAR. The committed set comes from PROJECTION and its ids must
+ * exist in the build map. The mandated set comes from LEGAL-AUDIT and its ids
+ * deliberately do not - the build map predates the DPDP audit, and a screen the
+ * Act requires has no build-map number to borrow. They are held to the same
+ * eight children, because "required by law" is not a reason to measure a screen
+ * less.
+ */
 let prevScreen = null;
-for (const [i, sid] of COMMITTED_SCREENS.ids.entries()) {
-  const name = screenNames.get(sid);
+const screenSet = [
+  ...COMMITTED_SCREENS.ids.map((id) => ({ id, mandated: false })),
+  ...MANDATED_SCREENS.ids.map((id) => ({ id, mandated: true })),
+];
+for (const [i, { id: sid, mandated }] of screenSet.entries()) {
+  const name = mandated ? MANDATED_SCREENS.names[sid] : screenNames.get(sid);
   if (!name) {
     failures.push(
       `the committed set names ${sid} and the build map has no such screen. The set ` +
         'would silently shrink; fix the id or the map rather than dropping the row.',
+    );
+    continue;
+  }
+  if (mandated && screenNames.has(sid)) {
+    failures.push(
+      `${sid} is in the MANDATED set and ALSO in the build map, as "${screenNames.get(sid)}". ` +
+        'One id cannot mean two screens: the mandated screen would tick off the build-map ' +
+        'one. Rename the mandated screen.',
     );
     continue;
   }
@@ -303,7 +325,7 @@ ${groupTable('PREP')}
 
 ## Screens — the committed set
 
-${COMMITTED_SCREENS.ids.length} screens, each a parent with the §B.6 bar as eight
+${COMMITTED_SCREENS.ids.length + MANDATED_SCREENS.ids.length} screens, each a parent with the §B.6 bar as eight
 children. **The parent is DONE only when all eight children are**, which is what makes
 "half a screen is not a screen" enforceable rather than a slogan.
 
@@ -376,7 +398,7 @@ const prev = existsSync('TASKS.md') ? readFileSync('TASKS.md', 'utf8') : '';
 writeFileSync('TASKS.md', prev.includes('\r\n') ? md.split('\n').join('\r\n') : md);
 console.log(`  tasks                  : ${all.length}`);
 console.log(
-  `  screens                : ${COMMITTED_SCREENS.ids.length} parents x ${SCREEN_CHILDREN.length} children`,
+  `  screens                : ${COMMITTED_SCREENS.ids.length + MANDATED_SCREENS.ids.length} parents x ${SCREEN_CHILDREN.length} children`,
 );
 console.log(`  done / ready / blocked : ${doneCount} / ${readyTasks.length} / ${blockedTasks.length}`);
 console.log(`  NEXT                   : ${next ? next.id : 'nothing READY'}`);

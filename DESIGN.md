@@ -11,7 +11,7 @@ Every fact is labelled **STATIC** (read from the source: cheap, complete, blind 
 anything computed at runtime) or **MEASURED** (render and instrument output: expensive,
 partial, and the only thing that tells the truth about a layout).
 
-**10 committed screens, 10 implemented.**
+**11 committed screens, 11 implemented.**
 
 > **No measured data.** `reports/design/measured.json` does not exist, so every MEASURED cell
 > reads `-`. The screen instruments that would produce it are tasks `I-001` through
@@ -243,6 +243,28 @@ partial, and the only thing that tells the truth about a layout).
 
 *none found statically*
 
+### X0 — Consent notice
+
+`apps\mobile\src\screens\X0.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Pressable, PrimaryButton, Shell, Text, View | - |
+| tokens used | CONSENT_PURPOSES | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
 
 ---
 
@@ -253,7 +275,7 @@ partial, and the only thing that tells the truth about a layout).
 | `EntryForm` | apps\mobile\src\components\EntryForm.tsx | T7, T8, T9, T10 | 0 | 0 |
 | `Keypad` | apps\mobile\src\components\Keypad.tsx | T11, T6 | 0 | 0 |
 | `Money` | apps\mobile\src\components\Money.tsx | T11, T6 | 0 | 0 |
-| `Shell` | apps\mobile\src\components\Shell.tsx | T1, T5, T11, T12, T14, T6 | 0 | 0 |
+| `Shell` | apps\mobile\src\components\Shell.tsx | T1, T5, T11, T12, T14, T6, X0 | 0 | 0 |
 
 **USED ONCE** — built as shared, used by a single screen. Not necessarily wrong, but a
 component with one caller is usually a screen section that got promoted for no reason.
@@ -284,6 +306,8 @@ component.
 | `OTP_TTL_SECONDS` | 2 |
 | `OTP_DIGITS` | 2 |
 | `OTP_LIMITS` | 2 |
+| `PRIVACY_NOTICE_VERSION` | 2 |
+| `CONSENT_PURPOSES` | 5 |
 | `TOUCH_TARGET_MIN_DP` | 2 |
 | `BODY_TEXT_MIN_SP` | 2 |
 | `CHROME_FONT_SCALE_CAP` | 1 |

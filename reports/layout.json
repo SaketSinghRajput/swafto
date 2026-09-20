@@ -266,6 +266,46 @@
       "overflowing": []
     },
     {
+      "id": "X0-canonical",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-adversarial",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-adversarial-focus",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-longest",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-granted",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
       "id": "T1-canonical",
       "scale": 1,
       "scrollWidth": 360,
@@ -635,6 +675,46 @@
     },
     {
       "id": "T14-longest",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-canonical",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-adversarial",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-adversarial-focus",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-longest",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-granted",
       "scale": 1.5,
       "scrollWidth": 360,
       "horizontalOverflowPx": 0,
@@ -1011,6 +1091,46 @@
     },
     {
       "id": "T14-longest",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-canonical",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-adversarial",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-adversarial-focus",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-longest",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": []
+    },
+    {
+      "id": "X0-granted",
       "scale": 2,
       "scrollWidth": 360,
       "horizontalOverflowPx": 0,

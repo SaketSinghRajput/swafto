@@ -220,6 +220,39 @@ export const STRINGS = {
   'state.entered': { en: 'entered', hi: 'दर्ज', or: 'ଲେଖାଯାଇଛି' },
   'state.skipped': { en: 'nothing today', hi: 'आज कुछ नहीं', or: 'ଆଜି କିଛି ନାହିଁ' },
   'state.untouched': { en: 'not yet', hi: 'अभी नहीं', or: 'ଏପର୍ଯ୍ୟନ୍ତ ନୁହେଁ' },
+
+  /* ---- X0 · the consent notice, shown before an account exists -------- */
+  'consent.title': { en: 'Before we start', hi: 'शुरू करने से पहले', or: 'ଆରମ୍ଭ ପୂର୍ବରୁ' },
+  'consent.intro': {
+    en: 'This is what SWAFTO keeps, and why. Nothing is kept for any other reason.',
+    hi: 'SWAFTO यह रखता है, और इसीलिए रखता है। किसी और कारण से कुछ नहीं रखा जाता।',
+    or: 'SWAFTO ଏହା ରଖେ, ଏବଂ ଏଥିପାଇଁ ରଖେ। ଅନ୍ୟ କୌଣସି କାରଣରୁ କିଛି ରଖାଯାଏ ନାହିଁ।',
+  },
+  'consent.required': { en: 'Needed to keep your book', hi: 'खाता रखने के लिए ज़रूरी', or: 'ଖାତା ରଖିବାକୁ ଆବଶ୍ୟକ' },
+  'consent.optional': { en: 'Your choice', hi: 'आपकी मर्ज़ी', or: 'ଆପଣଙ୍କ ଇଚ୍ଛା' },
+  'consent.purpose.account_and_ledger': {
+    en: 'Your number, your shop name, and the entries you type',
+    hi: 'आपका नंबर, दुकान का नाम, और आपकी दर्ज की गई बातें',
+    or: 'ଆପଣଙ୍କ ନମ୍ବର, ଦୋକାନ ନାମ, ଏବଂ ଆପଣ ଲେଖିଥିବା ବିଷୟ',
+  },
+  'consent.purpose.sms_reminders': {
+    en: 'Send me reminders by SMS',
+    hi: 'मुझे SMS से याद दिलाएँ',
+    or: 'ମୋତେ SMS ରେ ମନେ ପକାନ୍ତୁ',
+  },
+  'consent.purpose.crash_diagnostics': {
+    en: 'Send crash reports, never with money or names',
+    hi: 'क्रैश रिपोर्ट भेजें, पैसे या नाम कभी नहीं',
+    or: 'କ୍ରାସ ରିପୋର୍ଟ ପଠାନ୍ତୁ, ଟଙ୍କା କିମ୍ବା ନାମ କେବେ ନୁହେଁ',
+  },
+  'consent.rights': {
+    en: 'You can see everything we hold, correct it, or have it erased. You can change any of these choices later, as easily as now.',
+    hi: 'आप सब कुछ देख सकते हैं, सुधार सकते हैं, या मिटवा सकते हैं। ये चुनाव बाद में भी उतनी ही आसानी से बदल सकते हैं।',
+    or: 'ଆପଣ ସବୁକିଛି ଦେଖିପାରିବେ, ସଂଶୋଧନ କରିପାରିବେ, କିମ୍ବା ହଟାଇପାରିବେ। ଏହି ପସନ୍ଦ ପରେ ମଧ୍ୟ ସହଜରେ ବଦଳାଇପାରିବେ।',
+  },
+  'consent.agree': { en: 'I agree', hi: 'मैं सहमत हूँ', or: 'ମୁଁ ସହମତ' },
+  'consent.on': { en: 'Yes', hi: 'हाँ', or: 'ହଁ' },
+  'consent.off': { en: 'No', hi: 'नहीं', or: 'ନା' },
 } as const satisfies Record<string, Phrase>;
 
 export type StringKey = keyof typeof STRINGS;

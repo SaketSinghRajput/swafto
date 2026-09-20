@@ -9,6 +9,7 @@
   },
   "description": "The canonical value registry. One home for every value that appears in more than one place. Code imports it; documents are checked against it.",
   "dependencies": {
-    "@swafto/formula-engine": "*"
+    "@swafto/formula-engine": "*",
+    "@swafto/schema": "*"
   }
 }

@@ -89,6 +89,33 @@ export const COMMITTED_SCREENS = {
 };
 
 /**
+ * SCREENS THE LAW COMMITTED, WHICH THE PROJECTION DID NOT.
+ *
+ * COMMITTED_SCREENS comes from PROJECTION's re-cut and every id in it exists in
+ * the build map. The consent notice is in neither: the build map predates the
+ * DPDP audit, and the audit's L-01/L-02 are not a product decision anybody made
+ * - they are a condition of processing personal data at all.
+ *
+ * IT IS NOT BUILD-MAP X1. X1 there is "Onboarding - shop name, language, text
+ * size, opening cash. Four questions, no more", and naming this screen X1 would
+ * tick that screen off with the four questions unwritten. X0 says what it is:
+ * the panel before the numbered flow starts, because consent has to precede the
+ * account it creates.
+ *
+ * SAME EIGHT CHILDREN, SAME BAR. A screen mandated rather than chosen is still a
+ * screen, and the cheapest way to end up with a legally-required panel nobody
+ * measured is to keep it in a category the instruments do not read.
+ */
+export const MANDATED_SCREENS = {
+  from: 'LEGAL-AUDIT L-01/L-02 - DPDP Act 2023 s6, notice and specific consent',
+  ids: ['X0'],
+  names: { X0: 'Consent notice' },
+};
+
+/** Every screen this build holds itself to, however it got there. */
+export const ALL_SCREEN_IDS = [...COMMITTED_SCREENS.ids, ...MANDATED_SCREENS.ids];
+
+/**
  * C.2 · THE §B.6 BAR AS EIGHT CHILDREN.
  *
  * "Build Form A" has no honest predicate: it gets ticked when somebody feels it is

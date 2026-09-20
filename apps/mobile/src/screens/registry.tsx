@@ -32,6 +32,8 @@ import { FormD } from './T10.tsx';
 import { CashCheck } from './T11.tsx';
 import { CashDifference } from './T12.tsx';
 import { DayClosed } from './T14.tsx';
+import { ConsentNotice } from './X0.tsx';
+import { CONSENT_PURPOSES } from '@swafto/values';
 import { Store, memoryPort, type StoreState } from '../store/index.ts';
 import type { RenderLanguage } from '../i18n/strings.ts';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
@@ -171,6 +173,30 @@ export const SCREEN_CASES: readonly ScreenCase[] = [
   ...standardCases('T14', 'T14 Day closed', (store, language, display) => (
     <DayClosed store={store} language={language} display={display} />
   )),
+  /*
+   * X0 takes no store, and that is the point of it: it is shown before an account
+   * exists, so there is no shop, no day and nothing to read. It joins the
+   * standard four so the contrast, target-size and Odia instruments cover it like
+   * any other screen - the consent notice is the one screen every user must read.
+   */
+  ...standardCases('X0', 'X0 Consent notice', (_store, language, display) => (
+    <ConsentNotice language={language} display={display} />
+  )),
+  {
+    id: 'X0-granted',
+    screen: 'X0',
+    caption: 'X0 Consent notice - both optional purposes turned on',
+    language: 'or',
+    display: 'comfort',
+    sheet: true,
+    element: () => (
+      <ConsentNotice
+        language="or"
+        display="comfort"
+        granted={CONSENT_PURPOSES.filter((p) => !p.required).map((p) => p.key)}
+      />
+    ),
+  },
   {
     id: 'T1-canonical',
     screen: 'T1',

@@ -31,7 +31,7 @@ import {
   rmSync,
 } from 'node:fs';
 import { join, relative } from 'node:path';
-import { COMMITTED_SCREENS } from './tasks.data.mjs';
+import { COMMITTED_SCREENS, MANDATED_SCREENS, ALL_SCREEN_IDS } from './tasks.data.mjs';
 
 const read = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split('\r\n').join('\n') : '');
 const failures = [];
@@ -165,12 +165,19 @@ const featureIdsFor = (sid) => {
   return ids;
 };
 
-const screens = COMMITTED_SCREENS.ids.map((sid) => {
+/*
+ * EVERY SCREEN THIS BUILD HOLDS ITSELF TO, from both sources. The committed set
+ * is PROJECTION's and its names come from the build map; the mandated set is
+ * LEGAL-AUDIT's and carries its own name, because the build map predates the
+ * DPDP audit and has no id for a consent notice.
+ */
+const screens = ALL_SCREEN_IDS.map((sid) => {
   const file = [join(SCREEN_DIR, `${sid}.tsx`), join(SCREEN_DIR, sid, 'index.tsx')].find(existsSync);
   const src = file ? read(file) : '';
   return {
     id: sid,
-    name: screenNames.get(sid) ?? '(not in the build map)',
+    name: screenNames.get(sid) ?? MANDATED_SCREENS.names[sid] ?? '(not in the build map)',
+    mandated: MANDATED_SCREENS.ids.includes(sid),
     file,
     src,
     features: featureIdsFor(sid),

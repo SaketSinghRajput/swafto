@@ -27,6 +27,7 @@
  * import without giving the engine a dependency it is forbidden to have.
  */
 import { BI_GATES } from '@swafto/formula-engine';
+import { CONSENT_PURPOSES as CONSENT_PURPOSE_KEYS, type ConsentPurpose } from '@swafto/schema';
 
 export interface ExternalValue<T> {
   readonly value: T;
@@ -79,6 +80,47 @@ export const OTP_LIMITS = {
   sendPerDevice: { windowSeconds: 3600, max: 5, lockoutSeconds: 3600 },
   verifyPerCode: { windowSeconds: OTP_TTL_SECONDS, max: 5, lockoutSeconds: OTP_TTL_SECONDS },
 } as const;
+
+/**
+ * WHICH PRIVACY NOTICE A CONSENT WAS GIVEN AGAINST.
+ *
+ * A consent record that does not name the notice cannot be honoured once the
+ * notice changes, and DPDP §6 requires exactly that reconstruction: what he was
+ * told, when. The app stamps it onto the decision, the API stamps it onto the
+ * row, and both must be the same string - which is why it is here and not in
+ * either of them.
+ *
+ * DATE-SHAPED AND HAND-BUMPED. It changes when the WORDS change, not when the
+ * code does, so nothing can derive it. Bumping it is a decision, and the
+ * decision is "the notice he agreed to is no longer the notice we show".
+ */
+export const PRIVACY_NOTICE_VERSION = '2026-09-1';
+
+/**
+ * WHICH PURPOSES THE ACCOUNT CANNOT EXIST WITHOUT. Exactly one, and it is the
+ * one that IS the account: the ledger he is here to keep. Everything else is
+ * refusable without losing anything, which is what makes the consent specific
+ * rather than a switch labelled "use the app".
+ */
+const REQUIRED_PURPOSES: readonly ConsentPurpose[] = ['account_and_ledger'];
+
+/**
+ * The purposes the notice asks about, DERIVED FROM THE SCHEMA rather than
+ * retyped beside it. The `consents` table's CHECK constraint is the list; a
+ * purpose that exists in the database and not on the screen is a row nothing
+ * can ever produce, and a purpose on the screen and not in the database is a
+ * consent the write refuses. Deriving makes both impossible.
+ *
+ * A NEW PURPOSE THEREFORE APPEARS ON THE SCREEN BY ITSELF - with no string for
+ * it, which B30 fails on. That is the intended order: the notice copy is the
+ * gate, not somebody's memory.
+ */
+export const CONSENT_PURPOSES: readonly {
+  readonly key: ConsentPurpose;
+  readonly required: boolean;
+}[] = CONSENT_PURPOSE_KEYS.map((key) => ({ key, required: REQUIRED_PURPOSES.includes(key) }));
+
+export type { ConsentPurpose };
 
 /**
  * Minimum touch target. **Ours, and deliberately stricter than the platform's 48dp.**

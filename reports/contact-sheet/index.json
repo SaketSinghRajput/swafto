@@ -80,6 +80,21 @@
     "file": "reports\\contact-sheet\\T14-adversarial.html"
   },
   {
+    "id": "X0-canonical",
+    "caption": "X0 Consent notice - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\X0-canonical.html"
+  },
+  {
+    "id": "X0-adversarial",
+    "caption": "X0 Consent notice - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\X0-adversarial.html"
+  },
+  {
+    "id": "X0-granted",
+    "caption": "X0 Consent notice - both optional purposes turned on",
+    "file": "reports\\contact-sheet\\X0-granted.html"
+  },
+  {
     "id": "T1-canonical",
     "caption": "T1 Today - canonical shop, English, Comfort. The front door.",
     "file": "reports\\contact-sheet\\T1-canonical.html"

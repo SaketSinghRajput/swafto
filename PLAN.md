@@ -517,13 +517,13 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 ---
 
 <!-- PLANHASH:START -->
-5cba20454958baa4  traceability  docs/spec/TRACEABILITY.md
+cfc1760ecac2d3bd  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
 2fbfd2c828d5a581  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
 059e6c297859c6e6  humanActions  docs/handover/HUMAN-ACTIONS.md
-4bbcb54411b3c520  legal  docs/audits/LEGAL-AUDIT.md
+3c84092737ed318c  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md
 1352e51ba2027971  derivedConstraints  docs/governance/DERIVED-CONSTRAINTS.md

@@ -19,6 +19,7 @@ import { Store, memoryPort, type StoreState } from '../src/store/index.ts';
 import { render, all, byTestId, text } from './render.tsx';
 import { canonicalInput, CANONICAL_PARTIES, CANONICAL_DATE } from '@swafto/fixtures';
 import { formatPaise, subtract, add } from '@swafto/formula-engine';
+import { CONSENT_PURPOSES, PRIVACY_NOTICE_VERSION } from '@swafto/values';
 
 const T0 = CANONICAL_DATE + 'T19:00:00.000Z';
 
@@ -301,5 +302,89 @@ describe('the app renders whatever screen the session is on', () => {
     expect(text(byTestId(tree, 't7-headline'))).toBe(
       formatPaise(s.store.primary().p4NetSales.value, { withSign: false }),
     );
+  });
+});
+
+/* ---- the consent decision, which precedes everything above -------------- */
+
+describe('consent is collected before the account, and reports exactly what he chose', () => {
+  /**
+   * THIS IS THE ONE FLOW WHOSE FAILURE IS LEGAL RATHER THAN NUMERICAL. Every
+   * case below is a way the app could record a consent the shopkeeper did not
+   * give - and none of them would look wrong on the screen.
+   */
+  const consenting = () => {
+    const s = freshSession();
+    s.goTo('X0');
+    return s;
+  };
+
+  it('opens on X0 when the host says there is no account yet', () => {
+    const base = canonicalInput();
+    const store = new Store(
+      memoryPort({
+        shopId: 'shop-canonical',
+        day: base.day,
+        entries: [],
+        parties: CANONICAL_PARTIES,
+        priorCreditOutstanding: 0,
+        priorSupplierOutstanding: 0,
+        skippedSections: [],
+      }),
+    );
+    const s = new Session(store, { now: () => T0, newId: () => 'e1', screen: 'X0' });
+    expect(s.state.screen).toBe('X0');
+    expect(byTestId(render(<App session={s} />), 'x0')).toBeTruthy();
+  });
+
+  it('nothing optional is granted until he turns it on', () => {
+    expect(consenting().state.grantedConsents).toEqual([]);
+  });
+
+  it('agreeing with nothing turned on grants ONLY the required purpose', () => {
+    const s = consenting();
+    const decision = s.agreeConsent();
+    expect(decision.granted).toEqual(['account_and_ledger']);
+    expect(decision.noticeVersion).toBe(PRIVACY_NOTICE_VERSION);
+    expect(decision.locale).toBe('en');
+  });
+
+  it('a purpose he turned on is in the decision, and one he turned off again is not', () => {
+    const s = consenting();
+    s.toggleConsent('sms_reminders');
+    expect(s.agreeConsent().granted).toEqual(['account_and_ledger', 'sms_reminders']);
+
+    const t = consenting();
+    t.toggleConsent('crash_diagnostics');
+    t.toggleConsent('crash_diagnostics');
+    expect(t.agreeConsent().granted).toEqual(['account_and_ledger']);
+  });
+
+  it('the required purpose cannot be toggled off, through the session or the screen', () => {
+    const s = consenting();
+    s.toggleConsent('account_and_ledger');
+    expect(s.state.grantedConsents).toEqual([]);
+    expect(s.agreeConsent().granted).toContain('account_and_ledger');
+  });
+
+  it('the decision carries the language he READ it in, not the one he ends up using', () => {
+    const s = consenting();
+    s.setLanguage('or');
+    expect(s.agreeConsent().locale).toBe('or');
+  });
+
+  it('tapping a toggle on the real screen moves the real state', () => {
+    const s = consenting();
+    const optional = CONSENT_PURPOSES.filter((p) => !p.required).map((p) => p.key);
+    byTestId(render(<App session={s} />), 'x0-toggle-' + optional[0]).props.onPress();
+    expect(s.state.grantedConsents).toEqual([optional[0]]);
+  });
+
+  it('agreeing hands the decision OUT - the app posts nothing by itself', () => {
+    const s = consenting();
+    const sent: unknown[] = [];
+    byTestId(render(<App session={s} onConsent={(d) => sent.push(d)} />), 'x0-agree').props.onPress();
+    expect(sent).toHaveLength(1);
+    expect(s.state.screen).toBe('T1');
   });
 });

@@ -704,12 +704,12 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
     const s = await signIn(h);
     const grant = await h.app.inject({
       method: 'POST',
-      url: '/v1/consent',
+      url: '/v1/me/consent',
       ...jsonAuth(s.accessToken!)({ purpose: 'sms_reminders', granted: true }),
     });
     const withdraw = await h.app.inject({
       method: 'POST',
-      url: '/v1/consent',
+      url: '/v1/me/consent',
       ...jsonAuth(s.accessToken!)({ purpose: 'sms_reminders', granted: false }),
     });
     expect(grant.statusCode).toBe(200);
@@ -732,7 +732,7 @@ describe('the DPDP obligations are endpoints, not paragraphs', () => {
     const s = await signIn(h);
     const res = await h.app.inject({
       method: 'POST',
-      url: '/v1/consent',
+      url: '/v1/me/consent',
       ...jsonAuth(s.accessToken!)({ purpose: 'account_and_ledger', granted: false }),
     });
     expect(res.statusCode).toBe(409);
