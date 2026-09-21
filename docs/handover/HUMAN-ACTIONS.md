@@ -267,8 +267,28 @@ JavaScript side is complete and tested:
   and rejection handling.
 - `apps/mobile/src/index.tsx` - the package entry, exporting all of it.
 
+**The exact versions, read from the template rather than from the docs page.**
+
+`react-native@0.81.4`'s own `android/build.gradle` is what Gradle reads, and it pins:
+
+| | Version | Why this one |
+|---|---|---|
+| JDK | **17** | RN 0.81 states it plainly: *"we recommend JDK17. You may encounter problems using higher JDK versions."* Microsoft OpenJDK 17 on Windows |
+| `compileSdkVersion` | **36** | Android 16 |
+| `targetSdkVersion` | **36** | And this is already what Google Play requires: since **31 August 2026** a new submission must target API 36. No React Native upgrade is needed for that |
+| `buildToolsVersion` | **36.0.0** | |
+| `minSdkVersion` | **24** | Android 7.0, the floor the INR 7,000 handsets sit above |
+| `ndkVersion` | **27.1.12297006** | Install that exact string; Gradle asks for it by name |
+
+> **The React Native setup page says "Android SDK Platform 35", and that is its own
+> environment guide lagging behind its own template.** Trust the template: it says 36.
+> Checked at iteration 36 against the 0.81.4 release.
+
 **What to do.**
-1. Install a JDK 17 and the Android SDK; accept the SDK licences.
+1. Install JDK 17 and the Android SDK components above; accept the SDK licences
+   (`sdkmanager --licenses`). Set `JAVA_HOME` and `ANDROID_HOME`
+   (`%LOCALAPPDATA%\Android\Sdk` is the Android Studio default) and put
+   `platform-tools` on `PATH`.
 2. Generate the native project with the React Native CLI at `apps/mobile`
    (`npx @react-native-community/cli init` against the existing package, or copy the
    template's `android/` directory). The version to match is in

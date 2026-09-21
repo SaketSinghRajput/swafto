@@ -523,7 +523,7 @@ bfcf21d75a9e4e7b  traceability  docs/spec/TRACEABILITY.md
 22eb0e0f66549859  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 c4efb872bd5c7767  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
-597c7f77729c8b86  humanActions  docs/handover/HUMAN-ACTIONS.md
+fde4f37830ebb082  humanActions  docs/handover/HUMAN-ACTIONS.md
 f1dbd3d30344e865  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md
