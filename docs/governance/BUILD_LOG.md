@@ -1685,7 +1685,7 @@ arithmetic survivors.
 
 ## 2026-09-20 · Iteration 23 · Injection 17: the canonical value registry
 
-**Recorded late, at iteration 24.** The work shipped as commit `e167882` and this
+**Recorded late, at iteration 24.** The work shipped as commit `f636cfa` and this
 heading was never appended, so `check:verifiers` derived the iteration as 22 for a
 whole iteration. The gap is left visible rather than back-dated: an append-only log
 that silently acquires a missing entry is worth less than one that admits it.

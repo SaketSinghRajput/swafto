@@ -83,7 +83,7 @@ Option (c) is unnecessary because a computable formula exists in the specificati
 **REVERSAL TRIGGER.** V2 introduces an item or stock section. Then BI4 gains the stock
 term and this row is superseded.
 
-**Iteration 6 · commit `3cd746a`**
+**Iteration 6 · commit `97536bf`**
 
 ---
 

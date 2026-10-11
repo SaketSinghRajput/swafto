@@ -1,7 +1,7 @@
 # PROJECTION
 
 **Repriced at iteration 20 against a hard ceiling of 40.** Replaces the 60-iteration
-version written earlier the same day; that one is in git at `8e067f5`. 20 iterations
+version written earlier the same day; that one is in git at `33baefc`. 20 iterations
 remain.
 
 **The short answer to A.7: sixteen screens do not fit, and cutting from the bottom of

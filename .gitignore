@@ -28,3 +28,15 @@ nul
 reports/vectors-node.json
 reports/vectors-hermes.json
 reports/sms-segments.json
+
+# Private keys never belong in a repository, ignored or not - the EC2 key
+# for the Mumbai instance was found sitting in AWS/ on 2026-10-11 and moved
+# to ../swafto-keys/. These patterns are belt and braces: check:secrets
+# walks the FILESYSTEM and does not read this file, so it will still fail
+# on a key left in the tree. That is deliberate - a key in the working
+# directory is one zip, rsync or `git add -f` away from being published.
+*.pem
+*.key
+*.p12
+*.jks
+AWS/
