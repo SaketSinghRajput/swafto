@@ -1,0 +1,22 @@
+# Editor settings, so whitespace never shows up in a diff that is about code.
+# .gitattributes handles what git stores; this handles what editors write.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+[*.md]
+# Markdown gives trailing spaces a meaning (a hard line break), so they stay.
+trim_trailing_whitespace = false
+
+[*.{ttf,otf,png,pdf}]
+# Declared binary in .gitattributes and hashed byte-exact by check:font.
+# No editor should touch these.
+insert_final_newline = false
+trim_trailing_whitespace = false

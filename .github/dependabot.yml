@@ -1,0 +1,35 @@
+# B33 is "0 high or critical advisories", and it is measured by `npm audit`
+# on every CI run. That check tells you when a dependency has gone bad; it
+# does nothing about it. Dependabot is the other half.
+#
+# WEEKLY, AND GROUPED, DELIBERATELY. A daily firehose of single-package PRs
+# is a firehose people stop reading, and an unread security PR is worse than
+# none because it looks like coverage. Grouping the routine bumps into one
+# PR a week keeps the signal; security updates still arrive on their own.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Everything that is only ever a build or test dependency moves together.
+      dev-dependencies:
+        dependency-type: development
+      # Runtime bumps are separate: these ship inside the product, so they are
+      # the ones that need a human to look at the diff.
+      production-dependencies:
+        dependency-type: production
+    commit-message:
+      prefix: deps
+      prefix-development: deps(dev)
+
+  # The pipeline's own actions pin to major tags; this keeps them current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

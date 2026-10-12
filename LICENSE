@@ -1,0 +1,24 @@
+Copyright (c) 2026 SWAFTO. All rights reserved.
+
+This software and its accompanying documentation are proprietary and
+confidential. No licence, express or implied, is granted to any person to
+use, copy, modify, merge, publish, distribute, sublicense or sell any part
+of this work.
+
+THIS FILE MAKES EXPLICIT WHAT package.json ALREADY DECLARES. The manifest
+says "license": "UNLICENSED", which is npm's way of saying proprietary. A
+public repository with no LICENSE file sits in the same legal position by
+default - absent a licence, all rights are reserved - but it leaves every
+reader guessing, and some of them guess generously. This removes the guess.
+
+IF THE INTENT IS TO OPEN-SOURCE THIS, replace this file wholesale with the
+chosen licence and change the `license` field in package.json to match. The
+two must agree: a repository whose manifest and LICENSE disagree is worse
+than one with neither, because each reader believes whichever suits them.
+
+Third-party components are not covered by the above and keep their own
+terms. They are enumerated, with their licences, in
+docs/handover/LICENCES.md - generated from the installed dependency tree
+rather than maintained by hand. The bundled Anek Odia font ships under the
+SIL Open Font Licence 1.1; its text is in
+apps/mobile/assets/fonts/OFL-AnekOdia.txt.
