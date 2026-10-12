@@ -10,7 +10,7 @@
     "@swafto/values": "*",
     "@swafto/fixtures": "*",
     "react": "^19.1.0",
-    "react-native": "^0.81.4"
+    "react-native": "^0.87.1"
   },
   "scripts": {
     "test": "vitest run"
