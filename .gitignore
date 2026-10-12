@@ -40,3 +40,9 @@ reports/sms-segments.json
 *.p12
 *.jks
 AWS/
+
+# Local agent/plugin state - not this product. These mutate constantly (they
+# blocked a history rewrite on 2026-10-11) and one of them is a SQLite WAL,
+# which is a binary that can carry whatever the plugin last touched.
+.claude/
+.claude-flow/
