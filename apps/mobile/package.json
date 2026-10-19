@@ -9,8 +9,8 @@
     "@swafto/formula-engine": "*",
     "@swafto/values": "*",
     "@swafto/fixtures": "*",
-    "react": "^19.1.0",
-    "react-native": "^0.81.4"
+    "react": "^19.3.1",
+    "react-native": "^0.88.0"
   },
   "scripts": {
     "test": "vitest run"
