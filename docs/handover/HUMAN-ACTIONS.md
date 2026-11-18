@@ -24,6 +24,15 @@ If yes, it does not belong here.
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 | H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
 | H14 | **An Android build environment and a release signing key** | 2 hours | The APK, and with it B14-B19, B24 and the APK half of B35 |
+| H15 | Play Console payments profile: bank account, PAN and GSTIN (R4-HA1). Needs H7 | 1 hour + review | Any paid sale of Premium |
+| H16 | GST registration and a CA's rulings on SAC code, threshold and invoices (R4-HA2) | 1-3 weeks | Selling Premium lawfully |
+| H17 | Google Cloud service account, Pub/Sub topic and push subscription for billing (R4-HA3) | 1 hour | Server verification of purchases, and the RTDN webhook |
+| H18 | The Premium subscription and its two base plans in Play Console (R4-HA4) | 30 minutes | The purchase sheet on the phone |
+| H19 | Counsel review of subscriptions and dark patterns (R4-HA5). Extends H9 | - | Public launch of Premium |
+| H20 | Choose the AI provider, if any (R4-HA6) | - | Any AI-derived feature |
+| H21 | Test the price with real shopkeepers (R4-HA7) | 1 day | Fixing the price in H18 |
+| H22 | Create the database roles' SSM parameters, with generated passwords | 20 minutes | The API booting in production (C-01) |
+| H23 | Decide on new-phone OTP lockout: accept the residual or add a second factor (RT-3) | 30 minutes | Public launch of sign-in |
 
 ---
 
@@ -401,3 +410,184 @@ typeface they ship in. A word that reads fine in a list can still be wrong on a 
 **Until this is done** the app has copy that renders correctly and means something
 nobody here has verified. That is a launch blocker for an Odia-language release and
 is recorded as one.
+
+---
+
+## H15 · Play Console payments profile (R4-HA1)
+
+**Why no agent can do it.** A merchant account in the business's own name, with its bank
+account, PAN and GSTIN, needs that legal identity. Needs H7 first.
+
+**What to do.** Create the payments profile in Play Console. Put the PAN and the GSTIN on
+it (R4 §6 explains the withholding when no PAN is on file). Leave the alternative-billing
+terms unaccepted for V1: the build uses Play Billing only.
+
+**Until then.** Nothing can be sold. The server's verify route and the phone's purchase
+sheet are built and tested against fakes; the S10 screen says buying is not open yet.
+
+---
+
+## H16 · GST registration and a CA's rulings (R4-HA2)
+
+**Why no agent can do it.** Registration needs the entity, and the open questions are a
+chartered accountant's to rule on, not this build's (CLAUDE.md, "Never invent a fact
+about Indian law").
+
+**What to do.** Get a GSTIN. Have a CA decide the SAC code, whether the e-commerce
+threshold exemption applies, the invoice numbering, and who issues the invoice for each
+Play sale. R4 §6 lists the sources and where they disagree.
+
+---
+
+## H17 · Google Cloud service account and Pub/Sub for billing (R4-HA3)
+
+**Why no agent can do it.** It needs the Google Cloud and Play Console accounts, and the
+key it produces must never enter this repository (`check:secrets`).
+
+**What to do.**
+1. Create a service account; in Play Console grant it API access with "View financial
+   data" and "Manage orders and subscriptions".
+2. Create a Pub/Sub topic, and a push subscription to
+   `https://api.<domain>/v1/billing/play/rtdn` with authentication on, using a
+   service account of your choice as the push identity.
+3. Give `google-play-developer-notifications@system.gserviceaccount.com` publish rights
+   on the topic, and point Play Console's real-time developer notifications at it.
+4. Put these in SSM Parameter Store (SecureString where secret) and into the API's
+   environment: `PLAY_SERVICE_ACCOUNT_JSON` (the key file, whole), `BILLING_ACCOUNT_KEY`
+   (a new random secret, at least 16 characters, not either other key),
+   `PLAY_PRODUCT_ID`, `PLAY_RTDN_AUDIENCE` (the push subscription's audience) and
+   `PLAY_RTDN_SERVICE_ACCOUNT` (its push identity's email). `PLAY_PACKAGE_NAME`
+   defaults to `com.swafto`.
+5. Check the 15 % fee on the first payout statement.
+
+**Until then.** The API boots and runs without them; `verify` and the webhook answer 503
+naming the missing variables. The 14-day preview works, because it is the server's own grant.
+
+---
+
+## H18 · The Premium subscription in Play Console (R4-HA4)
+
+**Why no agent can do it.** Play Console access.
+
+**What to do.** One subscription product (its id goes in `PLAY_PRODUCT_ID`) with two
+auto-renewing base plans whose ids are exactly `monthly` and `yearly`
+(`apps/mobile/src/app/plan.ts`, `BASE_PLANS`). Prices tax-inclusive: ₹99 a month, and
+₹799 or ₹599 a year (the owner's call after H21). Grace period on. **No free-trial
+offer** (R4 §5.3: the app has its own preview that asks for no payment details).
+
+---
+
+## H19 · Counsel review: subscriptions and dark patterns (R4-HA5)
+
+**Why no agent can do it.** It is a legal opinion.
+
+**What to do.** Check R4 §5 against the gazette text of the 2023 Dark Patterns
+Guidelines. Rule on the free-trial question (§5.3), on whether a shopkeeper is a
+"consumer" under CPA s.2(7), and on whether the E-Commerce Rules 2020 apply. Extend H9
+to item-level party history (R4 §7.1). Also rule on whether billing records
+(`plan_purchases`) are kept or erased when a shop is deleted: the erasure job leaves them
+today, and that is an open question, not a decision.
+
+---
+
+## H20 · Choose the AI provider (R4-HA6)
+
+**Why no agent can do it.** A contract.
+
+**What to do.** For a third-party model: one with an India-region endpoint, a DPA with
+security terms and a no-training clause, and its own notice line. Self-hosted needs no
+signature. R5 currently ships no language model, so nothing waits on this yet.
+
+---
+
+## H21 · Test the price with real shopkeepers (R4-HA7)
+
+**Why no agent can do it.** It needs shops.
+
+**What to do.** Show ₹99 a month and ₹799 a year against ₹599 a year to a handful of
+target shops in Odisha before H18 fixes the prices. R4 §4 is a judgement, not evidence.
+
+
+---
+
+## H22 · Database role credentials in SSM (C-01)
+
+**Why no agent can do it.** It needs your AWS account, and the passwords must be
+generated where only you see them. A password in the repository would defeat the
+point; `check:secrets` would fail it.
+
+**What to do.** In the AWS console or CLI, in ap-south-1, create three SSM
+**SecureString** parameters under the prefix in `/etc/swafto/site.env`
+(`/swafto/prod`), each a Postgres connection URL (scheme `postgresql`, the role, a
+generated password URL-encoded, the RDS host, port 5432, the database name):
+
+- `MASTER_DATABASE_URL` - the RDS master user. Used only by the one-time role
+  bootstrap, never given to the API.
+- `DATABASE_URL` - user exactly `swafto_app` (no BYPASSRLS).
+- `SYSTEM_DATABASE_URL` - user exactly `swafto_system` (BYPASSRLS).
+
+The role passwords are not stored a second time: the bootstrap reads each password
+out of these two URLs and sets it on the role, so the API's password and the
+role's password are the same value by construction. Generate each once, put it in
+the URL, and do not change it anywhere else. To rotate, edit the SSM parameter and
+re-run the bootstrap.
+
+The other secrets are unchanged.
+
+Then, on every deploy and after the migrations have run, on the box over SSM
+Session Manager: `sudo /usr/local/bin/swafto-db-roles`. It applies
+`packages/schema/sql/roles.postgres.sql` as the master user (its grants skip any
+table that does not exist yet), then sets the two passwords. Safe to re-run.
+The API refuses to start in production if either URL is missing or both connect as
+the same role.
+
+**Also at deploy, because nothing in `infra/` defines IAM or alarms** (the repository
+holds only `cloud-init.yaml`; there is no Terraform yet):
+
+- Add `sns:Publish` on your alert topic to the instance role, and put the topic ARN
+  in `SWAFTO_ALERT_TOPIC_ARN` in `/etc/swafto/site.env`.
+- In CloudWatch, create a metric filter on log group `swafto-alerts` (pattern
+  `"FAILED"`) and an alarm on it (threshold 1, notify the same topic). The daily
+  purge job writes there when it fails.
+
+**Not done.** Nothing here has been done.
+
+**Progress — 2026-11-18 (done by the CTO on Saket's explicit approval, via the CLI as his SSO admin):**
+the three SecureString parameters exist under `/swafto/prod/` (`MASTER_DATABASE_URL` v1,
+`DATABASE_URL` v2, now the `swafto_app` role, and `SYSTEM_DATABASE_URL` v1). The passwords were generated
+locally (hex, so no URL-encoding is needed) and written through 0600 temp files that were deleted at once; none was
+printed or logged. The RDS master password was reset to the one in `MASTER_DATABASE_URL`. Before the reset,
+the database had 0 connections in 24 h and only the SWAFTO app security group could reach it.
+**Not done yet:** the roles `swafto_app` and `swafto_system` do not exist in the database until the one-time
+`swafto-db-roles` bootstrap runs on the API server, because RDS is private and cannot be reached from a laptop.
+**Status.** Partly done: the parameters are created; the role bootstrap waits for the API server (Wave 6).
+
+## H23 · New-phone sign-in lockout: accept the residual, or add a second factor (RT-3)
+
+**Why no agent can do it.** It is a product and risk decision. It trades how easy
+sign-in is against an attack the red team proved, and the red team accepted it as S3
+only on condition that the founder records the decision.
+
+**The residual.** Anyone who knows a shopkeeper's phone number can, from a single
+IPv4 address, keep destroying each fresh code with 5 wrong guesses (the 5-per-code
+limit that B37 cites). That keeps the number out of sign-in **on a new phone**
+indefinitely. Phones already signed in are unaffected: their sessions last 180 days,
+the ledger is local, and a known device bypasses the per-number send budget. The
+attacker gains nothing but the denial. No takeover is possible: attempts are ticketed
+before the compare.
+
+**What to do.** Choose one, and record it here with the date:
+1. **Accept for V1** and stand up a support recovery path for a locked-out new phone
+   (e.g. the grievance officer verifies the owner and clears the number's limiter
+   state). This is the red team's condition for acceptance.
+2. **Add a second factor for new-device sign-in** (e.g. a confirmation on an already
+   signed-in device, where one exists). This is engineering work, scoped after the
+   decision.
+
+**Decision — 2026-11-17, Saket:** option 1. **Accept the residual for V1, with a support
+recovery path.** Option 2 stays available for a later version.
+
+**Status.** Decided. The engineering it requires is NOT yet built: an admin command,
+for the grievance officer, that clears one number's OTP limiter state after a callback
+verifies the owner, plus its runbook. That is tracked in `docs/audit/PLAN.md`, Wave 6.
+The red team's acceptance (S3) holds once that path exists.

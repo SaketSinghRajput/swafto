@@ -23,7 +23,7 @@ describe('T6 renders all four states', () => {
   it('loading', () => {
     const tree = render(<OpeningCash status="loading" />);
     expect(byTestId(tree, 't6-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error offers a way back', () => {
@@ -34,7 +34,10 @@ describe('T6 renders all four states', () => {
 
   it('ready and untouched: the question, and an empty figure', () => {
     const tree = render(<OpeningCash />);
-    expect(text(byTestId(tree, 't6-prompt'))).toBe(phrase('t6.prompt', 'en'));
+    // The question is the reference's ("What's in the box right now?"), with the
+    // promise that it is asked once under it.
+    expect(text(byTestId(tree, 't6-prompt'))).toBe(phrase('t6.question', 'en'));
+    expect(text(byTestId(tree, 't6-why'))).toBe(phrase('t6.body', 'en'));
     expect(text(byTestId(tree, 't6-draft-amount'))).toBe(formatPaise(0, { withSign: false }));
   });
 
@@ -82,7 +85,8 @@ describe('T6 in every language, including the adversarial worst case', () => {
     it(language + ': the title and the question are in that language', () => {
       const tree = render(<OpeningCash language={language} />);
       expect(text(byTestId(tree, 't6-title'))).toBe(phrase('t6.title', language));
-      expect(text(byTestId(tree, 't6-prompt'))).toBe(phrase('t6.prompt', language));
+      expect(text(byTestId(tree, 't6-prompt'))).toBe(phrase('t6.question', language));
+      expect(text(byTestId(tree, 't6-confirm'))).toBe(phrase('t6.save', language));
     });
   }
 
@@ -131,9 +135,42 @@ describe('T6 accessibility and its keypad', () => {
     ).toEqual([]);
   });
 
+  it('F-9: a back control is drawn when there is somewhere to go, and reports it', () => {
+    let backs = 0;
+    const tree = render(<OpeningCash onBack={() => (backs += 1)} />);
+    byTestId(tree, 't6-back').props.onPress();
+    expect(backs).toBe(1);
+    expect(all(render(<OpeningCash />)).some((n) => n.props?.testID === 't6-back')).toBe(false);
+  });
+
+  it('the keypad is above the save button, as the reference stacks them', () => {
+    const ids = all(render(<OpeningCash />)).map((n) => String(n.props?.testID ?? ''));
+    expect(ids.indexOf('t6-draft')).toBeLessThan(ids.indexOf('keypad'));
+    expect(ids.indexOf('keypad')).toBeLessThan(ids.indexOf('t6-confirm'));
+  });
+
   it('a disabled confirm announces itself as disabled', () => {
     expect(byTestId(render(<OpeningCash />), 't6-confirm').props?.accessibilityState).toEqual({
       disabled: true,
     });
+  });
+});
+
+describe('HT-30 - in focus at large text the keypad waits for a tap', () => {
+  it('closed: no keypad, the question keeps the room, Save still there', () => {
+    const tree = render(<OpeningCash display="focus" keypadOpen={false} />);
+    expect(all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('keypad'))).toEqual([]);
+    expect(byTestId(tree, 't6-prompt')).toBeTruthy();
+    expect(byTestId(tree, 't6-confirm')).toBeTruthy();
+  });
+
+  it('tapping the figure asks for the keypad, and says whether it is up', () => {
+    const asked: boolean[] = [];
+    const closed = render(<OpeningCash display="focus" keypadOpen={false} onKeypad={(o) => asked.push(o)} />);
+    expect(byTestId(closed, 't6-draft').props.accessibilityState).toEqual({ expanded: false });
+    byTestId(closed, 't6-draft').props.onPress();
+    expect(asked).toEqual([true]);
+    const open = render(<OpeningCash display="focus" keypadOpen />);
+    expect(byTestId(open, 'keypad')).toBeTruthy();
   });
 });

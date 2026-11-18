@@ -163,7 +163,77 @@ export const OTP_LIMITS = {
       'SECURITY-AUDIT TB6, "Per phone number - verify attempts", 5 per code; TTL per ' +
       'SPEC-DIGEST §1 ruling (10 min)',
   },
+  /*
+   * WAVE 2 (C-03) - REVERSIBLE DEFAULTS. Chosen by the engineer, NOT by the founder
+   * and NOT measured: every number below is a conservative starting point and the
+   * SMS price (H1) is still unmeasured, so none of them is a cost figure. Change them
+   * here, in one place. The audit's TB6 left the global breaker's number to "somebody
+   * chooses" (SEC-1); this is that somebody, provisionally.
+   *
+   * REASONING.
+   *  - The per-phone rules cap what one NUMBER can receive. Nothing above capped how
+   *    many numbers one host or the whole service may text, so the SMS bill was
+   *    attacker-controlled (RT-4: 3000 numbers, one IP, 3000 SMS).
+   *  - Per-IP: 60 sends an hour. A sign-in is once per 180 days, so even a busy
+   *    carrier-NAT address will not legitimately ask for 60 codes in an hour. This is
+   *    what R-007 feared when it kept the IP rule telemetry-only (CGNAT) - that
+   *    concern is why this is NOT the 2000 rule and why it is skipped for a loopback
+   *    address (a reverse proxy that is not trusted would put every caller on
+   *    127.0.0.1; see `isLoopback`). The telemetry rule above stays as it was.
+   *  - Global: 500 sends an hour, then a one-hour pause that ends by itself. (The pause
+   *    equals the window on purpose: with a shorter pause the 500 events would still be
+   *    inside the hour when it ended and the breaker would re-trip.) It bounds the SMS
+   *    spend of a botnet that defeats every per-source rule.
+   *
+   *    CTO DECISION (RT2-2, reversible): THE CEILING COUNTS, AND BLOCKS, ONLY SENDS TO
+   *    NUMBERS WITH NO ACCOUNT. The first version counted every send and was a free
+   *    denial of service: nine addresses at 60 requests each tripped it, and then no
+   *    innocent user could sign in or delete their account for an hour. Sends to a
+   *    registered number (sign-in for an existing account, deletion for a real one) are
+   *    exempt - still bound by the per-number and per-address caps - and a deletion
+   *    request for an unregistered number sends nothing and counts toward nothing. The
+   *    cost: while it is tripped a NEW user cannot sign up for up to an hour (and the
+   *    refusal itself says "this number has no account" - an oracle, but only during a
+   *    trip the attacker has already caused). WHO PAYS: the OPERATOR pays for every SMS
+   *    that gets through, not whoever caused it; the ceiling limits that bill and nothing
+   *    more. Tripping it writes one `crit` log line naming this breaker, for ops alerting.
+   */
+  sendPerIpCap: {
+    name: 'otp:send:ip:cap',
+    windowSeconds: HOUR,
+    max: 60,
+    lockoutSeconds: HOUR,
+    source: 'SECURITY-AUDIT TB6 "Per IP - send", enforcing companion; Wave 2 default (C-03b, RT-4)',
+  },
+
+  sendGlobal: {
+    name: 'otp:send:global:hour',
+    windowSeconds: HOUR,
+    max: 500,
+    lockoutSeconds: HOUR,
+    source: 'SECURITY-AUDIT TB6 "Global send rate circuit-breaker"; Wave 2 default (C-03b, SEC-102)',
+  },
+
+  /**
+   * SEC-103: verify attempts per source address ACROSS numbers. One host walking a list
+   * of numbers with a few guesses each stays under every per-number rule. 100 an hour
+   * is a sign-in rate no real address reaches (each sign-in is one or two verifies).
+   */
+  verifyPerIp: {
+    name: 'otp:verify:ip:hour',
+    windowSeconds: HOUR,
+    max: 100,
+    lockoutSeconds: HOUR,
+    source: 'SECURITY-AUDIT TB6, verify abuse across numbers; Wave 2 default (C-03d, SEC-103)',
+  },
 } as const satisfies Record<string, RateRule>;
+
+/**
+ * A fresh request inside this many seconds of the last one does not mint a new code and
+ * does not send (RT-3 path 3). After it, a new code replaces the old - the user whose
+ * first SMS was lost needs that. Reversible default.
+ */
+export const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
 export type OtpLimitName = keyof typeof OTP_LIMITS;
 

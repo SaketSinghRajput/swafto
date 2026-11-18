@@ -2,7 +2,7 @@
   "name": "swafto",
   "private": true,
   "version": "0.1.0",
-  "description": "SWAFTO Retail Desk V1 — offline-first daily cash-and-credit closing for small Indian retail shops",
+  "description": "SWAFTO Retail Desk V1 \u2014 offline-first daily cash-and-credit closing for small Indian retail shops",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=24 <25"
@@ -11,6 +11,15 @@
     "packages/*",
     "apps/*"
   ],
+  "overrides": {
+    "react-native-nitro-modules": "0.35.9",
+    "shell-quote": "^1.10.1",
+    "joi": "^17.13.9",
+    "source-map-js": "^1.2.2",
+    "zod": "^4.6.6",
+    "qs": "^6.16.2",
+    "vite": "^8.3.3"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -25,7 +34,7 @@
     "db:emit": "node --experimental-strip-types tools/emit-sql.mjs",
     "check:prose": "node tools/check-prose.mjs",
     "check:sms": "node tools/check-sms-templates.mjs",
-    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run check:shadow && npm run check:plan && npm run check:tasks && npm run check:design && npm run check:layout && npm run check:client-logs && npm run check:naming && npm run check:push && npm run check:licences && npm run check:crossdoc && npm run check:divergence && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:registry && npm run check:findings && npm run check:verifiers",
+    "check:all": "npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run check:purity && npm run check:shadow && npm run check:plan && npm run check:tasks && npm run check:design && npm run check:layout && npm run check:client-logs && npm run check:naming && npm run check:push && npm run check:licences && npm run check:crossdoc && npm run check:divergence && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:registry && npm run check:findings && npm run check:verifiers",
     "check:sms:segments": "node tools/check-sms-segments.mjs",
     "check:tooling": "node tools/check-tooling.mjs",
     "detection-rate": "node tools/detection-rate.mjs",
@@ -33,6 +42,7 @@
     "check:generated": "node tools/check-generated.mjs",
     "check:font": "node tools/check-font-coverage.mjs",
     "check:money": "node tools/check-money-lint.mjs",
+    "check:purity": "node tools/check-engine-purity.mjs",
     "check:shadow": "node tools/check-shadow-copies.mjs",
     "plan": "node tools/gen-plan.mjs",
     "check:plan": "node tools/gen-plan.mjs --check",
@@ -64,6 +74,9 @@
     "mutation:money": "node tools/check-money-mutants.mjs",
     "mutation:money:prove": "node tools/check-money-mutants.mjs --prove",
     "check:findings": "node tools/check-findings.mjs",
+    "gen:openapi": "node --experimental-strip-types tools/gen-openapi.mjs",
+    "check:openapi": "node --experimental-strip-types tools/gen-openapi.mjs --check",
+    "check:config-docs": "node tools/check-config-docs.mjs",
     "check:registry": "node tools/check-registry.mjs"
   },
   "devDependencies": {
@@ -82,11 +95,11 @@
     "hermes-engine-cli": "^0.12.0",
     "pg": "^8.23.0",
     "playwright": "^1.63.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.3.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "^0.81.4",
     "react-native-web": "^0.21.2",
-    "react-test-renderer": "^19.1.0",
+    "react-test-renderer": "19.1.0",
     "typescript": "^5.9.2",
     "vitest": "^5.0.1"
   }

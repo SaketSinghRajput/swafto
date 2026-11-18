@@ -486,6 +486,70 @@ if (bundledBytes > APK_BUDGET_BYTES) {
   failures.push('the fonts alone exceed the B24 APK budget.');
 }
 
+/**
+ * THE ICON FONT (M3, DESIGN-SYSTEM-V2 section 2) - a separate block with its own
+ * rules. None of the Anek rules above apply to it and none of them was loosened:
+ * icons are Private Use codepoints that go through no Indic shaping, no `ory2`
+ * and no tabular-figure rule. What can fail here is different: a glyph the app
+ * names that the font lacks draws an empty box beside a word, a font swapped
+ * without review, a variable font that core RN cannot select an instance of, or
+ * a glyph outside the Private Use Area that could collide with real text.
+ */
+const ICON_SPEC = 'apps/mobile/src/ui/icons.json';
+const ICON_FILE = 'SwaftoIcons.ttf';
+const ICON_SHA = '1e1c27df845d1305afb4960c14e2689d6316475dfcb2f79de3b34e1a29361bf5';
+const ICON_MAX_BYTES = 24 * 1024; // measured 10,816 for 32 glyphs; a megabyte means the stock font shipped
+const inPrivateUse = (c) => c >= 0xe000 && c <= 0xf8ff;
+let iconFont = null;
+const iconSpec = JSON.parse(readFileSync(ICON_SPEC, 'utf8'));
+const wanted = Object.entries(iconSpec.icons).map(([name, e]) => ({
+  name,
+  cp: Number.parseInt(e.codepoint, 16),
+}));
+if (wanted.length === 0) {
+  failures.push(`${ICON_SPEC} declares ZERO icons. An icon check over an empty list passes vacuously.`);
+}
+try {
+  iconFont = openFont(`${DIR}/${ICON_FILE}`);
+} catch (e) {
+  failures.push(`${ICON_FILE}: ${e.message}`);
+}
+if (iconFont) {
+  if (iconFont.sha !== ICON_SHA) {
+    failures.push(
+      `${ICON_FILE} does not match its recorded sha256 (expected ${ICON_SHA.slice(0, 16)}..., ` +
+        `found ${iconFont.sha.slice(0, 16)}...). Rebuild it with tools/build-icon-font.py from ` +
+        'the pinned Lucide release and re-pin, rather than swapping a file.',
+    );
+  }
+  if (iconFont.isVariable) {
+    failures.push(`${ICON_FILE} is a VARIABLE font (it has an fvar table); core React Native cannot select an instance.`);
+  }
+  if (iconFont.bytes > ICON_MAX_BYTES) {
+    failures.push(`${ICON_FILE} is ${iconFont.bytes} bytes, over the ${ICON_MAX_BYTES} cap: the full Lucide font is not a subset.`);
+  }
+  if (iconFont.family !== iconSpec.font.family) {
+    failures.push(`${ICON_FILE} names itself "${iconFont.family}", but tokens and icons.json say "${iconSpec.font.family}".`);
+  }
+  for (const { name, cp } of wanted) {
+    if (!iconFont.map.has(cp)) {
+      failures.push(`${ICON_FILE}: icon "${name}" (${hex(cp)}) has no glyph. It would draw an empty box beside its word.`);
+    }
+    if (!inPrivateUse(cp)) {
+      failures.push(`icon "${name}" is ${hex(cp)}, outside the Private Use Area, where it could collide with real text.`);
+    }
+  }
+  const declared = new Set(wanted.map((w) => w.cp));
+  const extra = [...iconFont.map.keys()].filter((c) => !declared.has(c));
+  if (extra.length) {
+    failures.push(`${ICON_FILE} carries ${extra.length} glyph(s) icons.json does not list (${extra.slice(0, 4).map(hex).join(' ')}): an unnamed glyph is dead weight in the APK.`);
+  }
+  console.log(
+    `\n  ${ICON_FILE.padEnd(22)} ${String(iconFont.bytes).padStart(7)} B · ${String(iconFont.map.size).padStart(4)} cp · ` +
+      `${wanted.length} named icons, all in the Private Use Area`,
+  );
+}
+
 if (failures.length) {
   console.error(`\nFONT FAILURES (${failures.length}):`);
   for (const f of failures) console.error(`  x    ${f}`);

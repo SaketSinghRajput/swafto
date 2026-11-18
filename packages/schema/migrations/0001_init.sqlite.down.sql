@@ -9,11 +9,55 @@ DROP TRIGGER IF EXISTS days_no_update_when_closed;
 
 DROP TRIGGER IF EXISTS entries_no_insert_into_closed_day;
 
+DROP TRIGGER IF EXISTS upi_confirmations_no_update;
+
+DROP TRIGGER IF EXISTS upi_confirmations_no_delete;
+
+DROP TRIGGER IF EXISTS upi_confirmations_no_insert_into_closed_day;
+
+DROP TRIGGER IF EXISTS adjustments_no_update;
+
+DROP TRIGGER IF EXISTS adjustments_no_delete;
+
+DROP TRIGGER IF EXISTS adjustments_no_insert_into_closed_day;
+
+DROP TRIGGER IF EXISTS item_lines_no_update;
+
+DROP TRIGGER IF EXISTS item_lines_no_delete;
+
+DROP TRIGGER IF EXISTS item_lines_no_insert_into_closed_day;
+
+DROP TRIGGER IF EXISTS items_no_update;
+
+DROP TRIGGER IF EXISTS items_no_delete;
+
+DROP TRIGGER IF EXISTS item_lines_fit_sale;
+
+DROP TRIGGER IF EXISTS party_credit_limits_no_update;
+
+DROP TRIGGER IF EXISTS party_credit_limits_no_delete;
+
+DROP TABLE IF EXISTS plan_purchase_states;
+
+DROP TABLE IF EXISTS plan_purchases;
+
+DROP TABLE IF EXISTS plan_previews;
+
 DROP TABLE IF EXISTS rate_events;
 
 DROP TABLE IF EXISTS outbox;
 
 DROP TABLE IF EXISTS section_skips;
+
+DROP TABLE IF EXISTS upi_confirmations;
+
+DROP TABLE IF EXISTS adjustments;
+
+DROP TABLE IF EXISTS item_lines;
+
+DROP TABLE IF EXISTS items;
+
+DROP TABLE IF EXISTS party_credit_limits;
 
 DROP TABLE IF EXISTS consents;
 

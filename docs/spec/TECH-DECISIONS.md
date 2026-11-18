@@ -200,6 +200,17 @@ both, raise, overwrite nothing.
   across two day records and break the carry-forward chain, which is the audit chain
   (architecture §05 4.7).
 
+**Superseded in part, 2026-10-22 (decision 1, retailer-defined business day).** The
+default date is no longer the calendar date: the shop sets when its day starts
+(00:00-06:00, S2), and `businessDate()` in `dates.ts` picks the day from the wall
+clock and that start - 00:30 with a 05:00 start is the previous day. It is a
+**cutover, not a migration**: each day row stores the `startsAt` it was created under
+(`days.starts_at`, fixed by trigger on both engines), a day without one is a calendar
+day, and a later change to the setting governs only days opened after it. No existing
+entry moves, because nothing recorded says which day a 00:30 entry belonged to. Still
+true from this ADR: `day_id` is client-assigned, the server never rewrites it, and a
+day still ends only by an explicit close - there is no auto-roll.
+
 **Resumability on 2G.** Push is chunked (default 50 entries) and cursor-based; a chunk
 that dies mid-request is retried whole, and idempotency makes the retry free. Pull is
 cursor-based on `server_seq`. No request depends on a previous request's side effects.

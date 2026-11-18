@@ -18,10 +18,7 @@ import type { KeypadKey } from '../components/Keypad.tsx';
 import type { Paise } from '@swafto/formula-engine';
 import type { Store } from '../store/index.ts';
 
-const COMMITS: readonly CommitOption[] = [
-  { labelKey: 'formA.mode.cash', section: 'withdrawal', mode: 'cash' },
-  { labelKey: 'formA.mode.upi', section: 'withdrawal', mode: 'upi' },
-];
+import { FORM_D_COMMITS as COMMITS } from './entryRoutes.ts';
 
 export interface FormDProps {
   readonly store: Store;
@@ -31,6 +28,29 @@ export interface FormDProps {
   readonly draftPaise?: Paise | null;
   readonly onKey?: (key: KeypadKey) => void;
   readonly onCommit?: (option: CommitOption) => void;
+  /**
+   * WHICH COMMIT IS LIVE, AND THE BACK DESTINATION.
+   *
+   * The payment mode stopped being a button that also writes the entry and
+   * became a segment that only chooses, so the choice now needs somewhere to
+   * live. It lives in the Session like every other piece of state - this screen
+   * holds nothing - and arrives here as a controlled value.
+   *
+   * It defaults to 0 rather than null on purpose: acceptance criterion 1 says
+   * the entry is committed in TWO taps from a cold start, and an unselected
+   * segment would cost a third on every entry.
+   */
+  readonly entryPartyId?: string | null;
+  /** USABILITY item 6: the entry this form just saved - said, and shown first. */
+  readonly savedId?: string | null;
+  readonly pickingParty?: boolean;
+  readonly onOpenPartyPicker?: () => void;
+  readonly onChooseParty?: (partyId: string) => void;
+  readonly onCancelPartyPicker?: () => void;
+  readonly selectedCommit?: number;
+  readonly onSelectCommit?: (index: number) => void;
+  /** Explicit `| undefined`: the project runs `exactOptionalPropertyTypes`. */
+  readonly onBack?: (() => void) | undefined;
   readonly onRetry?: () => void;
 }
 
@@ -42,6 +62,15 @@ export function FormD({
   draftPaise = null,
   onKey = () => {},
   onCommit = () => {},
+  entryPartyId = null,
+  savedId = null,
+  pickingParty = false,
+  onOpenPartyPicker = () => {},
+  onChooseParty = () => {},
+  onCancelPartyPicker = () => {},
+  selectedCommit = 0,
+  onSelectCommit = () => {},
+  onBack,
   onRetry = () => {},
 }: FormDProps) {
   return (
@@ -61,6 +90,15 @@ export function FormD({
       draftPaise={draftPaise}
       onKey={onKey}
       onCommit={onCommit}
+      entryPartyId={entryPartyId}
+      savedId={savedId}
+      pickingParty={pickingParty}
+      onOpenPartyPicker={onOpenPartyPicker}
+      onChooseParty={onChooseParty}
+      onCancelPartyPicker={onCancelPartyPicker}
+      selectedCommit={selectedCommit}
+      onSelectCommit={onSelectCommit}
+      onBack={onBack}
       onRetry={onRetry}
     />
   );

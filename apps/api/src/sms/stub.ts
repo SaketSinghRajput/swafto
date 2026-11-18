@@ -20,6 +20,14 @@ export interface RecordedSend {
 
 export class StubSmsPort implements SmsPort {
   private readonly sent: RecordedSend[] = [];
+  /**
+   * RT-W4-8 · only the newest `maxKept` sends are held (plaintext OTPs included), so a staging process
+   * that signs people in for weeks does not grow without bound. Tests never come near the default.
+   */
+  private readonly maxKept: number;
+  constructor(maxKept = 1000) {
+    this.maxKept = maxKept;
+  }
   /** Set to make the next send fail, for testing carrier-failure paths. */
   public failNext = false;
 
@@ -36,6 +44,7 @@ export class StubSmsPort implements SmsPort {
       variables: [...req.variables],
       at: new Date().toISOString(),
     });
+    if (this.sent.length > this.maxKept) this.sent.splice(0, this.sent.length - this.maxKept);
   }
 
   all(): readonly RecordedSend[] {

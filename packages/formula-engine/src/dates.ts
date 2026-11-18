@@ -82,6 +82,68 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   return fromEpochDay(toEpochDay(date) + days);
 }
 
+/* ------------------------------------------------------------------ *
+ * The retailer-defined business day (2026-10-22, decision 1)
+ * ------------------------------------------------------------------ */
+
+/**
+ * 'HH:MM', 24-hour: the wall-clock time a shop's business day begins. A day that
+ * starts at 05:00 on the 11th runs until 05:00 on the 12th, so a sale at 00:30 on
+ * the 12th is the 11th's takings - which is how a shop that trades past midnight
+ * already thinks about it.
+ */
+export type DayStart = string;
+
+/** The calendar day: what every day recorded before the setting existed is. */
+export const MIDNIGHT: DayStart = '00:00';
+
+const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** Minutes after midnight. Throws on anything that is not a real 'HH:MM'. */
+export function dayStartMinutes(startsAt: DayStart): number {
+  const m = HHMM.exec(startsAt);
+  if (!m) throw new Error(`Not a day start (HH:MM, 00:00-23:59): ${startsAt}`);
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+const WALL = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}))?/;
+
+/**
+ * WHICH BUSINESS DAY A WALL-CLOCK MOMENT BELONGS TO. Pure: the moment is passed in.
+ *
+ * `wallClock` is read AS WRITTEN - the date and hh:mm on the shop's own wall - so
+ * pass the phone's local stamp (`localIso`), never a UTC `toISOString()`, whose
+ * hh:mm is five and a half hours off in India. Before `startsAt`, the moment is
+ * still the previous date's business day; at `startsAt` exactly, the new one.
+ *
+ * A bare 'YYYY-MM-DD' carries no time, so it is taken as a business date already
+ * chosen and returned unchanged.
+ */
+export function businessDate(wallClock: string, startsAt: DayStart = MIDNIGHT): IsoDate {
+  const m = WALL.exec(wallClock);
+  if (!m) throw new Error(`Not a wall-clock ISO time: ${wallClock}`);
+  const date = m[1]!;
+  parseIsoDate(date);
+  if (m[2] === undefined) return date;
+  const hh = Number(m[2]);
+  const mm = Number(m[3]);
+  if (hh > 23 || mm > 59) throw new Error(`Not a wall-clock ISO time: ${wallClock}`);
+  return hh * 60 + mm < dayStartMinutes(startsAt) ? addDays(date, -1) : date;
+}
+
+/**
+ * HAS THIS DAY ENDED, BY ITS OWN RULE? A day keeps the start it was created under;
+ * one recorded before the setting existed has none and is a calendar day. So a
+ * later change to the shop's setting never shortens or stretches a day that is
+ * already in the book - it governs only the days opened after it.
+ */
+export function dayHasEnded(
+  day: { readonly date: IsoDate; readonly startsAt?: DayStart },
+  wallClock: string,
+): boolean {
+  return compareIsoDate(businessDate(wallClock, day.startsAt ?? MIDNIGHT), day.date) > 0;
+}
+
 export function compareIsoDate(a: IsoDate, b: IsoDate): number {
   // ISO dates sort correctly as strings, but go through epoch days so an invalid
   // date throws rather than silently mis-sorting.

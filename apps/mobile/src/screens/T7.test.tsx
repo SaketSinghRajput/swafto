@@ -21,7 +21,7 @@ import { CANONICAL_DATE } from '@swafto/fixtures';
 import { formatPaise, type Entry } from '@swafto/formula-engine';
 import { TOUCH_TARGET_MIN_DP, BODY_TEXT_MIN_SP, CHROME_FONT_SCALE_CAP } from '@swafto/values';
 import { STRINGS, phrase, type StringKey, type Language } from '../i18n/strings.ts';
-
+import { tokens } from '../theme/tokens.ts';
 const SALES = ['cash_sales', 'upi_sales', 'udhar_sales'];
 const rowCount = (tree: ReturnType<typeof render>): number =>
   all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('t7-line-')).length;
@@ -44,7 +44,7 @@ describe('T7 renders all four states, and empty is derived rather than declared'
   it('loading: an indicator and a label, and no figure pretending to be zero', () => {
     const tree = render(<FormA store={canonicalStore()} status="loading" />);
     expect(byTestId(tree, 't7-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
     // Nothing that looks like money may appear while the day is still opening.
     expect(text(tree)).not.toContain('₹');
   });
@@ -236,6 +236,8 @@ describe('T7 in three languages, in longest string mode, at maximum font scale',
       .filter((n) => n.type === 'Text')
       .filter((n) => n.props?.allowFontScaling !== true)
       .filter((n) => n.props?.maxFontSizeMultiplier === undefined)
+      // v2: an icon glyph never scales at all (the Icon contract) - stricter than capped.
+      .filter((n) => !(n.props?.allowFontScaling === false && n.props?.style?.fontFamily === tokens().font.icons))
       .map((n) => n.text.slice(0, 24));
     expect(uncapped).toEqual([]);
   });
@@ -270,9 +272,22 @@ describe('T7 meets contrast, touch target and text size, with the values from th
 
   it('the keypad keys are each at least TOUCH_TARGET_MIN_DP - the smallest targets here', () => {
     const tree = render(<FormA store={canonicalStore()} />);
-    const keys = all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('keypad-'));
+    /*
+     * TWELVE KEYS AND ONE COMMIT, COUNTED SEPARATELY.
+     *
+     * The pad gained a thirteenth `keypad-` node when the marigold commit key
+     * moved into it, and a bare prefix count would have absorbed that silently -
+     * which is the shape of a test that stops noticing a key going missing. Ten
+     * digits, a clear and a backspace are the pad; the commit is a different
+     * thing that happens to live there, so it is asserted as one. Both still
+     * have to clear the registry minimum, which is what this test is for.
+     */
+    const keys = all(tree).filter((n) =>
+      /^keypad-([0-9]|back|clear)$/.test(String(n.props?.testID ?? '')),
+    );
     expect(keys.length).toBe(12);
-    for (const k of keys) {
+    const commit = byTestId(tree, 't7-commit');
+    for (const k of [...keys, commit]) {
       const style = (k.props?.style ?? {}) as Record<string, number>;
       expect(style.minHeight).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_DP);
       expect(style.minWidth).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_DP);
@@ -328,8 +343,25 @@ describe('T7 is an entry screen, so it has the keypad and no bottom navigation',
     const store = canonicalStore();
     const committed: string[] = [];
     const before = store.state.entries.length;
-    const tree = render(<FormA store={store} onCommit={(m) => committed.push(m)} />);
-    byTestId(tree, 't7-commit-udhar-udhar_sales').props.onPress();
+    /*
+     * SELECT, THEN COMMIT - and the selection is what is really under test.
+     *
+     * Mode used to be a button that also wrote the entry. It is now a segment
+     * that only chooses, so this drives the segment INDEX and presses the one
+     * commit key. That is strictly stronger than pressing a named button was:
+     * it proves index 2 reaches the udhar CommitOption, which is the wiring
+     * that could come out mis-ordered without anything else noticing.
+     */
+    const tree = render(
+      <FormA
+        store={store}
+        draftPaise={50000}
+        selectedCommit={2}
+        onCommit={(m) => committed.push(m)}
+      />,
+    );
+    expect(byTestId(tree, 't7-mode-2').props?.accessibilityState?.selected).toBe(true);
+    byTestId(tree, 't7-commit').props.onPress();
     expect(committed).toEqual(['udhar']);
     // The screen does not write. Writing is the caller's, through the parsers.
     expect(store.state.entries.length).toBe(before);

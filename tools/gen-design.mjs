@@ -30,7 +30,12 @@ import {
   mkdirSync,
   rmSync,
 } from 'node:fs';
-import { join, relative } from 'node:path';
+// POSIX joins on purpose: DESIGN.md prints these paths, and a Windows-generated
+// file used to say apps\mobile\src\... while CI on Linux said apps/mobile/src/...,
+// so check:generated could never agree across platforms (CI run 44343844200).
+// Every path here is repo-relative, and Node's fs accepts '/' on Windows.
+import { posix } from 'node:path';
+const { join, relative } = posix;
 import { COMMITTED_SCREENS, MANDATED_SCREENS, ALL_SCREEN_IDS } from './tasks.data.mjs';
 
 const read = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split('\r\n').join('\n') : '');
@@ -251,10 +256,40 @@ const TOKEN_DEFINITION = join(APP, 'theme', 'tokens.ts');
 const appWide = walk(APP).filter(
   (f) => f !== TOKEN_DEFINITION && !f.startsWith(join(APP, 'screens')) && !f.startsWith(COMPONENT_DIR),
 );
+/**
+ * SCREENS THAT ARE NOT REGISTERED YET ARE STILL SCANNED, and until 2026-10-22
+ * they were not.
+ *
+ * The per-screen scan above iterates `ALL_SCREEN_IDS`, and the app-wide walk
+ * below it EXCLUDES the screens directory on the grounds that the per-screen
+ * scan covers it. Between the two, a `.tsx` sitting in `screens/` whose id has
+ * not been added to `COMMITTED_SCREENS.ids` was read by neither - so
+ * `check:design` printed `raw values: 0` while saying nothing whatever about it.
+ *
+ * That is the A12 scoping axis this file's own comment two blocks down says was
+ * already caught once, closed in one direction and left open in the other: the
+ * fix then was to widen the walk to the whole app, and the screens directory was
+ * carved back out of it. A new screen is exactly when the first hardcoded colour
+ * gets written, and it was the one moment the instrument could not see.
+ */
+const registeredFiles = new Set(screens.map((s) => s.file).filter(Boolean));
+/*
+ * `registry.tsx` lives in this directory and is not a screen - it is the list of
+ * the cases every screen is rendered in. Named by path rather than skipped by a
+ * pattern, for the same reason `theme/tokens.ts` is: a rule that exempted
+ * anything non-`T`-prefixed would quietly exempt the next screen whose id starts
+ * with a letter nobody thought of.
+ */
+const NOT_A_SCREEN = new Set([join(SCREEN_DIR, 'registry.tsx')]);
+const unregisteredScreens = walk(SCREEN_DIR).filter(
+  (f) => !registeredFiles.has(f) && !NOT_A_SCREEN.has(f),
+);
+
 const rawAll = [
   ...screens.flatMap((s) => s.raw),
   ...components.flatMap((c) => c.raw),
   ...appWide.flatMap((f) => rawValues(f)),
+  ...unregisteredScreens.flatMap((f) => rawValues(f)),
 ];
 /** D.3 - the same value in four files is ONE missing token, not four mistakes. */
 const rawGrouped = [
@@ -589,6 +624,14 @@ if (process.argv.includes('--check')) {
   }
   console.log(`  committed screens      : ${screens.length}, ${present.length} implemented`);
   console.log(`  raw values             : ${rawAll.length} (this must be zero)`);
+  console.log(
+    `  unregistered screens   : ${unregisteredScreens.length}` +
+      (unregisteredScreens.length
+        ? ` - scanned, but absent from COMMITTED_SCREENS.ids: ${unregisteredScreens
+            .map((f) => f.split(/[\/]/).pop())
+            .join(', ')}`
+        : ''),
+  );
   console.log(
     `  drift rows             : ${drift.length} (${drift.filter((d) => d.sev === 'ENFORCED').length} enforced)`,
   );

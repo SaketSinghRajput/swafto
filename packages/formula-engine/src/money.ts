@@ -179,6 +179,25 @@ export function stdevMoney(values: readonly Paise[]): Paise | null {
   return assertPaise(roundHalfAwayFromZero(Math.sqrt(acc / values.length)), 'stdev');
 }
 
+/**
+ * Google Play's `priceAmountMicros` to paise. One rupee is 1,000,000 micros, so
+ * one paisa is 10,000 (R4 §2, "Money").
+ *
+ * EXACT OR REFUSED, NEVER ROUNDED. A price that is not a whole number of paise
+ * is not a price Play charges in INR. Rounding it would show the shopkeeper a
+ * figure he is not going to pay, before he agrees to pay it.
+ */
+export const MICROS_PER_PAISA = 10_000;
+
+export function paiseFromMicros(micros: number): Paise {
+  if (!Number.isSafeInteger(micros) || micros < 0 || micros % MICROS_PER_PAISA !== 0) {
+    throw MoneyError(
+      `a Play price must be a whole, non-negative number of paise in micros, got ${String(micros)}`,
+    );
+  }
+  return assertPaise(micros / MICROS_PER_PAISA, 'price');
+}
+
 /* ------------------------------------------------------------------ *
  * The render boundary
  * ------------------------------------------------------------------ */

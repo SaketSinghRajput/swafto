@@ -17,6 +17,17 @@ const GENERATED = [
   { file: 'docs/spec/SMS-TEMPLATES.md', by: ['tools/check-sms-segments.mjs', '--update-md'] },
   { file: 'packages/schema/migrations/0001_init.sqlite.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
   { file: 'packages/schema/migrations/0001_init.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // C-02: migration 0002 (otp_pending), Postgres only - server-side like rate_events.
+  { file: 'packages/schema/migrations/0002_otp_pending.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  { file: 'packages/schema/migrations/0002_otp_pending.postgres.down.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // ARCH-09: migration 0003 (FOR SHARE in the closed-day triggers), Postgres only.
+  { file: 'packages/schema/migrations/0003_closed_day_lock.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  { file: 'packages/schema/migrations/0003_closed_day_lock.postgres.down.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // RT-10: migration 0004 (devices.refresh_gen), Postgres only.
+  { file: 'packages/schema/migrations/0004_refresh_gen.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  { file: 'packages/schema/migrations/0004_refresh_gen.postgres.down.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // 4.2: the OpenAPI document is built from the routes the API serves (and fails if a route is undescribed).
+  { file: 'docs/api/openapi.json', by: ['--experimental-strip-types', 'tools/gen-openapi.mjs'] },
   // §5.12: the verifier inventory is generated from the same data the check reads,
   // so the table cannot drift from the thing it documents.
   { file: 'docs/governance/VERIFIERS.md', by: ['tools/check-verifiers.mjs', '--update-md'] },

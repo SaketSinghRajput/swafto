@@ -20,6 +20,15 @@ export * from './types.ts';
 export * from './primary.ts';
 export * from './operational.ts';
 export * from './intelligence.ts';
+export * from './scores.ts';
+export * from './returns.ts';
+export * from './adjustments.ts';
+export * from './upi.ts';
+export * from './reports-basic.ts';
+export * from './forecast.ts';
+export * from './comparisons.ts';
+export * from './items.ts';
+export * from './credit.ts';
 
 import { computePrimary } from './primary.ts';
 import { computeOperational, type OperationalContext } from './operational.ts';
@@ -28,7 +37,9 @@ import type {
   ClosedDaySummary,
   DayComputation,
   DayInput,
+  DayRecord,
   DayState,
+  Entry,
   Section,
 } from './types.ts';
 import type { Paise } from './money.ts';
@@ -159,6 +170,43 @@ export function toClosedDaySummary(input: DayInput): ClosedDaySummary {
     countedCash: input.day.countedCash,
     expectedCash: p.p3ExpectedCashBalance.value,
   };
+}
+
+/**
+ * EVERY CLOSED DAY'S SUMMARY, FROM ONE PASS OVER THE ENTRIES (BE-10).
+ *
+ * The entries are grouped by day once, so a thirty- or 365-day window costs one
+ * walk of the history, not one walk per day. Carried credit is not needed: no
+ * field of the summary reads P7 or P8. Oldest first. Derived on every call;
+ * nothing is kept.
+ *
+ * `last` keeps only the most recent N closed days, and is not a nicety: over a
+ * year of history the per-day summaries were most of R1's measured cost under
+ * Hermes (SCORES.md §7), and every reading on R1 needs only the trailing window.
+ */
+export function closedDaySummaries(
+  days: readonly DayRecord[],
+  entries: readonly Entry[],
+  last = Infinity,
+): ClosedDaySummary[] {
+  const byDay = new Map<string, Entry[]>();
+  for (const e of entries) {
+    const list = byDay.get(e.dayId);
+    if (list) list.push(e);
+    else byDay.set(e.dayId, [e]);
+  }
+  return days
+    .filter((d) => d.state === 'closed' && d.countedCash !== null)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .slice(Number.isFinite(last) ? -last : 0)
+    .map((day) =>
+      toClosedDaySummary({
+        day,
+        entries: byDay.get(day.date) ?? [],
+        priorCreditOutstanding: 0,
+        priorSupplierOutstanding: 0,
+      }),
+    );
 }
 
 /**

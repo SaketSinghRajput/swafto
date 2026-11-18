@@ -27,64 +27,37 @@
  * SECURITY-AUDIT, and both are counted rather than promised.
  */
 import type { FastifyInstance } from 'fastify';
-import { timingSafeEqual } from 'node:crypto';
-import type { AppDeps } from '../app.ts';
+import { shopOf, type AppDeps } from '../app.ts';
 import { OTP_LIMITS, OTP_TTL_SECONDS, OTP_DIGITS } from '../rate-limit/limits.ts';
-import { hashOtp, mintOtp, mintToken, newId, verifyToken } from './tokens.ts';
+import { mintToken, newId, verifyToken } from './tokens.ts';
+import { INVALID_PHONE, normaliseIndianMobile } from './phone.ts';
+import { requestOtp, verifyOtp } from './otp-flow.ts';
+import type { DeviceRow } from '../db/port.ts';
+import { NO_BODY, NO_QUERY } from '../schemas.ts';
 
 /** How long a session lasts. Long by decision (D5): a re-auth costs a real SMS. */
 export const ACCESS_TTL_SECONDS = 60 * 60 * 24;
 export const REFRESH_TTL_SECONDS = 60 * 60 * 24 * 180;
 
-/** Five wrong codes and the code dies - the verify side of the TB6 OTP limits. */
-export const MAX_VERIFY_ATTEMPTS = 5;
+/** Guesses one code survives in total, enforced by the store's attempt ticket (otp-flow.ts). */
+export const MAX_VERIFY_ATTEMPTS = OTP_LIMITS.verifyPerCode.max;
 
-export interface PendingOtp {
-  readonly phone: string;
-  /** HMAC of the code. The code itself is never written anywhere. */
-  readonly hash: string;
-  readonly expiresAt: string;
-  readonly attempts: number;
-}
+export { memoryOtpStore, type OtpStore, type PendingOtp } from './otp-store.ts';
 
-export interface OtpStore {
-  put(pending: PendingOtp): Promise<void>;
-  get(phone: string): Promise<PendingOtp | null>;
-  bumpAttempts(phone: string): Promise<number>;
-  clear(phone: string): Promise<void>;
-}
-
-export function memoryOtpStore(): OtpStore {
-  const byPhone = new Map<string, PendingOtp>();
-  return {
-    async put(pending) {
-      byPhone.set(pending.phone, pending);
-    },
-    async get(phone) {
-      return byPhone.get(phone) ?? null;
-    },
-    async bumpAttempts(phone) {
-      const p = byPhone.get(phone);
-      if (!p) return 0;
-      const next = { ...p, attempts: p.attempts + 1 };
-      byPhone.set(phone, next);
-      return next.attempts;
-    },
-    async clear(phone) {
-      byPhone.delete(phone);
-    },
-  };
-}
+/*
+ * The phone shape is `normaliseIndianMobile` (phone.ts), shared with web deletion: a
+ * number is accepted as `9876500001`, `+91 98765 00001` and so on, and always handled
+ * as `+91XXXXXXXXXX` after that (C-10).
+ */
 
 /**
- * A mobile number as this product accepts it.
- *
- * Deliberately not a clever regex. The database CHECK is `length BETWEEN 8 AND 16`,
- * and a stricter pattern here than the column allows would refuse a number the
- * database would have taken - the sort of mismatch nobody finds until a real
- * shopkeeper cannot sign in.
+ * The one Repo method this file needs that the port does not have yet. Typed here so
+ * the route compiles on its own and answers 501 until API-DATA adds it to `Repo`:
+ *   listDevices(shopId: string): Promise<readonly DeviceRow[]>
  */
-const PHONE = /^\+?[0-9]{8,15}$/;
+type DeviceListingRepo = {
+  listDevices?: (shopId: string) => Promise<readonly DeviceRow[]>;
+};
 
 /** Identical in shape whatever happened, so nothing can be learned from the reply. */
 const OTP_SENT = { sent: true, expiresInSeconds: OTP_TTL_SECONDS, digits: OTP_DIGITS } as const;
@@ -103,19 +76,46 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
           properties: {
             phone: { type: 'string', minLength: 8, maxLength: 16 },
             language: { type: 'string', enum: ['od', 'hi', 'en'] },
+            /*
+             * F-24: the install id the app generates once and keeps. It is
+             * NOT identity and never tenancy - the account and shop come from
+             * the phone number at verify, and the session after that. It is
+             * only the key for TB6's per-device send limit, so a lying
+             * client can at worst rate-limit itself.
+             */
+            deviceId: { type: 'string', minLength: 8, maxLength: 64, pattern: '^[A-Za-z0-9-]+$' },
           },
         },
       },
     },
     async (req, reply) => {
-      const { phone, language } = req.body as { phone: string; language: 'od' | 'hi' | 'en' };
-      if (!PHONE.test(phone)) return reply.code(400).send({ error: 'invalid_phone' });
+      const body = req.body as {
+        phone: string;
+        language: 'od' | 'hi' | 'en';
+        deviceId?: string;
+      };
+      const phone = normaliseIndianMobile(body.phone);
+      if (!phone) return reply.code(400).send(INVALID_PHONE);
 
-      const decision = await deps.rate.consumeAll([
-        { rule: OTP_LIMITS.sendPerPhoneBurst, identifier: phone },
-        { rule: OTP_LIMITS.sendPerPhoneDaily, identifier: phone },
-      ]);
-      if (!decision.allowed) {
+      /*
+       * Everything the old inline version did, and the RT-3 / RT-4 / SEC-101 fixes, now
+       * live in `requestOtp` so web deletion shares them: the resend cooldown, the
+       * per-address cap that blocks, the global hourly breaker, and the atomic limiter.
+       * The response is the same whatever happened, including inside the cooldown.
+       */
+      const user = await deps.repo.findUserByPhone(phone);
+      const out = await requestOtp(deps, {
+        key: phone,
+        phone,
+        templateId: 'otp_signin',
+        language: body.language,
+        ip: req.ip,
+        ...(body.deviceId ? { deviceId: body.deviceId } : {}),
+        user,
+        send: true,
+        log: req.log,
+      });
+      if (out.kind === 'limited') {
         /*
          * `Retry-After` is a real number of seconds and it always eventually
          * reaches zero (B.3). A lockout a shopkeeper cannot escape without support
@@ -123,30 +123,9 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
          */
         return reply
           .code(429)
-          .header('Retry-After', String(decision.retryAfterSeconds))
-          .send({ error: 'too_many_requests', retryAfterSeconds: decision.retryAfterSeconds });
+          .header('Retry-After', String(out.decision.retryAfterSeconds))
+          .send({ error: 'too_many_requests', retryAfterSeconds: out.decision.retryAfterSeconds });
       }
-
-      const code = mintOtp(OTP_DIGITS);
-      await deps.otp.put({
-        phone,
-        hash: hashOtp(deps.signingKey, phone, code),
-        expiresAt: new Date((nowSeconds() + OTP_TTL_SECONDS) * 1000).toISOString(),
-        attempts: 0,
-      });
-
-      /*
-       * Sent for a known AND an unknown number. Sending only to known numbers would
-       * make the timing of this call the very oracle the identical response body
-       * exists to prevent.
-       */
-      await deps.sms.send({
-        phone,
-        templateId: 'otp_signin',
-        variables: [code],
-        languageTag: language,
-      });
-
       return reply.code(202).send(OTP_SENT);
     },
   );
@@ -192,36 +171,22 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
         consent?: { granted: boolean; noticeVersion: string; locale: 'od' | 'hi' | 'en' };
       };
 
-      const gate = await deps.rate.consumeAll([
-        { rule: OTP_LIMITS.verifyPerCode, identifier: body.phone },
-      ]);
-      if (!gate.allowed) {
-        return reply
-          .code(429)
-          .header('Retry-After', String(gate.retryAfterSeconds))
-          .send({ error: 'too_many_requests', retryAfterSeconds: gate.retryAfterSeconds });
-      }
+      const phone = normaliseIndianMobile(body.phone);
+      if (!phone) return reply.code(400).send(INVALID_PHONE);
 
-      const pending = await deps.otp.get(body.phone);
-      if (!pending || Date.parse(pending.expiresAt) <= nowSeconds() * 1000) {
+      const checked = await verifyOtp(deps, { key: phone, code: body.code, ip: req.ip });
+      if (!checked.ok) {
+        if (checked.status === 429) {
+          return reply
+            .code(429)
+            .header('Retry-After', String(checked.retryAfterSeconds))
+            .send({ error: 'too_many_requests', retryAfterSeconds: checked.retryAfterSeconds });
+        }
         return reply.code(401).send({ error: 'code_invalid' });
       }
-
-      const given = Buffer.from(hashOtp(deps.signingKey, body.phone, body.code));
-      const wanted = Buffer.from(pending.hash);
-      const ok = given.length === wanted.length && timingSafeEqual(given, wanted);
-
-      if (!ok) {
-        const attempts = await deps.otp.bumpAttempts(body.phone);
-        if (attempts >= MAX_VERIFY_ATTEMPTS) await deps.otp.clear(body.phone);
-        return reply.code(401).send({ error: 'code_invalid' });
-      }
-
-      // Single use. A code that survives its own success can be replayed.
-      await deps.otp.clear(body.phone);
 
       const now = deps.now();
-      let user = await deps.repo.findUserByPhone(body.phone);
+      let user = await deps.repo.findUserByPhone(phone);
 
       if (!user) {
         /*
@@ -242,7 +207,7 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
         const created = await deps.repo.createShopAndUser({
           shopId,
           userId,
-          phone: body.phone,
+          phone,
           shopName: body.shopName ?? '',
           language: body.consent.locale,
           now,
@@ -296,6 +261,7 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
           typ: 'refresh',
           nowSeconds: seconds,
           ttlSeconds: REFRESH_TTL_SECONDS,
+          gen: 0,
         }),
         deviceId,
         shopId: user.shopId,
@@ -324,6 +290,37 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
         if (!device || device.revokedAt) {
           return reply.code(401).send({ error: 'device_revoked' });
         }
+        if (device.shopId !== claims.shop || device.userId !== claims.sub) {
+          return reply.code(401).send({ error: 'device_revoked' });
+        }
+        /*
+         * RT-10 · A REFRESH TOKEN IS USED ONCE. The token's generation must equal the
+         * device's current one, and the swap to the next is a single compare-and-set.
+         * A token minted before rotation has no `gen` and is generation 0, which is what
+         * every existing device row defaults to. No row matched means this token was
+         * already spent: a stolen copy replayed, or the real one after a thief used it.
+         * Either way two parties hold the credential, so the device is revoked and
+         * both are signed out; the owner signs in again by SMS.
+         */
+        const gen = claims.gen ?? 0;
+        const rotation = await deps.repo.rotateRefreshGen(device.shopId, device.id, gen, deps.now());
+        if (rotation.kind === 'lost_race') {
+          // A concurrent retry of the same lost response won. Not a replay: refuse, do not revoke.
+          return reply.code(401).send({ error: 'unauthenticated' });
+        }
+        if (rotation.kind === 'reuse') {
+          await deps.repo.revokeDevice(device.shopId, device.id, deps.now());
+          req.log.warn({ event: 'refresh_reuse_revoked' }, 'refresh token reused; device revoked');
+          return reply.code(401).send({ error: 'device_revoked' });
+        }
+        /*
+         * RT-W4-2 · A GRACE ROTATION (the token was one generation behind) is how a lost response is
+         * retried AND how a stolen token raced inside the window would be served. It is accepted, but
+         * never silently: one warn event with the device id (no token), so a steal-and-race shows in the log.
+         */
+        if (rotation.gen !== gen + 1) {
+          req.log.warn({ event: 'refresh_grace_used', deviceId: device.id }, 'refresh accepted via the grace window');
+        }
         return reply.code(200).send({
           accessToken: mintToken(deps.signingKey, {
             sub: claims.sub,
@@ -333,6 +330,17 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
             nowSeconds: seconds,
             ttlSeconds: ACCESS_TTL_SECONDS,
           }),
+          // New field; `accessToken` keeps its shape. The client must store this and
+          // send it next time - the one it just used no longer works.
+          refreshToken: mintToken(deps.signingKey, {
+            sub: claims.sub,
+            shop: claims.shop,
+            dev: claims.dev,
+            typ: 'refresh',
+            nowSeconds: seconds,
+            ttlSeconds: REFRESH_TTL_SECONDS,
+            gen: rotation.gen,
+          }),
         });
       } catch {
         return reply.code(401).send({ error: 'unauthenticated' });
@@ -341,20 +349,76 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
   );
 
   /**
+   * C-21 / SEC-105 - THE SHOP'S DEVICES, so a lost phone can be found and signed out
+   * from another one. Which shop: the session's, via `shopOf` (S-11) - there is no id
+   * in the request that could name another. Revoked devices are listed too (marked),
+   * because "this one is already signed out" is what the owner wants to see.
+   *
+   * There is no `label` column; `platform` is the only description a device has.
+   * `listDevices` is API-DATA's to add to the Repo (see the Wave 2 report); until it
+   * exists this answers 501 rather than guessing.
+   */
+  app.get('/v1/devices', { schema: { querystring: NO_QUERY } }, async (req, reply) => {
+    const repo = deps.repo as DeviceListingRepo;
+    if (typeof repo.listDevices !== 'function') {
+      return reply.code(501).send({ error: 'not_implemented' });
+    }
+    const rows = await repo.listDevices(shopOf(req));
+    return reply.code(200).send({
+      devices: rows.map((d) => ({
+        id: d.id,
+        platform: d.platform,
+        createdAt: d.createdAt,
+        lastSeenAt: d.lastSeenAt,
+        revokedAt: d.revokedAt,
+        current: d.id === req.claims?.dev,
+      })),
+    });
+  });
+
+  /**
    * Revoke a device - the handset that lost the phone does this from the new one.
    *
    * A device may only be revoked by somebody holding a token for the SAME SHOP.
    * Without that check the endpoint is a way to sign out any shop in India whose
    * device id can be guessed, which is a denial of service on a shopkeeper's day.
    */
-  app.post('/v1/auth/devices/:id/revoke', async (req, reply) => {
+  app.post('/v1/auth/devices/:id/revoke', { schema: { body: NO_BODY } }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const device = await deps.repo.findDevice(id);
-    if (!device || device.shopId !== req.claims?.shop) {
+    if (!device || device.shopId !== shopOf(req)) {
       // 404 rather than 403: a 403 confirms the id exists, which is the same oracle.
       return reply.code(404).send({ error: 'not_found' });
     }
-    await deps.repo.revokeDevice(id, deps.now());
+    await deps.repo.revokeDevice(shopOf(req), id, deps.now());
     return reply.code(200).send({ revoked: true });
   });
+
+  /**
+   * DV-13 - THE SHOP'S NAME. On a new install the account is created at verify,
+   * before X1 asks the name, so `shops.name` stayed empty for ever. The app
+   * sends it from its sync once it has one. Which shop: the session's, via
+   * `shopOf` (S-11) - there is no id in the body to name another.
+   */
+  app.post(
+    '/v1/me/shop',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['name'],
+          additionalProperties: false,
+          // The verify route's own bounds for `shopName`.
+          properties: { name: { type: 'string', minLength: 1, maxLength: 120 } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { name } = req.body as { name: string };
+      if (!(await deps.repo.renameShop(shopOf(req), name))) {
+        return reply.code(404).send({ error: 'not_found' });
+      }
+      return reply.code(200).send({ name });
+    },
+  );
 }

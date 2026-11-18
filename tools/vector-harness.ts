@@ -15,8 +15,12 @@ import {
   agedParties,
   computeDay,
   computeIntelligence,
+  expectedUpi,
   formatPaise,
+  upiCheck,
   nextOpeningCash,
+  salesForecast,
+  type ClosedDaySummary,
   type DayInput,
   type OperationalContext,
 } from '../packages/formula-engine/src/index.ts';
@@ -74,6 +78,17 @@ export function evaluateVector(v: VectorCase): Record<string, unknown> {
     soFar: g.available ? null : (g.closedDaysSoFar ?? null),
   });
 
+  /*
+   * PR-3 · THE FORECAST, under both runtimes. It is the one engine output that
+   * runs in floating point before rounding to paise, so it is the one where a
+   * Node/Hermes disagreement is most plausible. Only a vector that supplies its
+   * own valid-dated `forecastHistory` computes it; the BI windows' synthetic
+   * `trailing` days are not real dates.
+   */
+  const history = (ctx as unknown as { forecastHistory?: ClosedDaySummary[] }).forecastHistory;
+  const forecast = history === undefined ? null : salesForecast(history, ctx.today);
+  const fv = forecast?.available ? forecast.value : null;
+
   const bi1 = gated(bi.bi1ProfitTrend);
   const bi2 = gated(bi.bi2SalesConsistency);
   const bi3 = gated(bi.bi3CashFlowStability);
@@ -96,6 +111,13 @@ export function evaluateVector(v: VectorCase): Record<string, unknown> {
     p3WorkingSigns: p.p3ExpectedCashBalance.working.lines.map((l) => l.sign),
     p3WorkingAmounts: p.p3ExpectedCashBalance.working.lines.map((l) => l.amount),
     p3WorkingTotal: p.p3ExpectedCashBalance.working.total,
+    profitWorkingKeys: p.estimatedProfit.working.lines.map((l) => l.key),
+
+    // Decision 3: the UPI ledger, a second equation beside P3 (D2)
+    upiExpected: expectedUpi(input).value,
+    upiExpectedReceived: upiCheck(input).expectedReceived,
+    upiConfirmedReceived: upiCheck(input).confirmedReceived,
+    upiStatus: upiCheck(input).status,
 
     // OP1-OP6
     op1Difference: o.op1DailyCashHealth.difference,
@@ -172,6 +194,17 @@ export function evaluateVector(v: VectorCase): Record<string, unknown> {
     bi6CustomerCount: bi.bi6CreditConcentration.available
       ? bi.bi6CreditConcentration.value.customerCount
       : null,
+
+    // PR-3 forecast (null unless the vector carries forecastHistory)
+    forecastAvailable: forecast === null ? null : forecast.available,
+    forecastMethod: fv === null ? null : fv.method,
+    forecastDates: fv === null ? null : fv.days.map((d) => d.date),
+    forecastPoints: fv === null ? null : fv.days.map((d) => d.point),
+    forecastLow: fv === null ? null : fv.days.map((d) => d.low),
+    forecastHigh: fv === null ? null : fv.days.map((d) => d.high),
+    forecastTypicalMiss: fv === null ? null : fv.typicalMiss,
+    forecastMaseBasisPoints: fv === null ? null : fv.holtWintersMaseBasisPoints,
+    forecastBacktestPoints: fv === null ? null : fv.backtestPoints,
 
     // Day lifecycle
     dayState: day.state,

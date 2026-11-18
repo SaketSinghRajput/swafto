@@ -30,12 +30,17 @@
  */
 import type { FastifyInstance } from 'fastify';
 import type { AppDeps } from '../app.ts';
-import { timingSafeEqual } from 'node:crypto';
-import { newId, hashOtp, mintOtp } from '../auth/tokens.ts';
-import { OTP_LIMITS, OTP_TTL_SECONDS, OTP_DIGITS } from '../rate-limit/limits.ts';
+import { makeShopLimitHooks, type ShopLimitHooks } from '../sync/shop-limit.ts';
+import { chunkedJson } from '../read/chunked-json.ts';
+import { RETRY_AFTER_SECONDS } from '../db/errors.ts';
+import { newId } from '../auth/tokens.ts';
+import { INVALID_PHONE, normaliseIndianMobile } from '../auth/phone.ts';
+import { requestOtp, verifyOtp } from '../auth/otp-flow.ts';
+import { OTP_TTL_SECONDS } from '../rate-limit/limits.ts';
 import { PRIVACY_NOTICE_VERSION as NOTICE_VERSION } from '@swafto/values';
 import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/schema';
 import { DELETION_GRACE_DAYS, EXPORT_DISCLAIMER } from '@swafto/values';
+import { NO_BODY, NO_QUERY } from '../schemas.ts';
 
 /** When a deletion requested at `at` actually happens. One place, both routes. */
 const purgeDueAt = (at: string): string =>
@@ -62,7 +67,7 @@ export const NOTICE = {
   fiduciary: {
     name: 'SWAFTO',
     grievanceOfficer: 'Grievance Officer, SWAFTO',
-    email: 'grievance@swafto.app',
+    email: 'grievance@swafto.com',
     responseDays: 30,
   },
   items: [
@@ -110,7 +115,11 @@ export const NOTICE = {
   dataLocation: 'India (ap-south-1)',
 } as const;
 
-export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
+export function registerDpdpRoutes(
+  app: FastifyInstance,
+  deps: AppDeps,
+  hooks: ShopLimitHooks = makeShopLimitHooks(deps.shopLimits),
+): void {
   /** Public: the notice has to be readable BEFORE an account exists. */
   app.get('/v1/legal/notice', async (_req, reply) => reply.code(200).send(NOTICE));
 
@@ -189,7 +198,7 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
    * processing-without-consent breach, and it is exactly the mistake the first
    * end-to-end test made.
    */
-  app.get('/v1/me/consents', async (req, reply) => {
+  app.get('/v1/me/consents', { schema: { querystring: NO_QUERY } }, async (req, reply) => {
     const userId = req.claims?.sub;
     if (!userId) return reply.code(401).send({ error: 'unauthenticated' });
     const log = await deps.repo.consentsFor(userId);
@@ -207,18 +216,53 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
    *
    * Machine-readable and complete. An export that omits a table because somebody
    * forgot it is a right half-given, so this returns the repository's own
-   * `exportUser` rather than a list assembled here - a new table joins the export
-   * by being in the repository, not by being remembered.
+   * `exportUser` rather than a list assembled here.
+   *
+   * THE SENTENCE THAT USED TO FOLLOW WAS FALSE, and is worth recording rather
+   * than quietly deleting. It claimed "a new table joins the export by being in
+   * the repository, not by being remembered". It does not. `exportUser` is a
+   * hand-written union of four table names and a hand-written object of seven
+   * keys (`db/postgres.ts`), and `purgeShop` keeps its own longer list. Nothing
+   * reconciles the two, and `Repo.exportUser` is typed `Promise<unknown>`, so
+   * the compiler cannot either. A new table joins the export by being
+   * remembered, which is exactly what the comment promised it would not be.
+   *
+   * The lists already disagree: `purgeShop` deletes `section_skips` and
+   * `exportUser` does not return it. Today that omits nothing, because
+   * `section_skips` is never written - the API has no method for it and
+   * the push carries no skips (`OutboxRow.kind` is 'entry' | 'day' | 'party',
+   * and the client's `dayPayload` drops `skippedSections`), so the D8 skip
+   * decisions stay on the handset. That is now a decision, not an omission:
+   * no server route reads a skip (`dayInputFor` builds no `skippedSections`,
+   * and no route calls `sectionStates`), so syncing them would add a DPDP
+   * export obligation and buy nothing until a restore-from-server exists. It becomes a real gap in the access right the moment that sync
+   * is built, which is the hazard of a comment nobody can rely on.
    */
-  app.get('/v1/me/export', async (req, reply) => {
+  /*
+   * RT-W3-1 · THE ONE ROUTE THAT READS A WHOLE LEDGER ON DEMAND. Three guards, because one user with
+   * 100,000 entries and a loop could otherwise stall the API for every tenant (40 concurrent exports
+   * blocked the event loop for 5.3 s):
+   *  - a per-shop bucket of its own (`shopLimits.heavy`, default 2 at once then 1 per 10 s);
+   *  - at most MAX_EXPORTS_IN_FLIGHT per process, the rest told to come back (503 + Retry-After);
+   *  - the JSON is built in slices that hand the event loop back (`chunkedJson`), not in one
+   *    synchronous `JSON.stringify` of the whole ledger.
+   */
+  const heavy = hooks.heavy;
+  const MAX_EXPORTS_IN_FLIGHT = 2;
+  let exportsInFlight = 0;
+  app.get('/v1/me/export', { schema: { querystring: NO_QUERY }, ...(heavy ? { preHandler: heavy } : {}) }, async (req, reply) => {
     const userId = req.claims?.sub;
     if (!userId) return reply.code(401).send({ error: 'unauthenticated' });
-    const data = await deps.repo.exportUser(userId);
-    if (!data) return reply.code(404).send({ error: 'not_found' });
-    return reply
-      .code(200)
-      .header('Content-Disposition', 'attachment; filename="swafto-my-data.json"')
-      .send({
+    if (exportsInFlight >= MAX_EXPORTS_IN_FLIGHT) {
+      reply.header('Retry-After', String(RETRY_AFTER_SECONDS));
+      return reply.code(503).send({ error: 'unavailable', message: 'other exports are running, try again shortly' });
+    }
+    exportsInFlight += 1;
+    let json: string;
+    try {
+      const data = await deps.repo.exportUser(userId);
+      if (!data) return reply.code(404).send({ error: 'not_found' });
+      json = await chunkedJson({
         generatedAt: deps.now(),
         noticeVersion: NOTICE_VERSION,
         /*
@@ -231,6 +275,14 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
         notice: EXPORT_DISCLAIMER,
         data,
       });
+    } finally {
+      exportsInFlight -= 1;
+    }
+    return reply
+      .code(200)
+      .header('Content-Disposition', 'attachment; filename="swafto-my-data.json"')
+      .header('Content-Type', 'application/json; charset=utf-8')
+      .send(json);
   });
 
   /**
@@ -291,7 +343,7 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
    * deletion copy promises - this route exists so the app can say so plainly
    * rather than relying on a side effect the shopkeeper cannot see.
    */
-  app.post('/v1/me/erase/cancel', async (req, reply) => {
+  app.post('/v1/me/erase/cancel', { schema: { body: NO_BODY } }, async (req, reply) => {
     const shopId = req.claims?.shop;
     if (!shopId) return reply.code(401).send({ error: 'unauthenticated' });
     await deps.repo.cancelDeletion(shopId);
@@ -341,34 +393,37 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
       },
     },
     async (req, reply) => {
-      const { phone, language } = req.body as { phone: string; language: 'od' | 'hi' | 'en' };
-
-      const decision = await deps.rate.consumeAll([
-        { rule: OTP_LIMITS.sendPerPhoneBurst, identifier: deletionKey(phone) },
-        { rule: OTP_LIMITS.sendPerPhoneDaily, identifier: deletionKey(phone) },
-      ]);
-      if (!decision.allowed) {
-        return reply
-          .code(429)
-          .header('Retry-After', String(decision.retryAfterSeconds))
-          .send({ error: 'too_many_requests', retryAfterSeconds: decision.retryAfterSeconds });
-      }
+      const body = req.body as { phone: string; language: 'od' | 'hi' | 'en' };
+      /*
+       * C-10 / RT-2. The number is normalised with the SAME function sign-in uses, so
+       * `9876500001`, `+91 98765 00001` and `09876500001` find the account the way
+       * `+919876500001` does. Something that is not an Indian mobile is refused with a
+       * 400 and a message: that says nothing about membership (it is about the
+       * SHAPE of what was typed), and it is the only honest answer - the page used to
+       * say "sent" for a number nothing was ever sent to.
+       */
+      const phone = normaliseIndianMobile(body.phone);
+      if (!phone) return reply.code(400).send(INVALID_PHONE);
 
       const user = await deps.repo.findUserByPhone(phone);
-      if (user) {
-        const code = mintOtp(OTP_DIGITS);
-        await deps.otp.put({
-          phone: deletionKey(phone),
-          hash: hashOtp(deps.signingKey, deletionKey(phone), code),
-          expiresAt: new Date(Date.parse(deps.now()) + OTP_TTL_SECONDS * 1000).toISOString(),
-          attempts: 0,
-        });
-        await deps.sms.send({
-          phone,
-          templateId: 'otp_account_deletion',
-          variables: [code],
-          languageTag: language,
-        });
+      const out = await requestOtp(deps, {
+        key: deletionKey(phone),
+        phone,
+        templateId: 'otp_account_deletion',
+        language: body.language,
+        ip: req.ip,
+        user,
+        log: req.log,
+        // An unregistered number spends the same budget and gets the same answer, but
+        // no SMS: texting a stranger that somebody is deleting their account is worse
+        // than the timing gap it would hide.
+        send: user !== null,
+      });
+      if (out.kind === 'limited') {
+        return reply
+          .code(429)
+          .header('Retry-After', String(out.decision.retryAfterSeconds))
+          .send({ error: 'too_many_requests', retryAfterSeconds: out.decision.retryAfterSeconds });
       }
 
       /*
@@ -398,32 +453,20 @@ export function registerDpdpRoutes(app: FastifyInstance, deps: AppDeps): void {
       },
     },
     async (req, reply) => {
-      const { phone, code } = req.body as { phone: string; code: string; confirm: 'DELETE' };
+      const body = req.body as { phone: string; code: string; confirm: 'DELETE' };
+      const phone = normaliseIndianMobile(body.phone);
+      if (!phone) return reply.code(400).send(INVALID_PHONE);
 
-      const gate = await deps.rate.consumeAll([
-        { rule: OTP_LIMITS.verifyPerCode, identifier: deletionKey(phone) },
-      ]);
-      if (!gate.allowed) {
-        return reply
-          .code(429)
-          .header('Retry-After', String(gate.retryAfterSeconds))
-          .send({ error: 'too_many_requests', retryAfterSeconds: gate.retryAfterSeconds });
-      }
-
-      const pending = await deps.otp.get(deletionKey(phone));
-      if (!pending || Date.parse(pending.expiresAt) <= Date.parse(deps.now())) {
+      const checked = await verifyOtp(deps, { key: deletionKey(phone), code: body.code, ip: req.ip });
+      if (!checked.ok) {
+        if (checked.status === 429) {
+          return reply
+            .code(429)
+            .header('Retry-After', String(checked.retryAfterSeconds))
+            .send({ error: 'too_many_requests', retryAfterSeconds: checked.retryAfterSeconds });
+        }
         return reply.code(401).send({ error: 'code_invalid' });
       }
-
-      const given = Buffer.from(hashOtp(deps.signingKey, deletionKey(phone), code));
-      const wanted = Buffer.from(pending.hash);
-      const ok = given.length === wanted.length && timingSafeEqual(given, wanted);
-      if (!ok) {
-        const attempts = await deps.otp.bumpAttempts(deletionKey(phone));
-        if (attempts >= 5) await deps.otp.clear(deletionKey(phone));
-        return reply.code(401).send({ error: 'code_invalid' });
-      }
-      await deps.otp.clear(deletionKey(phone));
 
       const user = await deps.repo.findUserByPhone(phone);
       if (!user) {

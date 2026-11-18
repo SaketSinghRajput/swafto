@@ -23,6 +23,12 @@ export {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  // F-15: built-in motion, so the ring can fill without a native dependency.
+  Animated,
+  Easing,
+  AccessibilityInfo,
+  // The system font scale, so a two-column money grid can give way to one.
+  PixelRatio,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';

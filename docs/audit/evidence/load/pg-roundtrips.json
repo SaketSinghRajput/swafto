@@ -1,0 +1,209 @@
+{
+  "node": "v24.22.3",
+  "closedDaysInFake": 60,
+  "rows": [
+    {
+      "route": "POST /v1/sync/push - 1 cash entry",
+      "status": 200,
+      "roundTrips": 9,
+      "scaling": "constant: the entries are one set-based INSERT",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM entries WHERE id = ANY($1::uuid[])",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date = ANY($2::dat",
+        "SAVEPOINT bulk_entries",
+        "INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party",
+        "RELEASE SAVEPOINT bulk_entries",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "POST /v1/sync/push - 1 cash entry + day row",
+      "status": 200,
+      "roundTrips": 17,
+      "scaling": "+8 per day row (findDay and upsertDay, each scoped)",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM days WHERE shop_id = $1 AND date = $2",
+        "COMMIT",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "INSERT INTO days (shop_id, date, state, opening_cash, counted_cash, di",
+        "COMMIT",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM entries WHERE id = ANY($1::uuid[])",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date = ANY($2::dat",
+        "SAVEPOINT bulk_entries",
+        "INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party",
+        "RELEASE SAVEPOINT bulk_entries",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "POST /v1/sync/push - 1 udhar entry (party check)",
+      "status": 200,
+      "roundTrips": 10,
+      "scaling": "constant (the party check is one query for the whole batch)",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM entries WHERE id = ANY($1::uuid[])",
+        "SELECT id FROM parties WHERE shop_id = $1 AND id = ANY($2::uuid[])",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date = ANY($2::dat",
+        "SAVEPOINT bulk_entries",
+        "INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party",
+        "RELEASE SAVEPOINT bulk_entries",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "POST /v1/sync/push - 3 cash entries",
+      "status": 200,
+      "roundTrips": 9,
+      "scaling": "constant in the number of entries",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM entries WHERE id = ANY($1::uuid[])",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date = ANY($2::dat",
+        "SAVEPOINT bulk_entries",
+        "INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party",
+        "RELEASE SAVEPOINT bulk_entries",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "POST /v1/sync/push - 100 cash entries (backlog)",
+      "status": 200,
+      "roundTrips": 9,
+      "scaling": "constant in the number of entries",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM entries WHERE id = ANY($1::uuid[])",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date = ANY($2::dat",
+        "SAVEPOINT bulk_entries",
+        "INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party",
+        "RELEASE SAVEPOINT bulk_entries",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "GET /v1/billing/entitlement",
+      "status": 200,
+      "roundTrips": 3,
+      "scaling": "constant",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "SELECT s.* FROM plan_purchase_states s JOIN plan_purchases p ON p.purc",
+        "SELECT * FROM plan_previews WHERE shop_id = $1"
+      ]
+    },
+    {
+      "route": "POST /v1/auth/refresh",
+      "status": 200,
+      "roundTrips": 1,
+      "scaling": "constant (1, unscoped)",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1"
+      ]
+    },
+    {
+      "route": "GET /v1/days/:date/summary - cold (first read of a shop after a restart)",
+      "status": 200,
+      "roundTrips": 10,
+      "scaling": "one extra scoped load of the whole earlier ledger; the days list is 60 rows",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM days WHERE shop_id = $1 AND date = $2",
+        "SELECT * FROM entries WHERE shop_id = $1 AND day_id = $2 ORDER BY crea",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date < $2 ORDER BY",
+        "SELECT * FROM entries WHERE shop_id = $1 AND day_id < $2 ORDER BY day_",
+        "SELECT * FROM upi_confirmations WHERE shop_id = $1 AND day_id = $2 ORD",
+        "SELECT * FROM adjustments WHERE shop_id = $1 AND day_id = $2 ORDER BY ",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "GET /v1/days/:date/summary - warm (closed days memoised)",
+      "status": 200,
+      "roundTrips": 9,
+      "scaling": "constant in history length",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM days WHERE shop_id = $1 AND date = $2",
+        "SELECT * FROM entries WHERE shop_id = $1 AND day_id = $2 ORDER BY crea",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date < $2 ORDER BY",
+        "SELECT * FROM upi_confirmations WHERE shop_id = $1 AND day_id = $2 ORD",
+        "SELECT * FROM adjustments WHERE shop_id = $1 AND day_id = $2 ORDER BY ",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "GET /v1/alerts - warm",
+      "status": 200,
+      "roundTrips": 10,
+      "scaling": "constant in history length (includes latestStartsAt)",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT starts_at FROM days WHERE shop_id = $1 ORDER BY date DESC LIMIT",
+        "SELECT * FROM days WHERE shop_id = $1 AND date = $2",
+        "SELECT * FROM entries WHERE shop_id = $1 AND day_id = $2 ORDER BY crea",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date < $2 ORDER BY",
+        "SELECT * FROM upi_confirmations WHERE shop_id = $1 AND day_id = $2 ORD",
+        "SELECT * FROM adjustments WHERE shop_id = $1 AND day_id = $2 ORDER BY ",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "GET /v1/parties/outstanding - warm",
+      "status": 200,
+      "roundTrips": 11,
+      "scaling": "constant in history length (includes latestStartsAt and partiesFor)",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT starts_at FROM days WHERE shop_id = $1 ORDER BY date DESC LIMIT",
+        "SELECT * FROM days WHERE shop_id = $1 AND date = $2",
+        "SELECT * FROM entries WHERE shop_id = $1 AND day_id = $2 ORDER BY crea",
+        "SELECT date, state FROM days WHERE shop_id = $1 AND date < $2 ORDER BY",
+        "SELECT * FROM upi_confirmations WHERE shop_id = $1 AND day_id = $2 ORD",
+        "SELECT * FROM adjustments WHERE shop_id = $1 AND day_id = $2 ORDER BY ",
+        "SELECT * FROM parties WHERE shop_id = $1 ORDER BY name",
+        "COMMIT"
+      ]
+    },
+    {
+      "route": "GET /v1/reports (today only)",
+      "status": 200,
+      "roundTrips": 9,
+      "scaling": "NOT memoised: loads the whole ledger, plus 4 per day in the range",
+      "statements": [
+        "SELECT * FROM devices WHERE id = $1",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT starts_at FROM days WHERE shop_id = $1 ORDER BY date DESC LIMIT",
+        "COMMIT",
+        "BEGIN",
+        "SELECT set_config('swafto.shop_id', $1, true)",
+        "SELECT * FROM entries WHERE shop_id = $1 AND day_id < $2 ORDER BY day_",
+        "COMMIT"
+      ]
+    }
+  ]
+}

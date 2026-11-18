@@ -39,6 +39,12 @@ export interface Claims {
   /** Unix seconds. Integers, because a float here is a clock nobody agreed on. */
   readonly iat: number;
   readonly exp: number;
+  /**
+   * RT-10 · REFRESH TOKENS ONLY. The generation of the one refresh token valid for
+   * `dev`; compared against `devices.refresh_gen` at `/v1/auth/refresh`. Absent on
+   * access tokens, and on refresh tokens minted before rotation (read as 0).
+   */
+  readonly gen?: number;
 }
 
 export class TokenInvalid extends Error {
@@ -80,6 +86,8 @@ export function mintToken(
     typ: TokenType;
     nowSeconds: number;
     ttlSeconds: number;
+    /** Refresh tokens only: the rotation generation (RT-10). */
+    gen?: number;
   },
 ): string {
   assertSigningKey(secret);
@@ -88,6 +96,9 @@ export function mintToken(
   }
   if (input.ttlSeconds <= 0) throw new Error('a token that is already expired is not a token');
 
+  if (input.gen !== undefined && (!Number.isInteger(input.gen) || input.gen < 0)) {
+    throw new Error('a token generation is a whole number, zero or more');
+  }
   const claims: Claims = {
     sub: input.sub,
     shop: input.shop,
@@ -95,6 +106,7 @@ export function mintToken(
     typ: input.typ,
     iat: input.nowSeconds,
     exp: input.nowSeconds + input.ttlSeconds,
+    ...(input.gen !== undefined ? { gen: input.gen } : {}),
   };
   const body = b64url(Buffer.from(JSON.stringify(claims), 'utf8'));
   return body + '.' + b64url(sign(secret, body));
@@ -139,6 +151,9 @@ export function verifyToken(
   if (claims.exp <= nowSeconds) throw new TokenInvalid('expired');
   if (claims.iat > nowSeconds + 60) throw new TokenInvalid('issued in the future');
   if (!claims.sub || !claims.shop || !claims.dev) throw new TokenInvalid('incomplete claims');
+  if (claims.gen !== undefined && (!Number.isInteger(claims.gen) || claims.gen < 0)) {
+    throw new TokenInvalid('bad generation');
+  }
 
   return claims;
 }

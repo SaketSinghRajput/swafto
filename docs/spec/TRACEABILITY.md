@@ -29,11 +29,11 @@ Status legend: `TODO` not started · `WIP` in progress · `DONE` all five cells 
 |----|-----------------|------|-------------|--------|--------|
 | P1 | `totalCashReceived` | `vectors.json:canonical-15-july` (=918000p) | `GET /v1/days/:date/summary` | T1 Today, T11 working | DONE |
 | P2 | `totalCashPaid` | `vectors.json:canonical-15-july` (=438000p) | `GET /v1/days/:date/summary` | T1 Today, T11 working | DONE |
-| P3 | `expectedCashBalance` | `vectors.json:canonical-15-july` (=630000p) | `GET /v1/days/:date/summary` | T11 Cash check, as its working; T5 day close list, as its headline; T6 opening cash, which sets its opening term | DONE |
-| P4 | `netSales` | `vectors.json:canonical-15-july` (=1145000p) | `GET /v1/days/:date/summary` | T1 Today, T14 summary | DONE |
+| P3 | `expectedCashBalance` | `vectors.json:canonical-15-july` (=630000p) | `GET /v1/days/:date/summary` | T11 Cash check, as its working; T5 day close list, as its headline; T6 opening cash, T2 Today first run and X1 Onboarding, each of which sets its opening term; T3 Today closed, as its headline; C1 Ask, as the free "expected cash" answer | DONE |
+| P4 | `netSales` | `vectors.json:canonical-15-july` (=1145000p) | `GET /v1/days/:date/summary` | T1 Today, T3 Today closed, T14 summary, R1 Reports, C1 Ask (today free; a period on Premium) | DONE |
 | P5 | `netPurchase` | `vectors.json:canonical-15-july` (=320000p) | `GET /v1/days/:date/summary` | T14 summary | DONE |
-| P6 | `totalExpenses` | `vectors.json:canonical-15-july` (=118000p) | `GET /v1/days/:date/summary` | T14 summary | DONE |
-| P7 | `creditOutstanding` | `vectors.json:p7-credit-outstanding` | `GET /v1/parties/outstanding` | T1 Today, P1 Parties, P2 Customer | TODO |
+| P6 | `totalExpenses` | `vectors.json:canonical-15-july` (=118000p) | `GET /v1/days/:date/summary` | T14 summary, R1 Reports | DONE |
+| P7 | `creditOutstanding` | `vectors.json:p7-credit-outstanding` | `GET /v1/parties/outstanding` | T1 Today, P1 Parties, P2 Customer, R1 Reports, C1 Ask | TODO |
 | P8 | `supplierOutstanding` | `vectors.json:p8-supplier-outstanding` | `GET /v1/parties/outstanding` | T1 Today, P1 Parties, P3 Supplier | TODO |
 
 Each of P1-P8 also returns a `Working` structure (line-by-line derivation), asserted by
@@ -49,6 +49,15 @@ Each of P1-P8 also returns a `Working` structure (line-by-line derivation), asse
 | OP4 | `paymentDue` | `vectors.json:op4-payment-due-horizon` | `GET /v1/alerts` | T1 Today, P3 Supplier | TODO |
 | OP5 | `businessMovement` | `vectors.json:op5-business-movement` | `GET /v1/reports` | R1 Reports | TODO |
 | OP6 | `cashDeficitWarnings` | `vectors.json:op6-deficit-names-party-amount-date` | `GET /v1/alerts` | T1 Today AlertBanner | DONE |
+
+**OP2, OP3 and OP5 stay TODO now that `R1.tsx` exists, and the reason is worth
+writing down.** `check:traceability` resolves a named screen by asking whether its
+FILE exists, which it now does — so the checker reports these three rows as held
+back only by a stale status. They are not. R1 displays P4, P6 and P7 and nothing
+else; the three operational ratios are not on it, and `GET /v1/reports` is still
+unwritten. Promoting them on the strength of the file existing would be counting a
+screen for figures it does not draw, which is the F-10 mistake with a different
+subject.
 
 ## Business intelligence — gated on closed-day count
 
@@ -71,6 +80,83 @@ the output set. *P7 says he is owed 18,240; it does not say 11,000 of it is owed
 man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 **Reversal trigger:** the original photograph surfaces and item 6 says otherwise.
 
+## Free and Premium reports (docs/research/R5-free-premium-plan.md)
+
+Everything below computes on the phone from the ledger it holds; there is no API
+surface, and the cell says so rather than naming an endpoint nobody calls. Premium
+is decided by `allows(plan, ...)` in `apps/mobile/src/app/plan.ts` and nowhere else.
+
+| ID | Engine function | Test | API surface | Screen | Status |
+|----|-----------------|------|-------------|--------|--------|
+| FR-7 | `duesByAge`, `monthAtAGlance`, `cashCheckHistory`, `upiMonth` | `reports-basic.spec.ts`, `R1.test.tsx` FR-7 block, `sqlite-port.spec.ts` past adjustments | none — on the phone | R1 Reports, free section | WIP — built and tested; Odia and Hindi copy is a DRAFT until H13 |
+| PR-3 | `salesForecast` (gates 14 / 56, MASE below 1) | `forecast.spec.ts`, `vectors.json:pr3-forecast-seasonal-naive-repeats-last-week`, `pr3-forecast-holt-winters-beats-last-week-on-a-rising-line`, `pr3-forecast-gate-shut-at-13` | none — on the phone | M1 Dashboard | WIP — built and tested; the plan is not yet in the session, so the app draws M1 for the free plan |
+| PR-4 | `samePeriodLastYear`, `festivalWeeks`, `daysToPay`, `returnsTrend` | `reports-basic.spec.ts` PR-4 blocks | none — on the phone | M1 Dashboard | WIP — festival dates cover 2025 and 2026 only (DoPT O.M., via staffnews.in; primary not fetched) |
+| PR-6 | none — the dashboard composes PR-3 and PR-4 and leaves a slot for PR-2 | `M1.test.tsx` | none — on the phone | M1 Dashboard, reached from R1 | WIP — item cards are another builder's |
+
+## Screens a store or a statute requires — no engine figure
+
+These are not feature rows. Every row above traces a FIGURE from the engine to a
+screen; the rows below trace a REQUIREMENT to one. They are here because the §B.6
+bar is keyed on a screen having a row at all, and a legally-required panel kept
+outside the matrix is a panel nobody traces.
+
+Three of the four say "none" in their first three columns because there is honestly
+nothing to resolve — those screens derive no number and read nothing from the API.
+**S8 is the exception, and it is the interesting one:** a confirmation screen has no
+business computing anything, and this one does, because the warning that the shop is
+still owed money is only true when P7 says so. So it traces a real engine figure, and
+the reason is a sentence it must not show when it is false.
+
+| ID | Engine function | Test | API surface | Screen | Status |
+|----|-----------------|------|-------------|--------|--------|
+| S5 | none — this screen derives no figure, which its test asserts | `apps/mobile/src/screens/S5.test.tsx` | none — the version is read from the build and passed in, never fetched | S5 About this app — version, open-source licences (L-19/L-21), and the L-15 sentence | WIP — built and tested; nothing in the app supplies a version string yet, so the row is not drawn, and the licences route has no destination wired |
+| S6 | none — this screen derives no figure, which its test asserts | `apps/mobile/src/screens/S6.test.tsx` | none — the officer is published copy, not shop data | S6 Help and contact — the named grievance officer the DPDP Act requires (L-07) | WIP — built and tested; the officer's name and address are human-blocked in `docs/handover/HUMAN-ACTIONS.md`, and until they are given the screen publishes the fact that there is none rather than a placeholder |
+| S7 | none — this screen derives no figure, which its test asserts; the grace window is `DELETION_GRACE_DAYS`, a constant, not an engine output | `apps/mobile/src/screens/S7.test.tsx` — the rendered grace copy is required to carry the constant in all three languages, and pressing the one button must leave the ledger untouched | none — nothing is requested here. The route exists, `POST /v1/deletion/request`, and nothing on S7 calls it | S7 Delete this account — the in-app deletion path Play's User Data policy and Apple 5.1.1(v) both require (LEGAL-AUDIT §4, beside L-13's web page) | WIP — built and tested; no navigation reaches it from S1 yet, nothing calls the API, and the Odia and Hindi copy is a DRAFT until H13 native review |
+| S8 | `creditOutstanding` (P7) — read only to decide whether the udhar warning is TRUE; the screen computes nothing else | `apps/mobile/src/screens/S8.test.tsx` — the warning's ABSENCE against a shop owed nothing, its presence and figure against one that is owed, and both buttons pressed with the store required not to move | none — the confirm screen reports intent only. `POST /v1/deletion/confirm` exists and S8 does not call it | S8 Are you sure? — the last stop of the same required path; the safe answer carries the screen's one accent | WIP — built and tested; nothing is wired to either callback, so no deletion can yet be requested from the app, and the Odia and Hindi copy is a DRAFT until H13 |
+| S10 | `paiseFromMicros` — Play's price to paise, exact or refused; the plan itself is derived on the server (`apps/api/src/billing/entitlement.ts`) and never by the engine | `apps/mobile/src/screens/S10.test.tsx`, `apps/api/test/billing.spec.ts` (cross-shop token reuse, unverified RTDN, expired preview, clock-only lapse), `packages/schema/test/billing.spec.ts`, `test/plan-flow.spec.tsx` | `GET /v1/billing/entitlement`, `POST /v1/billing/preview`, `POST /v1/billing/play/verify`, `POST /v1/billing/play/rtdn` | S10 Your plan — PR-7: price with GST shown before purchase, renewal terms, the 14-day preview with no payment details, Cancel opening Play's subscription page (Play Subscriptions policy; R4 §5.4) | WIP — built and tested end to end against a fake Google; buying stays closed until Play Console, the service account and Pub/Sub exist (H15, H17, H18), and the Odia and Hindi copy is a DRAFT until H13 |
+| FR-6 | `limitInForce`, `creditLimitObservation` (`packages/formula-engine/src/credit.ts`) — the limit in force; the observation itself is drawn on T7/T8 against `Store.partyBalance` | `apps/mobile/src/screens/P6.test.tsx`; the P2 -> P6 -> save flow, the observation on T8 and the SQLite restart in `apps/mobile/test/r5-free.spec.tsx`; the engine in `packages/formula-engine/test/credit-limit.spec.ts` | `POST /v1/sync/push` `creditLimits` (append-only `party_credit_limits`, both engines; `apps/api/test/api.spec.ts`, `repo-equivalence.spec.ts`) and the per-party export | P6 Credit limit — R5 FR-6 (R1 GAP-7), a limit he sets on a customer, observed and never enforced | WIP — built and tested in Node; not yet run on a handset, and the Odia and Hindi copy is a DRAFT until H13 |
+| FR-4 | none of its own — the CSV's money is `formatPaise` of entry amounts and of `partyEffect` sums (`apps/mobile/src/app/share.ts`) | `apps/mobile/src/screens/S12.test.tsx`; the CSV's columns, rupees, month filter, month-end balances and formula guard in `apps/mobile/test/r5-free.spec.tsx` | none — the file is made on the phone and handed to the share sheet (`SwaftoDeviceModule.shareTextFile`); nothing is sent to the server | S12 Entries for your accountant — R5 FR-4 (R1 GAP-5), a one-off CSV of one month | WIP — built and tested in Node; the share sheet has not been exercised on a handset, and the Odia and Hindi copy is a DRAFT until H13 |
+| S11 | none — the app-lock cover derives no figure and shows nothing from the book, which its test asserts against the adversarial shop | `apps/mobile/src/screens/S11.test.tsx`; the lock policy in `apps/mobile/test/app-lock.spec.tsx` | none — the phone's own screen lock through `SwaftoDeviceModule.kt`; nothing is sent to the server | S11 App locked — R5 FR-3 (R1 GAP-4), the cover drawn when the app lock is on | WIP — built and tested in Node; the confirm itself (KeyguardManager) has not been exercised on a handset |
+| S13 | none — this screen derives no figure, which its test asserts against both shops | `apps/mobile/src/screens/S13.test.tsx` | `GET /v1/me/export` (existing; `ApiClient.exportMe`), handed to the phone's share sheet as a file (`SwaftoDeviceModule.shareTextFile`) — nothing else is sent | S13 Your data — DPDP access as one button, with correction and erasure said in words (M3, approved at M2 2026-11-18) | WIP — built and tested in Node; the export and share sheet have not been exercised on a handset, and the Odia and Hindi copy is a DRAFT until H13 |
+| S14 | none — this screen derives no figure; "last used" is whole days between the server's timestamp and a date passed in (`daysBetween`) | `apps/mobile/src/screens/S14.test.tsx` | `GET /v1/devices` and `POST /v1/auth/devices/:id/revoke` (existing; shop from `shopOf`, never the request) — `ApiClient.listDevices`, `ApiClient.revokeDevice` | S14 Signed-in phones — C-21 lost-device sign-out, asked before it is sent (M3, approved at M2 2026-11-18) | WIP — built and tested in Node against a fixture list; not exercised against the live API or a handset, and the Odia and Hindi copy is a DRAFT until H13 |
+
+**L-07 reads RESOLVED above as a DECISION** (AD-003/007 settled that there will be a
+named officer with an SLA). The artifact is not resolved: this screen renders the
+contact when it exists and says so when it does not, and no code in this repository
+can close the human half.
+
+## Settings screens the shopkeeper chose, not the ones a statute did
+
+A SECOND TABLE RATHER THAN TWO MORE ROWS ABOVE, because the reason differs and the
+reason is the whole content of these cells. The rows above trace a REQUIREMENT to a
+screen: they exist whether or not anyone wants them. These two exist because a man
+changed his mind about his own shop — he mistapped a language on his first morning,
+or he is standing in daylight he was not standing in when he was first asked. No
+statute names either, and writing a feature ID beside one to make the matrix look
+uniform would be inventing a traceability link.
+
+**The "none" in the engine column is the claim worth recording.** If a day total, an
+entry count or an expected-cash line ever lands on either screen that cell becomes
+false — and both tests already fail on it, because each mutates the store and
+requires the render not to move.
+
+| ID | Engine function | Test | API surface | Screen | Status |
+|----|-----------------|------|-------------|--------|--------|
+| S2 | **none** — displays no feature-map output. The shop name is session state, not a derived figure, and the screen is forbidden to alter it | `apps/mobile/src/screens/S2.test.tsx` — four verbatim-name cases, truncation refused, and a store mutation that must not move the render | **none** — nothing is fetched or written; renaming is not built yet | S2 `ShopProfile`, reached from S1's shop row | WIP — built and tested; renaming is not implemented, and the Odia and Hindi copy is a DRAFT until H13 native review |
+| S3 | **none** — displays no feature-map output. Both values are device preferences | `apps/mobile/src/screens/S3.test.tsx` — the autonyms are never translated and match X1's; the mode labels carry no accessibility wording | **none** — the choice is applied locally and at once; there is no round trip to save | S3 `LanguageSettings`, reached from S1's language row | WIP — built and tested; persisting the choice across launches is not wired, and the Odia and Hindi copy is a DRAFT until H13 |
+
+## Premium item screens (PR-1, R5 decision 2 of 2026-10-26)
+
+Item capture per sale replaces D5 for the Premium plan only. These rows trace the
+two PR-1 screens to the engine and the sync route. Neither is a feature-map row:
+the feature map predates R5. The item reports (PR-2) are cards for the Premium
+dashboard (`apps/mobile/src/components/ItemCards.tsx`), not a screen of their own.
+
+| ID | Engine function | Test | API surface | Screen | Status |
+|----|-----------------|------|-------------|--------|--------|
+| S9 | `parseShopItem` — a name, trimmed, at most `ITEM_NAME_MAX`; no price and no stock column exists to hold one | `apps/mobile/src/screens/S9.test.tsx`; `packages/schema/test/items.spec.ts` (append-only, no price column, both engines) | `POST /v1/sync/push` (`items`) | S9 `YourItems`, reached from S1's items row on Premium, or to read a list recorded under Premium | WIP — built and tested; how the plan reaches the session is builder D's (PR-7), and the customer-notice line and the Odia and Hindi copy are DRAFT until counsel and H13 |
+| I1 | `parseItemLine`, `assertLineFits`, `saleItemised` — never more than the sale, only a sale of its own day | `apps/mobile/src/screens/I1.test.tsx`; `packages/formula-engine/test/items.spec.ts`; `packages/schema/test/items.spec.ts` (trigger `item_lines_fit_sale`, both engines); `apps/api/test/repo-equivalence.spec.ts` | `POST /v1/sync/push` (`itemLines`), `GET /v1/parties/:id/export` | I1 `ItemsForSale`, reached from T7's "Add items to a sale" on Premium only | WIP — built and tested; no server-side entitlement check (the phone's `allows()` is the only gate), and the Odia and Hindi copy is a DRAFT until H13 |
+
 ## Invariants the vectors must prove (architecture doc §02 p.4)
 
 | Rule | Test | Status |
@@ -87,7 +173,7 @@ man.* Gate 14 closed days, behind `CREDIT_CONCENTRATION_ENABLED`, default ON.
 | Ref | Requirement | Artifact | Owner | Status |
 |-----|-------------|----------|-------|--------|
 | L-01 | Consent notice before OTP, 3 languages | X0 `ConsentNotice` (en/hi/or), `GET /v1/legal/notice`, `consents` table | Eng | WIP - built and tested; the Odia and Hindi copy is a DRAFT until H13 native review |
-| L-02 | Granular consent + easy withdrawal | X0 per-purpose toggles in manage mode, reached from T1; `POST /v1/me/consent` (grant and withdraw are the same call), `GET /v1/me/consents` returning `current` as well as the log | Eng | WIP - built end to end; the Odia and Hindi copy is DRAFT until H13 |
+| L-02 | Granular consent + easy withdrawal | X0 per-purpose toggles in manage mode, reached from T1 and from S1 via S4 (the route, which deliberately renders no second set of toggles); `POST /v1/me/consent` (grant and withdraw are the same call), `GET /v1/me/consents` returning `current` as well as the log | Eng | WIP - built end to end; the Odia and Hindi copy is DRAFT until H13 |
 | L-03 | Party data Fiduciary vs Processor analysis | Terms clause | AD-005/006 | RESOLVED |
 | L-04 | Per-party export and redaction | `GET /v1/parties/:id/export`, `POST /v1/parties/:id/redact`, `ApiClient.exportParty/redactParty` | Eng | WIP - both routes built and tested on both repositories; the P2/P3 screens are deferred |
 | L-05 | Retention / inactivity period | Privacy policy | AD-003/007 | RESOLVED |

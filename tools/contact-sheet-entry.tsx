@@ -21,6 +21,8 @@ export interface RenderedPanel {
   readonly caption: string;
   readonly html: string;
   readonly css: string;
+  /** check:layout scopes the running-total in-view measure by it (HT-60). */
+  readonly display: ScreenCase['display'];
 }
 
 const renderOne = (panel: ScreenCase): RenderedPanel => {
@@ -32,6 +34,7 @@ const renderOne = (panel: ScreenCase): RenderedPanel => {
     caption: panel.caption,
     html: renderToStaticMarkup(app.element),
     css: renderToStaticMarkup(app.getStyleElement()),
+    display: panel.display,
   };
 };
 

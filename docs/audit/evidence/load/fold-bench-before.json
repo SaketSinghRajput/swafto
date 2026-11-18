@@ -1,0 +1,60 @@
+{
+  "node": "v24.22.3",
+  "src": "file:///D:/SWAFTO/code%20base/.load-before/apps/api/src/",
+  "rows": [
+    {
+      "days": 30,
+      "perDay": 50,
+      "rows": 1500,
+      "coldMs": 1.51,
+      "warmMedianMs": 0.5,
+      "warmMaxMs": 0.99,
+      "ledgerLoadsInTenReads": 10
+    },
+    {
+      "days": 90,
+      "perDay": 40,
+      "rows": 3600,
+      "coldMs": 0.65,
+      "warmMedianMs": 0.92,
+      "warmMaxMs": 4.76,
+      "ledgerLoadsInTenReads": 10
+    },
+    {
+      "days": 365,
+      "perDay": 50,
+      "rows": 18250,
+      "coldMs": 4.95,
+      "warmMedianMs": 1.59,
+      "warmMaxMs": 3.48,
+      "ledgerLoadsInTenReads": 10
+    },
+    {
+      "days": 730,
+      "perDay": 50,
+      "rows": 36500,
+      "coldMs": 3.03,
+      "warmMedianMs": 3.6,
+      "warmMaxMs": 5.07,
+      "ledgerLoadsInTenReads": 10
+    },
+    {
+      "days": 365,
+      "perDay": 150,
+      "rows": 54750,
+      "coldMs": 2.69,
+      "warmMedianMs": 2.39,
+      "warmMaxMs": 4.72,
+      "ledgerLoadsInTenReads": 10
+    },
+    {
+      "days": 1095,
+      "perDay": 100,
+      "rows": 109500,
+      "coldMs": 6.65,
+      "warmMedianMs": 6.4,
+      "warmMaxMs": 8.23,
+      "ledgerLoadsInTenReads": 10
+    }
+  ]
+}

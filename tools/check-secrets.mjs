@@ -37,6 +37,10 @@ const ALLOWED = [
     match: 'test-secret-key-at-least-16',
     why: 'a literal in rate-limit.spec.ts whose entire purpose is to be a non-production key',
   },
+  {
+    match: 'postgresql://USER:PASS@HOST:5432/swafto',
+    why: 'docs/infra/HOSTING.md showing the shape of the DATABASE_URL that goes into SSM - USER, PASS and HOST are literal placeholders, and every honest rendering of a connection string trips this rule, so the alternative is a runbook that cannot say what to type. Narrow by construction: the allowlist matches an exact substring, so a real host or password here would still be reported',
+  },
 ];
 
 const RULES = [

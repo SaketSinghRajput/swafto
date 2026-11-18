@@ -28,6 +28,34 @@ export const SECTIONS = [
 ] as const;
 export type Section = (typeof SECTIONS)[number];
 
+/**
+ * THE FOUR EVENT SECTIONS - a return, and what settled it (review §6-§7, EX-2).
+ *
+ * NOT CLOSING SECTIONS, and kept out of SECTIONS on purpose (EX-7). The progress
+ * ring counts ten steps and the cash check opens when the EIGHT closing sections
+ * are entered or skipped; a shop that never takes a return must not tap "Nothing
+ * to enter" four more times a day. A return is an event that lands in the ledger,
+ * not a line of the paper sheet that has to be ticked off.
+ *
+ *   sales_return      goods came back, at the price they went out. P4 '-'. Mode `other`.
+ *   exchange_out      replacement goods went out. P4 '+'. Mode `other`.
+ *   exchange_receipt  the customer paid the difference. Cash moves P1/P3 (D2).
+ *   refund_paid       the shop paid the customer: cash (P2/P3), UPI, or udhar (P7 '-').
+ *
+ * Every leg carries `refersToEntryId`: a return points at the sale it reverses,
+ * and each settlement leg points at its return. That one link IS the event (EX-3);
+ * there is no events table and no stored status (EX-4, `settlementOf`).
+ */
+export const EVENT_SECTIONS = ['sales_return', 'exchange_out', 'exchange_receipt', 'refund_paid'] as const;
+export type EventSection = (typeof EVENT_SECTIONS)[number];
+
+/** Every section an entry may carry: the eight closing sections, then the four event ones. */
+export const ENTRY_SECTIONS = [...SECTIONS, ...EVENT_SECTIONS] as const;
+export type EntrySection = Section | EventSection;
+
+export const isEventSection = (s: string): s is EventSection =>
+  (EVENT_SECTIONS as readonly string[]).includes(s);
+
 export const MODES = ['cash', 'upi', 'other', 'udhar', 'shop_stock'] as const;
 export type Mode = (typeof MODES)[number];
 
@@ -38,7 +66,7 @@ export type DayState = (typeof DAY_STATES)[number];
 // IsoDate is defined in dates.ts and re-exported here so this module stays the one
 // place a reader looks for the domain types. Declaring it twice made `export *` from
 // both ambiguous (TS2308) - invisible until typechecking was switched on.
-import type { IsoDate } from './dates.ts';
+import type { DayStart, IsoDate } from './dates.ts';
 export type { IsoDate };
 
 /* ------------------------------------------------------------------ *
@@ -52,7 +80,7 @@ export type { IsoDate };
 export interface Entry {
   readonly id: string;
   readonly dayId: IsoDate;
-  readonly section: Section;
+  readonly section: EntrySection;
   /** INTEGER PAISE. Always non-negative - sign is carried by the section. */
   readonly amount: Paise;
   readonly mode: Mode;
@@ -65,6 +93,18 @@ export interface Entry {
    * day it corrects. It changes today's figures and leaves that day byte-identical.
    */
   readonly correctsDayId?: IsoDate;
+  /**
+   * THE ROW THIS ONE IS ABOUT (EX-3). A day-level `correctsDayId` cannot say
+   * which of four expenses was wrong; this can.
+   *
+   *   sales_return                 -> the sale it reverses
+   *   exchange_out / _receipt,
+   *   refund_paid                  -> the sales_return it settles
+   *   a correction (correctsDayId) -> the closed day's entry it corrects (HT-11)
+   *
+   * A pointer, never a copy: nothing about the referenced row is restated here.
+   */
+  readonly refersToEntryId?: string;
   readonly createdAt: string;
   readonly source: 'manual' | 'imported';
 }
@@ -80,6 +120,14 @@ export interface DayRecord {
   readonly differenceReason?: string;
   readonly closedAt?: string;
   /**
+   * The rule this day was created under: the wall-clock time it starts, and it
+   * ends at that time on the next date (decision 1). Fixed when the day is made
+   * and never changed after - a later shop setting governs only later days.
+   * Absent on a day recorded before the setting existed, which reads as '00:00':
+   * a calendar day, which is exactly what it was.
+   */
+  readonly startsAt?: DayStart;
+  /**
    * D8: sections explicitly marked "Nothing to enter". A skipped section and an
    * untouched section produce the SAME total and a DIFFERENT day state.
    */
@@ -94,11 +142,67 @@ export interface Party {
   readonly defaultDueDays?: number;
 }
 
+/* ------------------------------------------------------------------ *
+ * Decision 2 - typed adjustments. Decision 3 - confirmed UPI receipts.
+ * ------------------------------------------------------------------ */
+
+/**
+ * THE FIXED LIST (decision 2). Never free-form: a free-text adjustment can absorb
+ * any discrepancy and would make expected-vs-actual mean nothing. Kept short on
+ * purpose; each one is a thing that happens at an Indian shop counter every week.
+ * What each type moves - expected cash, profit, both or neither - is the table
+ * `ADJUSTMENT_EFFECT` in adjustments.ts, reasoned there from D2 and D3.
+ *
+ * Duplicated in @swafto/schema for the same reason SECTIONS is; a test holds the
+ * two in lockstep.
+ */
+export const ADJUSTMENT_TYPES = [
+  'counterfeit_note',
+  'rounding_given',
+  'rounding_kept',
+  'home_use',
+  'stock_written_off',
+] as const;
+export type AdjustmentType = (typeof ADJUSTMENT_TYPES)[number];
+
+/**
+ * SEC-05: AN ADJUSTMENT IS NOT AN `entries` ROW. It has no section, no mode, no
+ * party, no label and no free text anywhere - only a type from the list and an
+ * amount from the keypad. Append-only like an entry (D1): a wrong one is answered
+ * by another, never by an edit.
+ */
+export interface Adjustment {
+  readonly id: string;
+  readonly dayId: IsoDate;
+  readonly type: AdjustmentType;
+  /** INTEGER PAISE, never negative. The direction is the type's, not the sign's. */
+  readonly amount: Paise;
+  readonly createdAt: string;
+}
+
+/**
+ * "THIS UPI RECEIPT ARRIVED" - a fact the shopkeeper states, as its own row (D1).
+ * It never UPDATEs the entry it is about. The bulk path writes one of these per
+ * receipt, sharing a `batchId`, so a receipt typed AFTER a bulk tap is never
+ * covered by it.
+ */
+export interface UpiConfirmation {
+  readonly id: string;
+  readonly dayId: IsoDate;
+  readonly entryId: string;
+  readonly batchId?: string;
+  readonly confirmedAt: string;
+}
+
 /** Everything the engine needs to compute one day. Passed in; never fetched. */
 export interface DayInput {
   readonly day: DayRecord;
   /** Entries whose `dayId` is this day. */
   readonly entries: readonly Entry[];
+  /** Decision 2. Absent is the same as none. */
+  readonly adjustments?: readonly Adjustment[];
+  /** Decision 3. Absent is the same as none - every UPI receipt unconfirmed. */
+  readonly upiConfirmations?: readonly UpiConfirmation[];
   /** P7's "prior outstanding": credit outstanding at the START of this day. */
   readonly priorCreditOutstanding: Paise;
   /** P8's "prior outstanding": supplier outstanding at the START of this day. */

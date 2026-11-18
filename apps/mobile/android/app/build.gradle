@@ -1,0 +1,299 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+
+/**
+ * This is the configuration block to customize your React Native Android app.
+ * By default you don't need to apply any configuration, just uncomment the lines you need.
+ */
+react {
+    /*
+     * MONOREPO PATHS, AND WHY THEY ARE NOT THE DEFAULTS.
+     *
+     * The template assumes the app IS the repository, so it looks for
+     * node_modules two levels up from here. This is a workspaces monorepo and
+     * npm hoists every dependency to the repository root, four levels up. Left
+     * at the defaults the plugin cannot find react-native, the codegen or the
+     * CLI, and the failure arrives as a missing-task error that names none of
+     * them.
+     *
+     * `root` stays at ../.. because that is apps/mobile, which is where this
+     * app's own package.json lives.
+     */
+    root = file("../../")
+    reactNativeDir = file("../../../../node_modules/react-native")
+    codegenDir = file("../../../../node_modules/@react-native/codegen")
+    cliFile = file("../../../../node_modules/react-native/cli.js")
+
+    /*
+     * BUNDLE THE JAVASCRIPT INTO THE DEBUG APK TOO.
+     *
+     * By default this list is ["debug"], meaning debug builds SKIP bundling
+     * and expect a Metro dev server to serve the JS over the network at run
+     * time. That is right for someone editing code with a cable attached, and
+     * wrong for what is needed here: an APK that can be copied to a phone and
+     * opened, with no laptop involved beyond the API it talks to.
+     *
+     * Emptying the list makes every variant carry its own bundle, so the debug
+     * APK is self-contained.
+     *
+     * WHY DEBUG AND NOT RELEASE. The app points at http://192.168.1.35:8080 -
+     * a laptop on the Wi-Fi, over cleartext. Android forbids cleartext in
+     * release builds, because the Gradle plugin sets the manifest's
+     * `usesCleartextTraffic` placeholder to false there, which is decision
+     * S-06 being enforced for us and must not be weakened to make a test build
+     * work. Debug permits it. So the local-network build is debug by
+     * necessity, and the release path keeps refusing plain HTTP exactly as it
+     * should.
+     */
+    debuggableVariants = []
+
+    /*
+     * WHERE hermesc IS, SPELLED OUT, FOR THE SAME MONOREPO REASON AS ABOVE.
+     *
+     * Hermes compiles the JS bundle to bytecode at build time, and the plugin
+     * finds its compiler through a default path containing an `%OS-BIN%`
+     * placeholder it substitutes per platform. In this repository it never got
+     * substituted - the build failed with the placeholder still in the string:
+     *
+     *   Couldn't determine Hermesc location. Please set `react.hermesCommand`
+     *   node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc
+     *
+     * The binary is present - sdks/hermesc/win64-bin/hermesc.exe, 1.9MB,
+     * shipped inside react-native. What the plugin could not do is find it,
+     * because it resolves hermesc against the node_modules it EXPECTS beside
+     * the app rather than against the `reactNativeDir` overridden above. npm
+     * hoists to the repository root, so that expectation is wrong here.
+     *
+     * Computed from the OS rather than hardcoded to Windows, so this does not
+     * quietly become a machine-specific build.
+     */
+    def os = org.gradle.internal.os.OperatingSystem.current()
+    def hermescBin = os.isWindows() ? "win64-bin" : os.isMacOsX() ? "osx-bin" : "linux64-bin"
+    def hermescExe = os.isWindows() ? "hermesc.exe" : "hermesc"
+    hermesCommand = file("../../../../node_modules/react-native/sdks/hermesc/${hermescBin}/${hermescExe}").absolutePath
+
+    /* Folders */
+    //   The root of your project, i.e. where "package.json" lives. Default is '../..'
+    // root = file("../../")
+    //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
+    // reactNativeDir = file("../../node_modules/react-native")
+    //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
+    // codegenDir = file("../../node_modules/@react-native/codegen")
+    //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
+    // cliFile = file("../../node_modules/react-native/cli.js")
+
+    /* Variants */
+    //   The list of variants to that are debuggable. For those we're going to
+    //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
+    //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
+    // debuggableVariants = ["liteDebug", "prodDebug"]
+
+    /* Bundling */
+    //   A list containing the node command and its flags. Default is just 'node'.
+    // nodeExecutableAndArgs = ["node"]
+    //
+    //   The command to run when bundling. By default is 'bundle'
+    // bundleCommand = "ram-bundle"
+    //
+    //   The path to the CLI configuration file. Default is empty.
+    // bundleConfig = file(../rn-cli.config.js)
+    //
+    //   The name of the generated asset file containing your JS bundle
+    // bundleAssetName = "MyApplication.android.bundle"
+    //
+    //   The entry file for bundle generation. Default is 'index.android.js' or 'index.js'
+    // entryFile = file("../js/MyApplication.android.js")
+    //
+    //   A list of extra flags to pass to the 'bundle' commands.
+    //   See https://github.com/react-native-community/cli/blob/main/docs/commands.md#bundle
+    // extraPackagerArgs = []
+
+    /* Hermes Commands */
+    //   The hermes compiler command to run. By default it is 'hermesc'
+    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+    //
+    //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
+    // hermesFlags = ["-O", "-output-source-map"]
+
+    /* Autolinking */
+    autolinkLibrariesWithApp()
+}
+
+/**
+ * OPS-13 (UNVERIFIED-BUILD): R8 code shrinking and resource shrinking are ON for
+ * release. The keep rules for RN 0.81, op-sqlite, MMKV, Nitro and our own native
+ * modules are in proguard-rules.pro. No release build has been made on this
+ * machine, so whether the shrunk build boots is unproven until the CTO's Wave 5
+ * build; if it fails, the missing rule is the first suspect, not this flag.
+ */
+def enableProguardInReleaseBuilds = true
+
+/**
+ * The preferred build flavor of JavaScriptCore (JSC)
+ *
+ * For example, to use the international variant, you can use:
+ * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
+ *
+ * The international variant includes ICU i18n library and necessary data
+ * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
+ * give correct results when using with locales other than en-US. Note that
+ * this variant is about 6MiB larger per architecture than default.
+ */
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
+
+// C-16: read once, trimmed, no trailing slash. Empty when unset (and then release refuses).
+// OPS-13: a Gradle property first, then the environment (CI), else the default.
+def swaftoSetting = { String name, String fallback ->
+    def v = (project.findProperty(name) ?: System.getenv(name) ?: '').toString().trim()
+    v ? v : fallback
+}
+
+def swaftoApiBaseUrl = (project.findProperty('SWAFTO_API_BASE_URL') ?: '').toString().trim().replaceAll('/+$', '')
+
+android {
+    ndkVersion rootProject.ext.ndkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdk rootProject.ext.compileSdkVersion
+
+    namespace "com.swafto"
+    /*
+     * THE FONTS WERE NEVER IN THE APK (DV-11). React Native loads a fontFamily
+     * from the APK's assets/fonts/<name>.ttf, and the Anek files lived only in
+     * apps/mobile/assets/fonts - so every screen on a real phone rendered in
+     * the system fallback while every token said Anek. check:font hashes the
+     * files; nothing ever looked inside the APK. Packaging that one directory
+     * keeps a single copy - the one check:font hashes - and ships its OFL
+     * licence beside the fonts it covers.
+     */
+    sourceSets {
+        main {
+            assets.srcDirs += ['../../assets']
+        }
+    }
+    // C-16: BuildConfig.API_BASE_URL below needs the generated class.
+    buildFeatures {
+        buildConfig true
+    }
+    defaultConfig {
+        applicationId "com.swafto"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        /*
+         * OPS-13 (UNVERIFIED-BUILD): THE VERSION COMES FROM THE BUILD, NOT FROM
+         * A HAND EDIT. Play refuses an upload whose versionCode is not higher
+         * than the last, so CI passes its run number as SWAFTO_VERSION_CODE
+         * (-P property or environment variable; the property wins). The dev
+         * defaults keep a local debug build working with neither set.
+         */
+        versionCode swaftoSetting('SWAFTO_VERSION_CODE', '1').toInteger()
+        versionName swaftoSetting('SWAFTO_VERSION_NAME', '1.0')
+    }
+    signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        /*
+         * THE UPLOAD KEY, AND WHY IT IS NOT IN THIS REPOSITORY.
+         *
+         * The four settings come from ~/.gradle/gradle.properties or the
+         * environment (CI secrets), both outside the tree. `check:secrets`
+         * fails the whole build chain on a private key or a password anywhere
+         * in the repository, and it is right to: a signing key in git is a
+         * signing key in every clone and every fork, forever, and this one
+         * cannot be rotated - lose it or leak it and the app can never be
+         * updated on Play again under the same identity. Where to create and
+         * keep it: docs/handover/HUMAN-ACTIONS.md, H14.
+         *
+         * OPS-13 (UNVERIFIED-BUILD): THERE IS NO DEBUG-KEY FALLBACK. Without
+         * the key, `upload` is not defined, the release buildType has no
+         * signing config, and the guard in the taskGraph block below fails any
+         * release build with a message naming the four settings. A contributor
+         * without the key still builds debug, which is signed with the debug
+         * key above and is never a release.
+         */
+        if (swaftoSetting('SWAFTO_UPLOAD_STORE_FILE', '')) {
+            upload {
+                storeFile file(swaftoSetting('SWAFTO_UPLOAD_STORE_FILE', ''))
+                storePassword swaftoSetting('SWAFTO_UPLOAD_STORE_PASSWORD', '')
+                keyAlias swaftoSetting('SWAFTO_UPLOAD_KEY_ALIAS', '')
+                keyPassword swaftoSetting('SWAFTO_UPLOAD_KEY_PASSWORD', '')
+                storeType 'PKCS12'
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            // The dev server over `adb reverse` (src/platform/endpoint.ts). Debug only.
+            buildConfigField "String", "API_BASE_URL", '"http://localhost:8787"'
+        }
+        release {
+            // C-16: from -PSWAFTO_API_BASE_URL or ~/.gradle/gradle.properties; checked below.
+            buildConfigField "String", "API_BASE_URL", "\"${swaftoApiBaseUrl}\""
+            // OPS-13: the upload key or nothing - see the signingConfigs comment. Never debug.
+            signingConfig signingConfigs.findByName('upload')
+            minifyEnabled enableProguardInReleaseBuilds
+            // Resource shrinking needs minify; both are on for release (OPS-13).
+            shrinkResources enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+/*
+ * C-16: THE RELEASE BUILD CANNOT BE MADE WITHOUT A REAL https API URL.
+ *
+ * `SWAFTO_API_BASE_URL` is the production origin, a HUMAN decision (H5) that is
+ * deliberately NOT chosen in this repository: android/gradle.properties holds an
+ * empty placeholder. Set it in ~/.gradle/gradle.properties (beside the upload
+ * key) or pass -PSWAFTO_API_BASE_URL=https://... . The check runs when the
+ * release BuildConfig is generated, so assembleRelease, bundleRelease and
+ * every release compile stop here, and a debug build is not affected.
+ */
+afterEvaluate {
+    tasks.matching { it.name == 'generateReleaseBuildConfig' }.configureEach {
+        doFirst {
+            if (!(swaftoApiBaseUrl.startsWith('https://') && swaftoApiBaseUrl.length() > 'https://'.length() && !swaftoApiBaseUrl.contains(' '))) {
+                throw new GradleException(
+                    "Release build refused: SWAFTO_API_BASE_URL must be an https:// URL, got '" + swaftoApiBaseUrl + "'. " +
+                    "Set it in ~/.gradle/gradle.properties or pass -PSWAFTO_API_BASE_URL=https://<production origin>.")
+            }
+        }
+    }
+}
+
+/*
+ * OPS-13 (UNVERIFIED-BUILD): A RELEASE BUILD WITHOUT THE UPLOAD KEY FAILS.
+ *
+ * Checked when the task graph is known, so a debug build, `./gradlew tasks`
+ * and an IDE sync are unaffected, while assembleRelease, bundleRelease,
+ * packageRelease and the signing tasks stop here with the fix in the message.
+ */
+gradle.taskGraph.whenReady { graph ->
+    def releaseSigned = graph.allTasks.any {
+        it.project == project && it.name ==~ /(assemble|bundle|package|sign|validateSigning)Release.*/
+    }
+    if (releaseSigned && !project.android.signingConfigs.findByName('upload')) {
+        throw new GradleException(
+            "Release build refused: no release keystore is configured, and a release is never signed with the debug key. " +
+            "Set SWAFTO_UPLOAD_STORE_FILE, SWAFTO_UPLOAD_STORE_PASSWORD, SWAFTO_UPLOAD_KEY_ALIAS and SWAFTO_UPLOAD_KEY_PASSWORD " +
+            "in ~/.gradle/gradle.properties or the environment. Where the keystore comes from: docs/handover/HUMAN-ACTIONS.md, H14.")
+    }
+}
+
+dependencies {
+    // The version of react-native is set by the React Native Gradle Plugin
+    implementation("com.facebook.react:react-android")
+    // PR-7: Google Play Billing (apps/mobile/src/net/billing.ts, R4 §2). Purchases only; the server verifies.
+    implementation("com.android.billingclient:billing:8.0.0")
+
+    if (hermesEnabled.toBoolean()) {
+        implementation("com.facebook.react:hermes-android")
+    } else {
+        implementation jscFlavor
+    }
+}

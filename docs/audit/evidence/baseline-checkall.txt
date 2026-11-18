@@ -1,0 +1,184 @@
+
+> swafto@0.1.0 check:all
+> npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run check:shadow && npm run check:plan && npm run check:tasks && npm run check:design && npm run check:layout && npm run check:client-logs && npm run check:naming && npm run check:push && npm run check:licences && npm run check:crossdoc && npm run check:divergence && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:registry && npm run check:findings && npm run check:verifiers
+
+
+> swafto@0.1.0 check:governance
+> node tools/check-governance.mjs
+
+  ok   no "BLOCKED-ON-HUMAN" status anywhere
+  ok   21 autonomous decisions, all with a reversal trigger
+  ok   HUMAN-ACTIONS.md present and non-blocking
+  ok   B40: no stubs or TODOs in shipped paths
+  ok   C.1: one money-formatting path, no Intl/toLocaleString in shipped code
+  ok   21 verbatim injections, all matching INJECTIONS/injections.lock
+
+governance: all invariants hold
+
+> swafto@0.1.0 check:benchmarks
+> node tools/check-benchmarks-lock.mjs
+
+BENCHMARKS.md sha256 : ae1a719c2a7551e6038fe3681f27fa6133710960b6294dbf159aafb9f5c4b395
+benchmarks.lock      : ae1a719c2a7551e6038fe3681f27fa6133710960b6294dbf159aafb9f5c4b395
+frozen               : OK, hash matches
+
+> swafto@0.1.0 check:prose
+> node tools/check-prose.mjs
+
+  files scanned      : 69 (21 verbatim, not ours to edit)
+  sentences scanned  : 36074
+  repeated strong labels : 2 document(s) - a count, not a failure (F-A5)
+       docs\benchmarks\BENCHMARKS-RESULTS.md (MISSED - SCOPEx2)
+       docs\governance\PROJECTION.md (COMMITTEDx2)
+  ids defined        : 21 AD · 40 B · 21 G · 21 H
+
+prose: no contradictory sentences, no dangling IDs
+
+> swafto@0.1.0 check:sms
+> node tools/check-sms-templates.mjs
+
+  OTP_TTL_SECONDS       : 600s (registry) · 1 duration(s) in copy
+  templates in markdown : 15
+  templates in code     : 15
+  distinct ids          : 5
+
+sms templates: markdown and code agree, all ids registered
+
+> swafto@0.1.0 check:sms:segments
+> node tools/check-sms-segments.mjs
+
+  template                 enc     units  lim   seg  head  bytes  retriever+hash
+  otp_signin/en            GSM-7   87     160   1    73    77     87B fits
+  otp_signin/hi            UCS-2   64     70    1    6     128    152B OVER 140
+  otp_signin/od            UCS-2   64     70    1    6     128    152B OVER 140
+  otp_number_change_old/en GSM-7   103    160   1    57    91     101B fits
+  otp_number_change_old/hi UCS-2   52     70    1    18    104    128B fits
+  otp_number_change_old/od UCS-2   56     70    1    14    112    136B fits
+  otp_number_change_new/en GSM-7   100    160   1    60    88     98B fits
+  otp_number_change_new/hi UCS-2   51     70    1    19    102    126B fits
+  otp_number_change_new/od UCS-2   55     70    1    15    110    134B fits
+  otp_pin_reset/en         GSM-7   96     160   1    64    84     95B fits
+  otp_pin_reset/hi         UCS-2   48     70    1    22    96     120B fits
+  otp_pin_reset/od         UCS-2   52     70    1    18    104    128B fits
+  otp_account_deletion/en  GSM-7   96     160   1    64    84     95B fits
+  otp_account_deletion/hi  UCS-2   49     70    1    21    98     122B fits
+  otp_account_deletion/od  UCS-2   49     70    1    21    98     122B fits
+
+  SMS Retriever viable across ALL templates: NO (2 of 15 exceed 140 bytes once an 11-char hash is appended)
+
+sms segments: every template fits one segment
+
+> swafto@0.1.0 check:tooling
+> node tools/check-tooling.mjs
+
+  tooling files scanned : 51
+  ok   no cross-language string surgery in tooling
+  ok   no known platform assumptions in tooling
+  ok   no Windows reserved-name files in the tree
+  ok   all 53 npm scripts reference files that exist
+
+tooling: no cross-language surgery, no known platform traps
+
+> swafto@0.1.0 check:generated
+> node tools/check-generated.mjs
+
+  generated artifacts checked : 13
+
+generated: every artifact matches its authoring script
+
+> swafto@0.1.0 check:font
+> node tools/check-font-coverage.mjs
+
+  odia strings       : 5
+  codepoints required: 58 · 30 inside the Odia block
+  required OUTSIDE the Odia block: U+0964 U+20B9
+
+  AnekOdia-Regular.ttf    163252 B ·  317 cp ·  90 odia · digits PROPORTIONAL, tabular @ 1087 only via tnum
+  AnekOdia-Medium.ttf     162948 B ·  317 cp ·  90 odia · digits PROPORTIONAL, tabular @ 1107 only via tnum
+  AnekOdia-Bold.ttf       163620 B ·  317 cp ·  90 odia · digits PROPORTIONAL, tabular @ 1179 only via tnum
+
+  C.4 · 3 of 3 weights have PROPORTIONAL digits by default.
+        Measured on AnekOdia-Regular.ttf: ten 1s are 6720 units against ten 0s at 11320 -
+        a 4600-unit gap in one row. With tnum both are 10870.
+        `tnum` is present and resolves all ten to one width, so the capability
+        exists - but it is OFF unless the money style asks for it. Every money
+        style MUST set fontVariant: ['tabular-nums'].
+        Owed at G10: a check-governance rule that the money style sets it, and a
+        render test. Owed at H8: DEVICE-CHECKLIST B4, because React Native
+        fontVariant support on Android is the part no static check can settle.
+
+  bundled total      : 489820 bytes · 1.87% of the B24 25 MB budget
+
+fonts: every character has a real glyph in every weight; digits are tabular ONLY with tnum applied
+
+> swafto@0.1.0 check:money
+> node tools/check-money-lint.mjs
+
+  files linted       : 298
+  rule               : swafto/no-money-float (ADR-003, four clauses)
+
+money lint: no float arithmetic, no coercion, no decimal literals in the engine
+
+> swafto@0.1.0 check:shadow
+> node tools/check-shadow-copies.mjs
+
+  directories walked     : 100
+  shadow trees found     : 0
+  a hazard is            : package.json, a spec/test file, or a vitest config
+  ignored counts as      : untracked - vitest does not read .gitignore
+
+shadow copies: no untracked tree that a test runner could discover
+
+> swafto@0.1.0 check:plan
+> node tools/gen-plan.mjs --check
+
+  sources tracked        : 12
+  sources changed        : 0
+  feature rows derived   : 27
+  screens parsed         : 27
+
+plan: every source is exactly as it was when PLAN.md was written
+
+> swafto@0.1.0 check:tasks
+> node tools/gen-tasks.mjs --check
+
+  tasks                  : 386
+  done / ready / blocked : 350 / 10 / 5
+  dependency edges       : 964
+
+tasks: every box derived, no cycle, no duplicate id, no human blocker
+
+> swafto@0.1.0 check:design
+> node tools/gen-design.mjs --check
+
+  committed screens      : 38, 38 implemented
+  raw values             : 0 (this must be zero)
+  unregistered screens   : 11 - scanned, but absent from COMMITTED_SCREENS.ids: apps\mobile\src\screens\A1.tsx, apps\mobile\src\screens\A2.tsx, apps\mobile\src\screens\A3.tsx, apps\mobile\src\screens\A4.tsx, apps\mobile\src\screens\A5.tsx, apps\mobile\src\screens\A6.tsx, apps\mobile\src\screens\A7.tsx, apps\mobile\src\screens\A8.tsx, apps\mobile\src\screens\actSections.ts, apps\mobile\src\screens\authParts.tsx, apps\mobile\src\screens\entryRoutes.ts
+  drift rows             : 34 (0 enforced)
+  measured data          : absent - MEASURED is blind
+
+design: no raw values, no keypad beside a nav, no static/measured disagreement
+
+> swafto@0.1.0 check:layout
+> node --experimental-strip-types tools/check-layout.mjs
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browserType.launch: Executable doesn't exist at C:\Users\user\AppData\Local\ms-playwright\chromium_headless_shell-1243\chrome-headless-shell-win64\chrome-headless-shell.exe
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+    at D:\SWAFTO\code base\tools\check-layout.mjs:236:32 {
+  log: [],
+  name: 'Error'
+}
+
+Node.js v24.22.3
+checkall exit 1

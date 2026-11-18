@@ -24,20 +24,141 @@
 import type { FastifyInstance } from 'fastify';
 import {
   computePrimary,
+  expectedUpi,
+  upiCheck,
   creditOutstanding,
   expectedCashBalance,
   supplierOutstanding,
   subtract,
+  add,
+  addDays,
+  daysBetween,
   captureCountedCash,
   parseIsoDate,
   type DayInput,
+  type Entry,
   type IsoDate,
   type Paise,
 } from '@swafto/formula-engine';
 import type { AppDeps } from '../app.ts';
 import { shopOf } from '../app.ts';
-import { EXPORT_DISCLAIMER } from '@swafto/values';
+import { EXPORT_DISCLAIMER, MAX_ENTRY_PAISE } from '@swafto/values';
 import type { Repo } from '../db/port.ts';
+import { memoFor, type ClosedDayMemo } from '../db/closed-day-memo.ts';
+import { shopToday } from '../business-date.ts';
+import { makeShopLimitHooks, type ShopLimitHooks } from '../sync/shop-limit.ts';
+import { NO_BODY, NO_QUERY } from '../schemas.ts';
+
+/** The longest `from`..`to` span `/v1/reports` will compute. A reversible default. */
+export const REPORT_MAX_DAYS = 366;
+
+/** Entries grouped by their day in ONE pass, each group in the order it arrived. */
+function groupByDay(entries: readonly Entry[]): Map<IsoDate, Entry[]> {
+  const byDay = new Map<IsoDate, Entry[]>();
+  for (const e of entries) {
+    const group = byDay.get(e.dayId);
+    if (group) group.push(e);
+    else byDay.set(e.dayId, [e]);
+  }
+  return byDay;
+}
+
+/** One day of the fold: the engine's own answers, which are the next day's opening position. */
+function foldStep(
+  d: IsoDate,
+  entries: readonly Entry[],
+  credit: Paise,
+  supplier: Paise,
+): { credit: Paise; supplier: Paise } {
+  const partial: DayInput = {
+    day: { date: d, state: 'closed', openingCash: 0, countedCash: null } as DayInput['day'],
+    entries,
+    priorCreditOutstanding: credit,
+    priorSupplierOutstanding: supplier,
+  };
+  return { credit: creditOutstanding(partial).value, supplier: supplierOutstanding(partial).value };
+}
+
+/** Every earlier day folded from its entries: the original algorithm, kept for the one case the chain cannot place. */
+async function fullFold(
+  repo: Repo,
+  shopId: string,
+  date: IsoDate,
+): Promise<{ credit: Paise; supplier: Paise }> {
+  const earlierByDay = groupByDay(await repo.entriesBefore(shopId, date));
+  let credit: Paise = 0;
+  let supplier: Paise = 0;
+  for (const d of [...earlierByDay.keys()].sort()) {
+    ({ credit, supplier } = foldStep(d, earlierByDay.get(d)!, credit, supplier));
+  }
+  return { credit, supplier };
+}
+
+/** How many days a warm shop may load one at a time before the fold loads the whole ledger instead. */
+const MAX_SINGLE_DAY_LOADS = 3;
+
+/** C-12 · how the fold uses the closed-day memo. Everything defaults; a test injects its own. */
+export interface FoldOptions {
+  readonly memo?: ClosedDayMemo;
+}
+
+/**
+ * The shop's credit and supplier balances coming INTO `date`, folded one day at a
+ * time through the engine, taking every CLOSED day from the memo when it has it.
+ *
+ * Why a memo hit is exactly the fold's answer is argued once, in
+ * `db/closed-day-memo.ts`: a closed day's entries are frozen (D7, D1), and every
+ * other input to the step is in the memo's key. What this function adds is the
+ * discipline around it: an OPEN day is never memoised; the entries are loaded
+ * only when some day misses (a cold shop pays what it always paid); and a fill is
+ * refused if the shop was erased or redacted while this read was in flight.
+ */
+export async function priorBalances(
+  repo: Repo,
+  shopId: string,
+  date: IsoDate,
+  opts: FoldOptions = {},
+): Promise<{ credit: Paise; supplier: Paise }> {
+  const memo = opts.memo ?? memoFor(repo);
+  const days = await repo.daysBefore(shopId, date);
+
+  let byDay: Map<IsoDate, Entry[]> | null = null;
+  // A shop the memo already knows misses only the days since it last looked (the one it closed
+  // since, today's neighbour that is still open): load those days one by one. A shop it does not
+  // know (first read after a restart) goes straight to the one bulk load, as before.
+  let singleLoads = memo.size(shopId) > 0 ? MAX_SINGLE_DAY_LOADS : 0;
+  let credit: Paise = 0;
+  let supplier: Paise = 0;
+  const since = memo.erasures;
+  for (const d of days) {
+    if (d.state === 'closed') {
+      const hit = memo.get(shopId, d.date, credit, supplier);
+      if (hit) {
+        ({ credit, supplier } = hit);
+        continue;
+      }
+    }
+    let dayEntries: readonly Entry[];
+    if (byDay === null && singleLoads > 0) {
+      singleLoads -= 1;
+      dayEntries = await repo.entriesFor(shopId, d.date);
+    } else {
+      if (byDay === null) {
+        byDay = groupByDay(await repo.entriesBefore(shopId, date));
+        // An entry on a day the day list did not name (a day created between the two reads)
+        // cannot be placed in the chain: fall back to the full fold rather than guess.
+        const named = new Set<string>(days.map((x) => x.date));
+        for (const k of byDay.keys()) if (!named.has(k)) return fullFold(repo, shopId, date);
+      }
+      dayEntries = byDay.get(d.date) ?? [];
+    }
+    const next = foldStep(d.date, dayEntries, credit, supplier);
+    if (d.state === 'closed') memo.set(shopId, d.date, credit, supplier, next, since);
+    ({ credit, supplier } = next);
+  }
+
+  return { credit, supplier };
+}
 
 /**
  * Assemble exactly what the engine needs for one day, with the prior balances
@@ -48,29 +169,23 @@ import type { Repo } from '../db/port.ts';
  * becomes the next day's opening position - so a change to how credit is counted
  * moves history and today together and cannot make them disagree.
  *
- * ponytail: O(days) per request, which is fine at a few hundred days and is not a
- * shape that survives ten years. The upgrade is a stored daily closing balance -
- * and that is a CACHE of a derived figure, so it needs its own re-derivation check
- * before it goes anywhere near this file.
+ * C-12: the fold was O(the shop's whole history) on every read (SIMP-02 had already
+ * removed the O(days x entries) factor). A closed day's step is now memoised in
+ * process (`priorBalances`), so a warm read loads the day list, today's entries and
+ * today's facts, not the ledger. It is a cache of a pure function of immutable
+ * input, not a stored total: nothing is persisted and nothing is sent.
  */
-export async function dayInputFor(repo: Repo, shopId: string, date: IsoDate): Promise<DayInput> {
+export async function dayInputFor(
+  repo: Repo,
+  shopId: string,
+  date: IsoDate,
+  opts: FoldOptions = {},
+): Promise<DayInput> {
   const day = await repo.findDay(shopId, date);
   const today = await repo.entriesFor(shopId, date);
-  const earlier = await repo.entriesBefore(shopId, date);
-
-  const dates = [...new Set(earlier.map((e) => e.dayId))].sort();
-  let credit: Paise = 0;
-  let supplier: Paise = 0;
-  for (const d of dates) {
-    const partial: DayInput = {
-      day: { date: d, state: 'closed', openingCash: 0, countedCash: null } as DayInput['day'],
-      entries: earlier.filter((e) => e.dayId === d),
-      priorCreditOutstanding: credit,
-      priorSupplierOutstanding: supplier,
-    };
-    credit = creditOutstanding(partial).value;
-    supplier = supplierOutstanding(partial).value;
-  }
+  const { credit, supplier } = await priorBalances(repo, shopId, date, opts);
+  // Decisions 2 and 3: the day's own facts, read beside its entries, never folded in.
+  const facts = await repo.dayFactsFor(shopId, date);
 
   return {
     day: {
@@ -82,12 +197,31 @@ export async function dayInputFor(repo: Repo, shopId: string, date: IsoDate): Pr
       ...(day?.closedAt ? { closedAt: day.closedAt } : {}),
     } as DayInput['day'],
     entries: today,
+    adjustments: facts.adjustments,
+    upiConfirmations: facts.upiConfirmations,
     priorCreditOutstanding: credit,
     priorSupplierOutstanding: supplier,
   };
 }
 
-export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
+export function registerReadRoutes(
+  app: FastifyInstance,
+  deps: AppDeps,
+  hooks: ShopLimitHooks = makeShopLimitHooks(deps.shopLimits),
+): void {
+  // BE-15: one per-shop bucket for every route below that folds the ledger.
+  const limited = hooks.read;
+  const limit = limited ? { preHandler: limited } : {};
+  // RT-W3-1: redaction clears the shop's memo and is rare: it shares the export's small bucket.
+  const heavy = hooks.heavy;
+  /**
+   * C-11 · THE SHOP'S "TODAY": its business date in India, by the day start it is
+   * using. Never `now().slice(0, 10)`, which is the UTC date and the wrong day
+   * from midnight to 05:30 IST. The engine still takes the date as an input.
+   */
+  const todayOf = async (shopId: string): Promise<IsoDate> =>
+    shopToday(deps.now(), await deps.repo.latestStartsAt(shopId));
+
   /**
    * The nine-section day close, as figures rather than as a verdict.
    *
@@ -96,6 +230,7 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
    * expectation, because the number on its own is an accusation he cannot check.
    */
   app.get('/v1/days/:date/summary', {
+    ...limit,
     // Takes no query parameters at all, and says so rather than ignoring them.
     schema: { querystring: { type: 'object', additionalProperties: false, properties: {} } },
   }, async (req, reply) => {
@@ -107,7 +242,8 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
       return reply.code(400).send({ error: 'invalid_date' });
     }
 
-    const input = await dayInputFor(deps.repo, shopId, date as IsoDate);
+    // ARCH-06: every repo call of this request shares ONE scoped transaction (3 round trips, not 3 per call).
+    const input = await deps.repo.inScope(shopId, () => dayInputFor(deps.repo, shopId, date as IsoDate));
     const primary = computePrimary(input);
     const cash = expectedCashBalance(input);
 
@@ -127,6 +263,16 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
       },
       countedCash: input.day.countedCash,
       cashCheck: { expected: cash.value, working: cash.working },
+      // The second equation (D2), and what of it he has confirmed (decision 3).
+      upi: (() => {
+        const check = upiCheck(input);
+        return {
+          expected: expectedUpi(input).value,
+          expectedReceived: check.expectedReceived,
+          confirmedReceived: check.confirmedReceived,
+          status: check.status,
+        };
+      })(),
       entryCount: input.entries.length,
     });
   });
@@ -143,6 +289,7 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
    * false` makes it the second.
    */
   app.get('/v1/parties/outstanding', {
+    ...limit,
     schema: {
       querystring: {
         type: 'object',
@@ -153,19 +300,22 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
   }, async (req, reply) => {
     const shopId = shopOf(req);
     const { asOf } = req.query as { asOf?: string };
-    const date = asOf ?? deps.now().slice(0, 10);
-    try {
-      parseIsoDate(date);
-    } catch {
-      return reply.code(400).send({ error: 'invalid_date' });
-    }
+    // ARCH-06: one scoped transaction for the whole request.
+    return deps.repo.inScope(shopId, async () => {
+      const date = asOf ?? (await todayOf(shopId));
+      try {
+        parseIsoDate(date);
+      } catch {
+        return reply.code(400).send({ error: 'invalid_date' });
+      }
 
-    const input = await dayInputFor(deps.repo, shopId, date as IsoDate);
-    return reply.code(200).send({
-      asOf: date,
-      creditOutstanding: creditOutstanding(input).value,
-      supplierOutstanding: supplierOutstanding(input).value,
-      parties: await deps.repo.partiesFor(shopId),
+      const input = await dayInputFor(deps.repo, shopId, date as IsoDate);
+      return reply.code(200).send({
+        asOf: date,
+        creditOutstanding: creditOutstanding(input).value,
+        supplierOutstanding: supplierOutstanding(input).value,
+        parties: await deps.repo.partiesFor(shopId),
+      });
     });
   });
 
@@ -190,7 +340,7 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
    * would be two confirmations, and the second one teaches him to tap through
    * the first.
    */
-  app.post('/v1/parties/:id/redact', async (req, reply) => {
+  app.post('/v1/parties/:id/redact', { schema: { body: NO_BODY }, ...(heavy ? { preHandler: heavy } : {}) }, async (req, reply) => {
     const shopId = shopOf(req);
     const { id } = req.params as { id: string };
 
@@ -207,22 +357,34 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
     });
   });
 
-  app.get('/v1/parties/:id/export', async (req, reply) => {
+  app.get('/v1/parties/:id/export', { ...limit, schema: { querystring: NO_QUERY } }, async (req, reply) => {
     const shopId = shopOf(req);
     const { id } = req.params as { id: string };
     const parties = await deps.repo.partiesFor(shopId);
     const party = parties.find((p) => p.id === id);
     if (!party) return reply.code(404).send({ error: 'not_found' });
 
-    const today = deps.now().slice(0, 10) as IsoDate;
+    const today = await todayOf(shopId);
     const all = [
       ...(await deps.repo.entriesBefore(shopId, today)),
       ...(await deps.repo.entriesFor(shopId, today)),
     ].filter((e) => e.partyId === id);
+    /*
+     * PR-1: what he bought on those sales, if items were recorded. DPDP s.11:
+     * the customer's access request covers it, because it is about him.
+     */
+    const ids = new Set(all.map((e) => e.id));
+    const itemLines = (await deps.repo.itemLinesFor(shopId)).filter((l) => ids.has(l.entryId));
+    const named = new Set(itemLines.map((l) => l.itemId));
+    const items = (await deps.repo.itemsFor(shopId)).filter((i) => named.has(i.id));
 
     return reply.code(200).send({
       party,
       entries: all,
+      itemLines,
+      items,
+      // R5 FR-6: the limits he set on this customer are about this customer too.
+      creditLimits: (await deps.repo.creditLimitsFor(shopId)).filter((l) => l.partyId === id),
       /*
        * L-15 and L-16: every export says what it is not. Somebody handed this
        * must not be able to mistake it for a tax document, and the words
@@ -235,11 +397,15 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
 
   /** The operational alerts. A figure with nothing behind it reports null, not zero. */
   app.get('/v1/alerts', {
+    ...limit,
     schema: { querystring: { type: 'object', additionalProperties: false, properties: {} } },
   }, async (req, reply) => {
     const shopId = shopOf(req);
-    const today = deps.now().slice(0, 10) as IsoDate;
-    const input = await dayInputFor(deps.repo, shopId, today);
+    // ARCH-06: one scoped transaction for the reads of this request.
+    const { today, input } = await deps.repo.inScope(shopId, async () => {
+      const t = await todayOf(shopId);
+      return { today: t, input: await dayInputFor(deps.repo, shopId, t) };
+    });
     const expected = expectedCashBalance(input).value;
     const counted = input.day.countedCash;
 
@@ -275,13 +441,14 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
   app.post(
     '/v1/days/:date/close',
     {
+      ...limit,
       schema: {
         body: {
           type: 'object',
           required: ['countedCash'],
           additionalProperties: false,
           properties: {
-            countedCash: { type: 'integer', minimum: 0 },
+            countedCash: { type: 'integer', minimum: 0, maximum: MAX_ENTRY_PAISE },
             differenceReason: { type: 'string', minLength: 1, maxLength: 200 },
           },
         },
@@ -344,8 +511,10 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
         state: 'closed',
         openingCash: existing.openingCash,
         countedCash: body.countedCash,
-        differenceReason: body.differenceReason ?? null,
+        // HT-49: a matched count carries no reason, whatever the client sent.
+        differenceReason: difference === 0 ? null : (body.differenceReason ?? null),
         closedAt,
+        startsAt: existing.startsAt,
         createdAt: existing.createdAt,
       });
 
@@ -361,6 +530,7 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
   );
   /** The reports screen's data. Figures only; the phone decides how to draw them. */
   app.get('/v1/reports', {
+    ...limit,
     schema: {
       querystring: {
         type: 'object',
@@ -374,25 +544,68 @@ export function registerReadRoutes(app: FastifyInstance, deps: AppDeps): void {
   }, async (req, reply) => {
     const shopId = shopOf(req);
     const { from, to } = req.query as { from?: string; to?: string };
-    const end = to ?? deps.now().slice(0, 10);
+    const end = to ?? (await todayOf(shopId));
     try {
       parseIsoDate(end);
       if (from) parseIsoDate(from);
     } catch {
       return reply.code(400).send({ error: 'invalid_date' });
     }
+    const start = from ?? end;
+    /*
+     * C-08 · A RANGE IS COMPUTED OR REFUSED, NEVER LABELLED AND IGNORED.
+     *
+     * This used to read `from`, echo it back, and compute the single day `to`:
+     * a figure that said "1 to 30 June" and meant "30 June". The flow figures
+     * (sales, purchases, expenses, profit) are now the engine's own per-day
+     * answers added up through the audited helper; the outstanding figures are
+     * the position at the END of the range, as they always were. A range that
+     * ends before it starts, or runs past REPORT_MAX_DAYS, is a 400.
+     */
+    if (daysBetween(start, end) < 0) return reply.code(400).send({ error: 'invalid_range' });
+    if (daysBetween(start, end) >= REPORT_MAX_DAYS) {
+      return reply.code(400).send({ error: 'range_too_long', maxDays: REPORT_MAX_DAYS });
+    }
 
-    const input = await dayInputFor(deps.repo, shopId, end as IsoDate);
-    const primary = computePrimary(input);
+    // Everything up to and including `end`, read once and grouped once.
+    const byDay = groupByDay(await deps.repo.entriesBefore(shopId, addDays(end, 1)));
+    let credit: Paise = 0;
+    let supplier: Paise = 0;
+    let netSales: Paise = 0;
+    let netPurchase: Paise = 0;
+    let totalExpenses: Paise = 0;
+    let estimatedProfit: Paise = 0;
+    for (const d of [...byDay.keys()].sort()) {
+      const input: DayInput = {
+        day: { date: d, state: 'closed', openingCash: 0, countedCash: null } as DayInput['day'],
+        entries: byDay.get(d)!,
+        priorCreditOutstanding: credit,
+        priorSupplierOutstanding: supplier,
+      };
+      if (d >= start) {
+        const facts = await deps.repo.dayFactsFor(shopId, d);
+        const primary = computePrimary({
+          ...input,
+          adjustments: facts.adjustments,
+          upiConfirmations: facts.upiConfirmations,
+        });
+        netSales = add(netSales, primary.p4NetSales.value);
+        netPurchase = add(netPurchase, primary.p5NetPurchase.value);
+        totalExpenses = add(totalExpenses, primary.p6TotalExpenses.value);
+        estimatedProfit = add(estimatedProfit, primary.estimatedProfit.value);
+      }
+      credit = creditOutstanding(input).value;
+      supplier = supplierOutstanding(input).value;
+    }
     return reply.code(200).send({
       from: from ?? null,
       to: end,
-      netSales: primary.p4NetSales.value,
-      netPurchase: primary.p5NetPurchase.value,
-      totalExpenses: primary.p6TotalExpenses.value,
-      estimatedProfit: primary.estimatedProfit.value,
-      creditOutstanding: primary.p7CreditOutstanding.value,
-      supplierOutstanding: primary.p8SupplierOutstanding.value,
+      netSales,
+      netPurchase,
+      totalExpenses,
+      estimatedProfit,
+      creditOutstanding: credit,
+      supplierOutstanding: supplier,
     });
   });
 }

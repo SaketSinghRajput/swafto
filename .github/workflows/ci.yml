@@ -8,7 +8,7 @@
 # rules that must not quietly stop working. CI is where they always run.
 #
 # THE GATES ARE THE REPOSITORY'S OWN. This file invents no quality bar. It runs
-# `check:all` - twenty-four checks that already fail the build locally - plus the
+# `check:all` - every check:* script, which already fails the build locally - plus the
 # test suite, the golden vectors on both runtimes, and the planted-defect proof. A
 # pipeline with its own weaker rules is a second opinion nobody asked for.
 #
@@ -21,7 +21,8 @@ name: ci
 
 on:
   push:
-    branches: [master, main]
+    # `productionize` is the long-running hardening branch; it gets the same gate.
+    branches: [master, main, productionize]
   pull_request:
 
 # A run that has been superseded is a run nobody will read.
@@ -64,9 +65,26 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/swafto_test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history, because the secret scan below reads every commit and
+          # a credential deleted in a later commit is still a leaked credential.
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      # Third-party secret scanner over the whole git history, complementing the
+      # in-repo check:secrets (which reads only the working tree). The binary is
+      # downloaded at a pinned version and verified against its published
+      # sha256 before it runs. It is gitleaks' own release, no paid service and
+      # no licence key (the gitleaks-action wrapper needs one for organisations).
+      # Allowlist and its reason: .github/gitleaks.toml.
+      - name: Scan git history for secrets
+        run: |
+          curl -fsSL -o /tmp/gitleaks.tar.gz             https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz' | sha256sum -c -
+          mkdir /tmp/gitleaks && tar -xzf /tmp/gitleaks.tar.gz -C /tmp/gitleaks
+          /tmp/gitleaks/gitleaks git --config .github/gitleaks.toml --redact --no-banner --exit-code 1 .
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           # The engines field says >=24 <25. CI honours it rather than guessing.
           node-version: '24'
@@ -88,11 +106,10 @@ jobs:
       - name: The whole test suite
         run: npx vitest run
 
-      - name: Golden vectors, on both runtimes, and the divergence between them
-        run: |
-          npm run test:vectors:node
-          npm run test:vectors:hermes
-          npm run check:divergence
+      # The golden vectors on both runtimes and their divergence are NOT a separate
+      # step: check:all above already runs check:divergence, which runs
+      # test:vectors:node, test:vectors:hermes and test:vectors:diff. A separate
+      # step ran the same three commands again (SIMP-05).
 
       # B33. High and critical only: a moderate advisory in build tooling is
       # something to fix on a Tuesday, not something to block a release on.
@@ -105,6 +122,56 @@ jobs:
       - name: Coverage
         run: npm run coverage
 
+      # THE COVERAGE GATE FOR BUSINESS LOGIC (PLAN 4.1). Each path is gated on its
+      # own tests, so a well-covered engine cannot carry an untested API.
+      #
+      # ENGINE. B3 in BENCHMARKS.md (SHA-locked, untouched) asks for 100% branch.
+      # The engine measures 91.91% today, so B3 is a MISS that stays reported by
+      # `npm run coverage` above; it is not gated here because a gate at 100 would
+      # redden every build for a known, recorded gap. This gate is the 80% floor,
+      # which exists to stop a REGRESSION and is not a claim that B3 is met.
+      - name: Coverage gate - engine (80%)
+        run: >-
+          npx vitest run packages/formula-engine
+          --coverage.enabled --coverage.provider=v8
+          --coverage.include='packages/formula-engine/src/**'
+          --coverage.reporter=text-summary
+          --coverage.thresholds.statements=80 --coverage.thresholds.branches=80
+          --coverage.thresholds.functions=80 --coverage.thresholds.lines=80
+
+      # API and MOBILE own their exact commands. Until they report them, these use
+      # the paths named in docs/audit/PLAN.md 4.1 (API: apps/api/src; mobile: store
+      # and app). Replace the include lines with theirs if they differ.
+      - name: Coverage gate - API (80%)
+        run: >-
+          npx vitest run apps/api
+          --coverage.enabled --coverage.provider=v8
+          --coverage.include='apps/api/src/**'
+          --coverage.reporter=text-summary
+          --coverage.thresholds.statements=80 --coverage.thresholds.branches=80
+          --coverage.thresholds.functions=80 --coverage.thresholds.lines=80
+
+      # MOBILE's command, from MOBILE via the CTO. It runs the WHOLE suite on purpose:
+      # the root test/*.spec.tsx exercise mobile code, so a mobile-only run would
+      # under-measure it. Measured when set: 91.29% lines, 86.80% branches.
+      - name: Coverage gate - mobile store, app, net, host (80% lines and branches)
+        run: >-
+          npx vitest run
+          --coverage.enabled --coverage.provider=v8
+          --coverage.include='apps/mobile/src/{store,app,net}/**'
+          --coverage.include='apps/mobile/src/host.tsx'
+          --coverage.reporter=text-summary --coverage.reportOnFailure=true
+          --coverage.thresholds.lines=80 --coverage.thresholds.branches=80
+
+      # The API's generated docs must match the routes. Script names are the ones
+      # API was asked to provide (gen:openapi, check:config-docs); if either is
+      # missing from package.json these two steps fail loudly rather than skip.
+      - name: OpenAPI is current
+        run: npm run gen:openapi -- --check
+
+      - name: Config docs agree with config.ts
+        run: npm run check:config-docs
+
       # Kept because the contact sheet is the only artifact a human can judge by
       # looking, and the Odia rendering question is answered by looking.
       - name: Contact sheet
@@ -112,7 +179,7 @@ jobs:
 
       - name: Keep what a human needs to read
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: reports
           path: |

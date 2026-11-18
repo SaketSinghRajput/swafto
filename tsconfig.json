@@ -7,6 +7,11 @@
     "moduleDetection": "force",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@swafto/ui": ["./apps/mobile/src/ui/index.ts"]
+    },
     "noEmit": true,
 
     "strict": true,
@@ -22,10 +27,16 @@
   },
   "include": [
     "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
     "packages/*/test/**/*.ts",
+    "packages/*/test/**/*.tsx",
     "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
     "apps/*/test/**/*.ts",
-    "tools/**/*.ts"
+    "apps/*/test/**/*.tsx",
+    "tools/**/*.ts",
+    "tools/**/*.tsx",
+    "tools/vendor.d.ts"
   ],
   "exclude": ["node_modules", "**/dist", "**/coverage"]
 }

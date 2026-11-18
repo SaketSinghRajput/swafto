@@ -98,8 +98,11 @@ function clockAt(startMs: number) {
   };
 }
 
+// `reserve` is required by the limiter (a transaction needs one connection). These tests
+// are sequential per client, so the client itself is the one connection.
 const runner = (c: PgClient): SqlRunner => ({
   query: (sql, params) => c.query(sql, params as unknown[]),
+  reserve: (fn) => fn({ query: (sql, params) => c.query(sql, params as unknown[]) }),
 });
 
 const T0 = Date.parse('2026-09-19T08:00:00.000Z');

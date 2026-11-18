@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - Mitra - settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Anek Odia';font-weight:400;src:local('Anek Odia Regular'),url('../../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:500;src:local('Anek Odia Medium'),url('../../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:700;src:local('Anek Odia Bold'),url('../../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf')}
+/* Mitra screen kit: palette from concepts/C-mitra.html. CSS variable names are placeholders until DESIGN-SYSTEM-V2.md tokens land (see FLOWS.md "Token map"). */
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--z:1;--zc:1;
+--bg:#FFF6EA;--surface:#FFFFFF;--raised:#F6EADA;--ink:#2B2118;--muted:#5E4E41;--edge:#8A7560;--rule:#E6D5BF;
+--brand:#0A6B66;--act:#0A6B66;--onact:#FFFFFF;--sel:#0A6B66;--onsel:#FFFFFF;--pos:#1E6B2E;--neg:#A3410C;
+--waitbg:#FFE9B8;--waitfg:#6B4400;--hbg:#0A6B66;--hfg:#FFFFFF;--nbg:#FFFFFF;--nfg:#2B2118;--nselbg:#0A6B66;--nselfg:#FFFFFF;--sbg:#0A6B66;--sfg:#FFFFFF;
+--t1bg:#DDF3EF;--t1ic:#0A6B66;--t2bg:#EDE4F7;--t2ic:#5B2E91;--t3bg:#E3F2D6;--t3ic:#2F6B1B;--t4bg:#FDE6D3;--t4ic:#8F4408;--t5bg:#EFE7DC;--t5ic:#5E4E41;--scrim:rgba(43,33,24,.55)}
+body[data-theme="focus"]{--bg:#1A1410;--surface:#261E18;--raised:#30261E;--ink:#F6EDE2;--muted:#BFAF9E;--edge:#9C8A78;--rule:#3E3126;--brand:#4FC3BA;--act:#4FC3BA;--onact:#10201F;--sel:#4FC3BA;--onsel:#10201F;--pos:#6FD48A;--neg:#F2A06A;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#261E18;--hfg:#F6EDE2;--nbg:#261E18;--nfg:#F6EDE2;--nselbg:#4FC3BA;--nselfg:#10201F;--sbg:#261E18;--sfg:#F6EDE2;--t1bg:#12302D;--t1ic:#7EE0D8;--t2bg:#2A1F3D;--t2ic:#CDB2F0;--t3bg:#1F3018;--t3ic:#A5DB86;--t4bg:#3A2412;--t4ic:#FFB27A;--t5bg:#30261E;--t5ic:#BFAF9E;--scrim:rgba(0,0,0,.65)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1500px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}.page-head p{margin-top:6px;line-height:1.5;max-width:960px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:9px 14px;font:600 14px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.toc{max-width:1500px;margin:8px auto 0;padding:0 24px;font-size:14px;line-height:1.9}
+.toc a{display:inline-block;margin:0 6px 4px 0;padding:2px 10px;border:1px solid #888;border-radius:14px;color:#222;text-decoration:none;background:#fff}
+.toc a.new{border-color:#b00;border-style:dashed}
+.stage{max-width:1500px;margin:0 auto;padding:12px 24px 40px;display:flex;flex-direction:column;gap:30px}
+.card{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;background:#EDEDED;border-radius:16px;padding:18px;scroll-margin-top:12px}
+.card.hl{outline:4px solid #0A6B66}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:calc(17px*var(--z));line-height:1.8;font-weight:500;font-synthesis:none}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.note{flex:1;min-width:320px;max-width:700px;background:#fff;border-radius:12px;padding:14px 18px;line-height:1.5;font-size:14px}
+.note h3{font-size:18px;margin-bottom:6px}.note dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px}
+.note dt{font-weight:700;color:#444}.note dd{margin:0}.note code{background:#eee;padding:0 4px;font-size:13px}
+.note .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;margin-right:6px;background:#0A6B66;color:#fff}
+.note .tag.new{background:#b00}.note .tag.chg{background:#8F4408}
+.note .keys{margin-top:6px;font-size:12px;color:#555;word-break:break-word}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}small{font-size:1em;font-weight:400}.grow{flex:1}ul{list-style:none}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}.pos{color:var(--pos)}.neg{color:var(--neg)}.ico{flex:none;display:block}
+.newc{border-bottom:2px dashed #c00}
+body[data-lang="od"] .newc::after,body[data-lang="hi"] .newc::after{content:" [NEW en]";font:700 10px system-ui;color:#c00;white-space:nowrap}
+/* chrome */
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg);border-radius:0 0 24px 24px;padding-bottom:6px;font-size:calc(17px*var(--zc))}
+.top h1{font-size:1.235em;font-weight:700;line-height:1.5}.top .sn{font-size:1.235em;font-weight:700;line-height:1.5}.top .dt{line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;line-height:1.4;font-weight:500;border-radius:28px}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg);border-radius:24px 24px 0 0;border-top:2px solid var(--rule);padding:4px 6px 0;font-size:calc(17px*var(--zc))}
+.tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.4;border-radius:20px;margin:2px}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+/* today */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.tile{min-height:76px;min-width:56px;display:flex;flex-direction:row;align-items:center;gap:10px;padding:0 12px;line-height:1.4;border-radius:20px;font-size:1.12em;background:var(--t5bg);color:var(--ink);text-align:left;font-weight:700}
+.ti{width:48px;height:48px;flex:none;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.t-sale{background:var(--act);color:var(--onact)}.t-sale .ti{color:var(--act)}
+.t-udhar{background:var(--t2bg)}.t-udhar .ti{color:var(--t2ic)}.t-collect{background:var(--t3bg)}.t-collect .ti{color:var(--t3ic)}.t-expense{background:var(--t4bg)}.t-expense .ti{color:var(--t4ic)}
+.t-more{grid-column:1/-1;min-height:56px;justify-content:center}.t-more .ti{width:36px;height:36px;color:var(--t5ic)}
+.tile.off{opacity:1;background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}.tile.off .ti{color:var(--muted)}
+.hero{margin:0 12px;padding:12px;background:var(--surface);border:2px solid var(--rule);border-radius:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.12em}
+.hero .hi{width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none}
+.hero .fig{padding:2px 0 6px}.hero-fig{font-size:2.1em}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.4}.ln .k{display:flex;align-items:center;gap:6px}
+.hero .ln{border-top:2px dashed var(--rule)}
+.dirico{border-radius:50%;padding:2px;width:28px;height:28px}.ln.in .dirico{background:var(--t3bg);color:var(--t3ic)}.ln.out .dirico{background:var(--t4bg);color:var(--t4ic)}
+.facts{margin:8px 12px 0}.facts .ln{min-height:52px;border-bottom:2px solid var(--rule)}.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left;background:var(--raised);border:2px solid var(--edge);border-radius:24px}
+.closecard.quiet2{background:var(--surface);border-color:var(--rule)}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.4}.cc-t{font-weight:700;font-size:1.06em}.cc-c{grid-area:chev;display:flex}.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}.bar i{flex:1;height:10px;background:var(--rule);border-radius:5px}.bar i.on{background:var(--brand)}
+/* controls */
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--edge);background:var(--raised);min-height:56px;border-radius:28px;overflow:hidden}
+.seg.two,.seg.three{margin:4px 12px 0}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.4;border-radius:28px;padding:0 6px;text-align:center}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;border-radius:32px}
+.addbar.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.addbar .m{font-size:1.15em}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:32px;text-align:center;line-height:1.4;padding:4px 12px}
+.primary.tonal{background:var(--t1bg);color:var(--ink);border:2px solid var(--act)}
+.primary.outline{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.primary.warn{background:var(--surface);color:var(--neg);border:2px solid var(--neg)}
+.primary.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.btn2{min-height:56px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--act);border-radius:28px;font-weight:700;background:var(--surface);line-height:1.4;text-align:center}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:140px;text-align:center;line-height:1.4}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.stack{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
+/* keypad / entry */
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;border-radius:16px}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.4}
+.kp.hidden{display:none}
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:2px solid var(--rule)}.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:2px solid var(--rule)}.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}.cust .cn{font-size:1.235em;font-weight:700}.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}.amt .al{color:var(--muted)}.amt-fig{font-size:2em}
+.refuse{display:flex;gap:8px;align-items:flex-start;margin:6px 0;padding:8px 12px;border:2px solid var(--neg);border-radius:16px;background:var(--surface);color:var(--ink);line-height:1.4}
+.refuse b{color:var(--neg)}
+/* rows */
+.prog{padding:8px 12px 4px}.pt{display:flex;flex-direction:column;line-height:1.4;margin-bottom:6px}.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:64px;line-height:1.4;margin:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:50%;background:var(--raised);border:2px solid var(--edge)}
+.row.done .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row.next{background:var(--t1bg);border-color:var(--act)}.row.next .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}.row .rv small{color:var(--muted)}
+.row.lock{color:var(--muted);border-style:dashed}
+.row.tap{width:calc(100% - 24px);text-align:left}
+.row.warnr{border-color:var(--neg)}
+.sec{padding:10px 16px 0;font-weight:700;color:var(--muted)}
+/* ledger */
+.lhero{padding:12px;background:var(--t1bg);margin:12px;border-radius:24px}.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.4}.lhero .big{font-size:2.1em;color:var(--t1ic)}.lhero .mid{font-size:1.4em}.lhero .h2{margin-top:6px}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700;border:2px solid var(--act);border-radius:28px;padding:0 16px}
+.plist li{margin:6px 12px}.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;line-height:1.4;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.pn{flex:1;display:flex;flex-direction:column}.pn b{font-size:1.18em}.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}.pa .m{font-size:1.3em}.pa em{font-style:normal;color:var(--muted)}
+.av{display:flex;width:44px;height:44px;flex:none;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.12em}
+.av0{background:var(--t1bg);color:var(--t1ic)}.av1{background:var(--t2bg);color:var(--t2ic)}.av2{background:var(--t3bg);color:var(--t3ic)}.av3{background:var(--t4bg);color:var(--t4ic)}.av4{background:var(--t5bg);color:var(--t5ic)}
+/* settings rows, forms, switches */
+.lrow{display:flex;align-items:center;gap:12px;min-height:64px;margin:6px 12px;padding:4px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.lrow .li{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--t5bg);color:var(--t5ic)}
+.lrow .lt{flex:1;display:flex;flex-direction:column}.lrow .lt small{color:var(--muted)}
+.lrow.danger .li{background:var(--t4bg);color:var(--t4ic)}.lrow.danger{border-color:var(--neg)}
+.field{margin:8px 12px}.field label{display:block;color:var(--muted);line-height:1.4}
+.field .in{min-height:56px;display:flex;align-items:center;padding:0 14px;background:var(--surface);border:2px solid var(--edge);border-radius:16px;line-height:1.4}
+.field .in.focus{border-color:var(--act);border-width:3px}.field .in.err{border-color:var(--neg)}.field .in .ph{color:var(--muted)}
+.field .help{color:var(--muted);line-height:1.4;margin-top:2px}.field .help.err{color:var(--neg)}
+.caret{display:inline-block;width:2px;height:1.2em;background:var(--ink);margin-left:2px;vertical-align:text-bottom}
+.sw{display:flex;align-items:center;gap:12px;min-height:72px;margin:6px 12px;padding:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.sw .tx{flex:1;display:flex;flex-direction:column}.sw .tx small{color:var(--muted)}
+.sw .knob{min-width:84px;min-height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;padding:0 10px;border:2px solid var(--edge);background:var(--raised)}
+.sw.on .knob{background:var(--sel);color:var(--onsel);border-color:var(--sel)}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.4;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg);border-radius:20px;margin:8px 12px 0}
+.banner span{flex:1}.banner.err{background:var(--surface);color:var(--ink);border-color:var(--neg)}.banner.info{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:24px 16px}.empty .ei{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center}
+.empty p{margin-bottom:10px;line-height:1.5}.empty .primary{max-width:280px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px;padding:12px}.skel i{display:block;height:64px;background:var(--rule);border-radius:20px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px;gap:12px}
+.bigmsg{font-size:1.5em;font-weight:700;line-height:1.4}.lead{color:var(--muted);line-height:1.5}
+.otp{display:flex;gap:8px;padding:0 12px;justify-content:center}.otp i{width:46px;height:60px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:1.5em}.otp i.cur{border-color:var(--act);border-width:3px}
+.dots{display:flex;gap:6px;justify-content:center;padding:6px}.dots i{width:10px;height:10px;border-radius:5px;background:var(--rule)}.dots i.on{background:var(--brand);width:26px}
+/* overlays */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-radius:28px 28px 0 0;padding:12px 0 16px;max-height:84%;display:flex;flex-direction:column;border-top:2px solid var(--edge)}
+.sheet h2{font-size:1.235em;padding:0 16px 6px;line-height:1.4}.sheet .grab{width:48px;height:5px;border-radius:3px;background:var(--edge);margin:0 auto 8px}
+.dialog{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:6;background:var(--bg);border:2px solid var(--edge);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:10px;line-height:1.5}
+.dialog h2{font-size:1.235em;line-height:1.4}
+.toast{position:absolute;left:12px;right:12px;bottom:12px;z-index:7;background:var(--ink);color:var(--bg);border-radius:20px;padding:10px 14px;display:flex;gap:8px;align-items:center;line-height:1.4}
+.refbanner{position:absolute;left:76px;right:12px;top:12px;z-index:7;padding:10px 12px;background:var(--surface);border:2px solid var(--neg);border-radius:16px;line-height:1.4}
+.refbanner b{color:var(--neg)}.refbanner.nn{border-color:var(--edge)}.refbanner.nn b{color:var(--ink)}
+.gray{filter:grayscale(1);opacity:.55}
+.spin{width:22px;height:22px;border:3px solid var(--rule);border-top-color:var(--act);border-radius:50%;display:inline-block}
+.size-prev{font-size:calc(17px*var(--z))}
+.legend{max-width:1500px;margin:0 auto;padding:6px 24px 0;font-size:13px;color:#444}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1 id="area-title"></h1><p id="area-intro"></p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button><button data-lang-btn="hi" aria-pressed="false">हिन्दी</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div>
+<div class="grp"><button data-size-btn="1" aria-pressed="true">Text 1.0x</button><button data-size-btn="1.3" aria-pressed="false">1.3x</button><button data-size-btn="2" aria-pressed="false">2.0x</button></div></div></div>
+<div class="legend">Odia and Hindi are the app's unreviewed DRAFT strings (H13), taken verbatim from strings.ts. A dashed red underline means the string does not exist yet (English only). Text sizes above 1.5x leave the header and tab bar at 1.5x (the app's chrome cap); body text and figures keep growing. Browser render with Anek Odia, not the phone.</div>
+<nav class="toc" id="toc"></nav>
+<main class="stage" id="stage"></main>
+<script>window.STRINGS={"sync.waiting":{"en":"{n} waiting · safe on phone","hi":"{n} बाकी · फ़ोन में सुरक्षित","or":"{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ"},"sync.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"common.back":{"en":"Back","hi":"पीछे","or":"ପଛକୁ ଯାଆନ୍ତୁ"},"nav.today":{"en":"Today","hi":"आज","or":"ଆଜି"},"nav.parties":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"nav.reports":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"act.sale":{"en":"Sale","hi":"बिक्री","or":"ବିକ୍ରି"},"act.credit":{"en":"Udhar sale","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"act.collect":{"en":"Collect","hi":"वसूली","or":"ଆଦାୟ"},"act.expense":{"en":"Expense","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"t1.more":{"en":"More","hi":"और","or":"ଅଧିକ"},"box.title":{"en":"In the box now","hi":"अभी बॉक्स में","or":"ଏବେ ବାକ୍ସରେ"},"box.opening":{"en":"Opening","hi":"शुरुआत","or":"ଆରମ୍ଭ"},"box.in":{"en":"cash in","hi":"नकद आया","or":"ନଗଦ ଆସିଲା"},"box.out":{"en":"cash out","hi":"नकद गया","or":"ନଗଦ ଗଲା"},"box.sales":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"t1.toCollect":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ ବାକି ଉଧାର"},"t1.continueClose":{"en":"Continue day close","hi":"दिन बंद करना जारी रखें","or":"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ"},"t1.progress":{"en":"{done} of {total}","hi":"{total} में से {done}","or":"{total} ରୁ {done}"},"keypad.clear":{"en":"Clear","hi":"मिटाएँ","or":"ଖାଲି କରନ୍ତୁ"},"keypad.delete":{"en":"Delete last digit","hi":"आखिरी अंक मिटाएँ","or":"ଶେଷ ଅଙ୍କ ଲିଭାନ୍ତୁ"},"t1.day.4":{"en":"Thursday","hi":"गुरुवार","or":"ଗୁରୁବାର"},"t1.month.11":{"en":"November","hi":"नवंबर","or":"ନଭେମ୍ବର"},"s1.privacy":{"en":"Privacy and consent","hi":"निजता और सहमति","or":"ଗୋପନୀୟତା ଓ ସହମତି"},"s1.about":{"en":"About this app","hi":"इस ऐप के बारे में","or":"ଏହି ଆପ୍ ବିଷୟରେ"},"s1.help":{"en":"Help and contact","hi":"सहायता और संपर्क","or":"ସହାୟତା ଓ ଯୋଗାଯୋଗ"},"s1.signIn":{"en":"Sign in","hi":"साइन इन करें","or":"ସାଇନ୍ ଇନ୍ କରନ୍ତୁ"},"s1.appLock":{"en":"App lock","hi":"ऐप लॉक","or":"ଆପ୍ ଲକ୍"},"s1.appLockOff":{"en":"Off","hi":"बंद","or":"ବନ୍ଦ"},"s1.appLockNoScreenLock":{"en":"This phone has no screen lock, so the app lock cannot be turned on. Set a screen lock in the phone settings first.","hi":"इस फ़ोन में स्क्रीन लॉक नहीं है, इसलिए ऐप लॉक चालू नहीं हो सकता। पहले फ़ोन की सेटिंग में स्क्रीन लॉक लगाएँ।","or":"ଏହି ଫୋନରେ ସ୍କ୍ରୀନ୍ ଲକ୍ ନାହିଁ, ତେଣୁ ଆପ୍ ଲକ୍ ଚାଲୁ ହୋଇପାରିବ ନାହିଁ। ପ୍ରଥମେ ଫୋନ୍ ସେଟିଂରେ ସ୍କ୍ରୀନ୍ ଲକ୍ ଲଗାନ୍ତୁ।"},"a8.logout":{"en":"Log out","hi":"लॉग आउट","or":"ଲଗ୍ ଆଉଟ୍"},"s1.title":{"en":"Settings","hi":"सेटिंग","or":"ସେଟିଂ"},"s1.shop":{"en":"Your shop","hi":"आपकी दुकान","or":"ଆପଣଙ୍କ ଦୋକାନ"},"s1.language":{"en":"Language and screen","hi":"भाषा और स्क्रीन","or":"ଭାଷା ଓ ସ୍କ୍ରୀନ"},"s1.export":{"en":"Entries for your accountant","hi":"अपने अकाउंटेंट के लिए एंट्री","or":"ଆପଣଙ୍କ ହିସାବରକ୍ଷକଙ୍କ ପାଇଁ ଏଣ୍ଟ୍ରି"},"s1.deleteAccount":{"en":"Delete this account","hi":"यह खाता मिटाएँ","or":"ଏହି ଖାତା ମିଟାନ୍ତୁ"},"consent.purpose.account_and_ledger":{"en":"Your number, your shop name, and the entries you type","hi":"आपका नंबर, दुकान का नाम, और आपकी दर्ज की गई बातें","or":"ଆପଣଙ୍କ ନମ୍ବର, ଦୋକାନ ନାମ, ଏବଂ ଆପଣ ଲେଖିଥିବା ବିଷୟ"},"consent.purpose.sms_reminders":{"en":"Send me reminders by SMS","hi":"मुझे SMS से याद दिलाएँ","or":"ମୋତେ SMS ରେ ମନେ ପକାନ୍ତୁ"},"consent.purpose.crash_diagnostics":{"en":"Send crash reports, never with money or names","hi":"क्रैश रिपोर्ट भेजें, पैसे या नाम कभी नहीं","or":"କ୍ରାସ ରିପୋର୍ଟ ପଠାନ୍ତୁ, ଟଙ୍କା କିମ୍ବା ନାମ କେବେ ନୁହେଁ"},"consent.manage.title":{"en":"What you agreed to","hi":"आपने किसके लिए हाँ कहा","or":"ଆପଣ କ’ଣ ପାଇଁ ହଁ କହିଥିଲେ"},"consent.intro":{"en":"This is what SWAFTO keeps, and why. Nothing is kept for any other reason.","hi":"SWAFTO यह रखता है, और इसीलिए रखता है। किसी और कारण से कुछ नहीं रखा जाता।","or":"SWAFTO ଏହା ରଖେ, ଏବଂ ଏଥିପାଇଁ ରଖେ। ଅନ୍ୟ କୌଣସି କାରଣରୁ କିଛି ରଖାଯାଏ ନାହିଁ।"},"consent.required":{"en":"Needed to keep your book","hi":"खाता रखने के लिए ज़रूरी","or":"ଖାତା ରଖିବାକୁ ଆବଶ୍ୟକ"},"consent.on":{"en":"Yes","hi":"हाँ","or":"ହଁ"},"consent.optional":{"en":"Your choice","hi":"आपकी मर्ज़ी","or":"ଆପଣଙ୍କ ଇଚ୍ଛା"},"consent.off":{"en":"No","hi":"नहीं","or":"ନା"},"consent.rights":{"en":"You can see everything we hold, correct it, or have it erased. You can change any of these choices later, as easily as now.","hi":"आप सब कुछ देख सकते हैं, सुधार सकते हैं, या मिटवा सकते हैं। ये चुनाव बाद में भी उतनी ही आसानी से बदल सकते हैं।","or":"ଆପଣ ସବୁକିଛି ଦେଖିପାରିବେ, ସଂଶୋଧନ କରିପାରିବେ, କିମ୍ବା ହଟାଇପାରିବେ। ଏହି ପସନ୍ଦ ପରେ ମଧ୍ୟ ସହଜରେ ବଦଳାଇପାରିବେ।"},"s2.title":{"en":"Your shop","hi":"आपकी दुकान","or":"ଆପଣଙ୍କ ଦୋକାନ"},"s2.name":{"en":"Shop name","hi":"दुकान का नाम","or":"ଦୋକାନ ନାମ"},"s2.note":{"en":"Your shop name appears on anything you export.","hi":"आपकी दुकान का नाम हर निर्यात पर दिखता है।","or":"ଆପଣଙ୍କ ଦୋକାନ ନାମ ପ୍ରତ୍ୟେକ ରପ୍ତାନିରେ ଦେଖାଯିବ।"},"s2.dayStart":{"en":"Day starts at","hi":"दिन शुरू होता है","or":"ଦିନ ଆରମ୍ଭ ହୁଏ"},"s2.dayStartNote":{"en":"A sale before this time counts in the day before. Applies from the next day you open; days already recorded keep their hours.","hi":"इस समय से पहले की बिक्री पिछले दिन में गिनी जाती है। अगले खुलने वाले दिन से लागू; पहले से दर्ज दिन अपने समय पर रहते हैं।","or":"ଏହି ସମୟ ପୂର୍ବର ବିକ୍ରି ପୂର୍ବ ଦିନରେ ଗଣାଯିବ। ପରବର୍ତ୍ତୀ ଖୋଲୁଥିବା ଦିନଠାରୁ ଲାଗୁ; ପୂର୍ବରୁ ଲେଖାଥିବା ଦିନ ନିଜ ସମୟରେ ରହିବ।"},"s7.title":{"en":"Delete this account","hi":"यह खाता मिटाएँ","or":"ଏହି ଖାତା ମିଟାନ୍ତୁ"},"s7.what":{"en":"Everything in your shop book is deleted: every day, every entry, and every name you have recorded.","hi":"आपकी बही का सब कुछ मिट जाएगा।","or":"ଆପଣଙ୍କ ଖାତାର ସବୁ କିଛି ମିଟିଯିବ।"},"s7.grace":{"en":"Signing in again within 30 days cancels the deletion. After that it cannot be undone.","hi":"30 दिन के भीतर फिर से साइन इन करने पर यह रद्द हो जाता है।","or":"30 ଦିନ ଭିତରେ ପୁଣି ସାଇନ୍ ଇନ୍ କଲେ ଏହା ବାତିଲ୍ ହୋଇଯାଏ।"},"s7.continue":{"en":"Continue","hi":"जारी रखें","or":"ଜାରି ରଖନ୍ତୁ"},"s8.title":{"en":"Are you sure?","hi":"क्या आप निश्चित हैं?","or":"ଆପଣ ନିଶ୍ଚିତ କି?"},"s8.localOnly":{"en":"This phone is not signed in. Only the book on this phone is deleted - no account on our server is touched. To delete that too, sign in first, or use the web page listed in About.","hi":"यह फ़ोन साइन इन नहीं है। सिर्फ़ इस फ़ोन की बही मिटेगी - हमारे सर्वर पर कोई खाता नहीं छुआ जाएगा। उसे भी मिटाने के लिए पहले साइन इन करें, या \"इस ऐप के बारे में\" में दिया वेब पेज इस्तेमाल करें।","or":"ଏହି ଫୋନ୍ ସାଇନ୍ ଇନ୍ ହୋଇନାହିଁ। କେବଳ ଏହି ଫୋନର ଖାତା ମିଟିବ - ଆମ ସର୍ଭରରେ କୌଣସି ଖାତା ଛୁଆଁଯିବ ନାହିଁ। ତାହାକୁ ମଧ୍ୟ ମିଟାଇବାକୁ ପ୍ରଥମେ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ, କିମ୍ବା \"ଏହି ଆପ୍ ବିଷୟରେ\"ରେ ଥିବା ୱେବ ପେଜ ବ୍ୟବହାର କରନ୍ତୁ।"},"s8.phoneNow":{"en":"The book on this phone is deleted as soon as our server accepts the request.","hi":"हमारा सर्वर अनुरोध स्वीकार करते ही इस फ़ोन की बही मिट जाती है।","or":"ଆମ ସର୍ଭର ଅନୁରୋଧ ଗ୍ରହଣ କରିବା ମାତ୍ରେ ଏହି ଫୋନର ଖାତା ମିଟିଯାଏ।"},"s8.owed":{"en":"You are still owed money that this book is the only record of.","hi":"इस बही में अभी भी उधार दर्ज है।","or":"ଏହି ଖାତାରେ ଏପର୍ଯ୍ୟନ୍ତ ଉଧାର ଲେଖା ଅଛି।"},"s8.cancel":{"en":"Keep my book","hi":"मेरी बही रहने दें","or":"ମୋ ଖାତା ରହୁ"},"s8.confirm":{"en":"Delete everything","hi":"सब कुछ मिटाएँ","or":"ସବୁ ମିଟାନ୍ତୁ"},"s3.title":{"en":"Language and screen","hi":"भाषा और स्क्रीन","or":"ଭାଷା ଓ ସ୍କ୍ରୀନ"},"s3.language":{"en":"Language","hi":"भाषा","or":"ଭାଷା"},"s3.display":{"en":"Screen","hi":"स्क्रीन","or":"ସ୍କ୍ରୀନ"},"s3.comfort":{"en":"Light","hi":"हल्की","or":"ହାଲୁକା"},"s3.focus":{"en":"Dark, bigger text","hi":"गहरी, बड़े अक्षर","or":"ଗାଢ଼, ବଡ଼ ଅକ୍ଷର"},"s4.title":{"en":"Privacy and consent","hi":"निजता और सहमति","or":"ଗୋପନୀୟତା ଓ ସହମତି"},"s4.review":{"en":"What you agreed to","hi":"आपने किस पर सहमति दी","or":"ଆପଣ କାହାକୁ ସହମତି ଦେଇଛନ୍ତି"},"s4.withdraw":{"en":"You can turn any of these off at any time. Turning one off is as easy as turning it on.","hi":"आप इनमें से किसी को कभी भी बंद कर सकते हैं।","or":"ଆପଣ ଏମାନଙ୍କ ମଧ୍ୟରୁ ଯେକୌଣସିକୁ ଯେକୌଣସି ସମୟରେ ବନ୍ଦ କରିପାରିବେ।"},"refusal.titleNotDone":{"en":"Could not do that","hi":"यह नहीं हो सका","or":"ଏହା ହୋଇପାରିଲା ନାହିଁ"},"refusal.consent":{"en":"Could not reach the server, so your choice was not changed. Try again with signal.","hi":"सर्वर से संपर्क नहीं हुआ, आपकी पसंद नहीं बदली। नेटवर्क मिलने पर फिर कोशिश करें।","or":"ସର୍ଭର ସହ ଯୋଗାଯୋଗ ହେଲା ନାହିଁ, ଆପଣଙ୍କ ପସନ୍ଦ ବଦଳିଲା ନାହିଁ। ନେଟୱର୍କ ମିଳିଲେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"refusal.consentRead":{"en":"Could not reach the server, so what you agreed to cannot be shown. Try again with signal.","hi":"सर्वर से जुड़ नहीं सके, इसलिए आपकी दी हुई सहमति नहीं दिख सकती। नेटवर्क मिलने पर फिर कोशिश करें।","or":"ସର୍ଭର ସହ ଯୋଗାଯୋଗ ହେଲା ନାହିଁ, ତେଣୁ ଆପଣ କଣ ରାଜି ହୋଇଛନ୍ତି ଦେଖାଯାଇପାରିବ ନାହିଁ। ନେଟୱର୍କ ମିଳିଲେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"common.retry":{"en":"Try again","hi":"फिर कोशिश करें","or":"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"},"refusal.eraseOffline":{"en":"No connection, so nothing was deleted - not on this phone and not on our server. Try again with signal.","hi":"नेटवर्क नहीं है, इसलिए कुछ नहीं मिटा - न इस फ़ोन पर, न हमारे सर्वर पर। नेटवर्क मिलने पर फिर कोशिश करें।","or":"ନେଟୱର୍କ ନାହିଁ, ତେଣୁ କିଛି ମିଟିଲା ନାହିଁ - ଏହି ଫୋନରେ ନୁହେଁ, ଆମ ସର୍ଭରରେ ମଧ୍ୟ ନୁହେଁ। ନେଟୱର୍କ ମିଳିଲେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"refusal.erase":{"en":"The server did not accept the request, so nothing was deleted. Try again later.","hi":"सर्वर ने अनुरोध स्वीकार नहीं किया, इसलिए कुछ नहीं मिटा। बाद में फिर कोशिश करें।","or":"ସର୍ଭର ଅନୁରୋଧ ଗ୍ରହଣ କଲା ନାହିଁ, ତେଣୁ କିଛି ମିଟିଲା ନାହିଁ। ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"refusal.eraseSignIn":{"en":"Your sign-in has expired, so nothing was deleted. Sign in again, then delete.","hi":"आपका साइन इन खत्म हो गया है, इसलिए कुछ नहीं मिटा। फिर से साइन इन करें, फिर मिटाएँ।","or":"ଆପଣଙ୍କ ସାଇନ୍ ଇନ୍ ଶେଷ ହୋଇଯାଇଛି, ତେଣୁ କିଛି ମିଟିଲା ନାହିଁ। ପୁଣି ସାଇନ୍ ଇନ୍ କରି ତା ପରେ ମିଟାନ୍ତୁ।"},"s8.scheduledTitle":{"en":"Deletion requested","hi":"मिटाने का अनुरोध हो गया","or":"ମିଟାଇବା ଅନୁରୋଧ ହୋଇଗଲା"},"s8.scheduled":{"en":"Your account is deleted after 30 days. Sign in again any time before then to cancel.","hi":"आपका खाता 30 दिन बाद मिटेगा। उससे पहले कभी भी फिर से साइन इन करके इसे रद्द करें।","or":"ଆପଣଙ୍କ ଖାତା 30 ଦିନ ପରେ ମିଟିବ। ତା ପୂର୍ବରୁ ଯେକୌଣସି ସମୟରେ ପୁଣି ସାଇନ୍ ଇନ୍ କରି ଏହାକୁ ବାତିଲ୍ କରନ୍ତୁ।"},"s8.erasesOn":{"en":"Erased on","hi":"मिटने की तारीख","or":"ମିଟିବା ତାରିଖ"},"s8.phoneWiped":{"en":"The book on this phone has been deleted now. Cancelling keeps your account on our server, but does not bring the book back to this phone.","hi":"इस फ़ोन की बही अभी मिटा दी गई है। रद्द करने पर हमारे सर्वर पर आपका खाता बचा रहता है, पर बही इस फ़ोन पर वापस नहीं आती।","or":"ଏହି ଫୋନର ଖାତା ଏବେ ମିଟାଇ ଦିଆଗଲା। ବାତିଲ୍ କଲେ ଆମ ସର୍ଭରରେ ଆପଣଙ୍କ ଖାତା ରହିବ, କିନ୍ତୁ ଖାତା ଏହି ଫୋନକୁ ଫେରିବ ନାହିଁ।"},"s8.done":{"en":"Done","hi":"ठीक है","or":"ଠିକ ଅଛି"},"s8.localTitle":{"en":"Deleted from this phone","hi":"इस फ़ोन से मिटाया गया","or":"ଏହି ଫୋନରୁ ମିଟାଗଲା"},"s8.localDone":{"en":"The book on this phone has been deleted. This did not send a deletion request to our server.","hi":"इस फ़ोन की बही मिटा दी गई है। इससे हमारे सर्वर को मिटाने का कोई अनुरोध नहीं गया।","or":"ଏହି ଫୋନର ଖାତା ମିଟାଇ ଦିଆଗଲା। ଏଥିରୁ ଆମ ସର୍ଭରକୁ କୌଣସି ମିଟାଇବା ଅନୁରୋଧ ଯାଇନାହିଁ।"},"s5.title":{"en":"About this app","hi":"इस ऐप के बारे में","or":"ଏହି ଆପ୍ ବିଷୟରେ"},"s5.version":{"en":"Version","hi":"संस्करण","or":"ସଂସ୍କରଣ"},"s5.privacy":{"en":"Privacy policy","hi":"गोपनीयता नीति","or":"ଗୋପନୀୟତା ନୀତି"},"settings.open":{"en":"Open","hi":"खोलें","or":"ଖୋଲନ୍ତୁ"},"s5.terms":{"en":"Terms of service","hi":"सेवा की शर्तें","or":"ସେବା ସର୍ତ୍ତାବଳୀ"},"s5.licences":{"en":"Open-source licences","hi":"ओपन-सोर्स लाइसेंस","or":"ଓପେନ୍-ସୋର୍ସ ଲାଇସେନ୍ସ"},"s5.notTax":{"en":"This is a record of entries made in your shop book. It is not a tax document.","hi":"यह आपकी दुकान की बही का रिकॉर्ड है। यह कर दस्तावेज़ नहीं है।","or":"ଏହା ଆପଣଙ୍କ ଦୋକାନ ଖାତାର ଲେଖା। ଏହା ଟ୍ୟାକ୍ସ ଦଲିଲ ନୁହେଁ।"},"s5.webDelete":{"en":"You can also delete your account from the web:","hi":"आप वेब से भी अपना खाता मिटा सकते हैं:","or":"ଆପଣ ୱେବରୁ ମଧ୍ୟ ନିଜ ଖାତା ମିଟାଇପାରିବେ:"},"s6.title":{"en":"Help and contact","hi":"सहायता और संपर्क","or":"ସହାୟତା ଓ ଯୋଗାଯୋଗ"},"s6.grievance":{"en":"Grievance officer","hi":"शिकायत अधिकारी","or":"ଅଭିଯୋଗ ଅଧିକାରୀ"},"s6.pending":{"en":"Not yet published. This app will not show a contact it has not been given.","hi":"अभी प्रकाशित नहीं।","or":"ଏପର୍ଯ୍ୟନ୍ତ ପ୍ରକାଶିତ ନୁହେଁ।"},"a8.bar":{"en":"Log out?","hi":"लॉग आउट करें?","or":"ଲଗ୍ ଆଉଟ୍ କରିବେ?"},"a8.title":{"en":"Log out of {shop}?","hi":"{shop} से लॉग आउट करें?","or":"{shop} ରୁ ଲଗ୍ ଆଉଟ୍ କରିବେ?"},"a8.body":{"en":"Signing back in needs a new SMS code to +91 {phone}.","hi":"फिर से साइन इन के लिए +91 {phone} पर नया SMS कोड चाहिए।","or":"ପୁଣି ସାଇନ୍ ଇନ୍ ପାଇଁ +91 {phone} କୁ ନୂଆ SMS କୋଡ୍ ଦରକାର।"},"a8.saved":{"en":"Everything is saved. Nothing will be lost.","hi":"सब कुछ सहेजा हुआ है। कुछ नहीं खोएगा।","or":"ସବୁକିଛି ସଞ୍ଚିତ ଅଛି। କିଛି ହଜିବ ନାହିଁ।"},"a8.stay":{"en":"Stay signed in","hi":"साइन इन रहें","or":"ସାଇନ୍ ଇନ୍ ରୁହନ୍ତୁ"},"a8.pending":{"en":"{n} entries not yet synced — they stay on this phone and upload when you sign in again with this number.","hi":"{n} एंट्री अभी सिंक नहीं हुईं — वे इसी फ़ोन पर रहेंगी और इसी नंबर से फिर साइन इन करने पर अपलोड होंगी।","or":"{n}ଟି ଏଣ୍ଟ୍ରି ଏପର୍ଯ୍ୟନ୍ତ ସିଙ୍କ୍ ହୋଇନାହିଁ — ସେଗୁଡ଼ିକ ଏହି ଫୋନରେ ରହିବ ଓ ଏହି ନମ୍ବରରେ ପୁଣି ସାଇନ୍ ଇନ୍ କଲେ ଅପଲୋଡ୍ ହେବ।"},"s11.body":{"en":"Your shop book is hidden. Unlock with your phone lock to continue.","hi":"आपकी दुकान की बही छिपी है। आगे बढ़ने के लिए फ़ोन के लॉक से खोलें।","or":"ଆପଣଙ୍କ ଦୋକାନ ଖାତା ଲୁଚି ରହିଛି। ଆଗକୁ ବଢ଼ିବାକୁ ଫୋନ୍ ଲକ୍ ଦେଇ ଖୋଲନ୍ତୁ।"},"s11.unlock":{"en":"Unlock","hi":"खोलें","or":"ଖୋଲନ୍ତୁ"},"s11.title":{"en":"SWAFTO is locked","hi":"SWAFTO लॉक है","or":"SWAFTO ଲକ୍ ଅଛି"},"s11.paused":{"en":"App lock is paused: this phone has no screen lock now. Set one in the phone settings to use it again.","hi":"ऐप लॉक रुका है: इस फ़ोन में अभी स्क्रीन लॉक नहीं है। फिर से इस्तेमाल के लिए फ़ोन की सेटिंग में लगाएँ।","or":"ଆପ୍ ଲକ୍ ବନ୍ଦ ରହିଛି: ଏହି ଫୋନରେ ଏବେ ସ୍କ୍ରୀନ୍ ଲକ୍ ନାହିଁ। ପୁଣି ବ୍ୟବହାର ପାଇଁ ଫୋନ୍ ସେଟିଂରେ ଲଗାନ୍ତୁ।"}};</script>
+<script>/* Mitra screen kit. Copy comes from window.STRINGS (extracted from apps/mobile/src/i18n/strings.ts by build.mjs, verbatim). Keys that do not exist yet are written K.N('English text') and are listed as NEW. Money is integer paise; the browser formatting mirrors formatPaise (Indian grouping, 2 decimals, sign always printed). */
+(function () {
+  'use strict';
+  var K = (window.K = {});
+  var SPEC = (window.SPEC = window.SPEC || {});
+  var LANGS = { en: 'en', od: 'or', hi: 'hi' };
+  var S = { lang: 'od', theme: 'comfort', size: 1 };
+  var USED = {}; var NEWC = {}; var curFrame = '';
+  K.state = S;
+
+  /* ---- copy ---- */
+  K.t = function (key, vars) {
+    var p = window.STRINGS[key];
+    if (!p) { return '<span class="newc" title="MISSING KEY ' + key + '">' + key + '</span>'; }
+    (USED[curFrame] = USED[curFrame] || {})[key] = 1;
+    var s = p[LANGS[S.lang]];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : '{' + k + '}'; });
+    return s;
+  };
+  K.N = function (en, hint) {
+    (NEWC[curFrame] = NEWC[curFrame] || {})[en] = hint || '';
+    return '<span class="newc" title="NEW string: no od/hi yet (H13)">' + en + '</span>';
+  };
+  K.plain = function (key, vars) { return K.t(key, vars); };
+  K.pick = function (en, od, hi) { return S.lang === 'en' ? en : (S.lang === 'od' ? od : hi); }; /* proper names only */
+
+  /* ---- money ---- */
+  K.rupee = function (p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100, s = String(r);
+    if (s.length > 3) { var l3 = s.slice(-3), rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + l3; }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  };
+  /* o.sign: print + on positives; o.out: an out-line (always -); o.tone:'dir' colours by direction (sign is always printed too) */
+  K.M = function (p, o) {
+    o = o || {}; var neg = o.out || p < 0, sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + K.rupee(p) + '</span>';
+  };
+
+  /* ---- icons (stroke, 24 grid) ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.6 14.4 9 14.4L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.5-3.5M12 12l3.5-3.5"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 5l-7 7 7 7"/>', bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>', up: '<path d="M12 5v14M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 5a3.5 3.5 0 0 1 0 7M19 20c0-2.500-1.500-4-3-4.700"/>',
+    warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    cloudoff: '<path d="M7 18h10a4 4 0 0 0 .8-7.900A6 6 0 0 0 6.500 9.500 4 4 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+    share: '<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 11l7.400-4M8.300 13l7.400 4"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    textsize: '<path d="M3 19L8 6l5 13M5 15h6M15 19l3.500-8 3.500 8M16.200 16.500h4.600"/>', shield: '<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', edit: '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>', logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+    sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>', swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    wa: '<path d="M4 20l1.500-4.500A8 8 0 1 1 8.500 18.500z"/><path d="M9 9c0 3 3 6 6 6l1.500-1.500-2-1-1 1c-1-.5-2-1.500-2.500-2.500l1-1-1-2z"/>',
+    star: '<path d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/>', pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+    bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+  K.ico = function (n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICO[n] || ICO.dots) + '</svg>';
+  };
+
+  /* ---- components: each returns an HTML string ---- */
+  K.chip = function (kind, n) {
+    if (kind === 'wait') { var s = K.t('sync.waiting', { n: n || 3 }); return '<button class="chip wait" aria-label="' + s + '">' + K.ico('clock', 22) + '<span>' + s + '</span></button>'; }
+    if (kind === 'off') { return '<button class="chip wait">' + K.ico('cloudoff', 22) + '<span>' + K.N('Offline') + '</span></button>'; }
+    return '<button class="chip ok">' + K.ico('check', 22) + '<span>' + K.t('sync.saved') + '</span></button>';
+  };
+  K.top = function (o) { /* {title, back, right, shop, date} */
+    var l = o.back ? '<button class="back" aria-label="' + K.t('common.back') + '">' + K.ico('back', 28) + '</button>' : '';
+    var mid = o.shop ? '<div class="shop"><div class="sn">' + o.shop + '</div><div class="dt">' + (o.date || '') + '</div></div>' : '<h1>' + (o.title || '') + '</h1>';
+    return '<header class="top">' + l + mid + '<div class="grow"></div>' + (o.right || '') + '</header>';
+  };
+  K.tabs = function (active) {
+    var d = [['today', 'box', K.t('nav.today')], ['parties', 'book', K.t('nav.parties')], ['reports', 'bars', K.t('nav.reports')]];
+    return '<nav class="tabs">' + d.map(function (x) { return '<button class="tab' + (x[0] === active ? ' on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + K.ico(x[1], 26) + '<span>' + x[2] + '</span></button>'; }).join('') + '</nav>';
+  };
+  K.tile = function (kind, icon, label, off) { return '<button class="tile t-' + kind + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : '') + '><span class="ti">' + K.ico(icon, 30) + '</span><span>' + label + '</span></button>'; };
+  K.tiles = function (off) {
+    return '<section class="tiles">' + K.tile('sale', 'coin', K.t('act.sale'), off) + K.tile('udhar', 'book', K.t('act.credit'), off) + K.tile('collect', 'tray', K.t('act.collect'), off) + K.tile('expense', 'receipt', K.t('act.expense'), off) + K.tile('more', 'dots', K.t('t1.more'), off) + '</section>';
+  };
+  K.hero = function (o) { /* {box, opening, cashIn, cashOut} paise */
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + K.t('box.title') + '</span></div><div class="fig">' + K.M(o.box, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.t('box.opening') + '</span>' + K.M(o.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + K.ico('down', 20, 'dirico') + K.t('box.in') + '</span>' + K.M(o.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + K.ico('up', 20, 'dirico') + K.t('box.out') + '</span>' + K.M(o.cashOut, { out: true, tone: 'dir' }) + '</div></section>';
+  };
+  K.facts = function (sales, collect) {
+    return '<section class="facts"><div class="ln"><span class="k">' + K.t('box.sales') + '</span>' + K.M(sales) + '</div><button class="ln link"><span class="k">' + K.t('t1.toCollect') + '</span>' + K.M(collect) + '</button></section>';
+  };
+  K.bar = function (done, total) { var h = '<div class="bar" role="img" aria-label="' + done + '/' + total + '">'; for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.closecard = function (done, total, quiet, label) {
+    return '<button class="closecard' + (quiet ? ' quiet2' : '') + '"><span class="cc-main"><span class="cc-t">' + (label || K.t('t1.continueClose')) + '</span><span>' + K.t('t1.progress', { done: done, total: total }) + '</span></span>' + K.bar(done, total) + '<span class="cc-c">' + K.ico('chev', 26) + '</span></button>';
+  };
+  K.seg = function (items, on, icons) { /* items: label html[]; on: index */
+    return '<div class="seg" role="radiogroup">' + items.map(function (l, i) { return '<button class="sg-b' + (i === on ? ' on' : '') + '" role="radio" aria-checked="' + (i === on) + '">' + (i === on ? K.ico('tick', 22) : (icons && icons[i] ? K.ico(icons[i], 22) : '')) + '<span>' + l + '</span></button>'; }).join('') + '</div>';
+  };
+  K.keypad = function (hidden) {
+    var k = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (x) { return '<button class="key">' + x + '</button>'; });
+    k.push('<button class="key aux">' + K.t('keypad.clear') + '</button>'); k.push('<button class="key">0</button>'); k.push('<button class="key aux" aria-label="' + K.t('keypad.delete') + '">' + K.ico('bksp', 30) + '</button>');
+    return '<div class="kp' + (hidden ? ' hidden' : '') + '">' + k.join('') + '</div>';
+  };
+  K.addbar = function (label, paise, dis) { return '<button class="addbar' + (dis ? ' dis' : '') + '"' + (dis ? ' aria-disabled="true"' : '') + '><span>' + label + '</span>' + (paise ? K.M(paise) : '') + '</button>'; };
+  K.primary = function (label, kind, icon) { return '<button class="primary' + (kind ? ' ' + kind : '') + '"' + (kind === 'dis' ? ' aria-disabled="true"' : '') + '>' + (icon ? K.ico(icon, 26) : '') + '<span>' + label + '</span></button>'; };
+  K.btn2 = function (label, icon) { return '<button class="btn2">' + (icon ? K.ico(icon, 24) : '') + '<span>' + label + '</span></button>'; };
+  K.quiet = function (label) { return '<button class="quiet">' + label + '</button>'; };
+  K.sticky = function () { return '<div class="sticky">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.scroll = function () { return '<div class="scroll">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.stack = function () { return '<div class="stack">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.row = function (o) { /* {state:'done'|'next'|'open'|'skip'|'lock', n, name, sub, paise, entries, quiet} */
+    var mk = o.state === 'done' ? K.ico('tick', 22) : o.state === 'skip' ? K.ico('dash', 22) : o.state === 'lock' ? K.ico('lock', 22) : '<b>' + (o.n || '') + '</b>';
+    var rv = o.paise !== undefined ? '<span class="rv">' + K.M(o.paise) + (o.entries ? '<small>' + o.entries + '</small>' : '') + '</span>' : '';
+    return '<li class="row ' + o.state + (o.cls ? ' ' + o.cls : '') + '"><span class="mk">' + mk + '</span><span class="nm">' + o.name + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' + rv + (o.quiet ? K.quiet(o.quiet) : '') + '</li>';
+  };
+  K.lrow = function (icon, title, sub, o) { o = o || {}; return '<button class="lrow' + (o.danger ? ' danger' : '') + '"><span class="li">' + K.ico(icon, 24) + '</span><span class="lt"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (o.right || '') + (o.noChev ? '' : K.ico('chev', 24)) + '</button>'; };
+  K.sw = function (on, title, sub) { return '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"><span class="tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + K.N(on ? 'On' : 'Off', 'switch state words (DS-V2 3.14); consent screens may use their existing allow/withdraw wording') + '</span></span></button>'; };
+  K.field = function (label, value, o) { o = o || {}; return '<div class="field"><label>' + label + '</label><div class="in' + (o.focus ? ' focus' : '') + (o.err ? ' err' : '') + '">' + (value ? '<span>' + value + '</span>' : '<span class="ph">' + (o.ph || '') + '</span>') + (o.focus ? '<i class="caret"></i>' : '') + '</div>' + (o.help ? '<div class="help' + (o.err ? ' err' : '') + '">' + o.help + '</div>' : '') + '</div>'; };
+  K.avatar = function (name, i) { return '<span class="av av' + ((i || 0) % 5) + '">' + Array.from(name)[0] + '</span>'; };
+  K.prow = function (name, i, sub, paise, state) { return '<li><button class="prow">' + K.avatar(name, i) + '<span class="pn"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="pa">' + K.M(paise) + '<em>' + state + '</em></span></button></li>'; };
+  K.banner = function (kind, icon, text, action) { return '<div class="banner ' + (kind || '') + '" role="status">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span>' + (action ? K.quiet(action) : '') + '</div>'; };
+  K.refuse = function (title, body) { return '<div class="refuse" role="alert">' + K.ico('warn', 24) + '<div><b>' + title + '</b><br>' + body + '</div></div>'; };
+  K.refbanner = function (title, body, nn) { return '<div class="refbanner' + (nn ? ' nn' : '') + '" role="alert"><b>' + title + '</b><br>' + body + '</div>'; };
+  K.empty = function (icon, text, ctaLabel, ctaIcon) { return '<div class="empty"><div class="ei">' + K.ico(icon, 44) + '</div><p>' + text + '</p>' + (ctaLabel ? K.primary(ctaLabel, '', ctaIcon) : '') + '</div>'; };
+  K.skel = function (n) { var h = '<div class="skel" aria-busy="true">'; for (var i = 0; i < (n || 4); i++) h += '<i></i>'; return h + '</div>'; };
+  K.sheet = function (title, inner) { return '<div class="scrim"></div><div class="sheet" role="dialog"><h2>' + title + '</h2><div class="scroll">' + inner + '</div></div>'; };
+  K.dialog = function (title, inner) { return '<div class="scrim"></div><div class="dialog" role="alertdialog"><h2>' + title + '</h2>' + inner + '</div>'; };
+  K.toast = function (icon, text) { return '<div class="toast" role="status">' + K.ico(icon || 'check', 24) + '<span>' + text + '</span></div>'; };
+  K.center = function (inner) { return '<div class="center">' + inner + '</div>'; };
+  K.dots = function (i, n) { var h = '<div class="dots">'; for (var k = 0; k < n; k++) h += '<i class="' + (k === i ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.otp = function (digits, cur) { var h = '<div class="otp">'; for (var i = 0; i < 6; i++) h += '<i class="' + (i === cur ? 'cur' : '') + '">' + (digits[i] || '') + '</i>'; return h + '</div>'; };
+  K.sec = function (t) { return '<div class="sec">' + t + '</div>'; };
+  K.list = function (rows) { return '<ul class="rows">' + rows.join('') + '</ul>'; };
+  K.names = { ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'], lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ'] };
+  K.nm = function (id) { return K.names[id][S.lang === 'en' ? 0 : 1]; }; /* demo names only; real names are user data, shown as typed */
+  K.shop = 'Subhadra Kirana';
+  K.date = function () { return K.t('t1.day.4') + ' 19 ' + K.t('t1.month.11'); };
+  K.screen = function (inner) { return inner; };
+
+  /* build.mjs runs the specs in Node (lang en) to write FLOWS.md from the very same mockup bodies */
+  K.frame = function (id) { curFrame = id; };
+  K.used = function (id) { return Object.keys(USED[id] || {}); };
+  K.newc = function (id) { return Object.keys(NEWC[id] || {}); };
+
+  /* ---- page ---- */
+  function frameHtml(sc) {
+    return '<div class="fwrap"><h3>' + sc.route + '</h3><div class="bezel"><div class="screen" id="fr-' + sc.id + '"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div>';
+  }
+  function noteHtml(sc) {
+    var used = Object.keys(USED[sc.id] || {}), nw = Object.keys(NEWC[sc.id] || {});
+    var flag = sc.flag === 'NEW' ? '<span class="tag new">NEW screen</span>' : sc.flag === 'CHG' ? '<span class="tag chg">Changed</span>' : '<span class="tag">Exists today</span>';
+    var dl = function (k, v) { return v ? '<dt>' + k + '</dt><dd>' + v + '</dd>' : ''; };
+    return '<div class="note"><h3>' + flag + sc.title + '</h3><dl>' + dl('Route', '<code>' + sc.route + '</code>') + dl('Purpose', sc.purpose) + dl('Primary action', sc.primary) + dl('Taps / target', sc.taps) + dl('Rules held', sc.rules) + dl('States / notes', sc.notes) + dl('For Saket to review', sc.review) + dl('Copy gaps (en only)', nw.length ? nw.map(function (x) { return '"' + x + '"'; }).join(' · ') + ' (od/hi DRAFT needed, H13)' : '') + '</dl><div class="keys"><b>Keys used:</b> ' + (used.length ? used.join(', ') : 'none') + '</div></div>';
+  }
+  function renderBodies(scr) { scr.forEach(function (sc) { curFrame = sc.id; var el = document.getElementById('fr-' + sc.id); var app = el.querySelector('.app'); var prev = app.querySelector('.scroll'); var top = prev ? prev.scrollTop : 0; app.innerHTML = sc.body(); var s2 = app.querySelector('.scroll'); if (s2) s2.scrollTop = top; }); }
+  function renderNotes(scr) { scr.forEach(function (sc) { document.getElementById('note-' + sc.id).innerHTML = noteHtml(sc); }); }
+  K.boot = function () {
+    var area = SPEC.area, scr = area.screens;
+    document.title = 'SWAFTO Retail Desk - Mitra - ' + area.title;
+    var q = function (id) { return document.getElementById(id); };
+    q('area-title').textContent = area.title + ' (' + scr.length + ' screen states)'; q('area-intro').innerHTML = area.intro;
+    q('toc').innerHTML = scr.map(function (s) { return '<a href="#c-' + s.id + '"' + (s.flag === 'NEW' ? ' class="new"' : '') + '>' + s.title + '</a>'; }).join('');
+    q('stage').innerHTML = scr.map(function (sc) { return '<section class="card" id="c-' + sc.id + '">' + frameHtml(sc) + '<div class="note" id="note-' + sc.id + '"></div></section>'; }).join('');
+    function all() { document.documentElement.lang = S.lang === 'od' ? 'or' : S.lang; document.body.setAttribute('data-lang', S.lang); document.body.setAttribute('data-theme', S.theme); document.body.style.setProperty('--z', S.size); document.body.style.setProperty('--zc', Math.min(S.size, 1.5)); USED = {}; NEWC = {}; renderBodies(scr); renderNotes(scr); }
+    [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { S.lang = b.getAttribute('data-lang-btn'); [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) { b.addEventListener('click', function () { S.theme = b.getAttribute('data-theme-btn'); [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (b) { b.addEventListener('click', function () { S.size = parseFloat(b.getAttribute('data-size-btn')); [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    all();
+  };
+})();
+</script>
+<script>/* AREA: Settings and privacy (S1 to S8, S11, A8, X0 manage mode, plus NEW Devices and Your data).
+   Copy by literal key; a string that does not exist is K.N(English). Money is integer paise through K.M. Status never by colour alone. */
+(function () {
+  var t = K.t;
+  function hdr(title, chip) { return K.top({ title: title, back: true, right: chip || K.chip('ok') }); }
+  function sel(on) { return on ? K.ico('check', 24) + '<span style="font-weight:700;margin-inline-start:6px">' + K.N('Chosen') + '</span>' : ''; }
+  /* local radio row: icon disc + label + chosen state in words (kit has no radio list) */
+  function radio(label, on, sub) { return K.lrow(on ? 'check' : 'dash', label, sub, { noChev: true, right: sel(on) }); }
+  function note(txt) { return '<p style="margin:12px 16px;font-size:17px;line-height:1.4">' + txt + '</p>'; }
+  function lockedBox(ico, txt) { return K.banner('info', ico, txt); }
+  var SHOP = K.shop;
+  var HUB_FOOT = function () {
+    return K.sec(K.N('Legal and help')) + K.lrow('shield', t('s1.privacy')) + K.lrow('info', t('s1.about')) + K.lrow('chat', t('s1.help'));
+  };
+  function hub(o) {
+    o = o || {};
+    var acct = o.signedOut ? K.lrow('user', t('s1.signIn')) : K.lrow('user', K.N('Your account'), '+91 98765 43210') + K.lrow('phone', K.N('Signed-in phones'), K.N('Sign out a lost phone'));
+    var lock = K.sw(false, t('s1.appLock'), t('s1.appLockOff')) + (o.lockUnavail ? K.banner('info', 'lock', t('s1.appLockNoScreenLock')) : '');
+    var out = o.signedOut ? '' : K.lrow('logout', t('a8.logout'));
+    return hdr(t('s1.title')) + K.scroll(
+      K.sec(K.N('Your shop')),
+      K.lrow('box', t('s1.shop'), SHOP) + K.lrow('globe', t('s1.language')) + K.lrow('receipt', t('s1.export')) + K.lrow('download', K.N('Your data')),
+      K.sec(t('s1.appLock')), lock,
+      K.sec(K.N('Account')), acct, out,
+      HUB_FOOT(),
+      K.sec(K.N('Danger zone')), K.lrow('trash', t('s1.deleteAccount'), K.N('Deletes your book. You can undo for 30 days.'), { danger: true })
+    ) + (o.extra || '');
+  }
+  var CONSENT = [
+    ['account_and_ledger', 'consent.purpose.account_and_ledger'],
+    ['sms_reminders', 'consent.purpose.sms_reminders'],
+    ['crash_diagnostics', 'consent.purpose.crash_diagnostics']
+  ];
+  function consent(sms, crash, extra, banner) {
+    return hdr(t('consent.manage.title')) + K.scroll(
+      banner || '', note(t('consent.intro')),
+      K.sec(t('consent.required')),
+      K.lrow('lock', t('consent.purpose.account_and_ledger'), t('consent.required'), { noChev: true, right: K.ico('check', 24) + '<span style="font-weight:700;margin-inline-start:6px">' + t('consent.on') + '</span>' }),
+      K.sec(t('consent.optional')),
+      K.sw(sms, t('consent.purpose.sms_reminders'), t('consent.optional') + ': ' + t(sms ? 'consent.on' : 'consent.off')),
+      K.sw(crash, t('consent.purpose.crash_diagnostics'), t('consent.optional') + ': ' + t(crash ? 'consent.on' : 'consent.off')),
+      note(t('consent.rights'))
+    ) + (extra || '');
+  }
+  var DAYS = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'];
+  function shop(extra, picked) {
+    return hdr(t('s2.title')) + K.scroll(
+      K.sec(t('s2.name')),
+      '<div class="lrow" style="cursor:default"><span class="li">' + K.ico('box', 24) + '</span><span class="lt"><b>' + SHOP + '</b><small>' + t('s2.note') + '</small></span></div>',
+      K.sec(t('s2.dayStart')),
+      K.lrow('clock', t('s2.dayStart'), t('s2.dayStartNote'), { right: '<b>' + (picked || '02:00') + '</b>' })
+    ) + (extra || '');
+  }
+  function dayList(on) { return DAYS.map(function (d) { return radio(d, d === on); }).join(''); }
+  function delInfo(extra) {
+    return hdr(t('s7.title')) + K.scroll(
+      K.banner('err', 'warn', t('s7.what')), note(t('s7.grace')),
+      K.stack(K.primary(K.N('Take a copy of my data first'), 'outline', 'download'))
+    ) + K.sticky(K.primary(t('s7.continue'), 'outline', 'chev')) + (extra || '');
+  }
+  function delConfirm(o) {
+    o = o || {};
+    return hdr(t('s8.title')) + K.scroll(
+      o.refusal || '',
+      K.banner('err', 'warn', t('s7.what')),
+      K.banner('info', 'info', t(o.signedOut ? 's8.localOnly' : 's8.phoneNow')),
+      o.owed === false ? '' : K.banner('info', 'book', t('s8.owed'))
+    ) + K.sticky(K.primary(t('s8.cancel'), '', 'undo'), K.primary(o.busy ? K.N('Deleting') : t('s8.confirm'), o.busy ? 'dis' : 'outline', 'trash'));
+  }
+  function dev(name, sub, cur) {
+    return K.lrow('phone', name, sub, { noChev: true, right: cur ? K.ico('check', 24) + '<span style="font-weight:700;margin-inline-start:6px">' + K.N('This phone') + '</span>' : '' });
+  }
+  var DEVS = function (withOther) {
+    return dev(K.N('Android phone'), K.N('Last used: now'), true) + (withOther ? dev(K.N('Android phone'), K.N('Last used: 12 days ago')) + K.btn2(K.N('Sign out this phone'), 'logout') : '');
+  };
+
+  SPEC.settings = SPEC.area = { title: 'Settings and privacy', intro: 'Settings hub and everything off it: your shop and the business day start, language and screen, what you agreed to (one-tap withdrawal), your data and account deletion, About, Help, log out, app lock, plus two NEW screens: Your data (export) and Signed-in phones. Odia and Hindi are DRAFT (H13).', screens: [
+    { id: 'settings-hub', route: 'S1', title: 'Settings: hub', flag: 'CHG',
+      purpose: 'One place to reach the shop, language, privacy, help and the way out.',
+      primary: 'Rows with icon and chevron; each opens its screen.',
+      taps: 'Language: Today, Settings row, Language = 3 taps. Withdraw consent: Settings, Privacy, one switch = 3 taps.',
+      rules: 'Log out and Delete sit under their own headings, apart from App lock. Delete is words plus icon, not colour alone.',
+      notes: 'Rows as built: shop, language, plan (absent in the all-free beta), items (Premium only), accountant export, app lock, account (Log out), privacy, about, help, delete. Group headings, App lock as a switch, "Your data" and "Signed-in phones" rows are proposals.',
+      review: 'Hub gains two rows (Your data, Signed-in phones) and group headings; confirm the order.',
+      body: function () { return hub(); } },
+    { id: 'settings-hub-signedout', route: 'S1', title: 'Settings: this phone is not signed in', flag: 'EXISTS',
+      purpose: 'No session on this phone: the account row offers Sign in instead of Log out.',
+      primary: 'Sign in.', taps: '1 tap to sign in.', rules: 'The shop comes from the session; with none, no account rows are drawn.',
+      notes: 'As built: onSignIn replaces onLogOut. Phone list and Log out are not shown without a session.',
+      body: function () { return hub({ signedOut: true }); } },
+    { id: 'settings-hub-lock-unavailable', route: 'S1', title: 'Settings: app lock cannot be turned on', flag: 'CHG',
+      purpose: 'He tried App lock and the phone has no screen lock. Say why, and keep the switch visibly off.',
+      primary: 'Set a screen lock in the phone settings (outside the app).', taps: 'No action here; the reason is on the row.',
+      rules: 'A switch is never silently dead.',
+      notes: 'Text is s1.appLockNoScreenLock as built; v1 drew it as a link row with plain text below. A "Chosen: No" word state is on the switch.',
+      body: function () { return hub({ lockUnavail: true }); } },
+    { id: 'settings-hub-loading', route: 'S1', title: 'Settings: loading', flag: 'EXISTS',
+      purpose: 'The shell is waiting on the phone database.', primary: 'None.', taps: 'None.', rules: 'Placeholder rows, no spinner.',
+      notes: 'Shell loading state, shared by S1 to S8. Error state is the common error with Try again, not redrawn per screen.',
+      body: function () { return hdr(t('s1.title')) + K.scroll(K.skel(6)); } },
+    { id: 'settings-shop', route: 'S2', title: 'Your shop', flag: 'CHG',
+      purpose: 'Show the shop name as typed and let him set when his business day starts.',
+      primary: 'Day starts at row (opens the labelled list).', taps: 'Change day start: row, time, done = 2 taps.',
+      rules: 'Name is read-only and shown verbatim: not capitalised or trimmed. Day start applies to days opened afterwards; recorded days keep their hours (CLAUDE.md decision 1).',
+      notes: 'As built the name sits in a plain block (no onEditName), so no chevron. Day start is a Segmented control of 7 times in the app today (00:00 to 06:00); here a list row opens a labelled list.',
+      review: 'Day start as a list sheet rather than a 7-way segment: seven segments will not fit 360 px at 56 dp.',
+      body: function () { return shop(); } },
+    { id: 'settings-shop-daystart', route: 'S2', title: 'Your shop: choose the day start', flag: 'CHG',
+      purpose: 'Pick the hour a business day begins.', primary: 'Tap a time; it applies at once with no Save.',
+      taps: '1 tap on a time.', rules: 'Applied at once; says it governs only days opened afterwards. The app never suggests a time.',
+      notes: 'Choices are the fixed 00:00 to 06:00 list from the store (DAY_START_CHOICES). Labels like "after midnight" would be new strings and are not drawn. Nothing is pre-chosen except his saved value.',
+      body: function () { return shop(K.sheet(t('s2.dayStart'), dayList('02:00') + note(t('s2.dayStartNote')))); } },
+    { id: 'settings-shop-daystart-done', route: 'S2', title: 'Your shop: day start changed', flag: 'CHG',
+      purpose: 'Confirm the new hour and what it does and does not move.', primary: 'None; Back.', taps: '0.',
+      rules: 'Past days are never re-dated (D7).', notes: 'Toast wording is new; the note under the row is s2.dayStartNote as built.',
+      body: function () { return shop(K.toast('check', K.N('Day now starts at 03:00')), '03:00'); } },
+    { id: 'settings-language', route: 'S3', title: 'Language and screen', flag: 'CHG',
+      purpose: 'Switch language and screen mode and see the result on this page.',
+      primary: 'Tap a language or a mode; applied at once, no Save.', taps: '1 tap each.',
+      rules: 'Each language is written in itself (never translated). The mode names say what the screen does, not an eyesight word.',
+      notes: 'Language is three buttons (English, Hindi, Odia). The built Screen setting has two modes, Light and "Dark, bigger text" (s3.focus), not Normal/Large/Extra large: those three labels do not exist. A live preview card is added here so the change is seen before leaving.',
+      review: 'Real display modes are two (Light, Dark bigger text); a three-step text size is a proposal that needs tokens work and copy.',
+      body: function () {
+        return hdr(t('s3.title')) + K.scroll(
+          K.sec(t('s3.language')), K.seg(['English', 'हिन्दी', 'ଓଡ଼ିଆ'], 2),
+          K.sec(t('s3.display')), K.seg([t('s3.comfort'), t('s3.focus')], 0),
+          K.sec(K.N('Preview')), K.hero({ box: 1845000, opening: 1200000, cashIn: 935000, cashOut: 290000 }));
+      } },
+    { id: 'settings-language-focus', route: 'S3', title: 'Language and screen: dark, bigger text', flag: 'CHG',
+      purpose: 'The same page after choosing the second mode.', primary: 'Tap Light to go back.', taps: '1 tap to switch back.',
+      rules: 'Reversible in one tap on the same screen.', notes: 'Use the page header toggles (theme, size) to see the rendered mode; the frame is the same layout with the other segment chosen.',
+      body: function () {
+        return hdr(t('s3.title')) + K.scroll(
+          K.sec(t('s3.language')), K.seg(['English', 'हिन्दी', 'ଓଡ଼ିଆ'], 0),
+          K.sec(t('s3.display')), K.seg([t('s3.comfort'), t('s3.focus')], 1),
+          K.sec(K.N('Preview')), K.hero({ box: 1845000, opening: 1200000, cashIn: 935000, cashOut: 290000 }));
+      } },
+    { id: 'settings-privacy', route: 'S4', title: 'Privacy and consent', flag: 'EXISTS',
+      purpose: 'Route to what he agreed to, and say withdrawal is as easy as giving.',
+      primary: 'What you agreed to (opens the consent screen).', taps: '1 tap to the switches.',
+      rules: 'DPDP: withdrawal as easy as giving; the sentence sits with the row.',
+      notes: 'Only the one row and s4.withdraw exist today. The policy link lives in About, not here.',
+      body: function () { return hdr(t('s4.title')) + K.scroll(K.lrow('shield', t('s4.review')), note(t('s4.withdraw')), K.lrow('download', K.N('Your data'))); } },
+    { id: 'settings-consent', route: 'X0', title: 'What you agreed to (manage)', flag: 'CHG',
+      purpose: 'See each purpose and turn an optional one off or on.',
+      primary: 'Each optional purpose is its own switch. One tap changes it and takes effect at once.',
+      taps: 'Withdraw one purpose: 1 tap (v1 needed switch plus Save).',
+      rules: 'No pre-ticked consent, no Save button, equal weight for Yes and No, the required purpose shown locked with its reason.',
+      notes: 'As built, X0 manage has switches plus a Save button (consent.save). Here the Save is removed. The required row is not a switch (service cannot run without it; the way out is deleting the account).',
+      review: 'Removes the Save button in manage mode to meet DPDP withdrawal-as-easy-as-giving; USABILITY item "withdrawal needs switch plus Save".',
+      body: function () { return consent(true, false); } },
+    { id: 'settings-consent-withdrawn', route: 'X0', title: 'What you agreed to: just withdrawn', flag: 'CHG',
+      purpose: 'Confirm the withdrawal happened now.', primary: 'None; the switch already reads No.', taps: '0 after the one tap.',
+      rules: 'Status in icon plus words on the switch and in the toast; he can switch it back on in one tap.',
+      notes: 'Toast copy is new. The server records the withdrawal when the tap lands.',
+      body: function () { return consent(false, false, K.toast('check', K.N('Turned off. This takes effect now.'))); } },
+    { id: 'settings-consent-offline', route: 'X0', title: 'What you agreed to: offline', flag: 'EXISTS',
+      purpose: 'Withdrawal cannot reach the server, so the choice stays as it was, and the screen says so.',
+      primary: 'Try again with signal.', taps: '1 tap to retry.',
+      rules: 'Never show a switch as changed when the server did not accept it. Calm refusal, only after the tap.',
+      notes: 'Copy is refusal.consent as built. Reading the list while offline gives refusal.consentRead instead (next frame).',
+      body: function () { return consent(true, false, K.refbanner(t('refusal.titleNotDone'), t('refusal.consent'), true)); } },
+    { id: 'settings-consent-readfail', route: 'X0', title: 'What you agreed to: cannot be read', flag: 'EXISTS',
+      purpose: 'No signal on opening: his current choices cannot be shown.', primary: 'Try again.', taps: '1 tap.',
+      rules: 'No switches are drawn rather than guessing their state.', notes: 'Copy is refusal.consentRead as built.',
+      body: function () { return hdr(t('consent.manage.title')) + K.scroll(K.refuse(t('refusal.titleNotDone'), t('refusal.consentRead')), K.stack(K.primary(t('common.retry'), '', 'refresh'))); } },
+    { id: 'settings-data', route: 'NEW', title: 'Your data (access and export)', flag: 'NEW',
+      purpose: 'Let him see and take a copy of everything held about him (DPDP right of access).',
+      primary: 'Download everything we hold.', taps: '2 taps: row, download.',
+      rules: 'Read-only; nothing is edited or deleted here. A monthly CSV for his accountant already exists (s1.export).',
+      notes: 'The API has GET /v1/me/export (full JSON), rate-limited, and answers 503 with a retry when busy. No mobile screen calls it today, only the accountant CSV (S12). Copy here is all new.',
+      review: 'NEW screen needs a mobile caller for /v1/me/export and a file-share step; no backend work is needed.',
+      body: function () {
+        return hdr(K.N('Your data')) + K.scroll(
+          note(K.N('This is a copy of everything we hold about you: your number, shop name, every entry and every party.')),
+          K.stack(K.primary(K.N('Download everything we hold'), '', 'download'), K.btn2(t('s1.export'), 'receipt')),
+          note(K.N('To correct something, add a dated correction on the day. To erase it all, use Delete this account.')));
+      } },
+    { id: 'settings-data-offline', route: 'NEW', title: 'Your data: offline', flag: 'NEW',
+      purpose: 'No signal, so the copy cannot be fetched.', primary: 'Try again with signal.', taps: '1 tap to retry.',
+      rules: 'Nothing is lost; calm and one next step.', notes: 'Refusal copy for export does not exist: new string.',
+      body: function () {
+        return hdr(K.N('Your data'), K.chip('off')) + K.scroll(K.refuse(t('refusal.titleNotDone'), K.N('No connection, so nothing was downloaded. Try again with signal.')),
+          K.stack(K.primary(K.N('Download everything we hold'), '', 'download')));
+      } },
+    { id: 'settings-delete-info', route: 'S7', title: 'Delete this account', flag: 'CHG',
+      purpose: 'Say plainly what is deleted and that it can be undone for 30 days.',
+      primary: 'Continue (goes to the sure screen).', taps: '2 taps to reach the final button.',
+      rules: 'Destructive, so it says what happens and how to undo. Continue and the safe exit have equal weight.',
+      notes: 'As built: s7.what and s7.grace, one Continue button. Back is the way to keep the book. A "take a copy first" button is proposed.',
+      review: 'Adds "Take a copy of my data first" (links to Your data) so erasure is not the only route off this page.',
+      body: function () { return delInfo(); } },
+    { id: 'settings-delete-confirm', route: 'S8', title: 'Are you sure? (signed in)', flag: 'EXISTS',
+      purpose: 'Final decision, with what he loses named.', primary: 'Keep my book and Delete everything have equal size.',
+      taps: '1 tap to confirm or keep.', rules: 'The owed-money line shows only when money is owed (a fact about his book).',
+      notes: 'As built: s8.phoneNow tells him the phone book goes the moment the server accepts. The server then erases after 30 days; sign in to cancel.',
+      body: function () { return delConfirm(); } },
+    { id: 'settings-delete-busy', route: 'S8', title: 'Are you sure? sending the request', flag: 'CHG',
+      purpose: 'The request is in flight.', primary: 'None; buttons are held.', taps: '0.',
+      rules: 'No double submit.', notes: 'The built screen has no busy state; this is a proposal.',
+      body: function () { return delConfirm({ busy: true }); } },
+    { id: 'settings-delete-offline', route: 'S8', title: 'Delete: no connection', flag: 'EXISTS',
+      purpose: 'Nothing was deleted, on the phone or the server.', primary: 'Try again with signal.', taps: '1 tap.',
+      rules: 'Refusal shown only after the tap; the book is intact.', notes: 'Copy is refusal.eraseOffline as built.',
+      body: function () { return delConfirm({ refusal: K.refuse(t('refusal.titleNotDone'), t('refusal.eraseOffline')) }); } },
+    { id: 'settings-delete-refused', route: 'S8', title: 'Delete: server refused', flag: 'EXISTS',
+      purpose: 'The server did not accept, so nothing was deleted.', primary: 'Try again later.', taps: '1 tap.',
+      rules: 'Calm, nothing lost.', notes: 'Copy is refusal.erase. A failure to clear the phone is refusal.eraseLocal.',
+      body: function () { return delConfirm({ refusal: K.refuse(t('refusal.titleNotDone'), t('refusal.erase')) }); } },
+    { id: 'settings-delete-signin', route: 'S8', title: 'Delete: sign in again first', flag: 'EXISTS',
+      purpose: 'His sign-in expired, so nothing was deleted.', primary: 'Sign in again, then delete.', taps: '1 tap to sign in.',
+      rules: 'Nothing deleted; the way forward is stated.', notes: 'Copy is refusal.eraseSignIn. A sign-in button here is proposed; today the text only.',
+      body: function () { return delConfirm({ refusal: K.refuse(t('refusal.titleNotDone'), t('refusal.eraseSignIn')) }); } },
+    { id: 'settings-delete-local', route: 'S8', title: 'Are you sure? (not signed in)', flag: 'EXISTS',
+      purpose: 'No session: only the book on this phone goes; the server account is untouched.', primary: 'Keep my book vs Delete everything.',
+      taps: '1 tap.', rules: 'Says so before he presses (F-22).', notes: 'Copy s8.localOnly points to sign in or the web page in About.',
+      body: function () { return delConfirm({ signedOut: true }); } },
+    { id: 'settings-delete-done', route: 'S8', title: 'Deletion requested (30-day undo)', flag: 'EXISTS',
+      purpose: 'Report what happened and the date the account is erased.', primary: 'Done.', taps: '1 tap.',
+      rules: 'Undo is stated: signing in within 30 days cancels.',
+      notes: 'As built, outcome kind scheduled. The date is the erasure date from the server; shown here as a specimen date, not a measured one.',
+      body: function () {
+        return hdr(t('s8.scheduledTitle')) + K.scroll(K.banner('info', 'clock', t('s8.scheduled')),
+          K.lrow('calendar', t('s8.erasesOn'), '2026-12-18', { noChev: true }), note(t('s8.phoneWiped'))) + K.sticky(K.primary(t('s8.done'), '', 'check'));
+      } },
+    { id: 'settings-delete-local-done', route: 'S8', title: 'Deleted from this phone', flag: 'EXISTS',
+      purpose: 'The phone book is gone; no request went to the server.', primary: 'Done.', taps: '1 tap.',
+      rules: 'Honest that the server was not told.', notes: 'Outcome kind local.',
+      body: function () { return hdr(t('s8.localTitle')) + K.scroll(K.banner('info', 'check', t('s8.localDone'))) + K.sticky(K.primary(t('s8.done'), '', 'check')); } },
+    { id: 'settings-about', route: 'S5', title: 'About this app', flag: 'EXISTS',
+      purpose: 'Version, legal links, the not-a-tax-document line and the web delete page.', primary: 'Open (each link row).', taps: '1 tap per link.',
+      rules: 'Not-tax statement is its own block. Web delete address shown in full so it can be read out.',
+      notes: 'The address below is a placeholder, not the real origin: the real value is passed in as deleteAccountUrl and I could not read it from code. Version is shown only when known.',
+      body: function () {
+        return hdr(t('s5.title')) + K.scroll(
+          K.lrow('info', t('s5.version'), '0.0.0 (placeholder)', { noChev: true }), K.lrow('shield', t('s5.privacy'), t('settings.open')), K.lrow('receipt', t('s5.terms'), t('settings.open')), K.lrow('book', t('s5.licences'), t('settings.open')),
+          note(t('s5.notTax')), note(t('s5.webDelete')), K.lrow('globe', 'https://[API origin]/delete-account/', t('settings.open')));
+      } },
+    { id: 'settings-help-pending', route: 'S6', title: 'Help and contact: grievance officer not published', flag: 'CHG',
+      purpose: 'Be honest that no officer is named yet, and give a next route.', primary: 'Use the web account page for requests.', taps: '1 tap.',
+      rules: 'Never show a contact the app has not been given. DPDP needs a named officer: blocked on a human item (HUMAN-ACTIONS).',
+      notes: 'As built: s6.pending only. The next-route row is proposed, and uses the real web page, not an invented address.',
+      review: 'Blocked until the grievance officer is named and published; the next-route row is a proposal.',
+      body: function () {
+        return hdr(t('s6.title')) + K.scroll(K.sec(t('s6.grievance')), K.banner('info', 'info', t('s6.pending')),
+          K.lrow('globe', K.N('Request help or deletion on the web'), K.N('Opens the privacy page'))); } },
+    { id: 'settings-help-published', route: 'S6', title: 'Help and contact: officer published (SPECIMEN)', flag: 'EXISTS',
+      purpose: 'How it will look once a name and address are supplied.', primary: 'Select the address to copy or write to it.', taps: '1 tap.',
+      rules: 'SPECIMEN ONLY: the name and address are made up for layout and must never ship.',
+      notes: 'A long address is one unbreakable word: it wraps inside the card (flexShrink as built).',
+      body: function () {
+        return hdr(t('s6.title')) + K.scroll(K.banner('warn', 'warn', K.N('SPECIMEN, not a real contact')), K.sec(t('s6.grievance')),
+          '<div class="lrow"><span class="lt"><b>Officer name (specimen)</b><small style="overflow-wrap:anywhere">officer-name@example.invalid</small></span></div>'); } },
+    { id: 'settings-logout', route: 'A8', title: 'Log out: everything saved', flag: 'EXISTS',
+      purpose: 'Confirm log out and say what signing back in needs.', primary: 'Stay signed in and Log out have equal size.', taps: '2 taps to log out.',
+      rules: 'No confirm-shaming; the safe option is first and plain.',
+      notes: 'a8.body says a new SMS code is needed. Both buttons are equal weight.',
+      body: function () {
+        return hdr(t('a8.bar')) + K.scroll(note('<b>' + t('a8.title', { shop: SHOP }) + '</b>'), note(t('a8.body', { phone: '98765 43210' })), K.banner('info', 'check', t('a8.saved'))) +
+          K.sticky(K.primary(t('a8.stay'), '', 'undo'), K.primary(t('a8.logout'), 'outline', 'logout')); } },
+    { id: 'settings-logout-pending', route: 'A8', title: 'Log out: entries not yet synced', flag: 'EXISTS',
+      purpose: 'Warn that entries are still waiting and where they stay.', primary: 'Stay signed in (first).', taps: '1 tap to stay.',
+      rules: 'Amber icon plus words, not red; nothing is lost.',
+      notes: 'a8.pending (n entries) and a8.pendingOne are the two real wordings; 3 is shown.',
+      body: function () {
+        return hdr(t('a8.bar'), K.chip('wait', 3)) + K.scroll(note('<b>' + t('a8.title', { shop: SHOP }) + '</b>'), note(t('a8.body', { phone: '98765 43210' })), K.banner('', 'clock', t('a8.pending', { n: 3 }))) +
+          K.sticky(K.primary(t('a8.stay'), '', 'undo'), K.primary(t('a8.logout'), 'outline', 'logout')); } },
+    { id: 'settings-lock', route: 'S11', title: 'App lock cover', flag: 'EXISTS',
+      purpose: 'The book is hidden until the phone lock is passed.', primary: 'Unlock.', taps: '1 tap, then the phone lock.',
+      rules: 'No figures behind the cover; the lock is the phone\'s own.', notes: 'Free for everyone (security is not behind a paywall).',
+      body: function () { return K.center(K.empty('lock', t('s11.body'), t('s11.unlock'), 'key').replace('<p>', '<h2>' + t('s11.title') + '</h2><p>')); } },
+    { id: 'settings-lock-paused', route: 'S11', title: 'App lock paused (no phone lock now)', flag: 'EXISTS',
+      purpose: 'The phone lost its screen lock, so the app lock is paused and the book opens.', primary: 'Set a screen lock in the phone settings.', taps: '0 in app.',
+      rules: 'The pause is stated, never silent.', notes: 'Copy s11.paused; it appears over the app, here on the hub.',
+      body: function () { return hub({ extra: K.refbanner(t('s11.paused'), '', true) }); } },
+    { id: 'settings-devices', route: 'NEW', title: 'Signed-in phones', flag: 'NEW',
+      purpose: 'See which phones are signed in and sign out a lost one.', primary: 'Sign out a phone.', taps: '3 taps: Settings, Signed-in phones, Sign out.',
+      rules: 'This phone is marked in words; only phones of this shop are listed (shop from the session).',
+      notes: 'API: POST /v1/auth/devices/:id/revoke exists and checks the shop. GET /v1/devices exists but returns 501 until the repo implements listDevices, which nothing does yet. The only description a device has is its platform (no label), so rows read "Android phone".',
+      review: 'Needs backend work: implement listDevices in the repo and add a device label; revoke is ready.',
+      body: function () { return hdr(K.N('Signed-in phones')) + K.scroll(note(K.N('Phones that can open this shop book. Sign out one you no longer have.')), DEVS(true)); } },
+    { id: 'settings-devices-confirm', route: 'NEW', title: 'Sign out a phone: confirm', flag: 'NEW',
+      purpose: 'Confirm signing out the other phone.', primary: 'Sign out that phone and Keep it signed in, equal weight.', taps: '1 tap to confirm.',
+      rules: 'Says what happens and how to undo: that phone needs a new SMS code to come back. A refresh-token reuse already revokes a device server-side.',
+      notes: 'Entries on that phone not yet synced stay there; say so in a final copy pass.',
+      body: function () {
+        return hdr(K.N('Signed-in phones')) + K.scroll(DEVS(true)) +
+          K.dialog(K.N('Sign out that phone?'), '<p>' + K.N('It will need a new SMS code to open this book again. Entries already saved are not removed.') + '</p>' + K.primary(K.N('Keep it signed in'), '', 'undo') + K.primary(K.N('Sign out that phone'), 'outline', 'logout')); } },
+    { id: 'settings-devices-done', route: 'NEW', title: 'Signed-in phones: signed out', flag: 'NEW',
+      purpose: 'Confirm the lost phone is out.', primary: 'None.', taps: '0.', rules: 'Status in icon plus words.',
+      notes: 'Only this phone remains in the list.',
+      body: function () { return hdr(K.N('Signed-in phones')) + K.scroll(DEVS(false)) + K.toast('check', K.N('That phone is signed out')); } },
+    { id: 'settings-devices-unavailable', route: 'NEW', title: 'Signed-in phones: cannot load', flag: 'NEW',
+      purpose: 'The list cannot be fetched (offline, or the server cannot list yet).', primary: 'Try again.', taps: '1 tap.',
+      rules: 'Calm, one next step, no list drawn rather than a guessed one.', notes: 'Today the API answers 501 here, which would land in this frame.',
+      body: function () { return hdr(K.N('Signed-in phones'), K.chip('off')) + K.scroll(K.refuse(t('refusal.titleNotDone'), K.N('The list of phones could not be loaded. Try again with signal.')), K.stack(K.primary(t('common.retry'), '', 'refresh'))); } }
+  ] };
+})();
+
+K.boot();</script>
+</body></html>

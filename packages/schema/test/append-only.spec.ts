@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
-import { migrationUp, migrationDown, SECTION_MODES, SECTIONS } from '../src/spec.ts';
+import { migrationUp, migrationDown, SECTION_MODES, SECTIONS, EVENT_SECTIONS } from '../src/spec.ts';
 
 const SHOP = '00000000-0000-7000-8000-000000000001';
 const DAY = '2026-07-15';
@@ -73,14 +73,22 @@ describe('G4 · migrations run up, down, and up again (SQLite)', () => {
     // consents (DPDP §1.2, added at iteration 39 when the server grew the
     // endpoints that record one).
     expect(tables).toEqual([
+      // Decisions 2 and 3 (2026-10): the two append-only day facts.
+      'adjustments',
       'consents',
       'days',
       'devices',
       'entries',
+      // PR-1 (Premium, R5): the shop's item list and the item lines of a sale.
+      'item_lines',
+      'items',
       'outbox',
       'parties',
+      // R5 FR-6 (2026-10-26): the append-only party fact.
+      'party_credit_limits',
       'section_skips',
       'shops',
+      'upi_confirmations',
       'users',
     ]);
     // rate_events is server-only (injection 08 B.2). A device that carried it would
@@ -309,6 +317,7 @@ describe('G4 · the schema physically enforces the domain rules', () => {
   });
 
   it('covers every section in SECTION_MODES', () => {
-    expect(Object.keys(SECTION_MODES).sort()).toEqual([...SECTIONS].sort());
+    // EX-7: widened, never loosened - still exact equality, over all twelve entry sections.
+    expect(Object.keys(SECTION_MODES).sort()).toEqual([...SECTIONS, ...EVENT_SECTIONS].sort());
   });
 });

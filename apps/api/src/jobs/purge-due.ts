@@ -55,27 +55,48 @@ export async function purgeDue(repo: Repo, now: string): Promise<PurgeReport> {
   return { before, erased, failed };
 }
 
+/**
+ * C-07 / BE-19 · THE WHOLE NIGHTLY JOB: erase what is due, then prune the
+ * limiter's table. A sibling concern in the same cron entry, because both are
+ * "housekeeping nobody will remember to schedule twice" and `rate_events`
+ * otherwise grows by one row per OTP attempt for ever.
+ */
+export async function runNightly(
+  repo: Repo,
+  limiter: { prune(): Promise<number> },
+  now: string,
+): Promise<PurgeReport & { readonly rateEventsPruned: number }> {
+  const report = await purgeDue(repo, now);
+  const rateEventsPruned = await limiter.prune();
+  return { ...report, rateEventsPruned };
+}
+
 /*
- * The command. Only when run directly, for the same reason `server.ts` guards
- * its own entry: importing this module in a test must not open a pool.
+ * The command: `npm run purge-due -w @swafto/api` (or `node apps/api/src/jobs/purge-due.ts`),
+ * which is what cron runs. Only when run directly, for the same reason `server.ts`
+ * guards its own entry: importing this module in a test must not open a pool.
+ *
+ * `purgeShop` is scoped per shop and sets the erasure flag itself, so this
+ * runs on the ordinary application role - no BYPASSRLS needed (C-01).
  */
 if (process.argv[1] && process.argv[1].endsWith('purge-due.ts')) {
   const { loadConfig } = await import('../config.ts');
   const { pgRepo } = await import('../db/postgres.ts');
+  const { openPool } = await import('../db/pool.ts');
+  const { RateLimiter } = await import('../rate-limit/store.ts');
 
   const config = loadConfig();
-  const mod = (await import('pg')) as unknown as Record<string, unknown>;
-  const pg = (mod.default ?? mod) as {
-    Pool: new (o: unknown) => {
-      query(text: string, params?: readonly unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
-      end(): Promise<void>;
-    };
-  };
-  const pool = new pg.Pool({ connectionString: config.databaseUrl, max: 2 });
+  const db = await openPool(config.databaseUrl, {
+    max: 2,
+    statementTimeoutMs: config.statementTimeoutMs,
+    name: 'purge',
+  });
 
+  let failed = 0;
   try {
-    const report = await purgeDue(
-      pgRepo({ query: (text, params) => pool.query(text, params) }),
+    const report = await runNightly(
+      pgRepo(db.sql),
+      new RateLimiter(db.sql, { secret: config.rateLimitKey }),
       new Date().toISOString(),
     );
     /*
@@ -90,13 +111,19 @@ if (process.argv[1] && process.argv[1].endsWith('purge-due.ts')) {
         report.erased.length +
         ', failed ' +
         report.failed.length +
+        ', rate events pruned ' +
+        report.rateEventsPruned +
         '\n',
     );
     for (const f of report.failed) {
       process.stderr.write('purge-due: shop ' + f.shopId + ' NOT erased: ' + f.reason + '\n');
     }
-    process.exit(report.failed.length === 0 ? 0 : 1);
+    failed = report.failed.length;
+  } catch (e) {
+    process.stderr.write('purge-due failed: ' + (e as Error).message + '\n');
+    failed = 1;
   } finally {
-    await pool.end();
+    await db.end();
   }
+  process.exit(failed === 0 ? 0 : 1);
 }

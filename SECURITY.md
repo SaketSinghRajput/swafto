@@ -6,7 +6,7 @@ want to hear about it before anyone else does.
 
 ## Reporting a vulnerability
 
-**Email `grievance@swafto.app`.** Please do not open a public issue for
+**Email `grievance@swafto.com`.** Please do not open a public issue for
 anything that could expose data.
 
 Useful things to include, in rough order of usefulness:

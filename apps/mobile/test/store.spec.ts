@@ -193,3 +193,76 @@ describe('a difference cannot be closed without a reason', () => {
     expect(store.state.day.differenceReason).toBeUndefined();
   });
 });
+
+describe('a party ledger carries the sign the section implies, never the amount', () => {
+  const partyEntry = (
+    id: string,
+    section: Entry['section'],
+    amount: number,
+    partyId: string,
+  ): Entry =>
+    ({
+      id,
+      dayId: CANONICAL_DATE,
+      section,
+      amount,
+      mode: section === 'udhar_sales' || section === 'purchase' ? 'udhar' : 'cash',
+      partyId,
+      source: 'manual',
+      createdAt: `${CANONICAL_DATE}T19:00:00.000Z`,
+    }) as Entry;
+
+  it('udhar given raises what a customer owes; a collection lowers it', () => {
+    const store = freshStore();
+    const before = store.partyMovementToday('p-ramesh');
+
+    store.append(partyEntry('pm-1', 'udhar_sales', 50000, 'p-ramesh'));
+    const afterSale = store.partyMovementToday('p-ramesh');
+    expect(afterSale).toBe(add(before, 50000));
+
+    store.append(partyEntry('pm-2', 'udhar_collection', 20000, 'p-ramesh'));
+    expect(store.partyMovementToday('p-ramesh')).toBe(subtract(afterSale, 20000));
+  });
+
+  it('a purchase raises what we owe a supplier; a payment lowers it', () => {
+    const store = freshStore();
+    const before = store.partyMovementToday('p-wholesale');
+
+    store.append(partyEntry('pm-3', 'purchase', 80000, 'p-wholesale'));
+    expect(store.partyMovementToday('p-wholesale')).toBe(add(before, 80000));
+
+    store.append(partyEntry('pm-4', 'party_payment', 80000, 'p-wholesale'));
+    expect(store.partyMovementToday('p-wholesale')).toBe(before);
+  });
+
+  /*
+   * THE ONE THAT WOULD HAVE BEEN WRONG IF THE SIGN CAME FROM THE AMOUNT.
+   *
+   * Every amount in this system is non-negative - the sign is carried by the
+   * section (types.ts:56). A party whose whole day is a collection must
+   * therefore go NEGATIVE, and an implementation that summed amounts would
+   * return a positive figure and tell the shopkeeper a man who paid him owes
+   * him more.
+   */
+  it('a day of nothing but collection leaves the customer owing LESS, not more', () => {
+    const store = freshStore();
+    const before = store.partyMovementToday('p-sunita');
+    store.append(partyEntry('pm-5', 'udhar_collection', 30000, 'p-sunita'));
+    const after = store.partyMovementToday('p-sunita');
+    expect(after).toBe(subtract(before, 30000));
+    expect(after).toBeLessThan(before);
+  });
+
+  it('a party with no entries today has moved by nothing, and that is 0 not null', () => {
+    expect(freshStore().partyMovementToday('p-nobody')).toBe(0);
+  });
+
+  it('sections that name no party never reach a party ledger', () => {
+    const store = freshStore();
+    const before = store.partyMovementToday('p-ramesh');
+    // A cash sale has no partyId at all, and a withdrawal is the owner's own.
+    store.append(sale('pm-6', 99999));
+    expect(store.partyMovementToday('p-ramesh')).toBe(before);
+    expect(store.partyEntries('p-ramesh').some((e) => e.section === 'cash_sales')).toBe(false);
+  });
+});

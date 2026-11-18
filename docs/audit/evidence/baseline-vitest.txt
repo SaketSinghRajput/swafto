@@ -1,0 +1,17 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+[33mBoth esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored.[39m The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.0.1 D:/SWAFTO/code base
+
+
+ Test Files  120 passed (120)
+      Tests  3720 passed | 87 skipped (3807)
+   Start at  07:59:47
+   Duration  10.25s (tests 52%, import 33%, transform 13%, worker 1%)
+
+    Isolate  120 workers spawned · ~314ms startup each (spawn + environment, per file)
+             at least ~3.11s faster with isolate: false — reuses workers across files instead of one per file
+
+vitest exit 0

@@ -68,7 +68,7 @@ export const packageExports =
  */
 export const COMMITTED_SCREENS = {
   made: 33,
-  from: 'PROJECTION.md "The re-cut" · ids resolved against the build map',
+  from: 'PROJECTION.md "The re-cut" · ids resolved against the build map · extended 2026-10-22 to SPEC-DIGEST §10 P0',
   ids: [
     'T7', // Form A - first, because it is the hardest
     'T1', // Today, the open day - THE FRONT DOOR. Added by the product review at
@@ -80,12 +80,155 @@ export const COMMITTED_SCREENS = {
     'T5', // the nine-section day-close list
     'T11', // cash check · counting
     'T12', // cash check · difference
-    // T13 (cash check - balanced) was REMOVED by the product review to keep the
-    // total at ten. Cheapest screen in the set to lose: three lines of content, T12
-    // owns the difference case, and T14 shows the same balanced figures.
+    /*
+     * T13 WAS REMOVED HERE, AND PUTTING IT BACK IS A CORRECTION RATHER THAN A
+     * CHANGE OF MIND.
+     *
+     * The note that stood in this place read: "T13 (cash check - balanced) was
+     * REMOVED by the product review to keep the total at ten. Cheapest screen in
+     * the set to lose: three lines of content, T12 owns the difference case, and
+     * T14 shows the same balanced figures."
+     *
+     * SPEC-DIGEST §8 S03 says the opposite, in the strongest terms used about
+     * any screen in this product: `BalancedState` is "the highest-leverage
+     * screen in the product and the only genuinely good moment the day
+     * contains", and it is explicitly "NOT the difference screen with a block
+     * removed". The removal reasoning is the exact claim the spec forbids, and
+     * it was made to hit a round number.
+     */
+    'T13', // cash check - balanced. Restored 2026-10-22 against S03.
     'T14', // day closed summary
     'T6', // opening cash - pulled into the committed set by injection 21
+
+    /*
+     * THE REST OF P0, added 2026-10-22. SPEC-DIGEST §10 names fifteen screens as
+     * "the minimum that closes one day" and says to build nothing else until all
+     * fifteen exist; the committed set above is PROJECTION's re-cut of ten and
+     * predates it. These seven are the difference.
+     */
+    'T2', // Today - first run. No history, one action: enter opening cash
+    'T3', // Today - already closed. What he sees at 10pm and again next morning
+    'X1', // Onboarding - shop name, language, text size, opening cash
+    'P1', // Parties list - customers and suppliers, with both outstanding totals
+    'P2', // Customer detail - the ledger and a collection
+    'P3', // Supplier detail - the same page, money running the other way
+
+    /*
+     * R1 - REPORTS, THE THIRD TAB. Added 2026-10-23, and an INSTRUMENT asked for
+     * it rather than a plan.
+     *
+     * `check:crossdoc` counts the `[TPRX]\d` screen files on disk against the
+     * implemented figure DESIGN.md derives from this list, so the moment
+     * `R1.tsx` existed the two documents disagreed by one. The rule that counter
+     * is named after is the right one - a real screen cannot be added without
+     * taking an id - and the build map has carried `R1  Reports - early` since
+     * G0, so the id was reserved rather than invented here.
+     *
+     * HELD TO THE SAME EIGHT CHILDREN as everything above it. Its TRACEABILITY
+     * cells are P4, P6 and P7, the ungated figures it actually draws; OP2, OP3,
+     * OP5 and BI1-BI6 name R1 as well and stay TODO, because those are gated on
+     * a closed-day count nothing in this app can reach yet (W4).
+     */
+    'R1', // Reports - early. Empty until the first close, which is the point of it
+
+    /*
+     * T16 - POST A CORRECTION, added 2026-10-25. Build map P1, and the answer to
+     * HT-11: T3's "Post a correction" routed to T5, the open day's list, which on
+     * a frozen day offers nothing. Same eight children as everything above.
+     */
+    'T16', // Post a correction - a new entry on the next open day, never a write to the closed one
+
+    /*
+     * T19 - A TYPED ADJUSTMENT. Added 2026-10-25 for decision 2 of the
+     * co-founder review (2026-10-22), which postdates the build map, so the map
+     * has no row for it. The id is taken from beyond the map's last T row
+     * rather than borrowed: T15 is "Past day - read-only" and T16 "Post a
+     * correction" (a different thing - a correction references a closed day;
+     * an adjustment is a typed fact of today), and T17 is day history. Taking
+     * any of those would tick a screen off with its own subject unbuilt. T18 is
+     * Return or exchange (§2.3), built alongside, so this one is T19 - also
+     * absent from the build map (renamed from T18 at the merge, 2026-10-26).
+     */
+    'T19', // Adjustment - a type from the fixed list and an amount; no free text
+
+    /*
+     * M1 - THE PREMIUM DASHBOARD, added 2026-10-26 for PR-6 of the Free/Premium
+     * plan (docs/research/R5-free-premium-plan.md), which postdates the build
+     * map. NOT R2: the map's R2 is "Reports - mature", a different screen, and
+     * taking it would tick that screen off with its own subject unbuilt. `M` is
+     * a prefix the map does not use, so the id cannot collide with a map row;
+     * check:crossdoc and check:traceability list screen prefixes by hand and
+     * were taught `M` in the same change.
+     */
+    'M1', // Premium dashboard - sales estimate and comparisons; an item-cards slot for PR-2
+
+    /*
+     * C1 - ASK, added 2026-10-26 for FR-8 and PR-5 (docs/research/R5): the
+     * free FAQ-and-today's-figures chatbot and the Premium shop-context one,
+     * one screen gated by `allows(plan, 'shopChat')`. Decided after the build
+     * map, which has no chat screen and no C row at all, so the id is free
+     * rather than borrowed - and `gen-tasks` refuses it the day the map ever
+     * names a C1. Same eight children as everything above.
+     */
+    'C1', // Ask - a question answered from the engine; never a figure entered
+
+    /*
+     * PR-1 (PREMIUM, R5 decision 2): items per sale. Scope decided 2026-10-26,
+     * after the build map. Neither id is the map's: the map numbers only the
+     * T, P, R and X families (gen-tasks reads `[TPRX]\d`), so S9 extends the
+     * mandated S family's numbering by one and I1 opens a family of its own.
+     * Same eight children as everything above.
+     */
+    'S9', // Your items - the shop's own short list, names only, no price, no stock
+    'I1', // Items in a sale - optional, after the sale, never more than the sale
+
+    /*
+     * S11 - THE APP-LOCK COVER. Added 2026-10-26 for R5 FR-3 (R1 GAP-4), which
+     * postdates the build map. The map has no lock screen of any letter, and
+     * the S family is outside the map's [TPRX] ids, so S11 cannot collide with
+     * a map screen (S9 and S10 went to items and the plan, merged alongside). Same
+     * eight children as everything above.
+     */
+    'S11', // App locked - the phone's own screen lock; shows nothing from the book
+
+    /*
+     * P6 AND S12 - R5 FR-6 AND FR-4, added 2026-10-26, both postdating the
+     * build map. P6 is a free P id: the map's P rows stop at P5, and P5 is
+     * "Edit party" - borrowing it would tick an edit screen off with only a
+     * credit limit built. S12 sits after S11 in the settings family, outside the
+     * map's [TPRX] ids. Same eight children as everything above.
+     */
+    'P6', // Credit limit - one amount, observed against, never enforced
+    'S12', // Entries for your accountant - a month, then a CSV to the share sheet
+
+    /*
+     * S13 AND S14 - the M3 "Mitra" redesign, approved by Saket at M2
+     * (2026-11-18, product/swafto-ui-redesign/PLAN.md decisions log). Both
+     * postdate the build map and sit in this build's own S family after S12,
+     * outside the map's [TPRX] ids. S13 is DPDP access as a button (the API's
+     * `/v1/me/export`); S14 is C-21's lost-phone sign-out (the API's device
+     * list and revoke). Same eight children as everything above.
+     */
+    'S13', // Your data - everything the server holds, to the share sheet
+    'S14', // Signed-in phones - the shop's devices, and signing a lost one out
   ],
+  /**
+   * Committed ids the build map does not have, with the name the map would have
+   * given them. Only for scope decided AFTER the map; `gen-tasks` refuses an id
+   * that is here and in the map both.
+   */
+  after: {
+    T19: 'Typed adjustment (decision 2, 2026-10-22)',
+    M1: 'Premium dashboard (PR-6, Free/Premium plan R5, 2026-10-26)',
+    C1: 'Ask - trilingual questions answered from the engine (FR-8, PR-5)',
+    S9: 'Your items - the shop’s item list (PR-1, Premium, 2026-10-26)',
+    I1: 'Items in a sale (PR-1, Premium, 2026-10-26)',
+    S11: "App locked - the phone's own screen lock (R5 FR-3, 2026-10-26)",
+    P6: 'Credit limit for a customer (R5 FR-6, 2026-10-26)',
+    S12: 'Entries for your accountant (R5 FR-4, 2026-10-26)',
+    S13: 'Your data - access and export (DPDP, M3 2026-11-18)',
+    S14: 'Signed-in phones - lost-device sign-out (C-21, M3 2026-11-18)',
+  },
 };
 
 /**
@@ -107,9 +250,66 @@ export const COMMITTED_SCREENS = {
  * measured is to keep it in a category the instruments do not read.
  */
 export const MANDATED_SCREENS = {
-  from: 'LEGAL-AUDIT L-01/L-02 - DPDP Act 2023 s6, notice and specific consent',
-  ids: ['X0'],
-  names: { X0: 'Consent notice' },
+  from:
+    'LEGAL-AUDIT L-01/L-02 (DPDP Act 2023 s6, notice and specific consent) and ' +
+    'LEGAL-AUDIT §1.6 · Google Play User Data policy · Apple App Store 5.1.1(i) and (v) · ' +
+    'CLAUDE.md decision 4 of 2026-10-22 (returns and exchanges in V1) · ' +
+    'Google Play Subscriptions policy (R4 §5.4, PR-7)',
+  /*
+   * THE SETTINGS FAMILY IS HERE FOR THE REASON X0 IS, and the reason is worth
+   * stating because it reads like a filing decision and is not one.
+   *
+   * Three of these screens are conditions of publication rather than product
+   * choices. Google Play's User Data policy requires an IN-APP path to delete
+   * the account and its data for any app that lets a user create one; Apple
+   * 5.1.1(v) requires the same, and 5.1.1(i) requires the privacy notice to be
+   * reachable inside the app, not only in the store listing; the DPDP Act
+   * requires a named grievance officer and withdrawal as easy as giving. None
+   * of them has a build-map number, because the build map predates all three.
+   *
+   * THEY ARE NOT X2 AND X3, and that is the X0 argument again. The build map
+   * has X2 "More · settings" (Language, appearance, BACKUP, help) and X3
+   * "Language switch". Naming S1 "X2" would tick off a screen whose backup half
+   * is not built, exactly as naming X0 "X1" would have ticked off onboarding
+   * with its four questions unwritten. The ids stay distinct until somebody
+   * decides whether the S family REPLACES X2/X3 or sits beside them - a spec
+   * decision, and `docs/spec/source/` is not ours to edit.
+   *
+   * SAME EIGHT CHILDREN EITHER WAY. The cheapest way to end up with a
+   * legally-required panel nobody measured is to keep it in a category the
+   * instruments do not read.
+   */
+  /*
+   * T18 IS HERE FOR THE SAME REASON, ONE SOURCE OVER. Returns and exchanges are
+   * in V1 by the co-founder decision of 2026-10-22 (CLAUDE.md, decision 4), not
+   * by law - but like the S family they have no build-map number. The build
+   * map's T15 is "Past day - read-only", so naming this screen T15 would tick off
+   * a screen nobody built; T18 is the first id the frozen build map never uses,
+   * and gen-tasks refuses it the day the map ever names one.
+   */
+  /*
+   * S10 - YOUR PLAN, added 2026-10-26 for PR-7, and mandated for the S family's
+   * reason: Play's Subscriptions policy requires the price, the billing period,
+   * auto-renewal and how to cancel to be shown in the app, and an easy way to
+   * cancel (R4 §1.5, §5.4). The build map has no S ids at all, so S10 cannot
+   * tick off a build-map screen; S9 and S10 were both free in this build's own
+   * S family, and S10 is the id the plan work was given. (The design reference
+   * uses S10 for "About" - the U-4 collision the S family already carries.)
+   */
+  ids: ['X0', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'T18', 'S10'],
+  names: {
+    T18: 'Return or exchange a sale',
+    X0: 'Consent notice',
+    S1: 'Settings hub',
+    S2: 'The shop',
+    S3: 'Language and text size',
+    S4: 'Privacy and consent',
+    S5: 'About, version and licences',
+    S6: 'Help and the grievance officer',
+    S7: 'Delete this account',
+    S8: 'Confirm deletion',
+    S10: 'Your plan (PR-7)',
+  },
 };
 
 /** Every screen this build holds itself to, however it got there. */
@@ -172,12 +372,38 @@ export const SCREEN_CHILDREN = [
     title: 'its TRACEABILITY row names the feature IDs it displays',
     why: 'A screen nobody can trace to a feature is a screen nobody can verify.',
     /*
-     * WORD-BOUNDED. A substring test ticks T1 whenever T10 through T17 are
-     * mentioned, which is a box nobody can check - the exact defect this file
-     * exists to prevent. TRACEABILITY is feature-keyed, so the honest test is that
-     * at least one feature row names this screen in its Screen column.
+     * WORD-BOUNDED, AND NOW SCOPED TO THE COLUMN IT CLAIMS TO READ.
+     *
+     * The comment here already said the honest test is "at least one feature row
+     * names this screen IN ITS SCREEN COLUMN" - and then tested the whole
+     * document, which is a different question. Word boundaries fixed T1-matching-
+     * T10 and left the larger hole open: any sentence anywhere in the file could
+     * tick any screen's box.
+     *
+     * It was live. TRACEABILITY line 149 reads "Deletion propagates to S3
+     * backups ... no S3, no Terraform" - Amazon S3, in the Test column of an
+     * infrastructure row - which would have ticked SCREEN S3's traceability box
+     * on a sentence about object storage. A box ticked by something other than
+     * its subject is the precise defect this file exists to prevent, and it was
+     * sitting in the predicate meant to prevent it.
+     *
+     * Fixing the predicate rather than renaming the screen is the root-cause
+     * fix: the hole was never about `S`. `R1` could be ticked by a mention of
+     * revision R1, `T5` by a template id. Scoping to the column closes it for
+     * every prefix, including the next one somebody invents.
      */
-    predicate: (id) => () => new RegExp(`\\b${id}\\b`).test(read('docs/spec/TRACEABILITY.md')),
+    predicate: (id) => () => {
+      const screenColumnOf = (row) => {
+        // `| ID | Engine | Test | API | Screen | Status |` - split on an
+        // UNESCAPED pipe, because API cells legitimately contain `a\|b`.
+        const cells = row.split(/(?<!\\)\|/);
+        return cells.length >= 7 ? (cells[5] ?? '') : '';
+      };
+      return read('docs/spec/TRACEABILITY.md')
+        .split(/\r?\n/)
+        .filter((line) => line.trimStart().startsWith('|'))
+        .some((row) => new RegExp(`\\b${id}\\b`).test(screenColumnOf(row)));
+    },
   },
 ];
 

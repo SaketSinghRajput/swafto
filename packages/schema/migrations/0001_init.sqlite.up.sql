@@ -57,13 +57,15 @@ CREATE TABLE days (
   difference_reason  TEXT,
   closed_at          TEXT,
   created_at         TEXT NOT NULL,
+  starts_at          TEXT NOT NULL DEFAULT '00:00',
   PRIMARY KEY (shop_id, date),
   CONSTRAINT days_state_ck   CHECK (state IN ('not_started', 'open', 'ready', 'closed', 'not_closed')),
   CONSTRAINT days_opening_ck CHECK (opening_cash IS NULL OR (typeof(opening_cash) = 'integer' AND opening_cash >= 0)),
   CONSTRAINT days_counted_ck CHECK (counted_cash IS NULL OR (typeof(counted_cash) = 'integer' AND counted_cash >= 0)),
   CONSTRAINT days_closed_ck  CHECK (
     state <> 'closed' OR (counted_cash IS NOT NULL AND closed_at IS NOT NULL)
-  )
+  ),
+  CONSTRAINT days_starts_at_ck CHECK ((starts_at GLOB '[0-2][0-9]:[0-5][0-9]' AND substr(starts_at, 1, 2) <= '23'))
 );
 
 CREATE TABLE entries (
@@ -77,10 +79,11 @@ CREATE TABLE entries (
   due_date        TEXT,
   label           TEXT,
   corrects_day_id TEXT,
+  refers_to_entry_id TEXT,
   created_at      TEXT NOT NULL,
   source          TEXT NOT NULL DEFAULT 'manual',
   device_id       TEXT,
-  CONSTRAINT entries_section_ck CHECK (section IN ('cash_sales', 'upi_sales', 'udhar_sales', 'expense', 'purchase', 'udhar_collection', 'party_payment', 'withdrawal')),
+  CONSTRAINT entries_section_ck CHECK (section IN ('cash_sales', 'upi_sales', 'udhar_sales', 'expense', 'purchase', 'udhar_collection', 'party_payment', 'withdrawal', 'sales_return', 'exchange_out', 'exchange_receipt', 'refund_paid')),
   CONSTRAINT entries_source_ck  CHECK (source IN ('manual', 'imported')),
   CONSTRAINT entries_amount_ck  CHECK ((typeof(amount) = 'integer' AND amount >= 0)),
   CONSTRAINT entries_mode_ck CHECK (
@@ -92,6 +95,10 @@ CREATE TABLE entries (
       OR (section = 'udhar_collection' AND mode IN ('cash', 'upi', 'other'))
       OR (section = 'party_payment' AND mode IN ('cash', 'upi', 'other'))
       OR (section = 'withdrawal' AND mode IN ('cash', 'upi'))
+      OR (section = 'sales_return' AND mode IN ('other'))
+      OR (section = 'exchange_out' AND mode IN ('other'))
+      OR (section = 'exchange_receipt' AND mode IN ('cash', 'upi', 'udhar'))
+      OR (section = 'refund_paid' AND mode IN ('cash', 'upi', 'udhar'))
   ),
   CONSTRAINT entries_due_ck CHECK (
     due_date IS NULL OR (section = 'purchase' AND mode = 'udhar')
@@ -100,7 +107,17 @@ CREATE TABLE entries (
     (section IN ('udhar_sales', 'udhar_collection', 'party_payment') AND party_id IS NOT NULL)
     OR (section = 'purchase')
     OR (section IN ('cash_sales', 'upi_sales', 'expense', 'withdrawal') AND party_id IS NULL)
+    OR (section IN ('sales_return', 'exchange_out'))
+    OR (section IN ('exchange_receipt', 'refund_paid') AND (mode <> 'udhar' OR party_id IS NOT NULL))
   ),
+  -- EX-3: an event leg always points at its row; a closing-section row only as a correction.
+  CONSTRAINT entries_refers_ck CHECK (
+    (section IN ('sales_return', 'exchange_out', 'exchange_receipt', 'refund_paid') AND refers_to_entry_id IS NOT NULL)
+    OR (section IN ('cash_sales', 'upi_sales', 'udhar_sales', 'expense', 'purchase', 'udhar_collection', 'party_payment', 'withdrawal') AND (refers_to_entry_id IS NULL OR corrects_day_id IS NOT NULL))
+  ),
+  CONSTRAINT entries_shop_id_uq UNIQUE (shop_id, id),
+  -- Same shop, by construction: a link can never reach another shop's ledger (S-11).
+  CONSTRAINT entries_refers_fk FOREIGN KEY (shop_id, refers_to_entry_id) REFERENCES entries(shop_id, id),
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
@@ -126,6 +143,66 @@ CREATE TABLE section_skips (
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
+CREATE TABLE upi_confirmations (
+  id            TEXT PRIMARY KEY,
+  shop_id       TEXT NOT NULL REFERENCES shops(id),
+  day_id        TEXT NOT NULL,
+  entry_id      TEXT NOT NULL REFERENCES entries(id),
+  batch_id      TEXT,
+  confirmed_at  TEXT NOT NULL,
+  CONSTRAINT upi_confirmations_once UNIQUE (shop_id, entry_id),
+  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+);
+
+CREATE TABLE adjustments (
+  id          TEXT PRIMARY KEY,
+  shop_id     TEXT NOT NULL REFERENCES shops(id),
+  day_id      TEXT NOT NULL,
+  type        TEXT NOT NULL,
+  amount      INTEGER NOT NULL,
+  created_at  TEXT NOT NULL,
+  device_id   TEXT,
+  CONSTRAINT adjustments_type_ck   CHECK (type IN ('counterfeit_note', 'rounding_given', 'rounding_kept', 'home_use', 'stock_written_off')),
+  CONSTRAINT adjustments_amount_ck CHECK ((typeof(amount) = 'integer' AND amount >= 0) AND amount > 0),
+  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+);
+
+CREATE TABLE items (
+  id          TEXT PRIMARY KEY,
+  shop_id     TEXT NOT NULL REFERENCES shops(id),
+  name        TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  CONSTRAINT items_name_ck CHECK (length(name) BETWEEN 1 AND 60),
+  CONSTRAINT items_shop_id_uq UNIQUE (shop_id, id)
+);
+
+CREATE TABLE item_lines (
+  id          TEXT PRIMARY KEY,
+  shop_id     TEXT NOT NULL REFERENCES shops(id),
+  day_id      TEXT NOT NULL,
+  entry_id    TEXT NOT NULL,
+  item_id     TEXT,
+  quantity    INTEGER NOT NULL,
+  amount      INTEGER NOT NULL,
+  created_at  TEXT NOT NULL,
+  device_id   TEXT,
+  CONSTRAINT item_lines_quantity_ck CHECK (typeof(quantity) = 'integer' AND quantity BETWEEN 1 AND 99999),
+  CONSTRAINT item_lines_amount_ck CHECK ((typeof(amount) = 'integer' AND amount >= 0) AND amount > 0),
+  -- Same shop, by construction (S-11): a line can never reach another shop's sale or list.
+  FOREIGN KEY (shop_id, entry_id) REFERENCES entries(shop_id, id),
+  FOREIGN KEY (shop_id, item_id) REFERENCES items(shop_id, id),
+  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+);
+
+CREATE TABLE party_credit_limits (
+  id           TEXT PRIMARY KEY,
+  shop_id      TEXT NOT NULL REFERENCES shops(id),
+  party_id     TEXT NOT NULL REFERENCES parties(id),
+  limit_paise  INTEGER,
+  set_at       TEXT NOT NULL,
+  CONSTRAINT party_credit_limits_ck CHECK (limit_paise IS NULL OR ((typeof(limit_paise) = 'integer' AND limit_paise >= 0) AND limit_paise > 0))
+);
+
 CREATE TABLE outbox (
   entry_id    TEXT PRIMARY KEY REFERENCES entries(id),
   attempts    INTEGER NOT NULL DEFAULT 0,
@@ -141,9 +218,21 @@ CREATE INDEX entries_due_idx ON entries (shop_id, due_date);
 
 CREATE INDEX entries_corrects_idx ON entries (shop_id, corrects_day_id);
 
+CREATE INDEX entries_refers_idx ON entries (shop_id, refers_to_entry_id);
+
 CREATE INDEX days_state_idx ON days (shop_id, state, date);
 
 CREATE INDEX parties_kind_idx ON parties (shop_id, kind);
+
+CREATE INDEX upi_confirmations_day_idx ON upi_confirmations (shop_id, day_id);
+
+CREATE INDEX adjustments_day_idx ON adjustments (shop_id, day_id);
+
+CREATE INDEX item_lines_day_idx ON item_lines (shop_id, day_id);
+
+CREATE INDEX item_lines_entry_idx ON item_lines (shop_id, entry_id);
+
+CREATE INDEX party_credit_limits_party_idx ON party_credit_limits (shop_id, party_id);
 
 CREATE TRIGGER entries_no_update
 BEFORE UPDATE ON entries
@@ -164,9 +253,111 @@ BEGIN
   SELECT RAISE(ABORT, 'a closed day is immutable: post a correction on the open day (decision D7)');
 END;
 
+CREATE TRIGGER days_starts_at_fixed
+BEFORE UPDATE OF starts_at ON days
+WHEN NEW.starts_at IS NOT OLD.starts_at
+BEGIN
+  SELECT RAISE(ABORT, 'a day keeps the start time it was created under (decision 1)');
+END;
+
 CREATE TRIGGER entries_no_insert_into_closed_day
 BEFORE INSERT ON entries
 WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
 BEGIN
   SELECT RAISE(ABORT, 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)');
+END;
+
+CREATE TRIGGER upi_confirmations_no_update
+BEFORE UPDATE ON upi_confirmations
+BEGIN
+  SELECT RAISE(ABORT, 'upi_confirmations is append-only: add another, never UPDATE (D1)');
+END;
+
+CREATE TRIGGER upi_confirmations_no_delete
+BEFORE DELETE ON upi_confirmations
+BEGIN
+  SELECT RAISE(ABORT, 'upi_confirmations is append-only: add another, never DELETE (D1)');
+END;
+
+CREATE TRIGGER upi_confirmations_no_insert_into_closed_day
+BEFORE INSERT ON upi_confirmations
+WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
+BEGIN
+  SELECT RAISE(ABORT, 'that day is closed: a closed day is frozen (decision D7)');
+END;
+
+CREATE TRIGGER adjustments_no_update
+BEFORE UPDATE ON adjustments
+BEGIN
+  SELECT RAISE(ABORT, 'adjustments is append-only: add another, never UPDATE (D1)');
+END;
+
+CREATE TRIGGER adjustments_no_delete
+BEFORE DELETE ON adjustments
+BEGIN
+  SELECT RAISE(ABORT, 'adjustments is append-only: add another, never DELETE (D1)');
+END;
+
+CREATE TRIGGER adjustments_no_insert_into_closed_day
+BEFORE INSERT ON adjustments
+WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
+BEGIN
+  SELECT RAISE(ABORT, 'that day is closed: a closed day is frozen (decision D7)');
+END;
+
+CREATE TRIGGER item_lines_no_update
+BEFORE UPDATE ON item_lines
+BEGIN
+  SELECT RAISE(ABORT, 'item_lines is append-only: add another, never UPDATE (D1)');
+END;
+
+CREATE TRIGGER item_lines_no_delete
+BEFORE DELETE ON item_lines
+BEGIN
+  SELECT RAISE(ABORT, 'item_lines is append-only: add another, never DELETE (D1)');
+END;
+
+CREATE TRIGGER item_lines_no_insert_into_closed_day
+BEFORE INSERT ON item_lines
+WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
+BEGIN
+  SELECT RAISE(ABORT, 'that day is closed: a closed day is frozen (decision D7)');
+END;
+
+CREATE TRIGGER items_no_update
+BEFORE UPDATE ON items
+BEGIN
+  SELECT RAISE(ABORT, 'items is append-only: add another, never UPDATE (D1)');
+END;
+
+CREATE TRIGGER items_no_delete
+BEFORE DELETE ON items
+BEGIN
+  SELECT RAISE(ABORT, 'items is append-only: add another, never DELETE (D1)');
+END;
+
+CREATE TRIGGER item_lines_fit_sale
+BEFORE INSERT ON item_lines
+WHEN NOT EXISTS (
+    SELECT 1 FROM entries e
+    WHERE e.shop_id = NEW.shop_id AND e.id = NEW.entry_id AND e.day_id = NEW.day_id
+      AND e.section IN ('cash_sales', 'upi_sales', 'udhar_sales')
+  )
+  OR (SELECT COALESCE(SUM(l.amount), 0) FROM item_lines l
+      WHERE l.shop_id = NEW.shop_id AND l.entry_id = NEW.entry_id) + NEW.amount
+     > (SELECT e.amount FROM entries e WHERE e.shop_id = NEW.shop_id AND e.id = NEW.entry_id)
+BEGIN
+  SELECT RAISE(ABORT, 'an item line belongs to a sale of its own day, and the lines never come to more than the sale (PR-1)');
+END;
+
+CREATE TRIGGER party_credit_limits_no_update
+BEFORE UPDATE ON party_credit_limits
+BEGIN
+  SELECT RAISE(ABORT, 'party_credit_limits is append-only: add another, never UPDATE (D1)');
+END;
+
+CREATE TRIGGER party_credit_limits_no_delete
+BEFORE DELETE ON party_credit_limits
+BEGIN
+  SELECT RAISE(ABORT, 'party_credit_limits is append-only: add another, never DELETE (D1)');
 END;

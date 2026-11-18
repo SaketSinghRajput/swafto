@@ -37,7 +37,7 @@ describe('T9 renders all four states', () => {
   it('loading', () => {
     const tree = render(<FormC store={canonicalStore()} status="loading" />);
     expect(byTestId(tree, 't9-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error', () => {
@@ -106,8 +106,11 @@ describe('T9 against both fixtures and every language', () => {
     const store = adversarialStore();
     const tree = render(<FormC store={store} language="longest" display="focus" />);
     expect(lines(tree)).toHaveLength(lines(render(<FormC store={store} />)).length);
+    // All five modes survive the longest strings at the largest type. They are
+    // segments now, and a segment pushed off the control by a long Odia label
+    // would put a payment mode out of reach without failing anything else.
     expect(
-      all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('t9-commit-')),
+      all(tree).filter((n) => /^t9-mode-[0-9]+$/.test(String(n.props?.testID ?? ''))),
     ).toHaveLength(5);
   });
 
@@ -149,9 +152,23 @@ describe('T9 accessibility and its keypad', () => {
 
   it('all five modes are offered, including shop stock', () => {
     const committed: string[] = [];
-    const tree = render(<FormC store={canonicalStore()} onCommit={(o) => committed.push(o.mode)} />);
-    for (const mode of ['cash', 'upi', 'other', 'udhar', 'shop_stock']) {
-      byTestId(tree, 't9-commit-' + mode + '-expense').props.onPress();
+    /*
+     * ALL FIVE OF THESE ARE THE SAME SECTION. `expense` with five modes is the
+     * clearest case for an index-keyed segment, and it is D2 in miniature: only
+     * the cash one moves the drawer, while all five count toward expenses. The
+     * index is the only thing that distinguishes them, so the index is what is
+     * driven here.
+     */
+    for (const index of [0, 1, 2, 3, 4]) {
+      const tree = render(
+        <FormC
+          store={canonicalStore()}
+          draftPaise={50000}
+          selectedCommit={index}
+          onCommit={(o) => committed.push(o.mode)}
+        />,
+      );
+      byTestId(tree, 't9-commit').props.onPress();
     }
     expect(committed).toEqual(['cash', 'upi', 'other', 'udhar', 'shop_stock']);
   });

@@ -108,7 +108,7 @@ in **Odia, Hindi and English** - the person reading it chose one of those three:
 4. **What they should do** - the safety measures they can take to protect their own
    interests.
 5. **Who to contact** - business contact details of a person who can actually answer.
-   Today that is the Grievance Officer at `grievance@swafto.app`
+   Today that is the Grievance Officer at `grievance@swafto.com`
    (`apps/api/src/dpdp/routes.ts`), and H6 must have named a real person by launch.
 
 **How it reaches them, in V1.** There is no notification inbox - it is deferred - and

@@ -110,7 +110,8 @@ export function dailyCashHealth(input: DayInput): DailyCashHealth {
     status,
     reasonRequired: difference !== 0,
   };
-  return input.day.differenceReason === undefined
+  // HT-49: a reason stored on a day that matched (an older build kept it) explains nothing.
+  return input.day.differenceReason === undefined || difference === 0
     ? out
     : { ...out, reason: input.day.differenceReason };
 }
@@ -127,12 +128,28 @@ export function dailyCashHealth(input: DayInput): DailyCashHealth {
  * an infinite one, and the UI must say "no sales yet" rather than render a symbol.
  */
 export function expensePressure(input: DayInput): Ratio {
-  return ratio(totalExpenses(input).value, netSales(input).value);
+  return overSales(totalExpenses(input).value, netSales(input).value);
+}
+
+/**
+ * A RATIO AGAINST NET SALES IS UNANSWERABLE WHEN NET SALES IS NOT POSITIVE (EX-10).
+ *
+ * Returns gave P4 its first minus term, so a day of more returns than sales has
+ * negative Net Sales - correct arithmetic, and the first P value that can be
+ * negative. `ratio` guards only zero, so expenses over -₹3,000 rendered as -340%,
+ * which means nothing. Answered here, at the three consumers of Net Sales,
+ * rather than in `ratio` itself: BI4 divides by expected cash, where a negative
+ * denominator is its own question and not this one. Exact parts are kept, so the
+ * working still renders; only the rounded share is withheld.
+ */
+function overSales(numeratorPaise: Paise, salesPaise: Paise): Ratio {
+  const r = ratio(numeratorPaise, salesPaise);
+  return salesPaise < 0 || numeratorPaise < 0 ? { ...r, basisPoints: null } : r;
 }
 
 /** OP2 over the trailing window, for the "vs your own trailing mean" comparison. */
 export function trailingExpensePressure(trailing: readonly ClosedDaySummary[]): Ratio {
-  return ratio(sum(trailing.map((d) => d.totalExpenses)), sum(trailing.map((d) => d.netSales)));
+  return overSales(sum(trailing.map((d) => d.totalExpenses)), sum(trailing.map((d) => d.netSales)));
 }
 
 /* ------------------------------------------------------------------ *
@@ -249,7 +266,7 @@ export function businessMovement(input: DayInput, ctx: OperationalContext): Busi
   }
 
   const direction = today > baseline ? 'up' : today < baseline ? 'down' : 'flat';
-  return { todayNetSales: today, baselineMedian: baseline, direction, ratio: ratio(today, baseline) };
+  return { todayNetSales: today, baselineMedian: baseline, direction, ratio: overSales(today, baseline) };
 }
 
 /* ------------------------------------------------------------------ *

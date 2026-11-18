@@ -1,0 +1,20 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+[33mBoth esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored.[39m The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.0.1 D:/SWAFTO/code base
+
+{"level":50,"time":1794885193887,"pid":26672,"hostname":"DESKTOP-7GNNJE7","reqId":"5dd8a7ca-8e07-45ef-951d-64e6b907319c","err":{"type":"Error","message":"timeout exceeded when trying to connect","stack":"Error: timeout exceeded when trying to connect\n    at Object.appendEntry (D:/SWAFTO/code base/apps/api/test/wave2-data.spec.ts:391:29)\n    at Object.<anonymous> (D:/SWAFTO/code base/apps/api/src/sync/routes.ts:586:42)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"},"reqId":"5dd8a7ca-8e07-45ef-951d-64e6b907319c","msg":"request failed"}
+{"level":50,"time":1794885193950,"pid":26672,"hostname":"DESKTOP-7GNNJE7","reqId":"7a7f8762-40e0-45d6-bf91-c2f2f88a6e79","constraint":"entries_amount_ck","msg":"sync row refused by the ledger"}
+{"level":50,"time":1794885194028,"pid":26672,"hostname":"DESKTOP-7GNNJE7","reqId":"67d730da-e84e-4ef2-972c-a6e541634a59","err":{"type":"TypeError","message":"cannot read properties of undefined (reading \"x\")","stack":"TypeError: cannot read properties of undefined (reading \"x\")\n    at Object.appendEntry (D:/SWAFTO/code base/apps/api/test/wave2-data.spec.ts:427:76)\n    at Object.<anonymous> (D:/SWAFTO/code base/apps/api/src/sync/routes.ts:586:42)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"},"msg":"sync row failed"}
+
+ Test Files  126 passed (126)
+      Tests  3861 passed | 103 skipped (3964)
+   Start at  08:43:11
+   Duration  10.91s (tests 56%, import 31%, transform 12%, worker 1%)
+
+    Isolate  126 workers spawned · ~353ms startup each (spawn + environment, per file)
+             at least ~3.69s faster with isolate: false — reuses workers across files instead of one per file
+
+vitest exit 0

@@ -315,6 +315,12 @@ describe('G6 - phone and OTP', () => {
       ...json({ phone: PHONE, language: 'en' }),
     });
     for (let i = 0; i < 12 && last.statusCode === 202; i += 1) {
+      /*
+       * RT-3 path 3 (Wave 2): inside the resend cooldown a request neither sends nor
+       * spends the per-phone budget, so the limit is only reached by requests a
+       * cooldown apart. The test still asserts the same limit and the same 429.
+       */
+      h.clock.value = new Date(Date.parse(h.clock.value) + 61_000).toISOString();
       last = await h.app.inject({
         method: 'POST',
         url: '/v1/auth/otp/request',
@@ -323,6 +329,72 @@ describe('G6 - phone and OTP', () => {
     }
     expect(last.statusCode).toBe(429);
     expect(Number(last.headers['retry-after'])).toBeGreaterThan(0);
+  });
+
+  it('F-24: one device walking a list of numbers is stopped by the per-device limit', async () => {
+    const ask = (phone: string, deviceId: string) =>
+      h.app.inject({
+        method: 'POST',
+        url: '/v1/auth/otp/request',
+        ...json({ phone, language: 'en', deviceId }),
+      });
+    const DEVICE = 'install-0001';
+    // A fresh number every time, so no per-phone limit is ever reached.
+    for (let i = 0; i < 5; i += 1) {
+      expect((await ask('+9198765100' + String(i).padStart(2, '0'), DEVICE)).statusCode).toBe(202);
+    }
+    const sixth = await ask('+919876510099', DEVICE);
+    expect(sixth.statusCode).toBe(429);
+    // The shape the client maps to A5 "too many tries", with when to come back.
+    expect(JSON.parse(sixth.body)).toEqual({
+      error: 'too_many_requests',
+      retryAfterSeconds: 3600,
+    });
+    expect(sixth.headers['retry-after']).toBe('3600');
+    expect(h.sms.count()).toBe(5);
+
+    // Another handset on the same address is untouched: per-IP never denies (R-007).
+    expect((await ask('+919876510098', 'install-0002')).statusCode).toBe(202);
+  });
+
+  it('DV-13: POST /v1/me/shop names the SESSION\'s shop and no other', async () => {
+    const mine = await signIn(h);
+    const theirs = await signIn(h, '+919876500002');
+    const res = await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/shop',
+      ...jsonAuth(mine.accessToken)({ name: 'Ma Tarini Store' }),
+    });
+    expect(res.statusCode).toBe(200);
+    expect((await h.deps.repo.findShop(mine.shopId))?.name).toBe('Ma Tarini Store');
+    expect((await h.deps.repo.findShop(theirs.shopId))?.name).toBe('Test Kirana');
+
+    // S-11: a shop id in the body is refused, not obeyed.
+    const sneaky = await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/shop',
+      ...jsonAuth(mine.accessToken)({ name: 'x', shopId: theirs.shopId }),
+    });
+    expect(sneaky.statusCode).toBe(400);
+    expect((await h.deps.repo.findShop(theirs.shopId))?.name).toBe('Test Kirana');
+
+    const anon = await h.app.inject({ method: 'POST', url: '/v1/me/shop', ...json({ name: 'x' }) });
+    expect(anon.statusCode).toBe(401);
+    const empty = await h.app.inject({
+      method: 'POST',
+      url: '/v1/me/shop',
+      ...jsonAuth(mine.accessToken)({ name: '' }),
+    });
+    expect(empty.statusCode).toBe(400);
+  });
+
+  it('F-24: a device id that is not a plain token is refused at the schema', async () => {
+    const res = await h.app.inject({
+      method: 'POST',
+      url: '/v1/auth/otp/request',
+      ...json({ phone: PHONE, language: 'en', deviceId: "x' OR 1=1" }),
+    });
+    expect(res.statusCode).toBe(400);
   });
 
   it('refreshes an access token, and refuses a refresh token used as an access token', async () => {
@@ -1419,6 +1491,18 @@ describe('POST /v1/days/:date/close', () => {
     expect(day.differenceReason).toBe('gave change from my own pocket');
   });
 
+  it('HT-49: a matching count stores no reason, even when one is sent', async () => {
+    const expected = await openWithCanonical();
+    const res = await h.app.inject({
+      method: 'POST',
+      url: '/v1/days/' + CANONICAL_DATE + '/close',
+      ...jsonAuth(session.accessToken)({ countedCash: expected, differenceReason: 't12.reason.miscount' }),
+    });
+    expect(res.statusCode).toBe(200);
+    const day = (h.deps.repo.dump() as { days: { differenceReason: string | null }[] }).days[0]!;
+    expect(day.differenceReason).toBeNull();
+  });
+
   it('is idempotent for the same count, and refuses a different one', async () => {
     const expected = await openWithCanonical();
     const first = await h.app.inject({
@@ -1469,5 +1553,246 @@ describe('POST /v1/days/:date/close', () => {
       ...json({ countedCash: 0 }),
     });
     expect(res.statusCode).toBe(401);
+  });
+});
+
+describe('HT-5 - an impossible mobile number gets no SMS', () => {
+  it('refuses a number outside the Indian mobile series, and sends nothing', async () => {
+    const h = harness();
+    for (const phone of ['+911234567890', '+910123456789', '+9190000000', '+19000000001']) {
+      const res = await h.app.inject({
+        method: 'POST',
+        url: '/v1/auth/otp/request',
+        ...json({ phone, language: 'en' }),
+      });
+      expect(res.statusCode, phone).toBe(400);
+      expect(h.sms.forPhone(phone), phone).toEqual([]);
+    }
+    const ok = await h.app.inject({
+      method: 'POST',
+      url: '/v1/auth/otp/request',
+      ...json({ phone: '+919000000001', language: 'en' }),
+    });
+    expect(ok.statusCode).toBe(202);
+  });
+});
+
+/* ==================================================================== *
+ * R5 FR-6 - a credit limit over the wire
+ * ==================================================================== */
+describe('R5 FR-6 - credit limits sync as an append-only party fact', () => {
+  let h: Harness;
+  let session: Session;
+  const ramesh = asUuid(CANONICAL_PARTIES.find((p) => p.kind === 'customer')!.id);
+  const limit = { id: asUuid('cl-1'), partyId: ramesh, limit: 500000, setAt: CANONICAL_DATE + 'T21:00:00.000Z' };
+  beforeEach(async () => {
+    h = harness();
+    session = await signIn(h);
+  });
+  const push = (body: unknown) =>
+    h.app.inject({ method: 'POST', url: '/v1/sync/push', ...jsonAuth(session.accessToken)(body) });
+
+  it('lands with its party, replays idempotently, and the party export carries it', async () => {
+    const batch = { ...pushBatch(canonicalInput(), CANONICAL_DATE), creditLimits: [limit] };
+    const first = JSON.parse((await push(batch)).body);
+    expect(first.rejected).toEqual([]);
+    expect(first.creditLimitsInserted).toBe(1);
+    const second = JSON.parse((await push(batch)).body);
+    expect(second.creditLimitsInserted).toBe(0);
+    expect(second.creditLimitsAlreadyPresent).toBe(1);
+    const exp = JSON.parse(
+      (
+        await h.app.inject({
+          method: 'GET',
+          url: '/v1/parties/' + ramesh + '/export',
+          headers: auth(session.accessToken),
+        })
+      ).body,
+    );
+    expect(exp.creditLimits.map((l: { limit: number }) => l.limit)).toEqual([500000]);
+  });
+
+  it('no free text, no zero, no fraction; null is "no limit"', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    expect((await push({ creditLimits: [{ ...limit, note: 'slow payer' }] })).statusCode).toBe(400);
+    expect((await push({ creditLimits: [{ ...limit, limit: 0 }] })).statusCode).toBe(400);
+    expect((await push({ creditLimits: [{ ...limit, limit: 10.5 }] })).statusCode).toBe(400);
+    const cleared = JSON.parse((await push({ creditLimits: [{ ...limit, limit: null }] })).body);
+    expect(cleared.rejected).toEqual([]);
+  });
+
+  it('a limit on a party this shop does not have is one rejected row, not a 500', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    const res = JSON.parse((await push({ creditLimits: [{ ...limit, partyId: asUuid('nobody') }] })).body);
+    expect(res.rejected).toEqual([expect.objectContaining({ id: limit.id, field: 'party_credit_limits_party' })]);
+  });
+});
+
+/* ==================================================================== *
+ * Decisions 2 and 3 - the day facts over the wire
+ * ==================================================================== */
+describe('decisions 2 and 3 - UPI confirmations and typed adjustments sync', () => {
+  let h: Harness;
+  let session: Session;
+  const upiId = asUuid('c-03'); // the canonical day's one UPI sale
+  const T = CANONICAL_DATE + 'T21:00:00.000Z';
+  const confirm = { id: asUuid('uc-1'), dayId: CANONICAL_DATE, entryId: upiId, confirmedAt: T };
+  const fake = {
+    id: asUuid('ad-1'),
+    dayId: CANONICAL_DATE,
+    type: 'counterfeit_note',
+    amount: 50000,
+    createdAt: T,
+  };
+
+  beforeEach(async () => {
+    h = harness();
+    session = await signIn(h);
+  });
+  const push = (body: unknown) =>
+    h.app.inject({ method: 'POST', url: '/v1/sync/push', ...jsonAuth(session.accessToken)(body) });
+  const summary = async () =>
+    JSON.parse(
+      (
+        await h.app.inject({
+          method: 'GET',
+          url: '/v1/days/' + CANONICAL_DATE + '/summary',
+          headers: auth(session.accessToken),
+        })
+      ).body,
+    ) as { cashCheck: { expected: number }; upi: { status: string } };
+
+  it('both land beside the entries, replay idempotently, and the summary derives from them', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    const before = await summary();
+    expect(before.upi.status).toBe('not_checked');
+
+    const batch = {
+      ...pushBatch(canonicalInput(), CANONICAL_DATE),
+      upiConfirmations: [confirm],
+      adjustments: [fake],
+    };
+    const first = JSON.parse((await push(batch)).body);
+    expect(first.rejected).toEqual([]);
+    expect(first.dayFactsInserted).toBe(2);
+    const second = JSON.parse((await push(batch)).body);
+    expect(second.dayFactsInserted).toBe(0);
+    expect(second.dayFactsAlreadyPresent).toBe(2);
+
+    const after = await summary();
+    expect(after.upi.status).toBe('checked');
+    // The fake note is a cash fact; the UPI tick is not (D2).
+    expect(after.cashCheck.expected).toBe(subtract(before.cashCheck.expected, 50000));
+  });
+
+  it('a day closed offline still takes its facts: they are written before the close', async () => {
+    const input = canonicalInput();
+    const res = JSON.parse(
+      (
+        await push({
+          days: [
+            {
+              date: CANONICAL_DATE,
+              state: 'closed',
+              openingCash: input.day.openingCash ?? 0,
+              countedCash: 0,
+              closedAt: T,
+              differenceReason: 't12.reason.loss',
+            },
+          ],
+          parties: CANONICAL_PARTIES.map((p) => ({ id: asUuid(p.id), kind: p.kind, name: p.name })),
+          entries: input.entries.map(wire),
+          upiConfirmations: [confirm],
+          adjustments: [fake],
+        })
+      ).body,
+    );
+    expect(res.rejected).toEqual([]);
+    expect(res.dayFactsInserted).toBe(2);
+  });
+
+  it('no free text rides along, and the type is from the list', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    expect((await push({ adjustments: [{ ...fake, reason: 'anything at all' }] })).statusCode).toBe(400);
+    expect((await push({ adjustments: [{ ...fake, type: 'other' }] })).statusCode).toBe(400);
+    expect((await push({ adjustments: [{ ...fake, amount: 0 }] })).statusCode).toBe(400);
+    expect((await push({ upiConfirmations: [{ ...confirm, note: 'seen it' }] })).statusCode).toBe(400);
+  });
+
+  it('a confirmation of a cash entry is one rejected row, not a 500', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    const res = JSON.parse(
+      (await push({ upiConfirmations: [{ ...confirm, entryId: asUuid('c-01') }] })).body,
+    );
+    expect(res.rejected).toEqual([
+      expect.objectContaining({ id: confirm.id, field: 'upi_confirmations_entry' }),
+    ]);
+  });
+});
+
+describe('PR-1 - the item list and item lines sync, within the sale', () => {
+  let h: Harness;
+  let session: Session;
+  const T = CANONICAL_DATE + 'T21:00:00.000Z';
+  const credit = asUuid('c-04'); // Ramesh's udhar sale, rs 900
+  const item = { id: asUuid('it-1'), name: 'Atta 5kg', createdAt: T };
+  const line = { id: asUuid('il-1'), dayId: CANONICAL_DATE, entryId: credit, itemId: item.id, quantity: 1, amount: 60000, createdAt: T };
+
+  beforeEach(async () => {
+    h = harness();
+    session = await signIn(h);
+  });
+  const push = (body: unknown) =>
+    h.app.inject({ method: 'POST', url: '/v1/sync/push', ...jsonAuth(session.accessToken)(body) });
+
+  it('lands, replays idempotently, and appears in the customer export', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    const batch = { items: [item], itemLines: [line] };
+    const first = JSON.parse((await push(batch)).body);
+    expect(first.rejected).toEqual([]);
+    expect(first.dayFactsInserted).toBe(2);
+    expect(JSON.parse((await push(batch)).body).dayFactsAlreadyPresent).toBe(2);
+
+    const exp = JSON.parse(
+      (
+        await h.app.inject({
+          method: 'GET',
+          url: '/v1/parties/' + asUuid(CANONICAL_PARTIES[0]!.id) + '/export',
+          headers: auth(session.accessToken),
+        })
+      ).body,
+    );
+    expect(exp.itemLines).toEqual([line]);
+    expect(exp.items).toEqual([item]);
+  });
+
+  it('a crafted push worth more than the sale is one rejected row, never recorded', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    const res = JSON.parse(
+      (await push({ items: [item], itemLines: [line, { ...line, id: asUuid('il-2'), amount: 30001 }] })).body,
+    );
+    expect(res.rejected).toEqual([expect.objectContaining({ id: asUuid('il-2'), field: 'item_lines_fit_sale' })]);
+  });
+
+  it('no price can be stored on an item, and quantity is a whole count', async () => {
+    await push(pushBatch(canonicalInput(), CANONICAL_DATE));
+    expect((await push({ items: [{ ...item, price: 5000 }] })).statusCode).toBe(400);
+    expect((await push({ itemLines: [{ ...line, quantity: 1.5 }] })).statusCode).toBe(400);
+    expect((await push({ itemLines: [{ ...line, quantity: 0 }] })).statusCode).toBe(400);
+  });
+});
+
+/* QA-04 (2026-11-18): the server refuses what the app refuses - a Rs 0 entry is one rejected row. */
+describe('QA-04 - a Rs 0 entry is refused as one row, and the rest of the push lands', () => {
+  it('rejects amount 0 by field and does not store it', async () => {
+    const h = harness();
+    const session = await signIn(h);
+    const push = (body: unknown) =>
+      h.app.inject({ method: 'POST', url: '/v1/sync/push', ...jsonAuth(session.accessToken)(body) });
+    const batch = pushBatch(canonicalInput(), CANONICAL_DATE);
+    const zero = { id: asUuid('zero-1'), dayId: CANONICAL_DATE, section: 'cash_sales', amount: 0, mode: 'cash', createdAt: CANONICAL_DATE + 'T10:00:00.000Z' };
+    const res = JSON.parse((await push({ ...batch, entries: [...batch.entries, zero] })).body);
+    expect(res.rejected).toEqual([expect.objectContaining({ id: zero.id, field: 'amount' })]);
+    expect(res.entriesInserted).toBe(batch.entries.length);
   });
 });

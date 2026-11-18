@@ -149,6 +149,57 @@ export const VERIFIERS = [
     },
   },
   {
+    id: 'icon-font-glyphs',
+    command: 'npm run check:font',
+    file: 'tools/check-font-coverage.mjs',
+    claims:
+      'Every icon name in apps/mobile/src/ui/icons.json has a real glyph in SwaftoIcons.ttf and sits in the Private Use Area, and the font carries no glyph the list does not name.',
+    benchmarks: [],
+    /*
+     * The plant is the failure the block exists for: the app names an icon the
+     * font does not have, so it would draw an empty box beside a word. U+E000 is
+     * in the Private Use Area but is not one of the subset's 32 glyphs.
+     */
+    defect: {
+      file: 'apps/mobile/src/ui/icons.json',
+      find: '"download": {',
+      replace: '"ghost": { "lucide": "ghost", "codepoint": "E000", "meaning": "planted" },\n    "download": {',
+    },
+  },
+  {
+    id: 'icon-font-pin',
+    command: 'npm run check:font',
+    file: 'tools/check-font-coverage.mjs',
+    claims:
+      'SwaftoIcons.ttf matches its recorded sha256, so the icon font cannot be swapped, or the full Lucide font shipped in its place, without this check being re-run.',
+    benchmarks: [],
+    /*
+     * A BINARY plant: one byte inside the glyf table is inverted (offset 5000 of
+     * 10,816; the glyf table spans 808-10,538). The file still parses and every
+     * codepoint still maps, so only the hash can notice - which is the claim. The
+     * harness restores the exact bytes and verifies the restore.
+     */
+    defect: { file: 'apps/mobile/assets/fonts/SwaftoIcons.ttf', flipByteAt: 5000 },
+  },
+  {
+    id: 'font-licence-isc',
+    command: 'npm run check:licences',
+    file: 'tools/check-licences.mjs',
+    claims:
+      'Each bundled font binary is covered by a licence mapping and the licence file beside it carries the required text of its licence: OFL 1.1 for Anek Odia, and for the Lucide icon subset the ISC permission notice and copyright plus the MIT notice for the Feather-derived glyphs. A font the tool does not map is a failure, not a pass.',
+    benchmarks: [],
+    /*
+     * The plant removes the ISC permission sentence, leaving a file that still
+     * says "ISC License" and still carries a copyright line - so a check that
+     * only looked for the label, as the old OFL-only rule would have, passes it.
+     */
+    defect: {
+      file: 'apps/mobile/assets/fonts/ISC-Lucide.txt',
+      find: 'Permission to use, copy, modify, and/or distribute this software for any',
+      replace: 'Use of this software is reserved for any',
+    },
+  },
+  {
     id: 'money-lint',
     command: 'npm run check:money',
     file: 'tools/check-money-lint.mjs',
@@ -164,6 +215,21 @@ export const VERIFIERS = [
       find: 'const totalOf = (entries: readonly Entry[]): Paise => sum(entries.map((e) => e.amount));',
       replace:
         'const totalOf = (entries: readonly Entry[]): Paise =>\n  sum(entries.map((e) => e.amount * 1.0));',
+    },
+  },
+  {
+    id: 'engine-purity',
+    command: 'npm run check:purity',
+    file: 'tools/check-engine-purity.mjs',
+    claims:
+      'ADR-012: nothing under packages/formula-engine/src reads the clock (Date.now, new Date, performance), randomness (Math.random), the locale (Intl.*, toLocale*), the environment (process, require) or a node built-in, read from the syntax tree so comments that explain the rule do not trip it. Refuses to pass over zero files.',
+    benchmarks: [],
+    // A clock read INSIDE the engine tree, which is the axis the guard is scoped by
+    // (REVIEW.md A12). The anchor is the one the typecheck plant already relies on.
+    defect: {
+      file: 'packages/formula-engine/src/money.ts',
+      find: 'export function assertPaise',
+      replace: 'export const plantedClock = Date.now();\nexport function assertPaise',
     },
   },
   {
@@ -302,14 +368,48 @@ export const VERIFIERS = [
     benchmarks: ['B26', 'B27', 'B28', 'B29', 'B30', 'B32'],
     /*
      * The plant is the defect this suite was written after finding: white on the
-     * marigold accent in Focus mode, which measures 3.85:1 against a 4.5 minimum.
+     * marigold accent in Focus mode, which measured 3.85:1 against a 4.5 minimum.
      * It is the right plant precisely because it SHIPPED - the comment above the
      * palette asserted the pair was not expressible while the palette expressed it.
+     *
+     * THE ANCHOR MOVED ON 2026-10-22, AND THIS HARNESS IS WHY ANYONE NOTICED.
+     *
+     * It used to find `onAccent: '#000000',`, which was Focus mode's value when
+     * Focus was a high-contrast LIGHT variant. The palette has since been brought
+     * into line with SPEC-DIGEST §9, where Focus is dark and `onAccent` is
+     * `#12181F` in both modes - so the old anchor simply was not in the file any
+     * more. The verifier reported ANCHOR MISSING instead of quietly passing,
+     * which is the whole reason this harness exists: a check whose planted defect
+     * no longer applies has stopped proving anything, and everything behind it is
+     * presumed safe.
+     *
+     * THE ANCHOR IS FOUR LINES, NOT ONE, BECAUSE ONE IS NO LONGER UNIQUE.
+     * `onAccent: '#12181F',` now appears in both modes and `String.replace` with
+     * a string takes the FIRST match, which is Comfort - still a real failure,
+     * but a different claim from the one this plant is written to make. The
+     * trailing `positive: '#4FCB89'` is Focus-only, so the block below can only
+     * match the mode built for the hardest reading conditions.
+     *
+     * RE-ANCHORED 2026-11-18 (M3, v2 "Mitra"): Focus `positive` became
+     * `#6FD48A` (DESIGN-SYSTEM-V2 1.1), so the four-line anchor no longer
+     * matched and the harness said ANCHOR MISSING. The marigold trio is
+     * retained unchanged in both modes, and `positive: '#6FD48A'` directly
+     * after `onAccent` is still Focus-only (Comfort has a comment between),
+     * so the plant makes the same claim on the same line: white on marigold
+     * in Focus.
      */
     defect: {
       file: 'apps/mobile/src/theme/tokens.ts',
-      find: "    onAccent: '#000000',",
-      replace: "    onAccent: '#FFFFFF',",
+      find: [
+        "    accentPressed: '#DB9317',",
+        "    onAccent: '#12181F',",
+        "    positive: '#6FD48A',",
+      ].join('\n'),
+      replace: [
+        "    accentPressed: '#DB9317',",
+        "    onAccent: '#FFFFFF',",
+        "    positive: '#6FD48A',",
+      ].join('\n'),
     },
   },
   {
@@ -317,7 +417,7 @@ export const VERIFIERS = [
     command: 'npm run check:layout',
     file: 'tools/check-layout.mjs',
     claims:
-      'Every registry case, laid out by a real engine in headless Chromium at a budget-handset viewport with the shipped fonts, at three font scales: nothing runs wider than the screen, no element escapes the element containing it, and no fixed chrome sits below the fold at or under the chrome font-scale cap. Money is scaled without limit and chrome stops at the cap, which is what the device does.',
+      'Every registry case, laid out by a real engine in headless Chromium at a budget-handset viewport with the shipped fonts, at three font scales: nothing runs wider than the screen, no element escapes the element containing it, no fixed chrome sits below the fold at or under the chrome font-scale cap, and the items and return links of the Sales form sit inside the visible body at every scale, and the running total of every entry form does too at every scale in Comfort mode and at scale 1 in Focus (HT-51, HT-60; an element no case renders fails the run). Money and body copy (a Text carrying `t.bodyText`, data-font-scale="body") are scaled without limit and chrome stops at the cap, which is what the device does.',
     benchmarks: ['B31'],
     /*
      * The plant removes the wrap from the draft row, where the amount being typed
@@ -338,11 +438,47 @@ export const VERIFIERS = [
      * lives. The plant pointed into a file that no longer contained its subject, and
      * the harness reported ANCHOR MISSING rather than quietly passing. A plant that
      * stops planting is a finding, and this is the third one it has produced.
+     *
+     * AND THEN A FOURTH, WHICH WAS A DIFFERENT FAILURE AND A MORE USEFUL ONE.
+     *
+     * The entry-form redesign broke the anchor the ordinary way - a comment was
+     * written between `justifyContent` and `flexWrap`, so two adjacent lines
+     * stopped being adjacent. Re-anchoring was easy and WRONG: with the anchor
+     * fixed, the plant applied cleanly and `check:layout` STILL PASSED. The
+     * harness said so in exactly those words.
+     *
+     * The subject had stopped being a defect. That draft row now holds a
+     * shrinkable column rather than three independent children, so taking the
+     * wrap away no longer pushes anything off the screen - the column simply
+     * shrinks. The old plant had been testing a hazard the code no longer has.
+     *
+     * So the plant moved to one that is live TODAY, on the same axis the claim
+     * names - "no element escapes the element containing it". `ActionTile` is
+     * two-up because three-up does not survive the chrome cap: at `30%` the
+     * word "Purchase" is wider than its tile, an English word has no break
+     * opportunity, and the 17sp floor forbids shrinking it. Planting `30%`
+     * fails T1 and T3 at scales 1.5 and 2, measured, every time.
+     *
+     * The lesson is the one the prove step exists for: an anchor that still
+     * applies is not the same as a plant that still plants.
      */
     defect: {
-      file: 'apps/mobile/src/components/EntryForm.tsx',
-      find: "              justifyContent: 'space-between',\n              flexWrap: 'wrap',",
-      replace: "              justifyContent: 'space-between',",
+      file: 'apps/mobile/src/components/Shell.tsx',
+      // The tile now takes `across`; three-up is the reference on Comfort, so the
+      // plant forces 30% on the two-up (Focus) tiles too. Measured: the same eight
+      // "Purchase" escapes on T1/T3 at 1.5 and 2 as the original plant.
+      // RE-MEASURED 2026-11-18 after the usability pass made Today's tiles
+      // two-up and large: the plant now fails 4 cases - "Collect" escaping
+      // its tile on T1-longest and T1-named-longest at 1.5 and 2. Still a
+      // live hazard on the claimed axis, so the plant stands.
+      // RE-ANCHORED 2026-11-18 (M3, v2 "Mitra"): DESIGN-SYSTEM-V2 3.3 removed
+      // `across` (three-up was measured failing at the cap), so the tile's
+      // basis is a plain '45%' and the old anchor was missing. Same line, same
+      // plant: forcing three-up. Re-measured with the v2 tile (pictogram disc
+      // beside the word): 133 escapes on T1/T3 cases at 1.5 and 2 - the words
+      // leave their tiles - so the plant still plants.
+      find: "        flexBasis: '45%',",
+      replace: "        flexBasis: '30%',",
     },
   },
   {
@@ -383,11 +519,12 @@ export const VERIFIERS = [
     benchmarks: [],
     defect: {
       file: 'apps/mobile/package.json',
-      find: '    "react": "^19.1.0",',
+      // DV-14 pinned react exactly; the anchor follows it.
+      find: '    "react": "19.1.0",',
       replace:
         '    "@react-native-firebase/messaging": "^21.0.0",' +
         String.fromCharCode(10) +
-        '    "react": "^19.1.0",',
+        '    "react": "19.1.0",',
     },
   },
   {
@@ -1548,17 +1685,27 @@ if (process.argv.includes('--prove')) {
       console.log(`  -    ${v.id.padEnd(20)} not plantable`);
       continue;
     }
-    const { file, find, replace } = v.defect;
-    const original = readFileSync(file, 'utf8');
+    const { file, find, replace, flipByteAt } = v.defect;
+    // A binary plant inverts one byte and restores the exact bytes; a text plant
+    // is find-and-replace. A binary file cannot round-trip through utf8.
+    const binary = flipByteAt !== undefined;
+    const snapshot = binary ? readFileSync(file) : null;
+    const original = binary ? '' : readFileSync(file, 'utf8');
     const crlf = original.includes('\r\n');
     const norm = original.split('\r\n').join('\n');
-    if (!norm.includes(find)) {
+    if (binary ? flipByteAt >= snapshot.length : !norm.includes(find)) {
       failures.push(`${v.id}: its planted defect no longer applies - anchor missing in ${file}`);
       console.log(`  x    ${v.id.padEnd(20)} ANCHOR MISSING in ${file}`);
       continue;
     }
-    const mutated = norm.replace(find, replace);
-    writeFileSync(file, crlf ? mutated.split('\n').join('\r\n') : mutated);
+    if (binary) {
+      const mutatedBytes = Buffer.from(snapshot);
+      mutatedBytes[flipByteAt] ^= 0xff;
+      writeFileSync(file, mutatedBytes);
+    } else {
+      const mutated = norm.replace(find, replace);
+      writeFileSync(file, crlf ? mutated.split('\n').join('\r\n') : mutated);
+    }
 
     let failedAsItShould = false;
     let couldNotRun = null;
@@ -1580,10 +1727,10 @@ if (process.argv.includes('--prove')) {
       if (typeof e.status === 'number') failedAsItShould = true;
       else couldNotRun = e.code || e.message;
     } finally {
-      writeFileSync(file, original);
+      writeFileSync(file, binary ? snapshot : original);
     }
 
-    if (readFileSync(file, 'utf8') !== original) {
+    if (binary ? !readFileSync(file).equals(snapshot) : readFileSync(file, 'utf8') !== original) {
       failures.push(`${v.id}: RESTORE FAILED for ${file} - the tree is left mutated`);
     }
 

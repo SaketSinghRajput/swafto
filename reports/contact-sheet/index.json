@@ -1,5 +1,275 @@
 [
   {
+    "id": "T2-canonical",
+    "caption": "T2 Today - the first run - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T2-canonical.html"
+  },
+  {
+    "id": "T2-adversarial",
+    "caption": "T2 Today - the first run - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T2-adversarial.html"
+  },
+  {
+    "id": "T3-canonical",
+    "caption": "T3 Today - already closed - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T3-canonical.html"
+  },
+  {
+    "id": "T3-adversarial",
+    "caption": "T3 Today - already closed - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T3-adversarial.html"
+  },
+  {
+    "id": "T13-canonical",
+    "caption": "T13 Cash check - it matches - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T13-canonical.html"
+  },
+  {
+    "id": "T13-adversarial",
+    "caption": "T13 Cash check - it matches - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T13-adversarial.html"
+  },
+  {
+    "id": "X1-canonical",
+    "caption": "X1 Onboarding - four questions - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\X1-canonical.html"
+  },
+  {
+    "id": "X1-adversarial",
+    "caption": "X1 Onboarding - four questions - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\X1-adversarial.html"
+  },
+  {
+    "id": "X1-keypad",
+    "caption": "X1 Onboarding - answering question 4, the keypad up",
+    "file": "reports\\contact-sheet\\X1-keypad.html"
+  },
+  {
+    "id": "X1-unanswered",
+    "caption": "X1 Onboarding - before any question is answered. The state it is designed around.",
+    "file": "reports\\contact-sheet\\X1-unanswered.html"
+  },
+  {
+    "id": "P1-canonical",
+    "caption": "P1 Parties - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\P1-canonical.html"
+  },
+  {
+    "id": "P1-adversarial",
+    "caption": "P1 Parties - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\P1-adversarial.html"
+  },
+  {
+    "id": "P2-canonical",
+    "caption": "P2 Customer detail - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\P2-canonical.html"
+  },
+  {
+    "id": "P2-adversarial",
+    "caption": "P2 Customer detail - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\P2-adversarial.html"
+  },
+  {
+    "id": "P3-canonical",
+    "caption": "P3 Supplier detail - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\P3-canonical.html"
+  },
+  {
+    "id": "P3-adversarial",
+    "caption": "P3 Supplier detail - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\P3-adversarial.html"
+  },
+  {
+    "id": "R1-canonical",
+    "caption": "R1 Reports - canonical shop, one day closed, English, Comfort",
+    "file": "reports\\contact-sheet\\R1-canonical.html"
+  },
+  {
+    "id": "R1-adversarial",
+    "caption": "R1 Reports - adversarial shop closed short, Odia, Comfort. Lakh figures.",
+    "file": "reports\\contact-sheet\\R1-adversarial.html"
+  },
+  {
+    "id": "R1-longest",
+    "caption": "R1 Reports - longest strings at the largest type. Four long labels beside four uncapped figures, which is the row that overflows first.",
+    "file": "reports\\contact-sheet\\R1-longest.html"
+  },
+  {
+    "id": "R1-empty",
+    "caption": "R1 Reports - before the first close. The state every shop starts in, and the one most users see first.",
+    "file": "reports\\contact-sheet\\R1-empty.html"
+  },
+  {
+    "id": "R1-history",
+    "caption": "R1 Reports - thirty-one closed days: trends, pressure and both scores past their gates",
+    "file": "reports\\contact-sheet\\R1-history.html"
+  },
+  {
+    "id": "M1-canonical",
+    "caption": "M1 Dashboard - Premium, thirty-one closed days, English, Comfort",
+    "file": "reports\\contact-sheet\\M1-canonical.html"
+  },
+  {
+    "id": "M1-adversarial",
+    "caption": "M1 Dashboard - Premium, adversarial shop closed short, Odia, Comfort. Lakh figures, forecast gated.",
+    "file": "reports\\contact-sheet\\M1-adversarial.html"
+  },
+  {
+    "id": "M1-longest",
+    "caption": "M1 Dashboard - Premium, seventy closed days, longest strings at the largest type",
+    "file": "reports\\contact-sheet\\M1-longest.html"
+  },
+  {
+    "id": "M1-free",
+    "caption": "M1 Dashboard - the free plan: what Premium adds, and no Premium figure",
+    "file": "reports\\contact-sheet\\M1-free.html"
+  },
+  {
+    "id": "S2-canonical",
+    "caption": "S2 Your shop - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S2-canonical.html"
+  },
+  {
+    "id": "S2-adversarial",
+    "caption": "S2 Your shop - the longest Odia shop name in the corpus, Comfort",
+    "file": "reports\\contact-sheet\\S2-adversarial.html"
+  },
+  {
+    "id": "S2-longest",
+    "caption": "S2 Your shop - longest strings at the largest type, against the longest name. The worst case, and the panel worth looking at.",
+    "file": "reports\\contact-sheet\\S2-longest.html"
+  },
+  {
+    "id": "S3-canonical",
+    "caption": "S3 Language and screen - English, Comfort. Both choices as they stand.",
+    "file": "reports\\contact-sheet\\S3-canonical.html"
+  },
+  {
+    "id": "S3-adversarial",
+    "caption": "S3 Language and screen - Odia, Comfort. Three scripts in one control.",
+    "file": "reports\\contact-sheet\\S3-adversarial.html"
+  },
+  {
+    "id": "S3-longest",
+    "caption": "S3 Language and screen - longest strings at the largest type. Nothing is shown as chosen, because the pseudo-locale is not a choice.",
+    "file": "reports\\contact-sheet\\S3-longest.html"
+  },
+  {
+    "id": "S4-canonical",
+    "caption": "S4 Privacy and consent - English, Comfort. The route to X0 in manage mode.",
+    "file": "reports\\contact-sheet\\S4-canonical.html"
+  },
+  {
+    "id": "S4-adversarial",
+    "caption": "S4 Privacy and consent - Odia, Comfort. The withdrawal sentence in Odia.",
+    "file": "reports\\contact-sheet\\S4-adversarial.html"
+  },
+  {
+    "id": "S4-longest",
+    "caption": "S4 Privacy and consent - longest strings at the largest type. The withdrawal sentence is the longest copy in the settings family.",
+    "file": "reports\\contact-sheet\\S4-longest.html"
+  },
+  {
+    "id": "S1-canonical",
+    "caption": "S1 Settings - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S1-canonical.html"
+  },
+  {
+    "id": "S1-adversarial",
+    "caption": "S1 Settings - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S1-adversarial.html"
+  },
+  {
+    "id": "S5-canonical",
+    "caption": "S5 About this app - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S5-canonical.html"
+  },
+  {
+    "id": "S5-adversarial",
+    "caption": "S5 About this app - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S5-adversarial.html"
+  },
+  {
+    "id": "S6-canonical",
+    "caption": "S6 Help and contact - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S6-canonical.html"
+  },
+  {
+    "id": "S6-adversarial",
+    "caption": "S6 Help and contact - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S6-adversarial.html"
+  },
+  {
+    "id": "S11-canonical",
+    "caption": "S11 App locked - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S11-canonical.html"
+  },
+  {
+    "id": "S11-adversarial",
+    "caption": "S11 App locked - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S11-adversarial.html"
+  },
+  {
+    "id": "S7-canonical",
+    "caption": "S7 Delete this account - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S7-canonical.html"
+  },
+  {
+    "id": "S7-adversarial",
+    "caption": "S7 Delete this account - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S7-adversarial.html"
+  },
+  {
+    "id": "S8-canonical",
+    "caption": "S8 Are you sure? - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S8-canonical.html"
+  },
+  {
+    "id": "S8-adversarial",
+    "caption": "S8 Are you sure? - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S8-adversarial.html"
+  },
+  {
+    "id": "S8-local-only",
+    "caption": "S8 Are you sure? - this phone is not signed in, so only its book can be deleted",
+    "file": "reports\\contact-sheet\\S8-local-only.html"
+  },
+  {
+    "id": "S8-scheduled",
+    "caption": "S8 after the server accepted the deletion - the date it erases, and the phone wiped now",
+    "file": "reports\\contact-sheet\\S8-scheduled.html"
+  },
+  {
+    "id": "S8-local-done",
+    "caption": "S8 after deleting on a phone with no session - the phone only",
+    "file": "reports\\contact-sheet\\S8-local-done.html"
+  },
+  {
+    "id": "S10-canonical",
+    "caption": "S10 Your plan - Free, buying not open yet - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S10-canonical.html"
+  },
+  {
+    "id": "S10-adversarial",
+    "caption": "S10 Your plan - Free, buying not open yet - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S10-adversarial.html"
+  },
+  {
+    "id": "S10-buying-open",
+    "caption": "S10 Your plan - buying open, preview already taken: two equal prices, GST included",
+    "file": "reports\\contact-sheet\\S10-buying-open.html"
+  },
+  {
+    "id": "S10-premium",
+    "caption": "S10 Your plan - Premium bought and renewing: the renewal date and Cancel Premium",
+    "file": "reports\\contact-sheet\\S10-premium.html"
+  },
+  {
+    "id": "S10-lapsed",
+    "caption": "S10 Your plan - Premium ended: nothing deleted, everything readable and exportable",
+    "file": "reports\\contact-sheet\\S10-lapsed.html"
+  },
+  {
     "id": "T5-canonical",
     "caption": "T5 Day close list - canonical shop, English, Comfort",
     "file": "reports\\contact-sheet\\T5-canonical.html"
@@ -80,6 +350,61 @@
     "file": "reports\\contact-sheet\\T14-adversarial.html"
   },
   {
+    "id": "P6-canonical",
+    "caption": "P6 Credit limit - one set, a new one typed - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\P6-canonical.html"
+  },
+  {
+    "id": "P6-adversarial",
+    "caption": "P6 Credit limit - one set, a new one typed - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\P6-adversarial.html"
+  },
+  {
+    "id": "S12-canonical",
+    "caption": "S12 Entries for your accountant - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S12-canonical.html"
+  },
+  {
+    "id": "S12-adversarial",
+    "caption": "S12 Entries for your accountant - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S12-adversarial.html"
+  },
+  {
+    "id": "T19-canonical",
+    "caption": "T19 Adjustment - a type chosen, an amount typed - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T19-canonical.html"
+  },
+  {
+    "id": "T19-adversarial",
+    "caption": "T19 Adjustment - a type chosen, an amount typed - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T19-adversarial.html"
+  },
+  {
+    "id": "S9-canonical",
+    "caption": "S9 Your items - the list, a name typed, the customer notice - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S9-canonical.html"
+  },
+  {
+    "id": "S9-adversarial",
+    "caption": "S9 Your items - the list, a name typed, the customer notice - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S9-adversarial.html"
+  },
+  {
+    "id": "I1-canonical",
+    "caption": "I1 Items in a sale - a line being typed - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\I1-canonical.html"
+  },
+  {
+    "id": "I1-adversarial",
+    "caption": "I1 Items in a sale - a line being typed - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\I1-adversarial.html"
+  },
+  {
+    "id": "I1-list",
+    "caption": "I1 Items in a sale - choosing one of today's sales",
+    "file": "reports\\contact-sheet\\I1-list.html"
+  },
+  {
     "id": "X0-canonical",
     "caption": "X0 Consent notice - canonical shop, English, Comfort",
     "file": "reports\\contact-sheet\\X0-canonical.html"
@@ -138,5 +463,290 @@
     "id": "T7-error",
     "caption": "T7 Form A - the day could not be opened",
     "file": "reports\\contact-sheet\\T7-error.html"
+  },
+  {
+    "id": "A1-canonical",
+    "caption": "A1 Splash - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A1-canonical.html"
+  },
+  {
+    "id": "A1-adversarial",
+    "caption": "A1 Splash - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A1-adversarial.html"
+  },
+  {
+    "id": "A2-canonical",
+    "caption": "A2 Choose your language - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A2-canonical.html"
+  },
+  {
+    "id": "A2-adversarial",
+    "caption": "A2 Choose your language - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A2-adversarial.html"
+  },
+  {
+    "id": "A3-canonical",
+    "caption": "A3 Phone number - typed - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A3-canonical.html"
+  },
+  {
+    "id": "A3-adversarial",
+    "caption": "A3 Phone number - typed - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A3-adversarial.html"
+  },
+  {
+    "id": "A3-empty",
+    "caption": "A3 Phone number - nothing typed yet",
+    "file": "reports\\contact-sheet\\A3-empty.html"
+  },
+  {
+    "id": "A3-offline",
+    "caption": "A3 Phone number - no signal when sending",
+    "file": "reports\\contact-sheet\\A3-offline.html"
+  },
+  {
+    "id": "A4-canonical",
+    "caption": "A4 Enter the code - three digits in - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A4-canonical.html"
+  },
+  {
+    "id": "A4-adversarial",
+    "caption": "A4 Enter the code - three digits in - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A4-adversarial.html"
+  },
+  {
+    "id": "A4-checking",
+    "caption": "A4 Enter the code - checking, keypad withdrawn",
+    "file": "reports\\contact-sheet\\A4-checking.html"
+  },
+  {
+    "id": "A4-offline",
+    "caption": "A4 Enter the code - no signal when checking, after two resends",
+    "file": "reports\\contact-sheet\\A4-offline.html"
+  },
+  {
+    "id": "A5-canonical",
+    "caption": "A5 Code problem - it does not match - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A5-canonical.html"
+  },
+  {
+    "id": "A5-adversarial",
+    "caption": "A5 Code problem - it does not match - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A5-adversarial.html"
+  },
+  {
+    "id": "A5-expired",
+    "caption": "A5 Code problem - expired",
+    "file": "reports\\contact-sheet\\A5-expired.html"
+  },
+  {
+    "id": "A5-locked",
+    "caption": "A5 Code problem - too many tries, with the server wait",
+    "file": "reports\\contact-sheet\\A5-locked.html"
+  },
+  {
+    "id": "A5-no-code",
+    "caption": "A5 Code problem - still no code",
+    "file": "reports\\contact-sheet\\A5-no-code.html"
+  },
+  {
+    "id": "A6-canonical",
+    "caption": "A6 Session expired - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A6-canonical.html"
+  },
+  {
+    "id": "A6-adversarial",
+    "caption": "A6 Session expired - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A6-adversarial.html"
+  },
+  {
+    "id": "A7-canonical",
+    "caption": "A7 Change your number - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A7-canonical.html"
+  },
+  {
+    "id": "A7-adversarial",
+    "caption": "A7 Change your number - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A7-adversarial.html"
+  },
+  {
+    "id": "A7-handoff",
+    "caption": "A7 Change your number - no old number",
+    "file": "reports\\contact-sheet\\A7-handoff.html"
+  },
+  {
+    "id": "A8-canonical",
+    "caption": "A8 Log out - two entries not synced - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\A8-canonical.html"
+  },
+  {
+    "id": "A8-adversarial",
+    "caption": "A8 Log out - two entries not synced - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\A8-adversarial.html"
+  },
+  {
+    "id": "A8-saved",
+    "caption": "A8 Log out - everything synced",
+    "file": "reports\\contact-sheet\\A8-saved.html"
+  },
+  {
+    "id": "T1-named",
+    "caption": "T1 Today - the reference layout, shop named, English",
+    "file": "reports\\contact-sheet\\T1-named.html"
+  },
+  {
+    "id": "T1-named-adversarial",
+    "caption": "T1 Today - longest shop name, lakh figures, Odia",
+    "file": "reports\\contact-sheet\\T1-named-adversarial.html"
+  },
+  {
+    "id": "T1-observation",
+    "caption": "T1 Today - more cash out than in, the observation card",
+    "file": "reports\\contact-sheet\\T1-observation.html"
+  },
+  {
+    "id": "T2-named",
+    "caption": "T2 Today - first run, shop named",
+    "file": "reports\\contact-sheet\\T2-named.html"
+  },
+  {
+    "id": "T3-named",
+    "caption": "T3 Today - closed, shop named",
+    "file": "reports\\contact-sheet\\T3-named.html"
+  },
+  {
+    "id": "T5-named",
+    "caption": "T5 Day close list - with back, shop named",
+    "file": "reports\\contact-sheet\\T5-named.html"
+  },
+  {
+    "id": "T5-first-morning",
+    "caption": "T5 Day close list - nothing answered, every skip offered, Odia",
+    "file": "reports\\contact-sheet\\T5-first-morning.html"
+  },
+  {
+    "id": "T5-upi-open",
+    "caption": "T5 Day close list - UPI check to answer, one adjustment",
+    "file": "reports\\contact-sheet\\T5-upi-open.html"
+  },
+  {
+    "id": "T5-first-morning-hindi",
+    "caption": "T5 Day close list - every \"Nothing today\" link, Hindi",
+    "file": "reports\\contact-sheet\\T5-first-morning-hindi.html"
+  },
+  {
+    "id": "T5-skipped",
+    "caption": "T5 Day close list - two skipped, each with its undo, and the count",
+    "file": "reports\\contact-sheet\\T5-skipped.html"
+  },
+  {
+    "id": "T1-hindi",
+    "caption": "T1 Today - sale first, the box, Hindi",
+    "file": "reports\\contact-sheet\\T1-hindi.html"
+  },
+  {
+    "id": "T1-closing-time",
+    "caption": "T1 Today - past closing time: the close is the one marigold button",
+    "file": "reports\\contact-sheet\\T1-closing-time.html"
+  },
+  {
+    "id": "T8-pay",
+    "caption": "T8 Pay supplier - its own title and what you owe suppliers",
+    "file": "reports\\contact-sheet\\T8-pay.html"
+  },
+  {
+    "id": "T8-collect-chosen-hindi",
+    "caption": "T8 Collect - customer chosen, balance above the pad, Hindi",
+    "file": "reports\\contact-sheet\\T8-collect-chosen-hindi.html"
+  },
+  {
+    "id": "T7-saved",
+    "caption": "T7 Sales - just saved: \"Saved ₹50 · Cash\", newest row first",
+    "file": "reports\\contact-sheet\\T7-saved.html"
+  },
+  {
+    "id": "T11-folded-hindi",
+    "caption": "T11 Cash check - large text: the pad folded, the working list whole, Hindi",
+    "file": "reports\\contact-sheet\\T11-folded-hindi.html"
+  },
+  {
+    "id": "P1-hindi",
+    "caption": "P1 Ledger - sorted by what is owed, Hindi",
+    "file": "reports\\contact-sheet\\P1-hindi.html"
+  },
+  {
+    "id": "T6-back",
+    "caption": "T6 Opening cash - with back, nothing typed yet",
+    "file": "reports\\contact-sheet\\T6-back.html"
+  },
+  {
+    "id": "T18-canonical",
+    "caption": "T18 Return or exchange - the list - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\T18-canonical.html"
+  },
+  {
+    "id": "T18-adversarial",
+    "caption": "T18 Return or exchange - the list - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T18-adversarial.html"
+  },
+  {
+    "id": "T18-return",
+    "caption": "T18 Return - a cash refund, typed",
+    "file": "reports\\contact-sheet\\T18-return.html"
+  },
+  {
+    "id": "T18-exchange",
+    "caption": "T18 Exchange - a dearer replacement, difference on udhar",
+    "file": "reports\\contact-sheet\\T18-exchange.html"
+  },
+  {
+    "id": "T18-exchange-adversarial",
+    "caption": "T18 Exchange - Odia, lakh figures",
+    "file": "reports\\contact-sheet\\T18-exchange-adversarial.html"
+  },
+  {
+    "id": "T18-settle",
+    "caption": "T18 Settle - a pending return paid back in part, Odia",
+    "file": "reports\\contact-sheet\\T18-settle.html"
+  },
+  {
+    "id": "T16-canonical",
+    "caption": "T16 Post a correction - a closed day, English, Comfort",
+    "file": "reports\\contact-sheet\\T16-canonical.html"
+  },
+  {
+    "id": "T16-adversarial",
+    "caption": "T16 Post a correction - closed adversarial day, Odia, Comfort",
+    "file": "reports\\contact-sheet\\T16-adversarial.html"
+  },
+  {
+    "id": "T16-target",
+    "caption": "T16 Post a correction - an entry chosen, amount typed",
+    "file": "reports\\contact-sheet\\T16-target.html"
+  },
+  {
+    "id": "T16-held",
+    "caption": "T16 Post a correction - held for the next day, Odia",
+    "file": "reports\\contact-sheet\\T16-held.html"
+  },
+  {
+    "id": "C1-canonical",
+    "caption": "C1 Ask - three questions on the free plan - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\C1-canonical.html"
+  },
+  {
+    "id": "C1-adversarial",
+    "caption": "C1 Ask - three questions on the free plan - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\C1-adversarial.html"
+  },
+  {
+    "id": "C1-empty",
+    "caption": "C1 Ask - nothing asked yet: what it can answer, as taps",
+    "file": "reports\\contact-sheet\\C1-empty.html"
+  },
+  {
+    "id": "C1-premium",
+    "caption": "C1 Ask - Premium, thirty-one days of history: best day, a comparison, a party and a follow-up",
+    "file": "reports\\contact-sheet\\C1-premium.html"
   }
 ]

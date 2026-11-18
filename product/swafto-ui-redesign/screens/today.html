@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - Mitra - today</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Anek Odia';font-weight:400;src:local('Anek Odia Regular'),url('../../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:500;src:local('Anek Odia Medium'),url('../../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:700;src:local('Anek Odia Bold'),url('../../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf')}
+/* Mitra screen kit: palette from concepts/C-mitra.html. CSS variable names are placeholders until DESIGN-SYSTEM-V2.md tokens land (see FLOWS.md "Token map"). */
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--z:1;--zc:1;
+--bg:#FFF6EA;--surface:#FFFFFF;--raised:#F6EADA;--ink:#2B2118;--muted:#5E4E41;--edge:#8A7560;--rule:#E6D5BF;
+--brand:#0A6B66;--act:#0A6B66;--onact:#FFFFFF;--sel:#0A6B66;--onsel:#FFFFFF;--pos:#1E6B2E;--neg:#A3410C;
+--waitbg:#FFE9B8;--waitfg:#6B4400;--hbg:#0A6B66;--hfg:#FFFFFF;--nbg:#FFFFFF;--nfg:#2B2118;--nselbg:#0A6B66;--nselfg:#FFFFFF;--sbg:#0A6B66;--sfg:#FFFFFF;
+--t1bg:#DDF3EF;--t1ic:#0A6B66;--t2bg:#EDE4F7;--t2ic:#5B2E91;--t3bg:#E3F2D6;--t3ic:#2F6B1B;--t4bg:#FDE6D3;--t4ic:#8F4408;--t5bg:#EFE7DC;--t5ic:#5E4E41;--scrim:rgba(43,33,24,.55)}
+body[data-theme="focus"]{--bg:#1A1410;--surface:#261E18;--raised:#30261E;--ink:#F6EDE2;--muted:#BFAF9E;--edge:#9C8A78;--rule:#3E3126;--brand:#4FC3BA;--act:#4FC3BA;--onact:#10201F;--sel:#4FC3BA;--onsel:#10201F;--pos:#6FD48A;--neg:#F2A06A;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#261E18;--hfg:#F6EDE2;--nbg:#261E18;--nfg:#F6EDE2;--nselbg:#4FC3BA;--nselfg:#10201F;--sbg:#261E18;--sfg:#F6EDE2;--t1bg:#12302D;--t1ic:#7EE0D8;--t2bg:#2A1F3D;--t2ic:#CDB2F0;--t3bg:#1F3018;--t3ic:#A5DB86;--t4bg:#3A2412;--t4ic:#FFB27A;--t5bg:#30261E;--t5ic:#BFAF9E;--scrim:rgba(0,0,0,.65)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1500px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}.page-head p{margin-top:6px;line-height:1.5;max-width:960px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:9px 14px;font:600 14px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.toc{max-width:1500px;margin:8px auto 0;padding:0 24px;font-size:14px;line-height:1.9}
+.toc a{display:inline-block;margin:0 6px 4px 0;padding:2px 10px;border:1px solid #888;border-radius:14px;color:#222;text-decoration:none;background:#fff}
+.toc a.new{border-color:#b00;border-style:dashed}
+.stage{max-width:1500px;margin:0 auto;padding:12px 24px 40px;display:flex;flex-direction:column;gap:30px}
+.card{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;background:#EDEDED;border-radius:16px;padding:18px;scroll-margin-top:12px}
+.card.hl{outline:4px solid #0A6B66}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:calc(17px*var(--z));line-height:1.8;font-weight:500;font-synthesis:none}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.note{flex:1;min-width:320px;max-width:700px;background:#fff;border-radius:12px;padding:14px 18px;line-height:1.5;font-size:14px}
+.note h3{font-size:18px;margin-bottom:6px}.note dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px}
+.note dt{font-weight:700;color:#444}.note dd{margin:0}.note code{background:#eee;padding:0 4px;font-size:13px}
+.note .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;margin-right:6px;background:#0A6B66;color:#fff}
+.note .tag.new{background:#b00}.note .tag.chg{background:#8F4408}
+.note .keys{margin-top:6px;font-size:12px;color:#555;word-break:break-word}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}small{font-size:1em;font-weight:400}.grow{flex:1}ul{list-style:none}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}.pos{color:var(--pos)}.neg{color:var(--neg)}.ico{flex:none;display:block}
+.newc{border-bottom:2px dashed #c00}
+body[data-lang="od"] .newc::after,body[data-lang="hi"] .newc::after{content:" [NEW en]";font:700 10px system-ui;color:#c00;white-space:nowrap}
+/* chrome */
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg);border-radius:0 0 24px 24px;padding-bottom:6px;font-size:calc(17px*var(--zc))}
+.top h1{font-size:1.235em;font-weight:700;line-height:1.5}.top .sn{font-size:1.235em;font-weight:700;line-height:1.5}.top .dt{line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;line-height:1.4;font-weight:500;border-radius:28px}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg);border-radius:24px 24px 0 0;border-top:2px solid var(--rule);padding:4px 6px 0;font-size:calc(17px*var(--zc))}
+.tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.4;border-radius:20px;margin:2px}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+/* today */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.tile{min-height:76px;min-width:56px;display:flex;flex-direction:row;align-items:center;gap:10px;padding:0 12px;line-height:1.4;border-radius:20px;font-size:1.12em;background:var(--t5bg);color:var(--ink);text-align:left;font-weight:700}
+.ti{width:48px;height:48px;flex:none;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.t-sale{background:var(--act);color:var(--onact)}.t-sale .ti{color:var(--act)}
+.t-udhar{background:var(--t2bg)}.t-udhar .ti{color:var(--t2ic)}.t-collect{background:var(--t3bg)}.t-collect .ti{color:var(--t3ic)}.t-expense{background:var(--t4bg)}.t-expense .ti{color:var(--t4ic)}
+.t-more{grid-column:1/-1;min-height:56px;justify-content:center}.t-more .ti{width:36px;height:36px;color:var(--t5ic)}
+.tile.off{opacity:1;background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}.tile.off .ti{color:var(--muted)}
+.hero{margin:0 12px;padding:12px;background:var(--surface);border:2px solid var(--rule);border-radius:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.12em}
+.hero .hi{width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none}
+.hero .fig{padding:2px 0 6px}.hero-fig{font-size:2.1em}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.4}.ln .k{display:flex;align-items:center;gap:6px}
+.hero .ln{border-top:2px dashed var(--rule)}
+.dirico{border-radius:50%;padding:2px;width:28px;height:28px}.ln.in .dirico{background:var(--t3bg);color:var(--t3ic)}.ln.out .dirico{background:var(--t4bg);color:var(--t4ic)}
+.facts{margin:8px 12px 0}.facts .ln{min-height:52px;border-bottom:2px solid var(--rule)}.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left;background:var(--raised);border:2px solid var(--edge);border-radius:24px}
+.closecard.quiet2{background:var(--surface);border-color:var(--rule)}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.4}.cc-t{font-weight:700;font-size:1.06em}.cc-c{grid-area:chev;display:flex}.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}.bar i{flex:1;height:10px;background:var(--rule);border-radius:5px}.bar i.on{background:var(--brand)}
+/* controls */
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--edge);background:var(--raised);min-height:56px;border-radius:28px;overflow:hidden}
+.seg.two,.seg.three{margin:4px 12px 0}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.4;border-radius:28px;padding:0 6px;text-align:center}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;border-radius:32px}
+.addbar.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.addbar .m{font-size:1.15em}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:32px;text-align:center;line-height:1.4;padding:4px 12px}
+.primary.tonal{background:var(--t1bg);color:var(--ink);border:2px solid var(--act)}
+.primary.outline{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.primary.warn{background:var(--surface);color:var(--neg);border:2px solid var(--neg)}
+.primary.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.btn2{min-height:56px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--act);border-radius:28px;font-weight:700;background:var(--surface);line-height:1.4;text-align:center}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:140px;text-align:center;line-height:1.4}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.stack{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
+/* keypad / entry */
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;border-radius:16px}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.4}
+.kp.hidden{display:none}
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:2px solid var(--rule)}.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:2px solid var(--rule)}.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}.cust .cn{font-size:1.235em;font-weight:700}.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}.amt .al{color:var(--muted)}.amt-fig{font-size:2em}
+.refuse{display:flex;gap:8px;align-items:flex-start;margin:6px 0;padding:8px 12px;border:2px solid var(--neg);border-radius:16px;background:var(--surface);color:var(--ink);line-height:1.4}
+.refuse b{color:var(--neg)}
+/* rows */
+.prog{padding:8px 12px 4px}.pt{display:flex;flex-direction:column;line-height:1.4;margin-bottom:6px}.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:64px;line-height:1.4;margin:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:50%;background:var(--raised);border:2px solid var(--edge)}
+.row.done .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row.next{background:var(--t1bg);border-color:var(--act)}.row.next .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}.row .rv small{color:var(--muted)}
+.row.lock{color:var(--muted);border-style:dashed}
+.row.tap{width:calc(100% - 24px);text-align:left}
+.row.warnr{border-color:var(--neg)}
+.sec{padding:10px 16px 0;font-weight:700;color:var(--muted)}
+/* ledger */
+.lhero{padding:12px;background:var(--t1bg);margin:12px;border-radius:24px}.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.4}.lhero .big{font-size:2.1em;color:var(--t1ic)}.lhero .mid{font-size:1.4em}.lhero .h2{margin-top:6px}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700;border:2px solid var(--act);border-radius:28px;padding:0 16px}
+.plist li{margin:6px 12px}.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;line-height:1.4;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.pn{flex:1;display:flex;flex-direction:column}.pn b{font-size:1.18em}.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}.pa .m{font-size:1.3em}.pa em{font-style:normal;color:var(--muted)}
+.av{display:flex;width:44px;height:44px;flex:none;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.12em}
+.av0{background:var(--t1bg);color:var(--t1ic)}.av1{background:var(--t2bg);color:var(--t2ic)}.av2{background:var(--t3bg);color:var(--t3ic)}.av3{background:var(--t4bg);color:var(--t4ic)}.av4{background:var(--t5bg);color:var(--t5ic)}
+/* settings rows, forms, switches */
+.lrow{display:flex;align-items:center;gap:12px;min-height:64px;margin:6px 12px;padding:4px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.lrow .li{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--t5bg);color:var(--t5ic)}
+.lrow .lt{flex:1;display:flex;flex-direction:column}.lrow .lt small{color:var(--muted)}
+.lrow.danger .li{background:var(--t4bg);color:var(--t4ic)}.lrow.danger{border-color:var(--neg)}
+.field{margin:8px 12px}.field label{display:block;color:var(--muted);line-height:1.4}
+.field .in{min-height:56px;display:flex;align-items:center;padding:0 14px;background:var(--surface);border:2px solid var(--edge);border-radius:16px;line-height:1.4}
+.field .in.focus{border-color:var(--act);border-width:3px}.field .in.err{border-color:var(--neg)}.field .in .ph{color:var(--muted)}
+.field .help{color:var(--muted);line-height:1.4;margin-top:2px}.field .help.err{color:var(--neg)}
+.caret{display:inline-block;width:2px;height:1.2em;background:var(--ink);margin-left:2px;vertical-align:text-bottom}
+.sw{display:flex;align-items:center;gap:12px;min-height:72px;margin:6px 12px;padding:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.sw .tx{flex:1;display:flex;flex-direction:column}.sw .tx small{color:var(--muted)}
+.sw .knob{min-width:84px;min-height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;padding:0 10px;border:2px solid var(--edge);background:var(--raised)}
+.sw.on .knob{background:var(--sel);color:var(--onsel);border-color:var(--sel)}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.4;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg);border-radius:20px;margin:8px 12px 0}
+.banner span{flex:1}.banner.err{background:var(--surface);color:var(--ink);border-color:var(--neg)}.banner.info{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:24px 16px}.empty .ei{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center}
+.empty p{margin-bottom:10px;line-height:1.5}.empty .primary{max-width:280px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px;padding:12px}.skel i{display:block;height:64px;background:var(--rule);border-radius:20px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px;gap:12px}
+.bigmsg{font-size:1.5em;font-weight:700;line-height:1.4}.lead{color:var(--muted);line-height:1.5}
+.otp{display:flex;gap:8px;padding:0 12px;justify-content:center}.otp i{width:46px;height:60px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:1.5em}.otp i.cur{border-color:var(--act);border-width:3px}
+.dots{display:flex;gap:6px;justify-content:center;padding:6px}.dots i{width:10px;height:10px;border-radius:5px;background:var(--rule)}.dots i.on{background:var(--brand);width:26px}
+/* overlays */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-radius:28px 28px 0 0;padding:12px 0 16px;max-height:84%;display:flex;flex-direction:column;border-top:2px solid var(--edge)}
+.sheet h2{font-size:1.235em;padding:0 16px 6px;line-height:1.4}.sheet .grab{width:48px;height:5px;border-radius:3px;background:var(--edge);margin:0 auto 8px}
+.dialog{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:6;background:var(--bg);border:2px solid var(--edge);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:10px;line-height:1.5}
+.dialog h2{font-size:1.235em;line-height:1.4}
+.toast{position:absolute;left:12px;right:12px;bottom:12px;z-index:7;background:var(--ink);color:var(--bg);border-radius:20px;padding:10px 14px;display:flex;gap:8px;align-items:center;line-height:1.4}
+.refbanner{position:absolute;left:76px;right:12px;top:12px;z-index:7;padding:10px 12px;background:var(--surface);border:2px solid var(--neg);border-radius:16px;line-height:1.4}
+.refbanner b{color:var(--neg)}.refbanner.nn{border-color:var(--edge)}.refbanner.nn b{color:var(--ink)}
+.gray{filter:grayscale(1);opacity:.55}
+.spin{width:22px;height:22px;border:3px solid var(--rule);border-top-color:var(--act);border-radius:50%;display:inline-block}
+.size-prev{font-size:calc(17px*var(--z))}
+.legend{max-width:1500px;margin:0 auto;padding:6px 24px 0;font-size:13px;color:#444}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1 id="area-title"></h1><p id="area-intro"></p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button><button data-lang-btn="hi" aria-pressed="false">हिन्दी</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div>
+<div class="grp"><button data-size-btn="1" aria-pressed="true">Text 1.0x</button><button data-size-btn="1.3" aria-pressed="false">1.3x</button><button data-size-btn="2" aria-pressed="false">2.0x</button></div></div></div>
+<div class="legend">Odia and Hindi are the app's unreviewed DRAFT strings (H13), taken verbatim from strings.ts. A dashed red underline means the string does not exist yet (English only). Text sizes above 1.5x leave the header and tab bar at 1.5x (the app's chrome cap); body text and figures keep growing. Browser render with Anek Odia, not the phone.</div>
+<nav class="toc" id="toc"></nav>
+<main class="stage" id="stage"></main>
+<script>window.STRINGS={"sync.waiting":{"en":"{n} waiting · safe on phone","hi":"{n} बाकी · फ़ोन में सुरक्षित","or":"{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ"},"sync.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"common.back":{"en":"Back","hi":"पीछे","or":"ପଛକୁ ଯାଆନ୍ତୁ"},"nav.today":{"en":"Today","hi":"आज","or":"ଆଜି"},"nav.parties":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"nav.reports":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"act.sale":{"en":"Sale","hi":"बिक्री","or":"ବିକ୍ରି"},"act.credit":{"en":"Udhar sale","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"act.collect":{"en":"Collect","hi":"वसूली","or":"ଆଦାୟ"},"act.expense":{"en":"Expense","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"t1.more":{"en":"More","hi":"और","or":"ଅଧିକ"},"box.title":{"en":"In the box now","hi":"अभी बॉक्स में","or":"ଏବେ ବାକ୍ସରେ"},"box.opening":{"en":"Opening","hi":"शुरुआत","or":"ଆରମ୍ଭ"},"box.in":{"en":"cash in","hi":"नकद आया","or":"ନଗଦ ଆସିଲା"},"box.out":{"en":"cash out","hi":"नकद गया","or":"ନଗଦ ଗଲା"},"box.sales":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"t1.toCollect":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ ବାକି ଉଧାର"},"t1.continueClose":{"en":"Continue day close","hi":"दिन बंद करना जारी रखें","or":"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ"},"t1.progress":{"en":"{done} of {total}","hi":"{total} में से {done}","or":"{total} ରୁ {done}"},"keypad.clear":{"en":"Clear","hi":"मिटाएँ","or":"ଖାଲି କରନ୍ତୁ"},"keypad.delete":{"en":"Delete last digit","hi":"आखिरी अंक मिटाएँ","or":"ଶେଷ ଅଙ୍କ ଲିଭାନ୍ତୁ"},"t1.day.4":{"en":"Thursday","hi":"गुरुवार","or":"ଗୁରୁବାର"},"t1.month.11":{"en":"November","hi":"नवंबर","or":"ନଭେମ୍ବର"},"c1.title":{"en":"Ask","hi":"पूछें","or":"ପଚାରନ୍ତୁ"},"t1.privacy":{"en":"Privacy and what you agreed to","hi":"निजता और आपकी सहमति","or":"ଗୋପନୀୟତା ଓ ଆପଣଙ୍କ ସହମତି"},"s1.title":{"en":"Settings","hi":"सेटिंग","or":"ସେଟିଂ"},"t2.title":{"en":"Today's book","hi":"आज की किताब","or":"ଆଜିର ବହି"},"t2.notStarted":{"en":"Not started","hi":"शुरू नहीं हुआ","or":"ଆରମ୍ଭ ହୋଇନାହିଁ"},"t2.prompt":{"en":"Count the cash in the box before the first sale.","hi":"पहली बिक्री से पहले बॉक्स का नकद गिनें।","or":"ପ୍ରଥମ ବିକ୍ରି ପୂର୍ବରୁ ବାକ୍ସର ନଗଦ ଗଣନ୍ତୁ।"},"t2.carried":{"en":"From tomorrow this is carried from your own count, and never asked again.","hi":"कल से यह आपकी अपनी गिनती से आएगा, और फिर कभी नहीं पूछा जाएगा।","or":"ଆସନ୍ତାକାଲିଠାରୁ ଏହା ଆପଣଙ୍କ ନିଜ ଗଣନାରୁ ଆସିବ, ଏବଂ ପୁଣି ପଚରାଯିବ ନାହିଁ।"},"t2.enterOpening":{"en":"Enter opening cash","hi":"शुरुआती नकद दर्ज करें","or":"ଆରମ୍ଭ ନଗଦ ଲେଖନ୍ତୁ"},"t2.empty":{"en":"Today's figures appear here after the first entry.","hi":"पहली प्रविष्टि के बाद आज के आँकड़े यहाँ दिखेंगे।","or":"ପ୍ରଥମ ଏଣ୍ଟ୍ରି ପରେ ଆଜିର ହିସାବ ଏଠାରେ ଦେଖାଯିବ।"},"t1.stale.body":{"en":"This book is still open for {date}. Close it to start today.","hi":"यह बही अभी {date} के लिए खुली है। आज शुरू करने के लिए इसे बंद करें।","or":"ଏହି ଖାତା ଏବେ ବି {date} ପାଇଁ ଖୋଲା ଅଛି। ଆଜି ଆରମ୍ଭ କରିବାକୁ ଏହାକୁ ବନ୍ଦ କରନ୍ତୁ।"},"t1.stale.action":{"en":"Close it now","hi":"अभी बंद करें","or":"ବର୍ତ୍ତମାନ ବନ୍ଦ କରନ୍ତୁ"},"refusal.titleNotDone":{"en":"Could not do that","hi":"यह नहीं हो सका","or":"ଏହା ହୋଇପାରିଲା ନାହିଁ"},"refusal.dayStale":{"en":"This book is still open for an earlier day. Close it to start today.","hi":"यह बही अभी पिछले दिन के लिए खुली है। आज शुरू करने के लिए इसे बंद करें।","or":"ଏହି ଖାତା ଏବେ ବି ପୂର୍ବ ଦିନ ପାଇଁ ଖୋଲା ଅଛି। ଆଜି ଆରମ୍ଭ କରିବାକୁ ଏହାକୁ ବନ୍ଦ କରନ୍ତୁ।"},"t1.future.body":{"en":"This phone's date looks wrong. Your book is on {date}, which is ahead of today. Nothing is lost. Check the phone's date and time.","hi":"इस फ़ोन की तारीख़ गलत लगती है। आपकी बही {date} पर है, जो आज से आगे है। कुछ भी खोया नहीं है। फ़ोन की तारीख़ और समय जाँचें।","or":"ଏହି ଫୋନର ତାରିଖ ଭୁଲ ଲାଗୁଛି। ଆପଣଙ୍କ ଖାତା {date} ରେ ଅଛି, ଯାହା ଆଜିଠାରୁ ଆଗରେ। କିଛି ହଜିନାହିଁ। ଫୋନର ତାରିଖ ଓ ସମୟ ଯାଞ୍ଚ କରନ୍ତୁ।"},"t3.banner":{"en":"Today is closed. Post a correction instead.","hi":"आज बंद है। इसके बदले सुधार दर्ज करें।","or":"ଆଜି ବନ୍ଦ ଅଛି। ଏହା ବଦଳରେ ସଂଶୋଧନ ଲେଖନ୍ତୁ।"},"t3.correction":{"en":"Post a correction","hi":"सुधार दर्ज करें","or":"ସଂଶୋଧନ ଲେଖନ୍ତୁ"},"t3.summary":{"en":"See the day summary","hi":"दिन का सारांश देखें","or":"ଦିନର ସାରାଂଶ ଦେଖନ୍ତୁ"},"t3.wrongDate.body":{"en":"Today's book ({date}) was already closed earlier, while the phone's date was wrong. New entries can start again tomorrow.","hi":"आज की बही ({date}) पहले ही बंद हो चुकी थी, जब फ़ोन की तारीख़ गलत थी। नई एंट्री कल से फिर शुरू हो सकती है।","or":"ଆଜିର ଖାତା ({date}) ଆଗରୁ ବନ୍ଦ ହୋଇସାରିଥିଲା, ଯେତେବେଳେ ଫୋନର ତାରିଖ ଭୁଲ ଥିଲା। ନୂଆ ଏଣ୍ଟ୍ରି କାଲିଠାରୁ ପୁଣି ଆରମ୍ଭ ହୋଇପାରିବ।"},"sync.waitingLong":{"en":"{n} waiting to send. Safe on this phone; it goes when the network is back.","hi":"{n} भेजना बाकी। इस फ़ोन में सुरक्षित है; नेटवर्क आने पर चला जाएगा।","or":"{n} ପଠାଇବା ବାକି। ଏହି ଫୋନରେ ସୁରକ୍ଷିତ; ନେଟୱର୍କ ଆସିଲେ ଚାଲିଯିବ।"},"t1.parked":{"en":"{n} could not be sent - contact us","hi":"{n} भेजा नहीं जा सका - हमसे संपर्क करें","or":"{n} ପଠାଯାଇପାରିଲା ନାହିଁ - ଆମକୁ ଜଣାନ୍ତୁ"},"common.loading":{"en":"Opening","hi":"खुल रहा है","or":"ଖୋଲୁଛି"},"common.error":{"en":"Could not open this. Nothing you entered is lost.","hi":"यह नहीं खुल सका। आपका दर्ज किया कुछ भी नहीं गया।","or":"ଏହା ଖୋଲିପାରିଲା ନାହିଁ। ଆପଣ ଲେଖିଥିବା କିଛି ହଜିନାହିଁ।"},"common.retry":{"en":"Try again","hi":"फिर कोशिश करें","or":"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"},"act.purchase":{"en":"Purchase","hi":"खरीद","or":"କିଣା"},"t8.title.pay":{"en":"Pay supplier","hi":"आपूर्तिकर्ता को भुगतान","or":"ଯୋଗାଣକାରୀଙ୍କୁ ଦେୟ"},"section.withdrawal":{"en":"Taken by owner","hi":"मालिक ने लिया","or":"ମାଲିକ ନେଇଛନ୍ତି"},"t1.obs.title":{"en":"More cash went out than came in today.","hi":"आज जितना नकद आया, उससे ज़्यादा गया।","or":"ଆଜି ଯେତେ ନଗଦ ଆସିଲା, ତାଠୁ ଅଧିକ ଗଲା।"},"t1.obs.body":{"en":"Worth a look before you count the box.","hi":"बॉक्स गिनने से पहले एक बार देख लें।","or":"ବାକ୍ସ ଗଣିବା ପୂର୍ବରୁ ଥରେ ଦେଖିନିଅନ୍ତୁ।"}};</script>
+<script>/* Mitra screen kit. Copy comes from window.STRINGS (extracted from apps/mobile/src/i18n/strings.ts by build.mjs, verbatim). Keys that do not exist yet are written K.N('English text') and are listed as NEW. Money is integer paise; the browser formatting mirrors formatPaise (Indian grouping, 2 decimals, sign always printed). */
+(function () {
+  'use strict';
+  var K = (window.K = {});
+  var SPEC = (window.SPEC = window.SPEC || {});
+  var LANGS = { en: 'en', od: 'or', hi: 'hi' };
+  var S = { lang: 'od', theme: 'comfort', size: 1 };
+  var USED = {}; var NEWC = {}; var curFrame = '';
+  K.state = S;
+
+  /* ---- copy ---- */
+  K.t = function (key, vars) {
+    var p = window.STRINGS[key];
+    if (!p) { return '<span class="newc" title="MISSING KEY ' + key + '">' + key + '</span>'; }
+    (USED[curFrame] = USED[curFrame] || {})[key] = 1;
+    var s = p[LANGS[S.lang]];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : '{' + k + '}'; });
+    return s;
+  };
+  K.N = function (en, hint) {
+    (NEWC[curFrame] = NEWC[curFrame] || {})[en] = hint || '';
+    return '<span class="newc" title="NEW string: no od/hi yet (H13)">' + en + '</span>';
+  };
+  K.plain = function (key, vars) { return K.t(key, vars); };
+  K.pick = function (en, od, hi) { return S.lang === 'en' ? en : (S.lang === 'od' ? od : hi); }; /* proper names only */
+
+  /* ---- money ---- */
+  K.rupee = function (p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100, s = String(r);
+    if (s.length > 3) { var l3 = s.slice(-3), rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + l3; }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  };
+  /* o.sign: print + on positives; o.out: an out-line (always -); o.tone:'dir' colours by direction (sign is always printed too) */
+  K.M = function (p, o) {
+    o = o || {}; var neg = o.out || p < 0, sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + K.rupee(p) + '</span>';
+  };
+
+  /* ---- icons (stroke, 24 grid) ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.6 14.4 9 14.4L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.5-3.5M12 12l3.5-3.5"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 5l-7 7 7 7"/>', bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>', up: '<path d="M12 5v14M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 5a3.5 3.5 0 0 1 0 7M19 20c0-2.500-1.500-4-3-4.700"/>',
+    warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    cloudoff: '<path d="M7 18h10a4 4 0 0 0 .8-7.900A6 6 0 0 0 6.500 9.500 4 4 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+    share: '<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 11l7.400-4M8.300 13l7.400 4"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    textsize: '<path d="M3 19L8 6l5 13M5 15h6M15 19l3.500-8 3.500 8M16.200 16.500h4.600"/>', shield: '<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', edit: '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>', logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+    sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>', swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    wa: '<path d="M4 20l1.500-4.500A8 8 0 1 1 8.500 18.500z"/><path d="M9 9c0 3 3 6 6 6l1.500-1.500-2-1-1 1c-1-.5-2-1.500-2.500-2.500l1-1-1-2z"/>',
+    star: '<path d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/>', pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+    bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+  K.ico = function (n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICO[n] || ICO.dots) + '</svg>';
+  };
+
+  /* ---- components: each returns an HTML string ---- */
+  K.chip = function (kind, n) {
+    if (kind === 'wait') { var s = K.t('sync.waiting', { n: n || 3 }); return '<button class="chip wait" aria-label="' + s + '">' + K.ico('clock', 22) + '<span>' + s + '</span></button>'; }
+    if (kind === 'off') { return '<button class="chip wait">' + K.ico('cloudoff', 22) + '<span>' + K.N('Offline') + '</span></button>'; }
+    return '<button class="chip ok">' + K.ico('check', 22) + '<span>' + K.t('sync.saved') + '</span></button>';
+  };
+  K.top = function (o) { /* {title, back, right, shop, date} */
+    var l = o.back ? '<button class="back" aria-label="' + K.t('common.back') + '">' + K.ico('back', 28) + '</button>' : '';
+    var mid = o.shop ? '<div class="shop"><div class="sn">' + o.shop + '</div><div class="dt">' + (o.date || '') + '</div></div>' : '<h1>' + (o.title || '') + '</h1>';
+    return '<header class="top">' + l + mid + '<div class="grow"></div>' + (o.right || '') + '</header>';
+  };
+  K.tabs = function (active) {
+    var d = [['today', 'box', K.t('nav.today')], ['parties', 'book', K.t('nav.parties')], ['reports', 'bars', K.t('nav.reports')]];
+    return '<nav class="tabs">' + d.map(function (x) { return '<button class="tab' + (x[0] === active ? ' on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + K.ico(x[1], 26) + '<span>' + x[2] + '</span></button>'; }).join('') + '</nav>';
+  };
+  K.tile = function (kind, icon, label, off) { return '<button class="tile t-' + kind + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : '') + '><span class="ti">' + K.ico(icon, 30) + '</span><span>' + label + '</span></button>'; };
+  K.tiles = function (off) {
+    return '<section class="tiles">' + K.tile('sale', 'coin', K.t('act.sale'), off) + K.tile('udhar', 'book', K.t('act.credit'), off) + K.tile('collect', 'tray', K.t('act.collect'), off) + K.tile('expense', 'receipt', K.t('act.expense'), off) + K.tile('more', 'dots', K.t('t1.more'), off) + '</section>';
+  };
+  K.hero = function (o) { /* {box, opening, cashIn, cashOut} paise */
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + K.t('box.title') + '</span></div><div class="fig">' + K.M(o.box, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.t('box.opening') + '</span>' + K.M(o.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + K.ico('down', 20, 'dirico') + K.t('box.in') + '</span>' + K.M(o.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + K.ico('up', 20, 'dirico') + K.t('box.out') + '</span>' + K.M(o.cashOut, { out: true, tone: 'dir' }) + '</div></section>';
+  };
+  K.facts = function (sales, collect) {
+    return '<section class="facts"><div class="ln"><span class="k">' + K.t('box.sales') + '</span>' + K.M(sales) + '</div><button class="ln link"><span class="k">' + K.t('t1.toCollect') + '</span>' + K.M(collect) + '</button></section>';
+  };
+  K.bar = function (done, total) { var h = '<div class="bar" role="img" aria-label="' + done + '/' + total + '">'; for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.closecard = function (done, total, quiet, label) {
+    return '<button class="closecard' + (quiet ? ' quiet2' : '') + '"><span class="cc-main"><span class="cc-t">' + (label || K.t('t1.continueClose')) + '</span><span>' + K.t('t1.progress', { done: done, total: total }) + '</span></span>' + K.bar(done, total) + '<span class="cc-c">' + K.ico('chev', 26) + '</span></button>';
+  };
+  K.seg = function (items, on, icons) { /* items: label html[]; on: index */
+    return '<div class="seg" role="radiogroup">' + items.map(function (l, i) { return '<button class="sg-b' + (i === on ? ' on' : '') + '" role="radio" aria-checked="' + (i === on) + '">' + (i === on ? K.ico('tick', 22) : (icons && icons[i] ? K.ico(icons[i], 22) : '')) + '<span>' + l + '</span></button>'; }).join('') + '</div>';
+  };
+  K.keypad = function (hidden) {
+    var k = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (x) { return '<button class="key">' + x + '</button>'; });
+    k.push('<button class="key aux">' + K.t('keypad.clear') + '</button>'); k.push('<button class="key">0</button>'); k.push('<button class="key aux" aria-label="' + K.t('keypad.delete') + '">' + K.ico('bksp', 30) + '</button>');
+    return '<div class="kp' + (hidden ? ' hidden' : '') + '">' + k.join('') + '</div>';
+  };
+  K.addbar = function (label, paise, dis) { return '<button class="addbar' + (dis ? ' dis' : '') + '"' + (dis ? ' aria-disabled="true"' : '') + '><span>' + label + '</span>' + (paise ? K.M(paise) : '') + '</button>'; };
+  K.primary = function (label, kind, icon) { return '<button class="primary' + (kind ? ' ' + kind : '') + '"' + (kind === 'dis' ? ' aria-disabled="true"' : '') + '>' + (icon ? K.ico(icon, 26) : '') + '<span>' + label + '</span></button>'; };
+  K.btn2 = function (label, icon) { return '<button class="btn2">' + (icon ? K.ico(icon, 24) : '') + '<span>' + label + '</span></button>'; };
+  K.quiet = function (label) { return '<button class="quiet">' + label + '</button>'; };
+  K.sticky = function () { return '<div class="sticky">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.scroll = function () { return '<div class="scroll">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.stack = function () { return '<div class="stack">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.row = function (o) { /* {state:'done'|'next'|'open'|'skip'|'lock', n, name, sub, paise, entries, quiet} */
+    var mk = o.state === 'done' ? K.ico('tick', 22) : o.state === 'skip' ? K.ico('dash', 22) : o.state === 'lock' ? K.ico('lock', 22) : '<b>' + (o.n || '') + '</b>';
+    var rv = o.paise !== undefined ? '<span class="rv">' + K.M(o.paise) + (o.entries ? '<small>' + o.entries + '</small>' : '') + '</span>' : '';
+    return '<li class="row ' + o.state + (o.cls ? ' ' + o.cls : '') + '"><span class="mk">' + mk + '</span><span class="nm">' + o.name + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' + rv + (o.quiet ? K.quiet(o.quiet) : '') + '</li>';
+  };
+  K.lrow = function (icon, title, sub, o) { o = o || {}; return '<button class="lrow' + (o.danger ? ' danger' : '') + '"><span class="li">' + K.ico(icon, 24) + '</span><span class="lt"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (o.right || '') + (o.noChev ? '' : K.ico('chev', 24)) + '</button>'; };
+  K.sw = function (on, title, sub) { return '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"><span class="tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + K.N(on ? 'On' : 'Off', 'switch state words (DS-V2 3.14); consent screens may use their existing allow/withdraw wording') + '</span></span></button>'; };
+  K.field = function (label, value, o) { o = o || {}; return '<div class="field"><label>' + label + '</label><div class="in' + (o.focus ? ' focus' : '') + (o.err ? ' err' : '') + '">' + (value ? '<span>' + value + '</span>' : '<span class="ph">' + (o.ph || '') + '</span>') + (o.focus ? '<i class="caret"></i>' : '') + '</div>' + (o.help ? '<div class="help' + (o.err ? ' err' : '') + '">' + o.help + '</div>' : '') + '</div>'; };
+  K.avatar = function (name, i) { return '<span class="av av' + ((i || 0) % 5) + '">' + Array.from(name)[0] + '</span>'; };
+  K.prow = function (name, i, sub, paise, state) { return '<li><button class="prow">' + K.avatar(name, i) + '<span class="pn"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="pa">' + K.M(paise) + '<em>' + state + '</em></span></button></li>'; };
+  K.banner = function (kind, icon, text, action) { return '<div class="banner ' + (kind || '') + '" role="status">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span>' + (action ? K.quiet(action) : '') + '</div>'; };
+  K.refuse = function (title, body) { return '<div class="refuse" role="alert">' + K.ico('warn', 24) + '<div><b>' + title + '</b><br>' + body + '</div></div>'; };
+  K.refbanner = function (title, body, nn) { return '<div class="refbanner' + (nn ? ' nn' : '') + '" role="alert"><b>' + title + '</b><br>' + body + '</div>'; };
+  K.empty = function (icon, text, ctaLabel, ctaIcon) { return '<div class="empty"><div class="ei">' + K.ico(icon, 44) + '</div><p>' + text + '</p>' + (ctaLabel ? K.primary(ctaLabel, '', ctaIcon) : '') + '</div>'; };
+  K.skel = function (n) { var h = '<div class="skel" aria-busy="true">'; for (var i = 0; i < (n || 4); i++) h += '<i></i>'; return h + '</div>'; };
+  K.sheet = function (title, inner) { return '<div class="scrim"></div><div class="sheet" role="dialog"><h2>' + title + '</h2><div class="scroll">' + inner + '</div></div>'; };
+  K.dialog = function (title, inner) { return '<div class="scrim"></div><div class="dialog" role="alertdialog"><h2>' + title + '</h2>' + inner + '</div>'; };
+  K.toast = function (icon, text) { return '<div class="toast" role="status">' + K.ico(icon || 'check', 24) + '<span>' + text + '</span></div>'; };
+  K.center = function (inner) { return '<div class="center">' + inner + '</div>'; };
+  K.dots = function (i, n) { var h = '<div class="dots">'; for (var k = 0; k < n; k++) h += '<i class="' + (k === i ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.otp = function (digits, cur) { var h = '<div class="otp">'; for (var i = 0; i < 6; i++) h += '<i class="' + (i === cur ? 'cur' : '') + '">' + (digits[i] || '') + '</i>'; return h + '</div>'; };
+  K.sec = function (t) { return '<div class="sec">' + t + '</div>'; };
+  K.list = function (rows) { return '<ul class="rows">' + rows.join('') + '</ul>'; };
+  K.names = { ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'], lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ'] };
+  K.nm = function (id) { return K.names[id][S.lang === 'en' ? 0 : 1]; }; /* demo names only; real names are user data, shown as typed */
+  K.shop = 'Subhadra Kirana';
+  K.date = function () { return K.t('t1.day.4') + ' 19 ' + K.t('t1.month.11'); };
+  K.screen = function (inner) { return inner; };
+
+  /* build.mjs runs the specs in Node (lang en) to write FLOWS.md from the very same mockup bodies */
+  K.frame = function (id) { curFrame = id; };
+  K.used = function (id) { return Object.keys(USED[id] || {}); };
+  K.newc = function (id) { return Object.keys(NEWC[id] || {}); };
+
+  /* ---- page ---- */
+  function frameHtml(sc) {
+    return '<div class="fwrap"><h3>' + sc.route + '</h3><div class="bezel"><div class="screen" id="fr-' + sc.id + '"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div>';
+  }
+  function noteHtml(sc) {
+    var used = Object.keys(USED[sc.id] || {}), nw = Object.keys(NEWC[sc.id] || {});
+    var flag = sc.flag === 'NEW' ? '<span class="tag new">NEW screen</span>' : sc.flag === 'CHG' ? '<span class="tag chg">Changed</span>' : '<span class="tag">Exists today</span>';
+    var dl = function (k, v) { return v ? '<dt>' + k + '</dt><dd>' + v + '</dd>' : ''; };
+    return '<div class="note"><h3>' + flag + sc.title + '</h3><dl>' + dl('Route', '<code>' + sc.route + '</code>') + dl('Purpose', sc.purpose) + dl('Primary action', sc.primary) + dl('Taps / target', sc.taps) + dl('Rules held', sc.rules) + dl('States / notes', sc.notes) + dl('For Saket to review', sc.review) + dl('Copy gaps (en only)', nw.length ? nw.map(function (x) { return '"' + x + '"'; }).join(' · ') + ' (od/hi DRAFT needed, H13)' : '') + '</dl><div class="keys"><b>Keys used:</b> ' + (used.length ? used.join(', ') : 'none') + '</div></div>';
+  }
+  function renderBodies(scr) { scr.forEach(function (sc) { curFrame = sc.id; var el = document.getElementById('fr-' + sc.id); var app = el.querySelector('.app'); var prev = app.querySelector('.scroll'); var top = prev ? prev.scrollTop : 0; app.innerHTML = sc.body(); var s2 = app.querySelector('.scroll'); if (s2) s2.scrollTop = top; }); }
+  function renderNotes(scr) { scr.forEach(function (sc) { document.getElementById('note-' + sc.id).innerHTML = noteHtml(sc); }); }
+  K.boot = function () {
+    var area = SPEC.area, scr = area.screens;
+    document.title = 'SWAFTO Retail Desk - Mitra - ' + area.title;
+    var q = function (id) { return document.getElementById(id); };
+    q('area-title').textContent = area.title + ' (' + scr.length + ' screen states)'; q('area-intro').innerHTML = area.intro;
+    q('toc').innerHTML = scr.map(function (s) { return '<a href="#c-' + s.id + '"' + (s.flag === 'NEW' ? ' class="new"' : '') + '>' + s.title + '</a>'; }).join('');
+    q('stage').innerHTML = scr.map(function (sc) { return '<section class="card" id="c-' + sc.id + '">' + frameHtml(sc) + '<div class="note" id="note-' + sc.id + '"></div></section>'; }).join('');
+    function all() { document.documentElement.lang = S.lang === 'od' ? 'or' : S.lang; document.body.setAttribute('data-lang', S.lang); document.body.setAttribute('data-theme', S.theme); document.body.style.setProperty('--z', S.size); document.body.style.setProperty('--zc', Math.min(S.size, 1.5)); USED = {}; NEWC = {}; renderBodies(scr); renderNotes(scr); }
+    [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { S.lang = b.getAttribute('data-lang-btn'); [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) { b.addEventListener('click', function () { S.theme = b.getAttribute('data-theme-btn'); [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (b) { b.addEventListener('click', function () { S.size = parseFloat(b.getAttribute('data-size-btn')); [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    all();
+  };
+})();
+</script>
+<script>/* AREA: Today (T1, T2, T3 and the states around them). This file is the EXEMPLAR for the other area specs.
+   Rules: copy by literal key K.t(KEY) (build.mjs embeds it verbatim from strings.ts); a string that does not exist is K.N(the English text).
+   Money is integer paise through K.M. Never colour alone: every status has an icon and words. */
+(function () {
+  var t = K.t, M = K.M;
+  var D18 = '18 ' + '';   /* date placeholder filled below, month name comes from t1.month.11 */
+  function d18() { return '18 ' + t('t1.month.11'); }
+  function homeTop(chip) { return K.top({ shop: K.shop, date: K.date(), right: chip || K.chip('ok') }); }
+  function lower() { /* the rows that used to be three loose links at the foot of Today in v1 */
+    return K.lrow('chat', t('c1.title')) + K.lrow('shield', t('t1.privacy')) + K.lrow('user', t('s1.title'));
+  }
+  var BOX = { box: 1200000 + 935000 - 290000, opening: 1200000, cashIn: 935000, cashOut: 290000 };
+
+  SPEC.area = {
+    title: 'Today',
+    intro: 'Mitra, sale-first Today. Four pinned tiles under the header, one hero ("In the box now"), two facts, and a close card that is tonal (not the loudest thing) until closing time. Every state of the Today route: normal, first day, stale open day, phone date behind, closed day (and wrong-date closed), offline or waiting, loading, error, the More sheet, and the derived cash observation.',
+    screens: [
+      {
+        id: 'today-normal', route: 'T1', title: 'Today: normal open day', flag: 'CHG',
+        purpose: 'The front door. Record the next sale with one tap, see what is in the box, see who owes, continue closing when ready.',
+        primary: 'Sale tile (solid teal, first, top-left). Continue day close is tonal until the shop\'s own closing time.',
+        taps: 'Cash sale: Sale tile, 2 to 3 digits, Add = 4 to 5 taps (target under 10 s; v1 device pass counted 5 actions with a scroll, here no scroll). Owes-lookup: tap "Udhar to collect" figure (1) then person (2) = 2 taps (target under 10 s).',
+        rules: 'Derived figures only (no stored totals). Out-flow printed with a minus sign. Sync chip never red.',
+        notes: 'Tiles are pinned above the figures and the scroll position is restored after every form (USABILITY items 1, 2, 3). Settings, Ask and Privacy are rows at the foot of the scroll with icon and chevron (v1 had loose links). OPEN/READY pill from v1 is dropped: the close card carries the state in words.',
+        body: function () {
+          return homeTop() + K.scroll(K.tiles(), K.hero(BOX), K.facts(1472000, 2150000), K.closecard(4, 10, true), lower()) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-first', route: 'T2', title: 'Today: first day, nothing entered', flag: 'CHG',
+        purpose: 'First morning of a new book. The only honest thing to ask for is the opening cash.',
+        primary: 'Enter opening cash (goes to T6).',
+        taps: 'Setup task, once: Enter opening cash, digits, Save = 3 taps plus digits.',
+        rules: 'No inference: the app never suggests a figure; it is carried from his own count from tomorrow.',
+        notes: 'Entry tiles stay hidden until the opening cash exists (as built: T2 shows only the opening step). Proposal for review: show the four tiles greyed with a dashed edge so he sees what is coming. Not done here, it changes T2 behaviour.',
+        body: function () {
+          return homeTop() + K.scroll(
+            '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + t('t2.title') + '</span></div><div class="fig"><b>' + t('t2.notStarted') + '</b></div>' +
+            '<div class="ln"><span class="k">' + t('t2.prompt') + '</span></div><div class="ln"><span class="k">' + t('t2.carried') + '</span></div></section>' +
+            K.stack(K.primary(t('t2.enterOpening'), '', 'coin')) + K.empty('box', t('t2.empty'))
+          ) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-stale', route: 'T1', title: 'Today: stale open day (book is for yesterday)', flag: 'CHG',
+        purpose: 'The open book belongs to an earlier day. Close it before today can start. Calm, not an alarm.',
+        primary: 'Close it now (opens the day-close list for the old day).',
+        taps: 'Close it now = 1 tap to reach T5; day-close target under 3 min applies from there.',
+        rules: 'Frozen/ordered days: entries are refused until the old day is closed (refusal.dayStale). A compact banner replaces v1\'s large card, so the tiles do not drop a fifth of the screen.',
+        notes: 'Tiles are shown greyed with a dashed edge and "aria-disabled". Tapping one shows the refusal banner (see below). Status is icon + words, never colour only.',
+        body: function () {
+          return homeTop() + K.scroll(
+            K.banner('', 'clock', t('t1.stale.body', { date: d18() }), t('t1.stale.action')),
+            K.tiles(true), K.hero(BOX), K.facts(1472000, 2150000), K.closecard(4, 10, false, t('t1.stale.action'))
+          ) + K.tabs('today') + K.refbanner(t('refusal.titleNotDone'), t('refusal.dayStale'), true);
+        }
+      },
+      {
+        id: 'today-future', route: 'T1', title: 'Today: phone date is behind the book', flag: 'CHG',
+        purpose: 'The phone clock is earlier than the book\'s date. Entries pause; nothing is lost; the fix is outside the app.',
+        primary: 'Open date settings (NEW button; v1 offered none, USABILITY known issue QA-06).',
+        taps: '1 tap to the Android date settings, then Back.',
+        rules: 'Never auto-correct the date or the book (no inference). The book stays as recorded.',
+        notes: 'Needs a host intent to open the phone\'s date and time settings (frontend build item, not a copy-only change; flagged). Compact banner instead of the four-line white card; at 2.0x the text wraps but the tiles remain reachable below.',
+        body: function () {
+          return homeTop() + K.scroll(
+            K.banner('', 'calendar', t('t1.future.body', { date: '20 ' + t('t1.month.11') })),
+            K.stack(K.primary(K.N('Open date settings'), 'tonal', 'calendar')),
+            K.tiles(true), K.hero(BOX), K.facts(1472000, 2150000)
+          ) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-closed', route: 'T3', title: 'Today: closed day (frozen)', flag: 'CHG',
+        purpose: 'Today is closed and frozen (D7). Show the result; the only way to change it is a dated correction.',
+        primary: 'Post a correction (opens T16). Secondary: See the day summary (T14).',
+        taps: 'Correction: 1 tap to the picker, then pick the entry, amount, Add.',
+        rules: 'D7: no entry rail; the tiles are replaced by a lock banner. Append-only: a correction is a new entry referencing the original.',
+        notes: 'The greyed tiles of v1 were silent; here the banner says why (t3.banner) and offers the one action that exists.',
+        body: function () {
+          return homeTop() + K.scroll(
+            K.banner('info', 'lock', t('t3.banner')),
+            K.stack(K.primary(t('t3.correction'), '', 'pencil'), K.primary(t('t3.summary'), 'outline', 'receipt')),
+            K.hero(BOX), K.facts(1472000, 2150000)
+          ) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-closed-wrongdate', route: 'T3', title: 'Today: closed while the phone date was wrong', flag: 'CHG',
+        purpose: 'Today\'s book was closed earlier under a wrong phone date. New entries resume tomorrow. Keeps the record as it was.',
+        primary: 'See the day summary. No correction is offered for the wrong-date day beyond the normal one.',
+        taps: '1 tap to the summary.',
+        rules: 'C-19 residual: the day is kept as recorded; nothing is rewritten.',
+        notes: 'Same frame as the closed day with the longer sentence (t3.wrongDate.body).',
+        body: function () {
+          return homeTop() + K.scroll(
+            K.banner('info', 'lock', t('t3.wrongDate.body', { date: '19 ' + t('t1.month.11') })),
+            K.stack(K.primary(t('t3.summary'), 'outline', 'receipt')), K.hero(BOX), K.facts(1472000, 2150000)
+          ) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-offline', route: 'T1', title: 'Today: offline, entries waiting to sync', flag: 'CHG',
+        purpose: 'No network. The app works fully; he needs to know the entries are safe on the phone and not yet on the server.',
+        primary: 'Keep selling (Sale tile). The chip is information; tapping it expands the explanation.',
+        taps: 'Same as normal: no extra step because of the network.',
+        rules: 'Chip is amber with a clock, words "waiting - safe on phone", never red. It appears in the header of every screen, not as grey text mid-page (USABILITY item 8).',
+        notes: 'Rows the server refused are parked and shown as a separate line (t1.parked) with a contact route. The queue drains by itself after signal returns (one drain was observed in the usability pass, USABILITY.md U-72; a single observation, not a benchmark).',
+        body: function () {
+          return homeTop(K.chip('wait', 3)) + K.scroll(
+            K.banner('info', 'cloudoff', t('sync.waitingLong', { n: 3 })),
+            K.banner('err', 'warn', t('t1.parked', { n: 1 })),
+            K.tiles(), K.hero(BOX), K.facts(1472000, 2150000), K.closecard(4, 10, true)
+          ) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-loading', route: 'T1', title: 'Today: loading the book', flag: 'EXISTS',
+        purpose: 'The day is being opened from the phone\'s own database. Placeholder rows, no spinner on save.',
+        primary: 'None; waits. Shown for well under a second normally.',
+        taps: 'n/a',
+        rules: 'Skeleton shapes match the tiles and hero so nothing jumps when the figures arrive.',
+        notes: 'Copy: common.loading is the accessible name only; no visible text.',
+        body: function () {
+          return homeTop(K.chip('ok')) + '<div class="scroll" aria-busy="true" aria-label="' + t('common.loading') + '"><section class="tiles"><i class="tile" style="background:var(--rule)"></i><i class="tile" style="background:var(--rule)"></i><i class="tile" style="background:var(--rule)"></i><i class="tile" style="background:var(--rule)"></i></section>' + K.skel(3) + '</div>' + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-error', route: 'T1', title: 'Today: could not open the book', flag: 'EXISTS',
+        purpose: 'The book failed to open. Say plainly that nothing is lost and give one next step.',
+        primary: 'Try again (common.retry).',
+        taps: '1 tap.',
+        rules: 'Calm words; the ledger is in SQLite and untouched. Error uses icon + words + an outlined edge; the edge colour is not the only cue.',
+        notes: 'If retry fails twice the error boundary screen is the next stop (see system area).',
+        body: function () {
+          return homeTop(K.chip('ok')) + K.scroll(K.banner('err', 'warn', t('common.error'), t('common.retry')), K.empty('refresh', t('common.error'), t('common.retry'), 'refresh')) + K.tabs('today');
+        }
+      },
+      {
+        id: 'today-more', route: 'T1', title: 'Today: More sheet (Purchase, Pay supplier, Withdrawal, Return)', flag: 'CHG',
+        purpose: 'The less frequent entries, kept off the four pinned tiles. Opens over Today; closes with Back or a tap outside.',
+        primary: 'One of the rows. Each opens its own form.',
+        taps: 'Purchase or Pay supplier: More, row = 2 taps to the form.',
+        rules: 'Each row names the real action (accessible name = visible word; fixes WCAG 2.5.3 W5). Withdrawal sits outside profit (D3).',
+        notes: 'Return or exchange lives here too (reached from the Sale form in v1 as a caption that looked like text). It stays reachable from the Sale form as a proper button.',
+        body: function () {
+          var rows = K.lrow('receipt', t('act.purchase')) + K.lrow('tray', t('t8.title.pay')) + K.lrow('up', t('section.withdrawal')) + K.lrow('swap', K.N('Return')) + K.lrow('pencil', K.N('Adjustment', 'cash adjustment from a fixed list'));
+          return homeTop() + K.scroll(K.tiles(), K.hero(BOX)) + K.tabs('today') + K.sheet(t('t1.more'), rows);
+        }
+      },
+      {
+        id: 'today-obs', route: 'T1', title: 'Today: more cash went out than came in (derived observation)', flag: 'EXISTS',
+        purpose: 'A derived observation, not an instruction: cash paid exceeds cash received. Asks him to look, never to act.',
+        primary: 'None. Informational; the tiles stay first.',
+        taps: 'n/a',
+        rules: 'CLAUDE.md "No inference in data entry": this reads two engine figures already on screen; it guesses no input and gives no command.',
+        notes: 'Appears below the hero. Wording is the existing t1.obs.title / body.',
+        body: function () {
+          return homeTop() + K.scroll(K.tiles(), K.hero({ box: 800000 + 100000 - 400000, opening: 800000, cashIn: 100000, cashOut: 400000 }), K.banner('info', 'info', t('t1.obs.title') + ' ' + t('t1.obs.body')), K.facts(100000, 0), K.closecard(2, 10, true)) + K.tabs('today');
+        }
+      }
+    ]
+  };
+})();
+
+K.boot();</script>
+</body></html>

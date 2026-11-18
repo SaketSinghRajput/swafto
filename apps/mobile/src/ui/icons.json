@@ -1,0 +1,176 @@
+{
+  "source": {
+    "package": "lucide-static",
+    "version": "1.75.0",
+    "tarballUrl": "https://registry.npmjs.org/lucide-static/-/lucide-static-1.75.0.tgz",
+    "tarballSha256": "5411093d26066ed3eda35f2349ec73c65c9427d64ef3b7bf3282169027899039",
+    "fontSha256": "3d6ce197ac48c4b546500518a5de137d46c3b2269762dd26c3ac32e974ed9658",
+    "licence": "ISC, plus MIT for the Feather-derived glyphs; text in ISC-Lucide.txt"
+  },
+  "font": {
+    "family": "SwaftoIcons",
+    "file": "SwaftoIcons.ttf"
+  },
+  "icons": {
+    "sale": {
+      "lucide": "indian-rupee",
+      "codepoint": "E0F8",
+      "meaning": "Sale: tile, title"
+    },
+    "udhar": {
+      "lucide": "notebook",
+      "codepoint": "E595",
+      "meaning": "Udhar (credit): tile, mode, Ledger tab"
+    },
+    "collect": {
+      "lucide": "hand-coins",
+      "codepoint": "E5B8",
+      "meaning": "Collect a payment: tile"
+    },
+    "expense": {
+      "lucide": "receipt",
+      "codepoint": "E3D3",
+      "meaning": "Expense: tile"
+    },
+    "more": {
+      "lucide": "ellipsis",
+      "codepoint": "E0B6",
+      "meaning": "More actions: tile"
+    },
+    "box": {
+      "lucide": "archive",
+      "codepoint": "E041",
+      "meaning": "The cash box: hero, Today tab"
+    },
+    "reports": {
+      "lucide": "chart-no-axes-column",
+      "codepoint": "E068",
+      "meaning": "Reports tab"
+    },
+    "cash": {
+      "lucide": "banknote",
+      "codepoint": "E052",
+      "meaning": "Cash payment mode"
+    },
+    "upi": {
+      "lucide": "smartphone",
+      "codepoint": "E163",
+      "meaning": "UPI payment mode"
+    },
+    "user": {
+      "lucide": "user",
+      "codepoint": "E19F",
+      "meaning": "Customer or supplier field, empty avatar"
+    },
+    "tick": {
+      "lucide": "check",
+      "codepoint": "E06C",
+      "meaning": "Selected option, done step, switch ON"
+    },
+    "dash": {
+      "lucide": "minus",
+      "codepoint": "E11C",
+      "meaning": "Skipped step, switch OFF"
+    },
+    "lock": {
+      "lucide": "lock",
+      "codepoint": "E10B",
+      "meaning": "Locked step, closed day, disabled tile"
+    },
+    "clock": {
+      "lucide": "clock",
+      "codepoint": "E087",
+      "meaning": "Sync waiting, changed today"
+    },
+    "saved": {
+      "lucide": "circle-check",
+      "codepoint": "E226",
+      "meaning": "Sync saved, toast"
+    },
+    "chevron": {
+      "lucide": "chevron-right",
+      "codepoint": "E06F",
+      "meaning": "Tappable row"
+    },
+    "back": {
+      "lucide": "chevron-left",
+      "codepoint": "E06E",
+      "meaning": "Header back"
+    },
+    "delete": {
+      "lucide": "delete",
+      "codepoint": "E0AE",
+      "meaning": "Keypad: delete last digit"
+    },
+    "plus": {
+      "lucide": "plus",
+      "codepoint": "E13D",
+      "meaning": "Add a customer or supplier"
+    },
+    "in": {
+      "lucide": "arrow-down",
+      "codepoint": "E042",
+      "meaning": "Cash in"
+    },
+    "out": {
+      "lucide": "arrow-up",
+      "codepoint": "E04A",
+      "meaning": "Cash out"
+    },
+    "stale": {
+      "lucide": "calendar-clock",
+      "codepoint": "E304",
+      "meaning": "Stale open day, overdue"
+    },
+    "info": {
+      "lucide": "info",
+      "codepoint": "E0F9",
+      "meaning": "Info banner"
+    },
+    "alert": {
+      "lucide": "circle-alert",
+      "codepoint": "E077",
+      "meaning": "Error or refused"
+    },
+    "offline": {
+      "lucide": "cloud-off",
+      "codepoint": "E08D",
+      "meaning": "Offline chip"
+    },
+    "exchange": {
+      "lucide": "arrow-left-right",
+      "codepoint": "E24A",
+      "meaning": "Exchange and return"
+    },
+    "correct": {
+      "lucide": "pencil",
+      "codepoint": "E1F9",
+      "meaning": "Correction entry"
+    },
+    "retry": {
+      "lucide": "refresh-cw",
+      "codepoint": "E145",
+      "meaning": "Retry, resend"
+    },
+    "share": {
+      "lucide": "share-2",
+      "codepoint": "E156",
+      "meaning": "Send a reminder or report"
+    },
+    "download": {
+      "lucide": "download",
+      "codepoint": "E0B2",
+      "meaning": "Your data export"
+    },
+    "erase": {
+      "lucide": "trash-2",
+      "codepoint": "E18E",
+      "meaning": "Delete account or data"
+    },
+    "signout": {
+      "lucide": "log-out",
+      "codepoint": "E10E",
+      "meaning": "Sign out a phone"
+    }
+  }
+}

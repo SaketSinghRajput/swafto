@@ -13,6 +13,19 @@ android/app/build/
 ios/Pods/
 *.keystore
 !debug.keystore
+
+# Android build state. `build/` above catches the output directories; these are
+# the three it does not.
+#
+# local.properties carries an absolute SDK path for ONE machine
+# (C:/Users/user/swafto-toolchain/sdk here). Committed, it breaks the build for
+# everyone else and publishes the layout of this one. Every Android project
+# ignores it, for that reason.
+#
+# .cxx/ is the NDK's intermediate output and runs to hundreds of megabytes.
+.gradle/
+local.properties
+.cxx/
 .terraform/
 *.tfstate
 *.tfstate.*
@@ -46,3 +59,11 @@ AWS/
 # which is a binary that can carry whatever the plugin last touched.
 .claude/
 .claude-flow/
+
+# Device recordings and raw captures. They can show the tester's own phone
+# (home screen, notifications), so they stay on the machine; the reviews
+# written from them are committed under docs/device-reviews/.
+artifacts/device-tests/
+
+# Dev-server session signing key (tools/dev-server.mjs). Never commit a key.
+tools/.dev/

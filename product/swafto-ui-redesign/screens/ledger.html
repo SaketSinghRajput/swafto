@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - Mitra - ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Anek Odia';font-weight:400;src:local('Anek Odia Regular'),url('../../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:500;src:local('Anek Odia Medium'),url('../../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:700;src:local('Anek Odia Bold'),url('../../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf')}
+/* Mitra screen kit: palette from concepts/C-mitra.html. CSS variable names are placeholders until DESIGN-SYSTEM-V2.md tokens land (see FLOWS.md "Token map"). */
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--z:1;--zc:1;
+--bg:#FFF6EA;--surface:#FFFFFF;--raised:#F6EADA;--ink:#2B2118;--muted:#5E4E41;--edge:#8A7560;--rule:#E6D5BF;
+--brand:#0A6B66;--act:#0A6B66;--onact:#FFFFFF;--sel:#0A6B66;--onsel:#FFFFFF;--pos:#1E6B2E;--neg:#A3410C;
+--waitbg:#FFE9B8;--waitfg:#6B4400;--hbg:#0A6B66;--hfg:#FFFFFF;--nbg:#FFFFFF;--nfg:#2B2118;--nselbg:#0A6B66;--nselfg:#FFFFFF;--sbg:#0A6B66;--sfg:#FFFFFF;
+--t1bg:#DDF3EF;--t1ic:#0A6B66;--t2bg:#EDE4F7;--t2ic:#5B2E91;--t3bg:#E3F2D6;--t3ic:#2F6B1B;--t4bg:#FDE6D3;--t4ic:#8F4408;--t5bg:#EFE7DC;--t5ic:#5E4E41;--scrim:rgba(43,33,24,.55)}
+body[data-theme="focus"]{--bg:#1A1410;--surface:#261E18;--raised:#30261E;--ink:#F6EDE2;--muted:#BFAF9E;--edge:#9C8A78;--rule:#3E3126;--brand:#4FC3BA;--act:#4FC3BA;--onact:#10201F;--sel:#4FC3BA;--onsel:#10201F;--pos:#6FD48A;--neg:#F2A06A;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#261E18;--hfg:#F6EDE2;--nbg:#261E18;--nfg:#F6EDE2;--nselbg:#4FC3BA;--nselfg:#10201F;--sbg:#261E18;--sfg:#F6EDE2;--t1bg:#12302D;--t1ic:#7EE0D8;--t2bg:#2A1F3D;--t2ic:#CDB2F0;--t3bg:#1F3018;--t3ic:#A5DB86;--t4bg:#3A2412;--t4ic:#FFB27A;--t5bg:#30261E;--t5ic:#BFAF9E;--scrim:rgba(0,0,0,.65)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1500px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}.page-head p{margin-top:6px;line-height:1.5;max-width:960px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:9px 14px;font:600 14px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.toc{max-width:1500px;margin:8px auto 0;padding:0 24px;font-size:14px;line-height:1.9}
+.toc a{display:inline-block;margin:0 6px 4px 0;padding:2px 10px;border:1px solid #888;border-radius:14px;color:#222;text-decoration:none;background:#fff}
+.toc a.new{border-color:#b00;border-style:dashed}
+.stage{max-width:1500px;margin:0 auto;padding:12px 24px 40px;display:flex;flex-direction:column;gap:30px}
+.card{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;background:#EDEDED;border-radius:16px;padding:18px;scroll-margin-top:12px}
+.card.hl{outline:4px solid #0A6B66}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:calc(17px*var(--z));line-height:1.8;font-weight:500;font-synthesis:none}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.note{flex:1;min-width:320px;max-width:700px;background:#fff;border-radius:12px;padding:14px 18px;line-height:1.5;font-size:14px}
+.note h3{font-size:18px;margin-bottom:6px}.note dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px}
+.note dt{font-weight:700;color:#444}.note dd{margin:0}.note code{background:#eee;padding:0 4px;font-size:13px}
+.note .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;margin-right:6px;background:#0A6B66;color:#fff}
+.note .tag.new{background:#b00}.note .tag.chg{background:#8F4408}
+.note .keys{margin-top:6px;font-size:12px;color:#555;word-break:break-word}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}small{font-size:1em;font-weight:400}.grow{flex:1}ul{list-style:none}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}.pos{color:var(--pos)}.neg{color:var(--neg)}.ico{flex:none;display:block}
+.newc{border-bottom:2px dashed #c00}
+body[data-lang="od"] .newc::after,body[data-lang="hi"] .newc::after{content:" [NEW en]";font:700 10px system-ui;color:#c00;white-space:nowrap}
+/* chrome */
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg);border-radius:0 0 24px 24px;padding-bottom:6px;font-size:calc(17px*var(--zc))}
+.top h1{font-size:1.235em;font-weight:700;line-height:1.5}.top .sn{font-size:1.235em;font-weight:700;line-height:1.5}.top .dt{line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;line-height:1.4;font-weight:500;border-radius:28px}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg);border-radius:24px 24px 0 0;border-top:2px solid var(--rule);padding:4px 6px 0;font-size:calc(17px*var(--zc))}
+.tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.4;border-radius:20px;margin:2px}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+/* today */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.tile{min-height:76px;min-width:56px;display:flex;flex-direction:row;align-items:center;gap:10px;padding:0 12px;line-height:1.4;border-radius:20px;font-size:1.12em;background:var(--t5bg);color:var(--ink);text-align:left;font-weight:700}
+.ti{width:48px;height:48px;flex:none;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.t-sale{background:var(--act);color:var(--onact)}.t-sale .ti{color:var(--act)}
+.t-udhar{background:var(--t2bg)}.t-udhar .ti{color:var(--t2ic)}.t-collect{background:var(--t3bg)}.t-collect .ti{color:var(--t3ic)}.t-expense{background:var(--t4bg)}.t-expense .ti{color:var(--t4ic)}
+.t-more{grid-column:1/-1;min-height:56px;justify-content:center}.t-more .ti{width:36px;height:36px;color:var(--t5ic)}
+.tile.off{opacity:1;background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}.tile.off .ti{color:var(--muted)}
+.hero{margin:0 12px;padding:12px;background:var(--surface);border:2px solid var(--rule);border-radius:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.12em}
+.hero .hi{width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none}
+.hero .fig{padding:2px 0 6px}.hero-fig{font-size:2.1em}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.4}.ln .k{display:flex;align-items:center;gap:6px}
+.hero .ln{border-top:2px dashed var(--rule)}
+.dirico{border-radius:50%;padding:2px;width:28px;height:28px}.ln.in .dirico{background:var(--t3bg);color:var(--t3ic)}.ln.out .dirico{background:var(--t4bg);color:var(--t4ic)}
+.facts{margin:8px 12px 0}.facts .ln{min-height:52px;border-bottom:2px solid var(--rule)}.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left;background:var(--raised);border:2px solid var(--edge);border-radius:24px}
+.closecard.quiet2{background:var(--surface);border-color:var(--rule)}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.4}.cc-t{font-weight:700;font-size:1.06em}.cc-c{grid-area:chev;display:flex}.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}.bar i{flex:1;height:10px;background:var(--rule);border-radius:5px}.bar i.on{background:var(--brand)}
+/* controls */
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--edge);background:var(--raised);min-height:56px;border-radius:28px;overflow:hidden}
+.seg.two,.seg.three{margin:4px 12px 0}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.4;border-radius:28px;padding:0 6px;text-align:center}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;border-radius:32px}
+.addbar.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.addbar .m{font-size:1.15em}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:32px;text-align:center;line-height:1.4;padding:4px 12px}
+.primary.tonal{background:var(--t1bg);color:var(--ink);border:2px solid var(--act)}
+.primary.outline{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.primary.warn{background:var(--surface);color:var(--neg);border:2px solid var(--neg)}
+.primary.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.btn2{min-height:56px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--act);border-radius:28px;font-weight:700;background:var(--surface);line-height:1.4;text-align:center}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:140px;text-align:center;line-height:1.4}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.stack{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
+/* keypad / entry */
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;border-radius:16px}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.4}
+.kp.hidden{display:none}
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:2px solid var(--rule)}.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:2px solid var(--rule)}.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}.cust .cn{font-size:1.235em;font-weight:700}.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}.amt .al{color:var(--muted)}.amt-fig{font-size:2em}
+.refuse{display:flex;gap:8px;align-items:flex-start;margin:6px 0;padding:8px 12px;border:2px solid var(--neg);border-radius:16px;background:var(--surface);color:var(--ink);line-height:1.4}
+.refuse b{color:var(--neg)}
+/* rows */
+.prog{padding:8px 12px 4px}.pt{display:flex;flex-direction:column;line-height:1.4;margin-bottom:6px}.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:64px;line-height:1.4;margin:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:50%;background:var(--raised);border:2px solid var(--edge)}
+.row.done .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row.next{background:var(--t1bg);border-color:var(--act)}.row.next .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}.row .rv small{color:var(--muted)}
+.row.lock{color:var(--muted);border-style:dashed}
+.row.tap{width:calc(100% - 24px);text-align:left}
+.row.warnr{border-color:var(--neg)}
+.sec{padding:10px 16px 0;font-weight:700;color:var(--muted)}
+/* ledger */
+.lhero{padding:12px;background:var(--t1bg);margin:12px;border-radius:24px}.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.4}.lhero .big{font-size:2.1em;color:var(--t1ic)}.lhero .mid{font-size:1.4em}.lhero .h2{margin-top:6px}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700;border:2px solid var(--act);border-radius:28px;padding:0 16px}
+.plist li{margin:6px 12px}.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;line-height:1.4;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.pn{flex:1;display:flex;flex-direction:column}.pn b{font-size:1.18em}.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}.pa .m{font-size:1.3em}.pa em{font-style:normal;color:var(--muted)}
+.av{display:flex;width:44px;height:44px;flex:none;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.12em}
+.av0{background:var(--t1bg);color:var(--t1ic)}.av1{background:var(--t2bg);color:var(--t2ic)}.av2{background:var(--t3bg);color:var(--t3ic)}.av3{background:var(--t4bg);color:var(--t4ic)}.av4{background:var(--t5bg);color:var(--t5ic)}
+/* settings rows, forms, switches */
+.lrow{display:flex;align-items:center;gap:12px;min-height:64px;margin:6px 12px;padding:4px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.lrow .li{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--t5bg);color:var(--t5ic)}
+.lrow .lt{flex:1;display:flex;flex-direction:column}.lrow .lt small{color:var(--muted)}
+.lrow.danger .li{background:var(--t4bg);color:var(--t4ic)}.lrow.danger{border-color:var(--neg)}
+.field{margin:8px 12px}.field label{display:block;color:var(--muted);line-height:1.4}
+.field .in{min-height:56px;display:flex;align-items:center;padding:0 14px;background:var(--surface);border:2px solid var(--edge);border-radius:16px;line-height:1.4}
+.field .in.focus{border-color:var(--act);border-width:3px}.field .in.err{border-color:var(--neg)}.field .in .ph{color:var(--muted)}
+.field .help{color:var(--muted);line-height:1.4;margin-top:2px}.field .help.err{color:var(--neg)}
+.caret{display:inline-block;width:2px;height:1.2em;background:var(--ink);margin-left:2px;vertical-align:text-bottom}
+.sw{display:flex;align-items:center;gap:12px;min-height:72px;margin:6px 12px;padding:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.sw .tx{flex:1;display:flex;flex-direction:column}.sw .tx small{color:var(--muted)}
+.sw .knob{min-width:84px;min-height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;padding:0 10px;border:2px solid var(--edge);background:var(--raised)}
+.sw.on .knob{background:var(--sel);color:var(--onsel);border-color:var(--sel)}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.4;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg);border-radius:20px;margin:8px 12px 0}
+.banner span{flex:1}.banner.err{background:var(--surface);color:var(--ink);border-color:var(--neg)}.banner.info{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:24px 16px}.empty .ei{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center}
+.empty p{margin-bottom:10px;line-height:1.5}.empty .primary{max-width:280px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px;padding:12px}.skel i{display:block;height:64px;background:var(--rule);border-radius:20px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px;gap:12px}
+.bigmsg{font-size:1.5em;font-weight:700;line-height:1.4}.lead{color:var(--muted);line-height:1.5}
+.otp{display:flex;gap:8px;padding:0 12px;justify-content:center}.otp i{width:46px;height:60px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:1.5em}.otp i.cur{border-color:var(--act);border-width:3px}
+.dots{display:flex;gap:6px;justify-content:center;padding:6px}.dots i{width:10px;height:10px;border-radius:5px;background:var(--rule)}.dots i.on{background:var(--brand);width:26px}
+/* overlays */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-radius:28px 28px 0 0;padding:12px 0 16px;max-height:84%;display:flex;flex-direction:column;border-top:2px solid var(--edge)}
+.sheet h2{font-size:1.235em;padding:0 16px 6px;line-height:1.4}.sheet .grab{width:48px;height:5px;border-radius:3px;background:var(--edge);margin:0 auto 8px}
+.dialog{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:6;background:var(--bg);border:2px solid var(--edge);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:10px;line-height:1.5}
+.dialog h2{font-size:1.235em;line-height:1.4}
+.toast{position:absolute;left:12px;right:12px;bottom:12px;z-index:7;background:var(--ink);color:var(--bg);border-radius:20px;padding:10px 14px;display:flex;gap:8px;align-items:center;line-height:1.4}
+.refbanner{position:absolute;left:76px;right:12px;top:12px;z-index:7;padding:10px 12px;background:var(--surface);border:2px solid var(--neg);border-radius:16px;line-height:1.4}
+.refbanner b{color:var(--neg)}.refbanner.nn{border-color:var(--edge)}.refbanner.nn b{color:var(--ink)}
+.gray{filter:grayscale(1);opacity:.55}
+.spin{width:22px;height:22px;border:3px solid var(--rule);border-top-color:var(--act);border-radius:50%;display:inline-block}
+.size-prev{font-size:calc(17px*var(--z))}
+.legend{max-width:1500px;margin:0 auto;padding:6px 24px 0;font-size:13px;color:#444}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1 id="area-title"></h1><p id="area-intro"></p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button><button data-lang-btn="hi" aria-pressed="false">हिन्दी</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div>
+<div class="grp"><button data-size-btn="1" aria-pressed="true">Text 1.0x</button><button data-size-btn="1.3" aria-pressed="false">1.3x</button><button data-size-btn="2" aria-pressed="false">2.0x</button></div></div></div>
+<div class="legend">Odia and Hindi are the app's unreviewed DRAFT strings (H13), taken verbatim from strings.ts. A dashed red underline means the string does not exist yet (English only). Text sizes above 1.5x leave the header and tab bar at 1.5x (the app's chrome cap); body text and figures keep growing. Browser render with Anek Odia, not the phone.</div>
+<nav class="toc" id="toc"></nav>
+<main class="stage" id="stage"></main>
+<script>window.STRINGS={"sync.waiting":{"en":"{n} waiting · safe on phone","hi":"{n} बाकी · फ़ोन में सुरक्षित","or":"{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ"},"sync.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"common.back":{"en":"Back","hi":"पीछे","or":"ପଛକୁ ଯାଆନ୍ତୁ"},"nav.today":{"en":"Today","hi":"आज","or":"ଆଜି"},"nav.parties":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"nav.reports":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"act.sale":{"en":"Sale","hi":"बिक्री","or":"ବିକ୍ରି"},"act.credit":{"en":"Udhar sale","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"act.collect":{"en":"Collect","hi":"वसूली","or":"ଆଦାୟ"},"act.expense":{"en":"Expense","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"t1.more":{"en":"More","hi":"और","or":"ଅଧିକ"},"box.title":{"en":"In the box now","hi":"अभी बॉक्स में","or":"ଏବେ ବାକ୍ସରେ"},"box.opening":{"en":"Opening","hi":"शुरुआत","or":"ଆରମ୍ଭ"},"box.in":{"en":"cash in","hi":"नकद आया","or":"ନଗଦ ଆସିଲା"},"box.out":{"en":"cash out","hi":"नकद गया","or":"ନଗଦ ଗଲା"},"box.sales":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"t1.toCollect":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ ବାକି ଉଧାର"},"t1.continueClose":{"en":"Continue day close","hi":"दिन बंद करना जारी रखें","or":"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ"},"t1.progress":{"en":"{done} of {total}","hi":"{total} में से {done}","or":"{total} ରୁ {done}"},"keypad.clear":{"en":"Clear","hi":"मिटाएँ","or":"ଖାଲି କରନ୍ତୁ"},"keypad.delete":{"en":"Delete last digit","hi":"आखिरी अंक मिटाएँ","or":"ଶେଷ ଅଙ୍କ ଲିଭାନ୍ତୁ"},"t1.day.4":{"en":"Thursday","hi":"गुरुवार","or":"ଗୁରୁବାର"},"t1.month.11":{"en":"November","hi":"नवंबर","or":"ନଭେମ୍ବର"},"p1.title":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"p1.toCollect":{"en":"Udhar to collect","hi":"वसूली बाकी","or":"ଆଦାୟ ବାକି"},"p1.youOwe":{"en":"You owe suppliers","hi":"आपको देना है","or":"ଆପଣଙ୍କୁ ଦେବାର"},"p1.changedToday":{"en":"changed today","hi":"आज बदला","or":"ଆଜି ବଦଳିଲା"},"party.newCustomer":{"en":"New customer","hi":"नया ग्राहक","or":"ନୂଆ ଗ୍ରାହକ"},"picker.owes":{"en":"owes","hi":"देना है","or":"ଦେବାର ଅଛି"},"p1.overdue":{"en":"31+ days","hi":"31+ दिन","or":"31+ ଦିନ"},"picker.settled":{"en":"nothing owed","hi":"कुछ बाकी नहीं","or":"କିଛି ବାକି ନାହିଁ"},"advance.label":{"en":"Advance","hi":"अग्रिम","or":"ଅଗ୍ରୀମ"},"picker.youOwe":{"en":"you owe","hi":"आपको देना है","or":"ଆପଣଙ୍କୁ ଦେବାର"},"p1.customers":{"en":"Customers","hi":"ग्राहक","or":"ଗ୍ରାହକ"},"p1.suppliers":{"en":"Suppliers","hi":"आपूर्तिकर्ता","or":"ଯୋଗାଣକାରୀ"},"p2.ledger":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"section.udhar_sales":{"en":"Credit sales","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"formA.mode.udhar":{"en":"Udhar","hi":"उधार","or":"ଉଧାର"},"section.udhar_collection":{"en":"Udhar collected","hi":"उधार वसूली","or":"ଉଧାର ଆଦାୟ"},"t1.month.10":{"en":"October","hi":"अक्टूबर","or":"ଅକ୍ଟୋବର"},"formA.mode.cash":{"en":"Cash","hi":"नकद","or":"ନଗଦ"},"p2.newUdhar":{"en":"New udhar sale","hi":"नई उधार बिक्री","or":"ନୂଆ ଉଧାର ବିକ୍ରି"},"p2.share":{"en":"Remind and share","hi":"याद दिलाएँ और भेजें","or":"ମନେ ପକାନ୍ତୁ ଓ ପଠାନ୍ତୁ"},"p2.remind":{"en":"Remind on WhatsApp","hi":"WhatsApp पर याद दिलाएँ","or":"WhatsAppରେ ମନେ ପକାନ୍ତୁ"},"p2.noPhone":{"en":"No phone number saved for this customer.","hi":"इस ग्राहक का फ़ोन नंबर सेव नहीं है।","or":"ଏହି ଗ୍ରାହକଙ୍କ ଫୋନ୍ ନମ୍ବର ସେଭ୍ ହୋଇନାହିଁ।"},"p2.remindNote":{"en":"Opens your WhatsApp with a polite message. You press send.","hi":"आपका WhatsApp एक विनम्र संदेश के साथ खुलेगा। भेजना आप दबाएँ।","or":"ଆପଣଙ୍କ WhatsApp ଏକ ଭଦ୍ର ବାର୍ତ୍ତା ସହ ଖୋଲିବ। ପଠାଇବା ଆପଣ ଦବାନ୍ତୁ।"},"p2.statement":{"en":"Share statement","hi":"खाते का ब्योरा भेजें","or":"ଖାତା ବିବରଣୀ ପଠାନ୍ତୁ"},"p2.limit":{"en":"Credit limit","hi":"उधार सीमा","or":"ଉଧାର ସୀମା"},"p2.noLimit":{"en":"Not set","hi":"तय नहीं","or":"ଧାର୍ଯ୍ୟ ହୋଇନାହିଁ"},"p2.addPhone":{"en":"Add a mobile number for reminders","hi":"याद दिलाने के लिए मोबाइल नंबर जोड़ें","or":"ମନେ ପକାଇବା ପାଇଁ ମୋବାଇଲ୍ ନମ୍ବର ଯୋଡ଼ନ୍ତୁ"},"party.refusal.phone":{"en":"A mobile number is 10 digits, starting 6, 7, 8 or 9. Or leave it empty.","hi":"मोबाइल नंबर 10 अंकों का होता है, 6, 7, 8 या 9 से शुरू। या खाली छोड़ें।","or":"ମୋବାଇଲ୍ ନମ୍ବର 10 ଅଙ୍କର, 6, 7, 8 କିମ୍ବା 9ରୁ ଆରମ୍ଭ। କିମ୍ବା ଖାଲି ଛାଡ଼ନ୍ତୁ।"},"p2.savePhone":{"en":"Save number","hi":"नंबर सेव करें","or":"ନମ୍ବର ସେଭ୍ କରନ୍ତୁ"},"p6.prompt":{"en":"The most udhar you want {name} to carry. When a sale would go above it the app tells you. It never stops a sale.","hi":"{name} पर आप ज़्यादा से ज़्यादा कितना उधार रखना चाहते हैं। कोई बिक्री इससे ऊपर ले जाए तो ऐप बताएगा। बिक्री कभी नहीं रोकेगा।","or":"{name}ଙ୍କ ଉପରେ ଆପଣ ସର୍ବାଧିକ କେତେ ଉଧାର ରଖିବାକୁ ଚାହାଁନ୍ତି। କୌଣସି ବିକ୍ରି ଏହାଠାରୁ ଅଧିକ ନେଲେ ଆପ୍ କହିବ। ବିକ୍ରି କେବେ ବି ଅଟକାଇବ ନାହିଁ।"},"p6.current":{"en":"Limit now","hi":"अभी की सीमा","or":"ଏବର ସୀମା"},"p6.amount":{"en":"New limit","hi":"नई सीमा","or":"ନୂଆ ସୀମା"},"p6.save":{"en":"Save limit","hi":"सीमा सेव करें","or":"ସୀମା ସେଭ୍ କରନ୍ତୁ"},"p1.empty":{"en":"No customers or suppliers yet.","hi":"अभी कोई ग्राहक या आपूर्तिकर्ता नहीं।","or":"ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଗ୍ରାହକ କିମ୍ବା ଯୋଗାଣକାରୀ ନାହାନ୍ତି।"},"common.loading":{"en":"Opening","hi":"खुल रहा है","or":"ଖୋଲୁଛି"},"common.error":{"en":"Could not open this. Nothing you entered is lost.","hi":"यह नहीं खुल सका। आपका दर्ज किया कुछ भी नहीं गया।","or":"ଏହା ଖୋଲିପାରିଲା ନାହିଁ। ଆପଣ ଲେଖିଥିବା କିଛି ହଜିନାହିଁ।"},"common.retry":{"en":"Try again","hi":"फिर कोशिश करें","or":"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"},"sync.waitingLong":{"en":"{n} waiting to send. Safe on this phone; it goes when the network is back.","hi":"{n} भेजना बाकी। इस फ़ोन में सुरक्षित है; नेटवर्क आने पर चला जाएगा।","or":"{n} ପଠାଇବା ବାକି। ଏହି ଫୋନରେ ସୁରକ୍ଷିତ; ନେଟୱର୍କ ଆସିଲେ ଚାଲିଯିବ।"},"party.name":{"en":"Name","hi":"नाम","or":"ନାମ"},"party.phone":{"en":"Mobile number (optional)","hi":"मोबाइल नंबर (वैकल्पिक)","or":"ମୋବାଇଲ୍ ନମ୍ବର (ବୈକଳ୍ପିକ)"},"common.save":{"en":"Save","hi":"सहेजें","or":"ସଞ୍ଚୟ କରନ୍ତୁ"},"party.backToList":{"en":"Back to the list","hi":"सूची पर वापस","or":"ତାଲିକାକୁ ଫେରନ୍ତୁ"},"refusal.title":{"en":"Not saved","hi":"सहेजा नहीं गया","or":"ସଞ୍ଚୟ ହେଲା ନାହିଁ"},"entry.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"p2.title":{"en":"Customer","hi":"ग्राहक","or":"ଗ୍ରାହକ"},"p2.balanceAll":{"en":"Owed to you, all days on this phone","hi":"आपको मिलना है, इस फ़ोन के सभी दिनों का","or":"ଆପଣ ପାଇବେ, ଏହି ଫୋନର ସବୁ ଦିନର"},"refusal.titleNotDone":{"en":"Could not do that","hi":"यह नहीं हो सका","or":"ଏହା ହୋଇପାରିଲା ନାହିଁ"},"refusal.noPhone":{"en":"This customer has no phone number saved, so WhatsApp cannot be opened for them. Add the number on this page.","hi":"इस ग्राहक का फ़ोन नंबर सेव नहीं है, इसलिए WhatsApp नहीं खुल सकता। इसी पेज पर नंबर जोड़ें।","or":"ଏହି ଗ୍ରାହକଙ୍କ ଫୋନ୍ ନମ୍ବର ସେଭ୍ ହୋଇନାହିଁ, ତେଣୁ WhatsApp ଖୋଲିପାରିବ ନାହିଁ। ଏହି ପୃଷ୍ଠାରେ ନମ୍ବର ଯୋଡ଼ନ୍ତୁ।"},"remind.text":{"en":"Namaste {name}. This is {shop}. Your account with us shows {amount} due. Please pay when you can. Thank you.","hi":"नमस्ते {name}। यह {shop} से है। हमारे यहाँ आपके खाते में {amount} बाकी है। सुविधा हो तब चुका दें। धन्यवाद।","or":"ନମସ୍କାର {name}। ଏହା {shop}ରୁ। ଆମ ପାଖରେ ଆପଣଙ୍କ ଖାତାରେ {amount} ବାକି ଅଛି। ସୁବିଧା ହେଲେ ଦେଇଦେବେ। ଧନ୍ୟବାଦ।"},"refusal.nothingDue":{"en":"Nothing is due from this customer, so there is nothing to remind.","hi":"इस ग्राहक पर कुछ बाकी नहीं, इसलिए याद दिलाने को कुछ नहीं।","or":"ଏହି ଗ୍ରାହକଙ୍କ ଉପରେ କିଛି ବାକି ନାହିଁ, ତେଣୁ ମନେ ପକାଇବାକୁ କିଛି ନାହିଁ।"},"p2.empty":{"en":"Nothing recorded for this customer yet.","hi":"इस ग्राहक के लिए अभी कुछ दर्ज नहीं।","or":"ଏହି ଗ୍ରାହକ ପାଇଁ ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଲେଖା ହୋଇନାହିଁ।"},"t3.correction":{"en":"Post a correction","hi":"सुधार दर्ज करें","or":"ସଂଶୋଧନ ଲେଖନ୍ତୁ"},"party.cancel":{"en":"Cancel","hi":"रद्द करें","or":"ବାତିଲ୍ କରନ୍ତୁ"},"p6.title":{"en":"Credit limit","hi":"उधार सीमा","or":"ଉଧାର ସୀମା"},"refusal.creditLimit":{"en":"The limit was not saved. Type an amount above zero.","hi":"सीमा सेव नहीं हुई। शून्य से ऊपर रकम लिखें।","or":"ସୀମା ସେଭ୍ ହେଲା ନାହିଁ। ଶୂନରୁ ଅଧିକ ପରିମାଣ ଲେଖନ୍ତୁ।"},"p6.clear":{"en":"Remove the limit","hi":"सीमा हटाएँ","or":"ସୀମା ହଟାନ୍ତୁ"},"section.party_payment":{"en":"Paid to suppliers","hi":"आपूर्तिकर्ता को भुगतान","or":"ଯୋଗାଣକାରୀଙ୍କୁ ଦିଆଗଲା"},"section.purchase":{"en":"Purchases","hi":"खरीद","or":"କିଣା"},"p3.title":{"en":"Supplier","hi":"आपूर्तिकर्ता","or":"ଯୋଗାଣକାରୀ"},"p3.owed":{"en":"You owe","hi":"आपको देना है","or":"ଆପଣଙ୍କୁ ଦେବାର"},"t8.title.pay":{"en":"Pay supplier","hi":"आपूर्तिकर्ता को भुगतान","or":"ଯୋଗାଣକାରୀଙ୍କୁ ଦେୟ"},"p3.empty":{"en":"Nothing recorded for this supplier yet.","hi":"इस आपूर्तिकर्ता के लिए अभी कुछ दर्ज नहीं।","or":"ଏହି ଯୋଗାଣକାରୀ ପାଇଁ ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଲେଖା ହୋଇନାହିଁ।"}};</script>
+<script>/* Mitra screen kit. Copy comes from window.STRINGS (extracted from apps/mobile/src/i18n/strings.ts by build.mjs, verbatim). Keys that do not exist yet are written K.N('English text') and are listed as NEW. Money is integer paise; the browser formatting mirrors formatPaise (Indian grouping, 2 decimals, sign always printed). */
+(function () {
+  'use strict';
+  var K = (window.K = {});
+  var SPEC = (window.SPEC = window.SPEC || {});
+  var LANGS = { en: 'en', od: 'or', hi: 'hi' };
+  var S = { lang: 'od', theme: 'comfort', size: 1 };
+  var USED = {}; var NEWC = {}; var curFrame = '';
+  K.state = S;
+
+  /* ---- copy ---- */
+  K.t = function (key, vars) {
+    var p = window.STRINGS[key];
+    if (!p) { return '<span class="newc" title="MISSING KEY ' + key + '">' + key + '</span>'; }
+    (USED[curFrame] = USED[curFrame] || {})[key] = 1;
+    var s = p[LANGS[S.lang]];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : '{' + k + '}'; });
+    return s;
+  };
+  K.N = function (en, hint) {
+    (NEWC[curFrame] = NEWC[curFrame] || {})[en] = hint || '';
+    return '<span class="newc" title="NEW string: no od/hi yet (H13)">' + en + '</span>';
+  };
+  K.plain = function (key, vars) { return K.t(key, vars); };
+  K.pick = function (en, od, hi) { return S.lang === 'en' ? en : (S.lang === 'od' ? od : hi); }; /* proper names only */
+
+  /* ---- money ---- */
+  K.rupee = function (p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100, s = String(r);
+    if (s.length > 3) { var l3 = s.slice(-3), rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + l3; }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  };
+  /* o.sign: print + on positives; o.out: an out-line (always -); o.tone:'dir' colours by direction (sign is always printed too) */
+  K.M = function (p, o) {
+    o = o || {}; var neg = o.out || p < 0, sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + K.rupee(p) + '</span>';
+  };
+
+  /* ---- icons (stroke, 24 grid) ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.6 14.4 9 14.4L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.5-3.5M12 12l3.5-3.5"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 5l-7 7 7 7"/>', bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>', up: '<path d="M12 5v14M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 5a3.5 3.5 0 0 1 0 7M19 20c0-2.500-1.500-4-3-4.700"/>',
+    warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    cloudoff: '<path d="M7 18h10a4 4 0 0 0 .8-7.900A6 6 0 0 0 6.500 9.500 4 4 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+    share: '<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 11l7.400-4M8.300 13l7.400 4"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    textsize: '<path d="M3 19L8 6l5 13M5 15h6M15 19l3.500-8 3.500 8M16.200 16.500h4.600"/>', shield: '<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', edit: '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>', logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+    sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>', swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    wa: '<path d="M4 20l1.500-4.500A8 8 0 1 1 8.500 18.500z"/><path d="M9 9c0 3 3 6 6 6l1.500-1.500-2-1-1 1c-1-.5-2-1.500-2.500-2.500l1-1-1-2z"/>',
+    star: '<path d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/>', pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+    bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+  K.ico = function (n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICO[n] || ICO.dots) + '</svg>';
+  };
+
+  /* ---- components: each returns an HTML string ---- */
+  K.chip = function (kind, n) {
+    if (kind === 'wait') { var s = K.t('sync.waiting', { n: n || 3 }); return '<button class="chip wait" aria-label="' + s + '">' + K.ico('clock', 22) + '<span>' + s + '</span></button>'; }
+    if (kind === 'off') { return '<button class="chip wait">' + K.ico('cloudoff', 22) + '<span>' + K.N('Offline') + '</span></button>'; }
+    return '<button class="chip ok">' + K.ico('check', 22) + '<span>' + K.t('sync.saved') + '</span></button>';
+  };
+  K.top = function (o) { /* {title, back, right, shop, date} */
+    var l = o.back ? '<button class="back" aria-label="' + K.t('common.back') + '">' + K.ico('back', 28) + '</button>' : '';
+    var mid = o.shop ? '<div class="shop"><div class="sn">' + o.shop + '</div><div class="dt">' + (o.date || '') + '</div></div>' : '<h1>' + (o.title || '') + '</h1>';
+    return '<header class="top">' + l + mid + '<div class="grow"></div>' + (o.right || '') + '</header>';
+  };
+  K.tabs = function (active) {
+    var d = [['today', 'box', K.t('nav.today')], ['parties', 'book', K.t('nav.parties')], ['reports', 'bars', K.t('nav.reports')]];
+    return '<nav class="tabs">' + d.map(function (x) { return '<button class="tab' + (x[0] === active ? ' on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + K.ico(x[1], 26) + '<span>' + x[2] + '</span></button>'; }).join('') + '</nav>';
+  };
+  K.tile = function (kind, icon, label, off) { return '<button class="tile t-' + kind + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : '') + '><span class="ti">' + K.ico(icon, 30) + '</span><span>' + label + '</span></button>'; };
+  K.tiles = function (off) {
+    return '<section class="tiles">' + K.tile('sale', 'coin', K.t('act.sale'), off) + K.tile('udhar', 'book', K.t('act.credit'), off) + K.tile('collect', 'tray', K.t('act.collect'), off) + K.tile('expense', 'receipt', K.t('act.expense'), off) + K.tile('more', 'dots', K.t('t1.more'), off) + '</section>';
+  };
+  K.hero = function (o) { /* {box, opening, cashIn, cashOut} paise */
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + K.t('box.title') + '</span></div><div class="fig">' + K.M(o.box, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.t('box.opening') + '</span>' + K.M(o.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + K.ico('down', 20, 'dirico') + K.t('box.in') + '</span>' + K.M(o.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + K.ico('up', 20, 'dirico') + K.t('box.out') + '</span>' + K.M(o.cashOut, { out: true, tone: 'dir' }) + '</div></section>';
+  };
+  K.facts = function (sales, collect) {
+    return '<section class="facts"><div class="ln"><span class="k">' + K.t('box.sales') + '</span>' + K.M(sales) + '</div><button class="ln link"><span class="k">' + K.t('t1.toCollect') + '</span>' + K.M(collect) + '</button></section>';
+  };
+  K.bar = function (done, total) { var h = '<div class="bar" role="img" aria-label="' + done + '/' + total + '">'; for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.closecard = function (done, total, quiet, label) {
+    return '<button class="closecard' + (quiet ? ' quiet2' : '') + '"><span class="cc-main"><span class="cc-t">' + (label || K.t('t1.continueClose')) + '</span><span>' + K.t('t1.progress', { done: done, total: total }) + '</span></span>' + K.bar(done, total) + '<span class="cc-c">' + K.ico('chev', 26) + '</span></button>';
+  };
+  K.seg = function (items, on, icons) { /* items: label html[]; on: index */
+    return '<div class="seg" role="radiogroup">' + items.map(function (l, i) { return '<button class="sg-b' + (i === on ? ' on' : '') + '" role="radio" aria-checked="' + (i === on) + '">' + (i === on ? K.ico('tick', 22) : (icons && icons[i] ? K.ico(icons[i], 22) : '')) + '<span>' + l + '</span></button>'; }).join('') + '</div>';
+  };
+  K.keypad = function (hidden) {
+    var k = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (x) { return '<button class="key">' + x + '</button>'; });
+    k.push('<button class="key aux">' + K.t('keypad.clear') + '</button>'); k.push('<button class="key">0</button>'); k.push('<button class="key aux" aria-label="' + K.t('keypad.delete') + '">' + K.ico('bksp', 30) + '</button>');
+    return '<div class="kp' + (hidden ? ' hidden' : '') + '">' + k.join('') + '</div>';
+  };
+  K.addbar = function (label, paise, dis) { return '<button class="addbar' + (dis ? ' dis' : '') + '"' + (dis ? ' aria-disabled="true"' : '') + '><span>' + label + '</span>' + (paise ? K.M(paise) : '') + '</button>'; };
+  K.primary = function (label, kind, icon) { return '<button class="primary' + (kind ? ' ' + kind : '') + '"' + (kind === 'dis' ? ' aria-disabled="true"' : '') + '>' + (icon ? K.ico(icon, 26) : '') + '<span>' + label + '</span></button>'; };
+  K.btn2 = function (label, icon) { return '<button class="btn2">' + (icon ? K.ico(icon, 24) : '') + '<span>' + label + '</span></button>'; };
+  K.quiet = function (label) { return '<button class="quiet">' + label + '</button>'; };
+  K.sticky = function () { return '<div class="sticky">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.scroll = function () { return '<div class="scroll">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.stack = function () { return '<div class="stack">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.row = function (o) { /* {state:'done'|'next'|'open'|'skip'|'lock', n, name, sub, paise, entries, quiet} */
+    var mk = o.state === 'done' ? K.ico('tick', 22) : o.state === 'skip' ? K.ico('dash', 22) : o.state === 'lock' ? K.ico('lock', 22) : '<b>' + (o.n || '') + '</b>';
+    var rv = o.paise !== undefined ? '<span class="rv">' + K.M(o.paise) + (o.entries ? '<small>' + o.entries + '</small>' : '') + '</span>' : '';
+    return '<li class="row ' + o.state + (o.cls ? ' ' + o.cls : '') + '"><span class="mk">' + mk + '</span><span class="nm">' + o.name + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' + rv + (o.quiet ? K.quiet(o.quiet) : '') + '</li>';
+  };
+  K.lrow = function (icon, title, sub, o) { o = o || {}; return '<button class="lrow' + (o.danger ? ' danger' : '') + '"><span class="li">' + K.ico(icon, 24) + '</span><span class="lt"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (o.right || '') + (o.noChev ? '' : K.ico('chev', 24)) + '</button>'; };
+  K.sw = function (on, title, sub) { return '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"><span class="tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + K.N(on ? 'On' : 'Off', 'switch state words (DS-V2 3.14); consent screens may use their existing allow/withdraw wording') + '</span></span></button>'; };
+  K.field = function (label, value, o) { o = o || {}; return '<div class="field"><label>' + label + '</label><div class="in' + (o.focus ? ' focus' : '') + (o.err ? ' err' : '') + '">' + (value ? '<span>' + value + '</span>' : '<span class="ph">' + (o.ph || '') + '</span>') + (o.focus ? '<i class="caret"></i>' : '') + '</div>' + (o.help ? '<div class="help' + (o.err ? ' err' : '') + '">' + o.help + '</div>' : '') + '</div>'; };
+  K.avatar = function (name, i) { return '<span class="av av' + ((i || 0) % 5) + '">' + Array.from(name)[0] + '</span>'; };
+  K.prow = function (name, i, sub, paise, state) { return '<li><button class="prow">' + K.avatar(name, i) + '<span class="pn"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="pa">' + K.M(paise) + '<em>' + state + '</em></span></button></li>'; };
+  K.banner = function (kind, icon, text, action) { return '<div class="banner ' + (kind || '') + '" role="status">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span>' + (action ? K.quiet(action) : '') + '</div>'; };
+  K.refuse = function (title, body) { return '<div class="refuse" role="alert">' + K.ico('warn', 24) + '<div><b>' + title + '</b><br>' + body + '</div></div>'; };
+  K.refbanner = function (title, body, nn) { return '<div class="refbanner' + (nn ? ' nn' : '') + '" role="alert"><b>' + title + '</b><br>' + body + '</div>'; };
+  K.empty = function (icon, text, ctaLabel, ctaIcon) { return '<div class="empty"><div class="ei">' + K.ico(icon, 44) + '</div><p>' + text + '</p>' + (ctaLabel ? K.primary(ctaLabel, '', ctaIcon) : '') + '</div>'; };
+  K.skel = function (n) { var h = '<div class="skel" aria-busy="true">'; for (var i = 0; i < (n || 4); i++) h += '<i></i>'; return h + '</div>'; };
+  K.sheet = function (title, inner) { return '<div class="scrim"></div><div class="sheet" role="dialog"><h2>' + title + '</h2><div class="scroll">' + inner + '</div></div>'; };
+  K.dialog = function (title, inner) { return '<div class="scrim"></div><div class="dialog" role="alertdialog"><h2>' + title + '</h2>' + inner + '</div>'; };
+  K.toast = function (icon, text) { return '<div class="toast" role="status">' + K.ico(icon || 'check', 24) + '<span>' + text + '</span></div>'; };
+  K.center = function (inner) { return '<div class="center">' + inner + '</div>'; };
+  K.dots = function (i, n) { var h = '<div class="dots">'; for (var k = 0; k < n; k++) h += '<i class="' + (k === i ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.otp = function (digits, cur) { var h = '<div class="otp">'; for (var i = 0; i < 6; i++) h += '<i class="' + (i === cur ? 'cur' : '') + '">' + (digits[i] || '') + '</i>'; return h + '</div>'; };
+  K.sec = function (t) { return '<div class="sec">' + t + '</div>'; };
+  K.list = function (rows) { return '<ul class="rows">' + rows.join('') + '</ul>'; };
+  K.names = { ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'], lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ'] };
+  K.nm = function (id) { return K.names[id][S.lang === 'en' ? 0 : 1]; }; /* demo names only; real names are user data, shown as typed */
+  K.shop = 'Subhadra Kirana';
+  K.date = function () { return K.t('t1.day.4') + ' 19 ' + K.t('t1.month.11'); };
+  K.screen = function (inner) { return inner; };
+
+  /* build.mjs runs the specs in Node (lang en) to write FLOWS.md from the very same mockup bodies */
+  K.frame = function (id) { curFrame = id; };
+  K.used = function (id) { return Object.keys(USED[id] || {}); };
+  K.newc = function (id) { return Object.keys(NEWC[id] || {}); };
+
+  /* ---- page ---- */
+  function frameHtml(sc) {
+    return '<div class="fwrap"><h3>' + sc.route + '</h3><div class="bezel"><div class="screen" id="fr-' + sc.id + '"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div>';
+  }
+  function noteHtml(sc) {
+    var used = Object.keys(USED[sc.id] || {}), nw = Object.keys(NEWC[sc.id] || {});
+    var flag = sc.flag === 'NEW' ? '<span class="tag new">NEW screen</span>' : sc.flag === 'CHG' ? '<span class="tag chg">Changed</span>' : '<span class="tag">Exists today</span>';
+    var dl = function (k, v) { return v ? '<dt>' + k + '</dt><dd>' + v + '</dd>' : ''; };
+    return '<div class="note"><h3>' + flag + sc.title + '</h3><dl>' + dl('Route', '<code>' + sc.route + '</code>') + dl('Purpose', sc.purpose) + dl('Primary action', sc.primary) + dl('Taps / target', sc.taps) + dl('Rules held', sc.rules) + dl('States / notes', sc.notes) + dl('For Saket to review', sc.review) + dl('Copy gaps (en only)', nw.length ? nw.map(function (x) { return '"' + x + '"'; }).join(' · ') + ' (od/hi DRAFT needed, H13)' : '') + '</dl><div class="keys"><b>Keys used:</b> ' + (used.length ? used.join(', ') : 'none') + '</div></div>';
+  }
+  function renderBodies(scr) { scr.forEach(function (sc) { curFrame = sc.id; var el = document.getElementById('fr-' + sc.id); var app = el.querySelector('.app'); var prev = app.querySelector('.scroll'); var top = prev ? prev.scrollTop : 0; app.innerHTML = sc.body(); var s2 = app.querySelector('.scroll'); if (s2) s2.scrollTop = top; }); }
+  function renderNotes(scr) { scr.forEach(function (sc) { document.getElementById('note-' + sc.id).innerHTML = noteHtml(sc); }); }
+  K.boot = function () {
+    var area = SPEC.area, scr = area.screens;
+    document.title = 'SWAFTO Retail Desk - Mitra - ' + area.title;
+    var q = function (id) { return document.getElementById(id); };
+    q('area-title').textContent = area.title + ' (' + scr.length + ' screen states)'; q('area-intro').innerHTML = area.intro;
+    q('toc').innerHTML = scr.map(function (s) { return '<a href="#c-' + s.id + '"' + (s.flag === 'NEW' ? ' class="new"' : '') + '>' + s.title + '</a>'; }).join('');
+    q('stage').innerHTML = scr.map(function (sc) { return '<section class="card" id="c-' + sc.id + '">' + frameHtml(sc) + '<div class="note" id="note-' + sc.id + '"></div></section>'; }).join('');
+    function all() { document.documentElement.lang = S.lang === 'od' ? 'or' : S.lang; document.body.setAttribute('data-lang', S.lang); document.body.setAttribute('data-theme', S.theme); document.body.style.setProperty('--z', S.size); document.body.style.setProperty('--zc', Math.min(S.size, 1.5)); USED = {}; NEWC = {}; renderBodies(scr); renderNotes(scr); }
+    [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { S.lang = b.getAttribute('data-lang-btn'); [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) { b.addEventListener('click', function () { S.theme = b.getAttribute('data-theme-btn'); [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (b) { b.addEventListener('click', function () { S.size = parseFloat(b.getAttribute('data-size-btn')); [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    all();
+  };
+})();
+</script>
+<script>/* AREA: Ledger / Parties tab (P1, Add customer, P2, P6, P3). Copy by literal key; a string that does not exist is K.N(...).
+   Money is integer paise through K.M. Every status has an icon and words. Balances in the frames are derived from the entries drawn. */
+(function () {
+  var t = K.t, M = K.M;
+
+  /* ---- demo book (paise). Customers: balance = sum of the entries in the P2 history frame for Ramesh; the others are list-only. ---- */
+  var RAMESH = 480000;                       /* 350000 + 60000 - 50000 + 120000, see HIST */
+  var SUNITA = 215000, BIJAY = 90000, LAKSHMI = 0, PRADEEP = -15000;
+  var TO_COLLECT = RAMESH + SUNITA + BIJAY;  /* 785000: sum of positive balances (assumed; the engine's P7 decides how an advance nets) */
+  var SUP1 = 1840000, SUP2 = 320000, YOU_OWE = SUP1 + SUP2; /* 2160000 */
+
+  function top(chip) { return K.top({ title: t('p1.title'), right: chip || K.chip('ok') }); }
+  function sub(back, title, chip) { return K.top({ title: title, back: true, right: chip || K.chip('ok') }); }
+  function hero(a, b) {
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('book', 28) + '</span><span>' + t('p1.toCollect') + '</span></div><div class="fig">' + M(a, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.ico('tray', 20, 'dirico') + t('p1.youOwe') + '</span>' + M(b) + '</div></section>';
+  }
+  function tag(icon, text) { return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px">' + K.ico(icon, 18) + text + '</span>'; }
+  function changed(p) { return tag('up', t('p1.changedToday') + ' ' + M(p, { sign: true })); }
+  function addBtn() { return K.stack(K.btn2('+ ' + t('party.newCustomer'), '')); }
+  function custRows() {
+    return K.list([
+      K.prow(K.nm('ramesh'), 0, '<span style="display:block">' + changed(120000) + '</span>', RAMESH, t('picker.owes')),
+      K.prow(K.nm('sunita'), 1, '<span style="display:block">' + tag('calendar', t('p1.overdue')) + '</span>', SUNITA, t('picker.owes')),
+      K.prow(K.nm('bijay'), 2, '', BIJAY, t('picker.owes')),
+      K.prow(K.nm('lakshmi'), 3, '', LAKSHMI, t('picker.settled')),
+      K.prow(K.nm('pradeep'), 4, '<span style="display:block">' + tag('info', t('advance.label')) + '</span>', -PRADEEP, t('advance.label'))
+    ]);
+  }
+  function supRows() {
+    return K.list([
+      K.prow('Mohanty Traders', 0, '', SUP1, t('picker.youOwe')),
+      K.prow('Odisha Wholesale', 1, '', SUP2, t('picker.youOwe'))
+    ]);
+  }
+  function segs(on) { return K.stack(K.seg([t('p1.customers'), t('p1.suppliers')], on, ['user', 'box'])); }
+
+  /* P2 history, newest first. Delta in paise: + means more owed. Sum = RAMESH. */
+  function hline(title, time, mode, delta) {
+    return K.lrow('receipt', title, time + ' · ' + mode, { right: M(delta, { sign: true }) });
+  }
+  function hist() {
+    return K.sec(t('p2.ledger')) +
+      hline(t('section.udhar_sales'), '11:20', t('formA.mode.udhar'), 120000) +
+      hline(t('section.udhar_collection'), '16:05, 14 ' + t('t1.month.10'), t('formA.mode.cash'), -50000) +
+      hline(t('section.udhar_sales'), '10:40, 8 ' + t('t1.month.10'), t('formA.mode.udhar'), 60000) +
+      hline(t('section.udhar_sales'), '18:15, 3 ' + t('t1.month.10'), t('formA.mode.udhar'), 350000);
+  }
+  function nameBlock(name, i) {
+    return '<div style="display:flex;align-items:center;gap:12px;padding:6px 16px">' + K.avatar(name, i || 0) + '<b style="font-size:1.35em;line-height:1.3">' + name + '</b></div>';
+  }
+  function p2hero(label, paise) {
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('book', 28) + '</span><span>' + label + '</span></div><div class="fig">' + M(paise, { cls: 'hero-fig' }) + '</div></section>';
+  }
+  function p2actions() { return K.sticky(K.primary(t('act.collect'), '', 'tray'), K.primary(t('p2.newUdhar'), 'tonal', 'book')); }
+  function p2links(o) {
+    o = o || {};
+    return K.sec(t('p2.share')) +
+      K.lrow('wa', t('p2.remind'), o.noPhone ? t('p2.noPhone') : t('p2.remindNote')) +
+      K.lrow('share', t('p2.statement')) +
+      K.lrow('shield', t('p2.limit'), o.limit ? M(o.limit) : t('p2.noLimit'));
+  }
+  function phoneRow(has) {
+    return has ? K.lrow('phone', '9437012345', K.N('Change mobile number', 'edit saved number; proposal, the app only adds today'), {}) : '';
+  }
+  function phoneAdd(val, err) {
+    return '<div class="stack">' + K.field(t('p2.addPhone'), val, { focus: !err, err: err, ph: '98XXXXXXXX', help: err ? t('party.refusal.phone') : '' }) + K.primary(t('p2.savePhone'), val ? '' : 'dis', 'phone') + '</div>';
+  }
+  function limitHead(name) { return '<div style="padding:8px 16px;line-height:1.5">' + t('p6.prompt', { name: name }) + '</div>'; }
+  function limitLines(cur) {
+    return '<div class="ln" style="display:flex;justify-content:space-between;padding:6px 16px;font-weight:700"><span>' + t('p6.current') + '</span><span>' + (cur ? M(cur) : t('p2.noLimit')) + '</span></div>';
+  }
+  function limitFoot(amt, cur) {
+    return K.sticky(
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 4px"><span>' + t('p6.amount') + '</span>' + M(amt || 0, { cls: 'hero-fig' }) + '</div>' +
+      K.primary(t('p6.save'), amt ? '' : 'dis', 'check') + K.keypad());
+  }
+
+  SPEC.area = { title: 'Ledger / Parties', intro: 'Mitra Ledger tab. One hero ("Udhar to collect") with "You owe suppliers" under it, customers sorted by what they owe with the 31+ days and changed-today tags as icon plus words, a Customers or Suppliers segment, customer detail with one primary button (Collect), credit limit, and supplier detail. Owes-lookup is 2 taps from Today by either route. Hindi and Odia copy is a DRAFT (H13).', screens: [
+    {
+      id: 'ledger-list', route: 'P1', title: 'Ledger: customers, most owed first', flag: 'CHG',
+      purpose: 'Answer "who owes me, how much" from the list itself. The two shop totals stay separate (never netted).',
+      primary: 'Tap a person (opens P2). Secondary: + New customer.',
+      taps: 'Owes-lookup from Today: Ledger tab (1) + person (2) = 2 taps; or the "Udhar to collect" figure on Today (1) + person (2) = 2 taps. Target under 10 s. Counted from frames, no real user timed.',
+      rules: 'Row figure = balance over every day on the phone, derived on read. Tags are icon + words (clock/calendar, up arrow, info), never colour only. Advance person: state word "Advance", never a silent minus (QA-03).',
+      notes: 'As built, Customers and Suppliers are two stacked cards; here they are a two-way segment so the first screen holds the hero, the add button and about five people. Sorted by balance, largest first; Lakshmi (settled) and Pradeep (advance) fall to the bottom. 31+ days tag: the app today shows none because the credit date is not held in this store (P1.tsx comment); the tag is drawn as the target, only shown when that date exists. Hero total is the sum of the positive balances here (assumed; the engine P7 decides how an advance nets).',
+      review: 'The 31+ days tag needs the credit date in the store (built code says it has none); and Customers/Suppliers as a segment replaces two stacked cards.',
+      body: function () { return top() + K.scroll(hero(TO_COLLECT, YOU_OWE), segs(0), addBtn(), custRows()) + K.tabs('parties'); }
+    },
+    {
+      id: 'ledger-suppliers', route: 'P1', title: 'Ledger: suppliers segment', flag: 'CHG',
+      purpose: 'The other question: who the shop owes. Same row shape, wording "you owe".',
+      primary: 'Tap a supplier (opens P3).',
+      taps: '2 taps from Today (Ledger tab, Suppliers, supplier = 3 with the segment).',
+      rules: 'Kept separate from customers; never merged into one net figure (P1.tsx).',
+      notes: 'Supplier names are shown as typed. Supplier add (party.addSupplier) is reached from the Pay supplier picker, as built; no add button here.',
+      body: function () { return top() + K.scroll(hero(TO_COLLECT, YOU_OWE), segs(1), supRows()) + K.tabs('parties'); }
+    },
+    {
+      id: 'ledger-advance', route: 'P1', title: 'Ledger: a person who paid more than they owed', flag: 'CHG',
+      purpose: 'QA-03. A negative balance is an advance: the shop holds their money. It is said in words, not shown as a bare minus.',
+      primary: 'Tap the person to see the entries behind it.',
+      taps: '2 taps from Today.',
+      rules: 'QA-03 and D2. The row shows the word "Advance" with the amount; the banner explains in a sentence. No inference: the app does not suggest what to do with it.',
+      notes: 'As built, the row shows word + positive figure (P1.tsx). The explanation banner is added here; the Advance word already exists (advance.label). Advance is not counted inside "Udhar to collect" here (assumed).',
+      body: function () {
+        return top() + K.scroll(hero(TO_COLLECT, YOU_OWE), segs(0), K.banner('info', 'info', K.N('This person paid more than was owed. The extra is an advance you hold for them. It is not udhar to collect.', 'explains an advance row')), custRows()) + K.tabs('parties');
+      }
+    },
+    {
+      id: 'ledger-empty', route: 'P1', title: 'Ledger: first time, nobody added yet', flag: 'CHG',
+      purpose: 'A new book has no customers. The next action is to add the first one.',
+      primary: '+ New customer.',
+      taps: '1 tap to the add form.',
+      rules: 'Never "nothing here yet" alone: the sentence is followed by the button. Totals show ₹0.00, derived.',
+      notes: 'As built, p1.empty is text only (no button); the button is added.',
+      body: function () { return top() + K.scroll(hero(0, 0), K.empty('users', t('p1.empty'), '+ ' + t('party.newCustomer'), '')) + K.tabs('parties'); }
+    },
+    {
+      id: 'ledger-loading', route: 'P1', title: 'Ledger: loading', flag: 'EXISTS',
+      purpose: 'The list is being read from the phone. Placeholder shapes, no spinner.',
+      primary: 'None; waits.', taps: 'n/a',
+      rules: 'Skeleton matches hero and rows so nothing jumps.',
+      notes: 'common.loading is the accessible name only.',
+      body: function () { return top() + '<div class="scroll" aria-busy="true" aria-label="' + t('common.loading') + '">' + K.skel(5) + '</div>' + K.tabs('parties'); }
+    },
+    {
+      id: 'ledger-error', route: 'P1', title: 'Ledger: could not open', flag: 'EXISTS',
+      purpose: 'The list failed to open. Say nothing is lost; one next step.',
+      primary: 'Try again.', taps: '1 tap.',
+      rules: 'Calm words, icon + words, not colour only.',
+      notes: 'Same pattern as Today error.',
+      body: function () { return top() + K.scroll(K.banner('err', 'warn', t('common.error'), t('common.retry')), K.empty('refresh', t('common.error'), t('common.retry'), 'refresh')) + K.tabs('parties'); }
+    },
+    {
+      id: 'ledger-offline', route: 'P1', title: 'Ledger: offline, entries waiting', flag: 'CHG',
+      purpose: 'No network. The list is the phone\'s own book; entries are safe and wait to send.',
+      primary: 'Keep working; open a person.',
+      taps: '2 taps, same as online.',
+      rules: 'Sync chip amber with a clock and a count, never red; it is in the header (USABILITY item 8).',
+      notes: 'The figures are the phone\'s own and may lack other devices\' entries until the queue drains.',
+      body: function () { return top(K.chip('wait', 3)) + K.scroll(K.banner('info', 'cloudoff', t('sync.waitingLong', { n: 3 })), hero(TO_COLLECT, YOU_OWE), segs(0), custRows()) + K.tabs('parties'); }
+    },
+    {
+      id: 'ledger-add', route: 'P1', title: 'Add customer: name and phone', flag: 'CHG',
+      purpose: 'Add a person to the book. Name is required; phone is optional (needed later for the WhatsApp reminder).',
+      primary: 'Save.',
+      taps: 'Name letters, Save = 2 taps plus typing (a phone number adds one tap per figure and a field change).',
+      rules: 'The app never suggests a name or reads contacts: typed exactly as entered. No refusal is shown before a tap.',
+      notes: 'As built the add form lives inside the party picker (party.save reads "Save and choose"). Here it is also reached from Ledger via "+ New customer", saving back to the list; the Save label is common.save for that reason (party.save would say "choose" with nothing to choose). The keyboard is the phone\'s own and is not drawn.',
+      review: 'Add-customer from the Ledger tab is new; today it is reachable only from a picker inside a sale or collection.',
+      body: function () {
+        return sub(true, t('party.newCustomer')) + K.scroll(K.stack(K.field(t('party.name'), 'Kamala', { focus: true }), K.field(t('party.phone'), '', { ph: '98XXXXXXXX' }))) + K.sticky(K.primary(t('common.save'), '', 'check'), K.quiet(t('party.backToList')));
+      }
+    },
+    {
+      id: 'ledger-add-refusal', route: 'P1', title: 'Add customer: refused (no name / bad number)', flag: 'EXISTS',
+      purpose: 'Two refusals, shown only after Save is tapped: no name; a number that is not a valid Indian mobile number.',
+      primary: 'Fix the field and Save again. Phone may be left empty.',
+      taps: 'Shown after 1 tap on Save.',
+      rules: 'party.refusal.name and party.refusal.phone. Text under the field plus an alert banner, icon + words. The refusal clears when the form is reopened; it never leaks into the next form.',
+      notes: 'Frame shows the bad-number case; the empty-name case has the same layout with party.refusal.name under Name.',
+      body: function () {
+        return sub(true, t('party.newCustomer')) + K.scroll(K.refuse(t('refusal.title'), t('party.refusal.phone')), K.stack(K.field(t('party.name'), 'Kamala', {}), K.field(t('party.phone'), '98765', { err: true, help: t('party.refusal.phone') }))) + K.sticky(K.primary(t('common.save'), '', 'check'), K.quiet(t('party.backToList')));
+      }
+    },
+    {
+      id: 'ledger-add-saved', route: 'P1', title: 'Add customer: saved, back on the list', flag: 'CHG',
+      purpose: 'Confirms the add and shows the new person on the list at Rs 0.00.',
+      primary: 'Tap the new person to start a udhar sale or add a number.',
+      taps: '1 tap to open them.',
+      rules: 'Append-only book: a person is added, never edited away. Zero balance reads "nothing owed" in words.',
+      notes: 'Toast uses entry.saved. Kamala sorts with the settled people.',
+      body: function () {
+        var rows = K.list([
+          K.prow(K.nm('ramesh'), 0, '<span style="display:block">' + changed(120000) + '</span>', RAMESH, t('picker.owes')),
+          K.prow(K.nm('sunita'), 1, '', SUNITA, t('picker.owes')),
+          K.prow(K.nm('bijay'), 2, '', BIJAY, t('picker.owes')),
+          K.prow('Kamala', 3, '', 0, t('picker.settled'))
+        ]);
+        return top() + K.scroll(hero(TO_COLLECT, YOU_OWE), segs(0), addBtn(), rows) + K.toast('check', t('entry.saved')) + K.tabs('parties');
+      }
+    },
+    {
+      id: 'ledger-p2', route: 'P2', title: 'Customer: balance, one Collect button, history', flag: 'CHG',
+      purpose: 'One person. How much they owe now (all days), the one action Collect, and the entries behind the figure.',
+      primary: 'Collect (solid teal, fixed at the foot). Quiet second: New udhar sale.',
+      taps: 'Collect: Collect (1), digits, Add. Owes-lookup is answered by the hero on arrival (2 taps from Today).',
+      rules: 'Hero = balance over all days on the phone, derived. The history rows show the mode and the time; a sale on udhar adds to what is owed, a collection reduces it, signs printed. Append-only: no edit or delete on any row. D2: only the Cash collection touches the drawer; the udhar sales do not.',
+      notes: 'History here is complete, so the hero equals the sum: +₹3,500.00 +₹600.00 -₹500.00 +₹1,200.00 = ₹4,800.00. As built the lines show a label and a signed amount; the time and mode in the second line are added. Remind, statement and credit limit sit under "Remind and share". Rows are buttons because they lead to the correction route (see the correction frame); as built the lines are not tappable.',
+      review: 'Mode and time on each history row, and tappable rows leading to a correction, are additions to the built P2.',
+      body: function () {
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('ramesh'), 0), p2hero(t('p2.balanceAll'), RAMESH), '<div class="ln" style="padding:4px 16px">' + changed(120000) + '</div>', p2links({}), hist()) + p2actions();
+      }
+    },
+    {
+      id: 'ledger-p2-phone', route: 'P2', title: 'Customer: no phone saved, add one', flag: 'CHG',
+      purpose: 'Reminders need a number. With none saved the way to add it is right here.',
+      primary: 'Save number (beside the field; Done on the keyboard saves too).',
+      taps: 'Typing the number + Save number = 1 tap plus one per figure.',
+      rules: 'The number is exactly as typed: no contact lookup, no suggestion. Saving moves no figure.',
+      notes: 'As built, the number can be added only while none is saved; once saved, the page shows no way to change it. Frame ledger-p2-remind shows a saved number with a "Change mobile number" row, which is a proposal.',
+      review: 'Editing a saved number is not possible in the built app; proposed here.',
+      body: function () {
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('sunita'), 1), p2hero(t('p2.balanceAll'), SUNITA), p2links({ noPhone: true }), phoneAdd('', false)) + p2actions();
+      }
+    },
+    {
+      id: 'ledger-p2-nophone-refusal', route: 'P2', title: 'Customer: tapped WhatsApp with no number', flag: 'EXISTS',
+      purpose: 'Reminder tapped but no number is saved. Say why and point to the fix on the same page.',
+      primary: 'Add the number in the field above.',
+      taps: 'Shown after 1 tap on the reminder row.',
+      rules: 'refusal.noPhone under the heading "Could not do that" (nothing was being saved). Nothing is sent; WhatsApp is not opened.',
+      notes: 'Refusal appears only after the tap, not before.',
+      body: function () {
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('sunita'), 1), p2hero(t('p2.balanceAll'), SUNITA), p2links({ noPhone: true }), phoneAdd('', false)) + p2actions() + K.refbanner(t('refusal.titleNotDone'), t('refusal.noPhone'), true);
+      }
+    },
+    {
+      id: 'ledger-p2-remind', route: 'P2', title: 'Customer: WhatsApp reminder handed over', flag: 'EXISTS',
+      purpose: 'The app writes a polite message and hands it to WhatsApp. The shopkeeper presses send there. The app sends nothing.',
+      primary: 'In WhatsApp: Send (outside the app).',
+      taps: 'Remind row (1 tap), then Send in WhatsApp (1 tap).',
+      rules: 'Nothing is sent by the app; the text states the amount due as derived from the book. The message is fixed copy (remind.text), not written by inference.',
+      notes: 'The panel is a drawing of what WhatsApp shows after the hand-off, not an in-app screen. A saved number is shown with a change row (proposal).',
+      body: function () {
+        var msg = t('remind.text', { name: K.nm('ramesh'), shop: K.shop, amount: K.rupee(RAMESH) });
+        var inner = '<div class="banner info">' + K.ico('wa', 24) + '<span>' + K.N('WhatsApp opens here, outside the app', 'describes the hand-off') + '</span></div><div style="margin:10px 16px;padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--rule);line-height:1.5">' + msg + '</div>' + K.banner('info', 'info', t('p2.remindNote'));
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('ramesh'), 0), p2hero(t('p2.balanceAll'), RAMESH), phoneRow(true), p2links({})) + p2actions() + K.sheet(t('p2.remind'), inner);
+      }
+    },
+    {
+      id: 'ledger-p2-settled', route: 'P2', title: 'Customer: nothing owed, reminder refused', flag: 'CHG',
+      purpose: 'A settled customer. Tapping the reminder says why there is nothing to send.',
+      primary: 'New udhar sale or Collect stays available.',
+      taps: 'Refusal shown after 1 tap.',
+      rules: 'refusal.nothingDue. No reminder is made for nothing; no figure invented.',
+      notes: 'As built the reminder row is hidden when nothing is owed, so this refusal is not reachable from the screen today. Here the row stays visible and explains itself (a hidden row gives no reason).',
+      review: 'Keeping the reminder row visible when nothing is due, to show refusal.nothingDue, differs from the built P2.',
+      body: function () {
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('lakshmi'), 3), p2hero(t('p2.balanceAll'), 0), p2links({ limit: 1000000 }), K.sec(t('p2.ledger')) + hline(t('section.udhar_collection'), '12:05', t('formA.mode.cash'), -50000) + hline(t('section.udhar_sales'), '09:30, 14 ' + t('t1.month.10'), t('formA.mode.udhar'), 50000)) + p2actions() + K.refbanner(t('refusal.titleNotDone'), t('refusal.nothingDue'), true);
+      }
+    },
+    {
+      id: 'ledger-p2-advance', route: 'P2', title: 'Customer: advance held (paid more than owed)', flag: 'CHG',
+      purpose: 'QA-03. The hero says "Advance" and the amount held, in place of a negative balance.',
+      primary: 'Collect and New udhar sale stay; a sale on udhar is set against the advance.',
+      taps: '2 taps from Today to see this.',
+      rules: 'No silent minus: the label is advance.label with the amount as a positive figure and a sentence. The confirm that creates an advance ("This is ... more than they owe") belongs to the Collect form.',
+      notes: 'Reminder row hidden (nothing is due). Explanatory sentence is new text.',
+      body: function () {
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('pradeep'), 4), p2hero(t('advance.label'), -PRADEEP), K.banner('info', 'info', K.N('You hold this for them. They paid more than they owed. Nothing is due from them.', 'explains advance on P2')), K.sec(t('p2.share')) + K.lrow('share', t('p2.statement')) + K.lrow('shield', t('p2.limit'), t('p2.noLimit'))) + p2actions();
+      }
+    },
+    {
+      id: 'ledger-p2-empty', route: 'P2', title: 'Customer: no entries yet', flag: 'CHG',
+      purpose: 'A person just added. History is empty; the next action is the first udhar sale.',
+      primary: 'New udhar sale (promoted to primary while history is empty).',
+      taps: '1 tap.',
+      rules: 'Balance ₹0.00, derived. No "usual" amount suggested.',
+      notes: 'As built, p2.empty is text and Collect stays primary. Collect has nothing to collect, so the primary here is the sale (proposal).',
+      review: 'Primary button switches to New udhar sale when the history is empty.',
+      body: function () {
+        return sub(true, t('p2.title')) + K.scroll(nameBlock('Kamala', 3), p2hero(t('p2.balanceAll'), 0), K.empty('book', t('p2.empty')), p2links({ noPhone: true }), phoneAdd('', false)) + K.sticky(K.primary(t('p2.newUdhar'), '', 'book'), K.primary(t('act.collect'), 'tonal', 'tray'));
+      }
+    },
+    {
+      id: 'ledger-p2-correct', route: 'P2', title: 'Customer: correcting an entry (new dated entry)', flag: 'NEW',
+      purpose: 'Tap a history row to see it and, if it was wrong, post a correction. The original stays; a new dated entry refers to it.',
+      primary: 'Post a correction.',
+      taps: 'Row (1), Post a correction (2), then the amount form.',
+      rules: 'D1 append-only: no Edit, no Delete. The sheet states that the original stays on the list. D7: if the entry\'s day is closed, the correction is still a new entry dated today.',
+      notes: 'Not in the built P2: lines there are not tappable and the correction route (T16, "Post a correction") starts from Today. This frame shows the proposed route from the person. The amount form itself is in another area.',
+      review: 'A correction route starting from a party\'s history row does not exist today.',
+      body: function () {
+        var inner = '<div style="padding:4px 16px;line-height:1.5"><b>' + t('section.udhar_collection') + '</b><br>16:05, 14 ' + t('t1.month.10') + ' · ' + t('formA.mode.cash') + '<br>' + M(-50000, { sign: true }) + '</div>' + K.banner('info', 'info', K.N('The original stays in the book. A correction is added as a new entry with today\'s date that points to it.', 'append-only explanation')) + K.stack(K.primary(t('t3.correction'), '', 'pencil'), K.quiet(t('party.cancel')));
+        return sub(true, t('p2.title')) + K.scroll(nameBlock(K.nm('ramesh'), 0), p2hero(t('p2.balanceAll'), RAMESH), hist()) + p2actions() + K.sheet(K.N('This entry', 'sheet title'), inner);
+      }
+    },
+    {
+      id: 'ledger-p2-error', route: 'P2', title: 'Customer: could not open', flag: 'EXISTS',
+      purpose: 'The detail failed to open. Nothing is lost.',
+      primary: 'Try again.', taps: '1 tap.',
+      rules: 'Calm words, icon + words.',
+      notes: 'Loading uses the same skeleton as the Ledger list loading frame.',
+      body: function () { return sub(true, t('p2.title')) + K.scroll(K.banner('err', 'warn', t('common.error'), t('common.retry')), K.empty('refresh', t('common.error'), t('common.retry'), 'refresh')); }
+    },
+    {
+      id: 'ledger-p6', route: 'P6', title: 'Credit limit: set a limit', flag: 'EXISTS',
+      purpose: 'Set the most udhar a customer may carry. The app tells him when a sale would go above it; it never stops a sale.',
+      primary: 'Save limit (disabled until an amount above zero).',
+      taps: 'Digits, Save limit = 1 tap plus digits.',
+      rules: 'The limit is typed by the shopkeeper; no suggested amount. It warns, never blocks (p6.prompt). Rs 0 is refused after a tap.',
+      notes: 'Current limit "Not set". The remove button appears only when a limit exists (next frame).',
+      body: function () {
+        return sub(true, t('p6.title')) + K.scroll(nameBlock(K.nm('ramesh'), 0), limitHead(K.nm('ramesh')), limitLines(0)) + limitFoot(1000000, 0);
+      }
+    },
+    {
+      id: 'ledger-p6-clear', route: 'P6', title: 'Credit limit: limit set, clear it, or refused at zero', flag: 'CHG',
+      purpose: 'A limit exists. Removing it is one tap, says what happens, and typing 0 then Save is refused.',
+      primary: 'Save limit for a new figure; Remove the limit is a quiet equal-weight button.',
+      taps: 'Remove: 1 tap (takes effect at once).',
+      rules: 'refusal.creditLimit after tapping Save with zero. Remove says what happens: entries and sales are untouched, only the warning goes. Never confirm-shaming.',
+      notes: 'The refusal is drawn here with 0 typed; in the app it appears only after the tap. The built remove is a ghost button; here it is outlined for equal weight (proposal).',
+      body: function () {
+        return sub(true, t('p6.title')) + K.scroll(K.refuse(t('refusal.title'), t('refusal.creditLimit')), nameBlock(K.nm('ramesh'), 0), limitLines(1000000), K.stack(K.primary(t('p6.clear'), 'outline', 'undo')), K.banner('info', 'info', K.N('Removing the limit only stops the warning. No entry changes. You can set a limit again at any time.', 'clear limit consequence'))) + limitFoot(0, 1000000);
+      }
+    },
+    {
+      id: 'ledger-p3', route: 'P3', title: 'Supplier: what you owe, Pay supplier, history', flag: 'CHG',
+      purpose: 'One supplier. How much the shop owes, the one action Pay supplier, and the entries behind the figure.',
+      primary: 'Pay supplier (solid teal, fixed at the foot).',
+      taps: 'Pay: Pay supplier (1), digits, Add.',
+      rules: 'D2: a payment in Cash reduces the drawer; a purchase on credit adds to what is owed without moving cash. Out-flow printed with a minus sign. Append-only.',
+      notes: 'As built, P3 headline is today\'s change (p1.changeToday) and the screen has no balance hero; the hero here is the balance owed (p3.owed), which is the figure the shopkeeper needs, matching P2. History is complete: +₹20,000.00 -₹1,600.00 = ₹18,400.00.',
+      review: 'P3 headline changes from today\'s change to the balance owed.',
+      body: function () {
+        var h = K.sec(t('p2.ledger')) +
+          K.lrow('tray', t('section.party_payment'), '15:30, 15 ' + t('t1.month.10') + ' · ' + t('formA.mode.cash'), { right: M(-160000, { sign: true }) }) +
+          K.lrow('receipt', t('section.purchase'), '10:10, 2 ' + t('t1.month.10') + ' · ' + t('formA.mode.udhar'), { right: M(2000000, { sign: true }) });
+        return sub(true, t('p3.title')) + K.scroll(nameBlock('Mohanty Traders', 0), p2hero(t('p3.owed'), 1840000), h) + K.sticky(K.primary(t('t8.title.pay'), '', 'tray'));
+      }
+    },
+    {
+      id: 'ledger-p3-empty', route: 'P3', title: 'Supplier: no entries yet', flag: 'EXISTS',
+      purpose: 'A supplier with no history. The next action is the first payment or purchase.',
+      primary: 'Pay supplier.', taps: '1 tap.',
+      rules: 'Balance ₹0.00 derived; nothing invented.',
+      notes: 'As built p3.empty is text; the button is always present at the foot.',
+      body: function () { return sub(true, t('p3.title')) + K.scroll(nameBlock('Odisha Wholesale', 1), p2hero(t('p3.owed'), 0), K.empty('box', t('p3.empty'))) + K.sticky(K.primary(t('t8.title.pay'), '', 'tray')); }
+    }
+  ] };
+})();
+
+K.boot();</script>
+</body></html>

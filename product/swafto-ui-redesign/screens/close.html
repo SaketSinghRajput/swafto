@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - Mitra - close</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Anek Odia';font-weight:400;src:local('Anek Odia Regular'),url('../../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:500;src:local('Anek Odia Medium'),url('../../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:700;src:local('Anek Odia Bold'),url('../../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf')}
+/* Mitra screen kit: palette from concepts/C-mitra.html. CSS variable names are placeholders until DESIGN-SYSTEM-V2.md tokens land (see FLOWS.md "Token map"). */
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--z:1;--zc:1;
+--bg:#FFF6EA;--surface:#FFFFFF;--raised:#F6EADA;--ink:#2B2118;--muted:#5E4E41;--edge:#8A7560;--rule:#E6D5BF;
+--brand:#0A6B66;--act:#0A6B66;--onact:#FFFFFF;--sel:#0A6B66;--onsel:#FFFFFF;--pos:#1E6B2E;--neg:#A3410C;
+--waitbg:#FFE9B8;--waitfg:#6B4400;--hbg:#0A6B66;--hfg:#FFFFFF;--nbg:#FFFFFF;--nfg:#2B2118;--nselbg:#0A6B66;--nselfg:#FFFFFF;--sbg:#0A6B66;--sfg:#FFFFFF;
+--t1bg:#DDF3EF;--t1ic:#0A6B66;--t2bg:#EDE4F7;--t2ic:#5B2E91;--t3bg:#E3F2D6;--t3ic:#2F6B1B;--t4bg:#FDE6D3;--t4ic:#8F4408;--t5bg:#EFE7DC;--t5ic:#5E4E41;--scrim:rgba(43,33,24,.55)}
+body[data-theme="focus"]{--bg:#1A1410;--surface:#261E18;--raised:#30261E;--ink:#F6EDE2;--muted:#BFAF9E;--edge:#9C8A78;--rule:#3E3126;--brand:#4FC3BA;--act:#4FC3BA;--onact:#10201F;--sel:#4FC3BA;--onsel:#10201F;--pos:#6FD48A;--neg:#F2A06A;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#261E18;--hfg:#F6EDE2;--nbg:#261E18;--nfg:#F6EDE2;--nselbg:#4FC3BA;--nselfg:#10201F;--sbg:#261E18;--sfg:#F6EDE2;--t1bg:#12302D;--t1ic:#7EE0D8;--t2bg:#2A1F3D;--t2ic:#CDB2F0;--t3bg:#1F3018;--t3ic:#A5DB86;--t4bg:#3A2412;--t4ic:#FFB27A;--t5bg:#30261E;--t5ic:#BFAF9E;--scrim:rgba(0,0,0,.65)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1500px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}.page-head p{margin-top:6px;line-height:1.5;max-width:960px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:9px 14px;font:600 14px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.toc{max-width:1500px;margin:8px auto 0;padding:0 24px;font-size:14px;line-height:1.9}
+.toc a{display:inline-block;margin:0 6px 4px 0;padding:2px 10px;border:1px solid #888;border-radius:14px;color:#222;text-decoration:none;background:#fff}
+.toc a.new{border-color:#b00;border-style:dashed}
+.stage{max-width:1500px;margin:0 auto;padding:12px 24px 40px;display:flex;flex-direction:column;gap:30px}
+.card{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;background:#EDEDED;border-radius:16px;padding:18px;scroll-margin-top:12px}
+.card.hl{outline:4px solid #0A6B66}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:calc(17px*var(--z));line-height:1.8;font-weight:500;font-synthesis:none}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.note{flex:1;min-width:320px;max-width:700px;background:#fff;border-radius:12px;padding:14px 18px;line-height:1.5;font-size:14px}
+.note h3{font-size:18px;margin-bottom:6px}.note dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px}
+.note dt{font-weight:700;color:#444}.note dd{margin:0}.note code{background:#eee;padding:0 4px;font-size:13px}
+.note .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;margin-right:6px;background:#0A6B66;color:#fff}
+.note .tag.new{background:#b00}.note .tag.chg{background:#8F4408}
+.note .keys{margin-top:6px;font-size:12px;color:#555;word-break:break-word}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}small{font-size:1em;font-weight:400}.grow{flex:1}ul{list-style:none}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}.pos{color:var(--pos)}.neg{color:var(--neg)}.ico{flex:none;display:block}
+.newc{border-bottom:2px dashed #c00}
+body[data-lang="od"] .newc::after,body[data-lang="hi"] .newc::after{content:" [NEW en]";font:700 10px system-ui;color:#c00;white-space:nowrap}
+/* chrome */
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg);border-radius:0 0 24px 24px;padding-bottom:6px;font-size:calc(17px*var(--zc))}
+.top h1{font-size:1.235em;font-weight:700;line-height:1.5}.top .sn{font-size:1.235em;font-weight:700;line-height:1.5}.top .dt{line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;line-height:1.4;font-weight:500;border-radius:28px}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg);border-radius:24px 24px 0 0;border-top:2px solid var(--rule);padding:4px 6px 0;font-size:calc(17px*var(--zc))}
+.tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.4;border-radius:20px;margin:2px}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+/* today */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.tile{min-height:76px;min-width:56px;display:flex;flex-direction:row;align-items:center;gap:10px;padding:0 12px;line-height:1.4;border-radius:20px;font-size:1.12em;background:var(--t5bg);color:var(--ink);text-align:left;font-weight:700}
+.ti{width:48px;height:48px;flex:none;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.t-sale{background:var(--act);color:var(--onact)}.t-sale .ti{color:var(--act)}
+.t-udhar{background:var(--t2bg)}.t-udhar .ti{color:var(--t2ic)}.t-collect{background:var(--t3bg)}.t-collect .ti{color:var(--t3ic)}.t-expense{background:var(--t4bg)}.t-expense .ti{color:var(--t4ic)}
+.t-more{grid-column:1/-1;min-height:56px;justify-content:center}.t-more .ti{width:36px;height:36px;color:var(--t5ic)}
+.tile.off{opacity:1;background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}.tile.off .ti{color:var(--muted)}
+.hero{margin:0 12px;padding:12px;background:var(--surface);border:2px solid var(--rule);border-radius:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.12em}
+.hero .hi{width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none}
+.hero .fig{padding:2px 0 6px}.hero-fig{font-size:2.1em}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.4}.ln .k{display:flex;align-items:center;gap:6px}
+.hero .ln{border-top:2px dashed var(--rule)}
+.dirico{border-radius:50%;padding:2px;width:28px;height:28px}.ln.in .dirico{background:var(--t3bg);color:var(--t3ic)}.ln.out .dirico{background:var(--t4bg);color:var(--t4ic)}
+.facts{margin:8px 12px 0}.facts .ln{min-height:52px;border-bottom:2px solid var(--rule)}.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left;background:var(--raised);border:2px solid var(--edge);border-radius:24px}
+.closecard.quiet2{background:var(--surface);border-color:var(--rule)}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.4}.cc-t{font-weight:700;font-size:1.06em}.cc-c{grid-area:chev;display:flex}.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}.bar i{flex:1;height:10px;background:var(--rule);border-radius:5px}.bar i.on{background:var(--brand)}
+/* controls */
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--edge);background:var(--raised);min-height:56px;border-radius:28px;overflow:hidden}
+.seg.two,.seg.three{margin:4px 12px 0}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.4;border-radius:28px;padding:0 6px;text-align:center}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;border-radius:32px}
+.addbar.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.addbar .m{font-size:1.15em}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:32px;text-align:center;line-height:1.4;padding:4px 12px}
+.primary.tonal{background:var(--t1bg);color:var(--ink);border:2px solid var(--act)}
+.primary.outline{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.primary.warn{background:var(--surface);color:var(--neg);border:2px solid var(--neg)}
+.primary.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.btn2{min-height:56px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--act);border-radius:28px;font-weight:700;background:var(--surface);line-height:1.4;text-align:center}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:140px;text-align:center;line-height:1.4}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.stack{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
+/* keypad / entry */
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;border-radius:16px}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.4}
+.kp.hidden{display:none}
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:2px solid var(--rule)}.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:2px solid var(--rule)}.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}.cust .cn{font-size:1.235em;font-weight:700}.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}.amt .al{color:var(--muted)}.amt-fig{font-size:2em}
+.refuse{display:flex;gap:8px;align-items:flex-start;margin:6px 0;padding:8px 12px;border:2px solid var(--neg);border-radius:16px;background:var(--surface);color:var(--ink);line-height:1.4}
+.refuse b{color:var(--neg)}
+/* rows */
+.prog{padding:8px 12px 4px}.pt{display:flex;flex-direction:column;line-height:1.4;margin-bottom:6px}.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:64px;line-height:1.4;margin:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:50%;background:var(--raised);border:2px solid var(--edge)}
+.row.done .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row.next{background:var(--t1bg);border-color:var(--act)}.row.next .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}.row .rv small{color:var(--muted)}
+.row.lock{color:var(--muted);border-style:dashed}
+.row.tap{width:calc(100% - 24px);text-align:left}
+.row.warnr{border-color:var(--neg)}
+.sec{padding:10px 16px 0;font-weight:700;color:var(--muted)}
+/* ledger */
+.lhero{padding:12px;background:var(--t1bg);margin:12px;border-radius:24px}.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.4}.lhero .big{font-size:2.1em;color:var(--t1ic)}.lhero .mid{font-size:1.4em}.lhero .h2{margin-top:6px}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700;border:2px solid var(--act);border-radius:28px;padding:0 16px}
+.plist li{margin:6px 12px}.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;line-height:1.4;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.pn{flex:1;display:flex;flex-direction:column}.pn b{font-size:1.18em}.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}.pa .m{font-size:1.3em}.pa em{font-style:normal;color:var(--muted)}
+.av{display:flex;width:44px;height:44px;flex:none;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.12em}
+.av0{background:var(--t1bg);color:var(--t1ic)}.av1{background:var(--t2bg);color:var(--t2ic)}.av2{background:var(--t3bg);color:var(--t3ic)}.av3{background:var(--t4bg);color:var(--t4ic)}.av4{background:var(--t5bg);color:var(--t5ic)}
+/* settings rows, forms, switches */
+.lrow{display:flex;align-items:center;gap:12px;min-height:64px;margin:6px 12px;padding:4px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.lrow .li{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--t5bg);color:var(--t5ic)}
+.lrow .lt{flex:1;display:flex;flex-direction:column}.lrow .lt small{color:var(--muted)}
+.lrow.danger .li{background:var(--t4bg);color:var(--t4ic)}.lrow.danger{border-color:var(--neg)}
+.field{margin:8px 12px}.field label{display:block;color:var(--muted);line-height:1.4}
+.field .in{min-height:56px;display:flex;align-items:center;padding:0 14px;background:var(--surface);border:2px solid var(--edge);border-radius:16px;line-height:1.4}
+.field .in.focus{border-color:var(--act);border-width:3px}.field .in.err{border-color:var(--neg)}.field .in .ph{color:var(--muted)}
+.field .help{color:var(--muted);line-height:1.4;margin-top:2px}.field .help.err{color:var(--neg)}
+.caret{display:inline-block;width:2px;height:1.2em;background:var(--ink);margin-left:2px;vertical-align:text-bottom}
+.sw{display:flex;align-items:center;gap:12px;min-height:72px;margin:6px 12px;padding:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.sw .tx{flex:1;display:flex;flex-direction:column}.sw .tx small{color:var(--muted)}
+.sw .knob{min-width:84px;min-height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;padding:0 10px;border:2px solid var(--edge);background:var(--raised)}
+.sw.on .knob{background:var(--sel);color:var(--onsel);border-color:var(--sel)}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.4;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg);border-radius:20px;margin:8px 12px 0}
+.banner span{flex:1}.banner.err{background:var(--surface);color:var(--ink);border-color:var(--neg)}.banner.info{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:24px 16px}.empty .ei{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center}
+.empty p{margin-bottom:10px;line-height:1.5}.empty .primary{max-width:280px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px;padding:12px}.skel i{display:block;height:64px;background:var(--rule);border-radius:20px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px;gap:12px}
+.bigmsg{font-size:1.5em;font-weight:700;line-height:1.4}.lead{color:var(--muted);line-height:1.5}
+.otp{display:flex;gap:8px;padding:0 12px;justify-content:center}.otp i{width:46px;height:60px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:1.5em}.otp i.cur{border-color:var(--act);border-width:3px}
+.dots{display:flex;gap:6px;justify-content:center;padding:6px}.dots i{width:10px;height:10px;border-radius:5px;background:var(--rule)}.dots i.on{background:var(--brand);width:26px}
+/* overlays */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-radius:28px 28px 0 0;padding:12px 0 16px;max-height:84%;display:flex;flex-direction:column;border-top:2px solid var(--edge)}
+.sheet h2{font-size:1.235em;padding:0 16px 6px;line-height:1.4}.sheet .grab{width:48px;height:5px;border-radius:3px;background:var(--edge);margin:0 auto 8px}
+.dialog{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:6;background:var(--bg);border:2px solid var(--edge);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:10px;line-height:1.5}
+.dialog h2{font-size:1.235em;line-height:1.4}
+.toast{position:absolute;left:12px;right:12px;bottom:12px;z-index:7;background:var(--ink);color:var(--bg);border-radius:20px;padding:10px 14px;display:flex;gap:8px;align-items:center;line-height:1.4}
+.refbanner{position:absolute;left:76px;right:12px;top:12px;z-index:7;padding:10px 12px;background:var(--surface);border:2px solid var(--neg);border-radius:16px;line-height:1.4}
+.refbanner b{color:var(--neg)}.refbanner.nn{border-color:var(--edge)}.refbanner.nn b{color:var(--ink)}
+.gray{filter:grayscale(1);opacity:.55}
+.spin{width:22px;height:22px;border:3px solid var(--rule);border-top-color:var(--act);border-radius:50%;display:inline-block}
+.size-prev{font-size:calc(17px*var(--z))}
+.legend{max-width:1500px;margin:0 auto;padding:6px 24px 0;font-size:13px;color:#444}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1 id="area-title"></h1><p id="area-intro"></p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button><button data-lang-btn="hi" aria-pressed="false">हिन्दी</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div>
+<div class="grp"><button data-size-btn="1" aria-pressed="true">Text 1.0x</button><button data-size-btn="1.3" aria-pressed="false">1.3x</button><button data-size-btn="2" aria-pressed="false">2.0x</button></div></div></div>
+<div class="legend">Odia and Hindi are the app's unreviewed DRAFT strings (H13), taken verbatim from strings.ts. A dashed red underline means the string does not exist yet (English only). Text sizes above 1.5x leave the header and tab bar at 1.5x (the app's chrome cap); body text and figures keep growing. Browser render with Anek Odia, not the phone.</div>
+<nav class="toc" id="toc"></nav>
+<main class="stage" id="stage"></main>
+<script>window.STRINGS={"sync.waiting":{"en":"{n} waiting · safe on phone","hi":"{n} बाकी · फ़ोन में सुरक्षित","or":"{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ"},"sync.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"common.back":{"en":"Back","hi":"पीछे","or":"ପଛକୁ ଯାଆନ୍ତୁ"},"nav.today":{"en":"Today","hi":"आज","or":"ଆଜି"},"nav.parties":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"nav.reports":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"act.sale":{"en":"Sale","hi":"बिक्री","or":"ବିକ୍ରି"},"act.credit":{"en":"Udhar sale","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"act.collect":{"en":"Collect","hi":"वसूली","or":"ଆଦାୟ"},"act.expense":{"en":"Expense","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"t1.more":{"en":"More","hi":"और","or":"ଅଧିକ"},"box.title":{"en":"In the box now","hi":"अभी बॉक्स में","or":"ଏବେ ବାକ୍ସରେ"},"box.opening":{"en":"Opening","hi":"शुरुआत","or":"ଆରମ୍ଭ"},"box.in":{"en":"cash in","hi":"नकद आया","or":"ନଗଦ ଆସିଲା"},"box.out":{"en":"cash out","hi":"नकद गया","or":"ନଗଦ ଗଲା"},"box.sales":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"t1.toCollect":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ ବାକି ଉଧାର"},"t1.continueClose":{"en":"Continue day close","hi":"दिन बंद करना जारी रखें","or":"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ"},"t1.progress":{"en":"{done} of {total}","hi":"{total} में से {done}","or":"{total} ରୁ {done}"},"keypad.clear":{"en":"Clear","hi":"मिटाएँ","or":"ଖାଲି କରନ୍ତୁ"},"keypad.delete":{"en":"Delete last digit","hi":"आखिरी अंक मिटाएँ","or":"ଶେଷ ଅଙ୍କ ଲିଭାନ୍ତୁ"},"t1.day.4":{"en":"Thursday","hi":"गुरुवार","or":"ଗୁରୁବାର"},"t1.month.11":{"en":"November","hi":"नवंबर","or":"ନଭେମ୍ବର"},"t1.day.3":{"en":"Wednesday","hi":"बुधवार","or":"ବୁଧବାର"},"t5.done":{"en":"{done} of {total} done","hi":"{total} में से {done} पूरे","or":"{total} ରୁ {done} ସମ୍ପୂର୍ଣ୍ଣ"},"t5.skippedCount":{"en":"{n} marked \"nothing today\"","hi":"{n} में \"आज कुछ नहीं\"","or":"{n}ଟିରେ \"ଆଜି କିଛି ନାହିଁ\""},"t5.entry":{"en":"1 entry","hi":"1 प्रविष्टि","or":"1ଟି ଏଣ୍ଟ୍ରି"},"t5.entries":{"en":"{n} entries","hi":"{n} प्रविष्टियाँ","or":"{n}ଟି ଏଣ୍ଟ୍ରି"},"state.entered":{"en":"entered","hi":"दर्ज","or":"ଲେଖାଯାଇଛି"},"state.untouched":{"en":"not yet","hi":"अभी नहीं","or":"ଏପର୍ଯ୍ୟନ୍ତ ନୁହେଁ"},"t5.nothingToday":{"en":"Nothing today","hi":"आज कुछ नहीं","or":"ଆଜି କିଛି ନାହିଁ"},"state.skipped":{"en":"nothing today","hi":"आज कुछ नहीं","or":"ଆଜି କିଛି ନାହିଁ"},"t5.undo":{"en":"Undo","hi":"वापस लें","or":"ଫେରାଇ ନିଅନ୍ତୁ"},"t6.title":{"en":"Opening cash","hi":"शुरुआती नकद","or":"ଆରମ୍ଭ ନଗଦ"},"t5.openingStep":{"en":"Counts as step 1","hi":"पहला कदम गिना गया","or":"ପ୍ରଥମ ପାଦ ଭାବେ ଗଣାଯାଏ"},"t5.cashCheck":{"en":"Cash check","hi":"नकद जाँच","or":"ନଗଦ ଯାଞ୍ଚ"},"t5.locked":{"en":"Locked","hi":"बंद है","or":"ତାଲା ପଡ଼ିଛି"},"t5.lockLine":{"en":"Enter or skip {section} first","hi":"पहले {section} दर्ज करें या छोड़ें","or":"ପ୍ରଥମେ {section} ଲେଖନ୍ତୁ କିମ୍ବା ଛାଡ଼ନ୍ତୁ"},"t1.closeDay":{"en":"Close the day","hi":"दिन बंद करें","or":"ଦିନ ବନ୍ଦ କରନ୍ତୁ"},"t5.closeLocked":{"en":"After the cash check","hi":"नकद जाँच के बाद","or":"ନଗଦ ଯାଞ୍ଚ ପରେ"},"t5.countBox":{"en":"Count the box","hi":"बॉक्स गिनें","or":"ବାକ୍ସ ଗଣନ୍ତୁ"},"upi.tick":{"en":"Received","hi":"आ गया","or":"ଆସିଗଲା"},"upi.status.not_checked":{"en":"UPI not checked","hi":"UPI जाँचा नहीं गया","or":"UPI ଯାଞ୍ଚ ହୋଇନାହିଁ"},"upi.expected":{"en":"UPI received, as entered","hi":"दर्ज किया गया UPI","or":"ଲେଖାଯାଇଥିବା UPI"},"upi.confirmed":{"en":"UPI you confirmed","hi":"आपने पक्का किया UPI","or":"ଆପଣ ନିଶ୍ଚିତ କରିଥିବା UPI"},"upi.note":{"en":"Tick each payment you can see arrived in your UPI app. Not your bank balance.","hi":"जो भुगतान आपके UPI ऐप में आया दिखे, उसे टिक करें। यह बैंक बैलेंस नहीं है।","or":"ଆପଣଙ୍କ UPI ଆପରେ ଆସିଥିବା ଦେଖାଯାଉଥିବା ପ୍ରତ୍ୟେକ ପେମେଣ୍ଟକୁ ଟିକ୍ କରନ୍ତୁ। ଏହା ବ୍ୟାଙ୍କ ବାଲାନ୍ସ ନୁହେଁ।"},"upi.all":{"en":"All {n} received · {amount}","hi":"सभी {n} आ गए · {amount}","or":"ସବୁ {n}ଟି ଆସିଗଲା · {amount}"},"section.upi_sales":{"en":"UPI sales","hi":"UPI बिक्री","or":"UPI ବିକ୍ରି"},"working.udhar_collected_upi":{"en":"Udhar collected by UPI","hi":"UPI से उधार वसूली","or":"UPI ରେ ଉଧାର ଆଦାୟ"},"upi.status.partly_checked":{"en":"{done} of {n} UPI payments checked","hi":"{n} में से {done} UPI भुगतान जाँचे गए","or":"{n} ରୁ {done} UPI ପେମେଣ୍ଟ ଯାଞ୍ଚ ହେଲା"},"upi.status.checked":{"en":"All UPI payments checked","hi":"सभी UPI भुगतान जाँचे गए","or":"ସବୁ UPI ପେମେଣ୍ଟ ଯାଞ୍ଚ ହେଲା"},"upi.title":{"en":"UPI check","hi":"UPI जाँच","or":"UPI ଯାଞ୍ଚ"},"adjustment.rounding_given":{"en":"Chhutta: gave extra change","hi":"छुट्टा: ज़्यादा लौटाया","or":"ଖୁଚୁରା: ଅଧିକ ଫେରାଇଲି"},"adjust.none":{"en":"None today","hi":"आज कोई नहीं","or":"ଆଜି କିଛି ନାହିଁ"},"adjust.title":{"en":"Adjustments","hi":"समायोजन","or":"ସମନ୍ୱୟ"},"adjust.add":{"en":"Add adjustment","hi":"समायोजन जोड़ें","or":"ସମନ୍ୱୟ ଯୋଡ଼ନ୍ତୁ"},"working.opening_cash":{"en":"Cash you started with","hi":"शुरू का नकद","or":"ଆରମ୍ଭର ନଗଦ"},"working.cash_sales":{"en":"Cash sales","hi":"नकद बिक्री","or":"ନଗଦ ବିକ୍ରି"},"working.udhar_collected_cash":{"en":"Udhar collected in cash","hi":"नकद में उधार वसूली","or":"ନଗଦରେ ଉଧାର ଆଦାୟ"},"working.cash_purchase":{"en":"Purchases paid in cash","hi":"नकद में खरीद","or":"ନଗଦରେ କିଣା"},"working.cash_expenses":{"en":"Expenses paid in cash","hi":"नकद में खर्च","or":"ନଗଦରେ ଖର୍ଚ୍ଚ"},"working.cash_party_payment":{"en":"Paid to suppliers in cash","hi":"नकद में आपूर्तिकर्ता को","or":"ନଗଦରେ ଯୋଗାଣକାରୀଙ୍କୁ"},"working.withdrawal_cash":{"en":"Cash you took","hi":"आपने लिया नकद","or":"ଆପଣ ନେଇଥିବା ନଗଦ"},"t11.counted":{"en":"You counted","hi":"आपने गिना","or":"ଆପଣ ଗଣିଲେ"},"t11.title":{"en":"Count the cash","hi":"नकद गिनें","or":"ନଗଦ ଗଣନ୍ତୁ"},"t11.expected":{"en":"Should be","hi":"होना चाहिए","or":"ରହିବା ଉଚିତ"},"common.save":{"en":"Save","hi":"सहेजें","or":"ସଞ୍ଚୟ କରନ୍ତୁ"},"refusal.title":{"en":"Not saved","hi":"सहेजा नहीं गया","or":"ସଞ୍ଚୟ ହେଲା ନାହିଁ"},"refusal.amount":{"en":"Type an amount first.","hi":"पहले रकम लिखें।","or":"ପ୍ରଥମେ ରାଶି ଲେଖନ୍ତୁ।"},"t12.difference":{"en":"Difference","hi":"अंतर","or":"ପାର୍ଥକ୍ୟ"},"working.cash_short":{"en":"Cash short (loss)","hi":"नकद कम (नुकसान)","or":"ନଗଦ କମ୍ (କ୍ଷତି)"},"working.cash_excess":{"en":"Cash extra (income)","hi":"नकद ज़्यादा (आय)","or":"ନଗଦ ଅଧିକ (ଆୟ)"},"t12.check.prompt":{"en":"Before you record this, check two things:","hi":"दर्ज करने से पहले दो चीज़ें जाँचें:","or":"ଲେଖିବା ପୂର୍ବରୁ ଦୁଇଟି କଥା ଯାଞ୍ଚ କରନ୍ତୁ:"},"t12.check.payments":{"en":"1. Open your UPI or payment app. Is every payment there written here too - as UPI, not as cash?","hi":"1. अपना UPI या पेमेंट ऐप खोलें। क्या वहाँ का हर भुगतान यहाँ भी लिखा है - UPI में, नकद में नहीं?","or":"1. ଆପଣଙ୍କ UPI ବା ପେମେଣ୍ଟ ଆପ୍ ଖୋଲନ୍ତୁ। ସେଠାର ପ୍ରତ୍ୟେକ ପେମେଣ୍ଟ ଏଠାରେ ବି ଲେଖାଯାଇଛି କି - UPI ରେ, ନଗଦରେ ନୁହେଁ?"},"t12.check.count":{"en":"2. Count the cash in the drawer again.","hi":"2. दराज़ का नकद फिर से गिनें।","or":"2. ଡ୍ରୟରର ନଗଦ ପୁଣି ଗଣନ୍ତୁ।"},"t12.recount":{"en":"Count again","hi":"फिर से गिनें","or":"ପୁଣି ଗଣନ୍ତୁ"},"t12.markLoss":{"en":"Still short - record as today's loss","hi":"अब भी कम है - आज का नुकसान दर्ज करें","or":"ଏବେ ବି କମ୍ - ଆଜିର କ୍ଷତି ଭାବେ ଲେଖନ୍ତୁ"},"t12.reasonPrompt":{"en":"What do you think happened?","hi":"आपको क्या लगता है हुआ?","or":"ଆପଣ ଭାବୁଛନ୍ତି କଣ ହୋଇଛି?"},"t12.reason.sale":{"en":"Forgot to write a sale","hi":"कोई बिक्री लिखना भूल गया","or":"ଗୋଟିଏ ବିକ୍ରି ଲେଖିବାକୁ ଭୁଲିଗଲି"},"t12.reason.miscount":{"en":"Counted wrong","hi":"गिनती में गलती","or":"ଗଣିବାରେ ଭୁଲ"},"t12.reason.unknown":{"en":"Don't know","hi":"पता नहीं","or":"ଜାଣିନାହିଁ"},"t12.title":{"en":"The difference","hi":"अंतर","or":"ପାର୍ଥକ୍ୟ"},"t13.matches":{"en":"It matches.","hi":"यह मिल गया।","or":"ଏହା ମିଶିଲା।"},"t13.everyRupee":{"en":"Every rupee in the box is in the book.","hi":"बॉक्स का हर रुपया किताब में है।","or":"ବାକ୍ସର ପ୍ରତ୍ୟେକ ଟଙ୍କା ବହିରେ ଅଛି।"},"t13.carry":{"en":"This becomes tomorrow's opening cash.","hi":"यही कल का शुरुआती नकद बनेगा।","or":"ଏହା ଆସନ୍ତାକାଲିର ଆରମ୍ଭ ନଗଦ ହେବ।"},"t13.title":{"en":"Cash check","hi":"नकद जाँच","or":"ନଗଦ ଯାଞ୍ଚ"},"t14.profit":{"en":"Estimated profit","hi":"अनुमानित लाभ","or":"ଆନୁମାନିକ ଲାଭ"},"t14.netSales":{"en":"Net sales","hi":"कुल बिक्री","or":"ମୋଟ ବିକ୍ରି"},"t14.purchases":{"en":"Purchase · all modes","hi":"खरीद · सभी तरीके","or":"କିଣା · ସବୁ ମାଧ୍ୟମ"},"t14.expenses":{"en":"Expenses · all modes","hi":"खर्च · सभी तरीके","or":"ଖର୍ଚ୍ଚ · ସବୁ ମାଧ୍ୟମ"},"p1.toCollect":{"en":"Udhar to collect","hi":"वसूली बाकी","or":"ଆଦାୟ ବାକି"},"t14.withdrawal":{"en":"Personal withdrawal","hi":"निजी निकासी","or":"ବ୍ୟକ୍ତିଗତ ଉଠାଣ"},"t14.withdrawalNote":{"en":"Money you took is shown separately and is not counted against profit.","hi":"आपने जो लिया वह अलग दिखाया है और लाभ में से नहीं घटाया।","or":"ଆପଣ ନେଇଥିବା ଟଙ୍କା ଅଲଗା ଦେଖାଯାଇଛି ଏବଂ ଲାଭରୁ ହଟାଯାଇନାହିଁ।"},"t14.cashCheck":{"en":"Cash check","hi":"नकद जाँच","or":"ନଗଦ ଯାଞ୍ଚ"},"t14.expected":{"en":"Expected","hi":"अपेक्षित","or":"ଆଶା କରାଯାଇଥିବା"},"t14.counted":{"en":"Counted","hi":"गिना गया","or":"ଗଣାଯାଇଛି"},"t12.reason.loss":{"en":"Loss for the day","hi":"आज का नुकसान","or":"ଆଜିର କ୍ଷତି"},"t14.profitAfterCash":{"en":"Profit after cash difference","hi":"नकद अंतर के बाद लाभ","or":"ନଗଦ ପାର୍ଥକ୍ୟ ପରେ ଲାଭ"},"t14.title":{"en":"Day closed","hi":"दिन बंद हुआ","or":"ଦିନ ବନ୍ଦ ହେଲା"},"sync.waitingLong":{"en":"{n} waiting to send. Safe on this phone; it goes when the network is back.","hi":"{n} भेजना बाकी। इस फ़ोन में सुरक्षित है; नेटवर्क आने पर चला जाएगा।","or":"{n} ପଠାଇବା ବାକି। ଏହି ଫୋନରେ ସୁରକ୍ଷିତ; ନେଟୱର୍କ ଆସିଲେ ଚାଲିଯିବ।"},"t14.done":{"en":"Done","hi":"हो गया","or":"ହୋଇଗଲା"},"section.cash_sales":{"en":"Cash sales","hi":"नकद बिक्री","or":"ନଗଦ ବିକ୍ରି"},"section.udhar_sales":{"en":"Credit sales","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"section.purchase":{"en":"Purchases","hi":"खरीद","or":"କିଣା"},"section.expense":{"en":"Expenses","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"section.udhar_collection":{"en":"Udhar collected","hi":"उधार वसूली","or":"ଉଧାର ଆଦାୟ"},"section.party_payment":{"en":"Paid to suppliers","hi":"आपूर्तिकर्ता को भुगतान","or":"ଯୋଗାଣକାରୀଙ୍କୁ ଦିଆଗଲା"},"section.withdrawal":{"en":"Taken by owner","hi":"मालिक ने लिया","or":"ମାଲିକ ନେଇଛନ୍ତି"},"t5.title":{"en":"Day close","hi":"दिन बंद","or":"ଦିନ ବନ୍ଦ"},"t5.next":{"en":"Enter {section}","hi":"{section} दर्ज करें","or":"{section} ଲେଖନ୍ତୁ"},"t5.openCheck":{"en":"Open cash check","hi":"नकद जाँच खोलें","or":"ନଗଦ ଯାଞ୍ଚ ଖୋଲନ୍ତୁ"},"t1.stale.body":{"en":"This book is still open for {date}. Close it to start today.","hi":"यह बही अभी {date} के लिए खुली है। आज शुरू करने के लिए इसे बंद करें।","or":"ଏହି ଖାତା ଏବେ ବି {date} ପାଇଁ ଖୋଲା ଅଛି। ଆଜି ଆରମ୍ଭ କରିବାକୁ ଏହାକୁ ବନ୍ଦ କରନ୍ତୁ।"},"common.error":{"en":"Could not open this. Nothing you entered is lost.","hi":"यह नहीं खुल सका। आपका दर्ज किया कुछ भी नहीं गया।","or":"ଏହା ଖୋଲିପାରିଲା ନାହିଁ। ଆପଣ ଲେଖିଥିବା କିଛି ହଜିନାହିଁ।"},"common.retry":{"en":"Try again","hi":"फिर कोशिश करें","or":"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"},"adjustment.counterfeit_note":{"en":"Fake note received","hi":"नकली नोट मिला","or":"ନକଲି ନୋଟ ମିଳିଲା"},"adjust.effect.counterfeit_note":{"en":"Takes it off expected cash and off profit.","hi":"अपेक्षित नकद और लाभ दोनों से घटता है।","or":"ଆଶା କରାଯାଇଥିବା ନଗଦ ଓ ଲାଭ ଦୁଇଟିରୁ କମେ।"},"adjustment.rounding_kept":{"en":"Chhutta: customer left the change","hi":"छुट्टा: ग्राहक ने छोड़ दिया","or":"ଖୁଚୁରା: ଗ୍ରାହକ ଛାଡ଼ିଦେଲେ"},"adjustment.home_use":{"en":"Goods taken for home (at cost)","hi":"घर के लिए लिया सामान (खरीद दाम पर)","or":"ଘର ପାଇଁ ନେଇଥିବା ଜିନିଷ (କିଣା ଦରରେ)"},"adjustment.stock_written_off":{"en":"Damaged or expired stock thrown away","hi":"खराब या एक्सपायर सामान फेंका","or":"ଖରାପ କିମ୍ବା ମିଆଦ ସରିଥିବା ଜିନିଷ ଫିଙ୍ଗିଲି"},"t19.title":{"en":"Adjustment","hi":"समायोजन","or":"ସମନ୍ୱୟ"},"t19.type":{"en":"What happened?","hi":"क्या हुआ?","or":"କଣ ହେଲା?"},"t19.amount":{"en":"Amount","hi":"रकम","or":"ପରିମାଣ"},"t19.save":{"en":"Save adjustment","hi":"समायोजन सहेजें","or":"ସମନ୍ୱୟ ସାଇତନ୍ତୁ"}};</script>
+<script>/* Mitra screen kit. Copy comes from window.STRINGS (extracted from apps/mobile/src/i18n/strings.ts by build.mjs, verbatim). Keys that do not exist yet are written K.N('English text') and are listed as NEW. Money is integer paise; the browser formatting mirrors formatPaise (Indian grouping, 2 decimals, sign always printed). */
+(function () {
+  'use strict';
+  var K = (window.K = {});
+  var SPEC = (window.SPEC = window.SPEC || {});
+  var LANGS = { en: 'en', od: 'or', hi: 'hi' };
+  var S = { lang: 'od', theme: 'comfort', size: 1 };
+  var USED = {}; var NEWC = {}; var curFrame = '';
+  K.state = S;
+
+  /* ---- copy ---- */
+  K.t = function (key, vars) {
+    var p = window.STRINGS[key];
+    if (!p) { return '<span class="newc" title="MISSING KEY ' + key + '">' + key + '</span>'; }
+    (USED[curFrame] = USED[curFrame] || {})[key] = 1;
+    var s = p[LANGS[S.lang]];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : '{' + k + '}'; });
+    return s;
+  };
+  K.N = function (en, hint) {
+    (NEWC[curFrame] = NEWC[curFrame] || {})[en] = hint || '';
+    return '<span class="newc" title="NEW string: no od/hi yet (H13)">' + en + '</span>';
+  };
+  K.plain = function (key, vars) { return K.t(key, vars); };
+  K.pick = function (en, od, hi) { return S.lang === 'en' ? en : (S.lang === 'od' ? od : hi); }; /* proper names only */
+
+  /* ---- money ---- */
+  K.rupee = function (p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100, s = String(r);
+    if (s.length > 3) { var l3 = s.slice(-3), rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + l3; }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  };
+  /* o.sign: print + on positives; o.out: an out-line (always -); o.tone:'dir' colours by direction (sign is always printed too) */
+  K.M = function (p, o) {
+    o = o || {}; var neg = o.out || p < 0, sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + K.rupee(p) + '</span>';
+  };
+
+  /* ---- icons (stroke, 24 grid) ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.6 14.4 9 14.4L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.5-3.5M12 12l3.5-3.5"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 5l-7 7 7 7"/>', bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>', up: '<path d="M12 5v14M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 5a3.5 3.5 0 0 1 0 7M19 20c0-2.500-1.500-4-3-4.700"/>',
+    warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    cloudoff: '<path d="M7 18h10a4 4 0 0 0 .8-7.900A6 6 0 0 0 6.500 9.500 4 4 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+    share: '<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 11l7.400-4M8.300 13l7.400 4"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    textsize: '<path d="M3 19L8 6l5 13M5 15h6M15 19l3.500-8 3.500 8M16.200 16.500h4.600"/>', shield: '<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', edit: '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>', logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+    sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>', swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    wa: '<path d="M4 20l1.500-4.500A8 8 0 1 1 8.500 18.500z"/><path d="M9 9c0 3 3 6 6 6l1.500-1.500-2-1-1 1c-1-.5-2-1.500-2.500-2.500l1-1-1-2z"/>',
+    star: '<path d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/>', pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+    bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+  K.ico = function (n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICO[n] || ICO.dots) + '</svg>';
+  };
+
+  /* ---- components: each returns an HTML string ---- */
+  K.chip = function (kind, n) {
+    if (kind === 'wait') { var s = K.t('sync.waiting', { n: n || 3 }); return '<button class="chip wait" aria-label="' + s + '">' + K.ico('clock', 22) + '<span>' + s + '</span></button>'; }
+    if (kind === 'off') { return '<button class="chip wait">' + K.ico('cloudoff', 22) + '<span>' + K.N('Offline') + '</span></button>'; }
+    return '<button class="chip ok">' + K.ico('check', 22) + '<span>' + K.t('sync.saved') + '</span></button>';
+  };
+  K.top = function (o) { /* {title, back, right, shop, date} */
+    var l = o.back ? '<button class="back" aria-label="' + K.t('common.back') + '">' + K.ico('back', 28) + '</button>' : '';
+    var mid = o.shop ? '<div class="shop"><div class="sn">' + o.shop + '</div><div class="dt">' + (o.date || '') + '</div></div>' : '<h1>' + (o.title || '') + '</h1>';
+    return '<header class="top">' + l + mid + '<div class="grow"></div>' + (o.right || '') + '</header>';
+  };
+  K.tabs = function (active) {
+    var d = [['today', 'box', K.t('nav.today')], ['parties', 'book', K.t('nav.parties')], ['reports', 'bars', K.t('nav.reports')]];
+    return '<nav class="tabs">' + d.map(function (x) { return '<button class="tab' + (x[0] === active ? ' on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + K.ico(x[1], 26) + '<span>' + x[2] + '</span></button>'; }).join('') + '</nav>';
+  };
+  K.tile = function (kind, icon, label, off) { return '<button class="tile t-' + kind + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : '') + '><span class="ti">' + K.ico(icon, 30) + '</span><span>' + label + '</span></button>'; };
+  K.tiles = function (off) {
+    return '<section class="tiles">' + K.tile('sale', 'coin', K.t('act.sale'), off) + K.tile('udhar', 'book', K.t('act.credit'), off) + K.tile('collect', 'tray', K.t('act.collect'), off) + K.tile('expense', 'receipt', K.t('act.expense'), off) + K.tile('more', 'dots', K.t('t1.more'), off) + '</section>';
+  };
+  K.hero = function (o) { /* {box, opening, cashIn, cashOut} paise */
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + K.t('box.title') + '</span></div><div class="fig">' + K.M(o.box, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.t('box.opening') + '</span>' + K.M(o.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + K.ico('down', 20, 'dirico') + K.t('box.in') + '</span>' + K.M(o.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + K.ico('up', 20, 'dirico') + K.t('box.out') + '</span>' + K.M(o.cashOut, { out: true, tone: 'dir' }) + '</div></section>';
+  };
+  K.facts = function (sales, collect) {
+    return '<section class="facts"><div class="ln"><span class="k">' + K.t('box.sales') + '</span>' + K.M(sales) + '</div><button class="ln link"><span class="k">' + K.t('t1.toCollect') + '</span>' + K.M(collect) + '</button></section>';
+  };
+  K.bar = function (done, total) { var h = '<div class="bar" role="img" aria-label="' + done + '/' + total + '">'; for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.closecard = function (done, total, quiet, label) {
+    return '<button class="closecard' + (quiet ? ' quiet2' : '') + '"><span class="cc-main"><span class="cc-t">' + (label || K.t('t1.continueClose')) + '</span><span>' + K.t('t1.progress', { done: done, total: total }) + '</span></span>' + K.bar(done, total) + '<span class="cc-c">' + K.ico('chev', 26) + '</span></button>';
+  };
+  K.seg = function (items, on, icons) { /* items: label html[]; on: index */
+    return '<div class="seg" role="radiogroup">' + items.map(function (l, i) { return '<button class="sg-b' + (i === on ? ' on' : '') + '" role="radio" aria-checked="' + (i === on) + '">' + (i === on ? K.ico('tick', 22) : (icons && icons[i] ? K.ico(icons[i], 22) : '')) + '<span>' + l + '</span></button>'; }).join('') + '</div>';
+  };
+  K.keypad = function (hidden) {
+    var k = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (x) { return '<button class="key">' + x + '</button>'; });
+    k.push('<button class="key aux">' + K.t('keypad.clear') + '</button>'); k.push('<button class="key">0</button>'); k.push('<button class="key aux" aria-label="' + K.t('keypad.delete') + '">' + K.ico('bksp', 30) + '</button>');
+    return '<div class="kp' + (hidden ? ' hidden' : '') + '">' + k.join('') + '</div>';
+  };
+  K.addbar = function (label, paise, dis) { return '<button class="addbar' + (dis ? ' dis' : '') + '"' + (dis ? ' aria-disabled="true"' : '') + '><span>' + label + '</span>' + (paise ? K.M(paise) : '') + '</button>'; };
+  K.primary = function (label, kind, icon) { return '<button class="primary' + (kind ? ' ' + kind : '') + '"' + (kind === 'dis' ? ' aria-disabled="true"' : '') + '>' + (icon ? K.ico(icon, 26) : '') + '<span>' + label + '</span></button>'; };
+  K.btn2 = function (label, icon) { return '<button class="btn2">' + (icon ? K.ico(icon, 24) : '') + '<span>' + label + '</span></button>'; };
+  K.quiet = function (label) { return '<button class="quiet">' + label + '</button>'; };
+  K.sticky = function () { return '<div class="sticky">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.scroll = function () { return '<div class="scroll">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.stack = function () { return '<div class="stack">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.row = function (o) { /* {state:'done'|'next'|'open'|'skip'|'lock', n, name, sub, paise, entries, quiet} */
+    var mk = o.state === 'done' ? K.ico('tick', 22) : o.state === 'skip' ? K.ico('dash', 22) : o.state === 'lock' ? K.ico('lock', 22) : '<b>' + (o.n || '') + '</b>';
+    var rv = o.paise !== undefined ? '<span class="rv">' + K.M(o.paise) + (o.entries ? '<small>' + o.entries + '</small>' : '') + '</span>' : '';
+    return '<li class="row ' + o.state + (o.cls ? ' ' + o.cls : '') + '"><span class="mk">' + mk + '</span><span class="nm">' + o.name + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' + rv + (o.quiet ? K.quiet(o.quiet) : '') + '</li>';
+  };
+  K.lrow = function (icon, title, sub, o) { o = o || {}; return '<button class="lrow' + (o.danger ? ' danger' : '') + '"><span class="li">' + K.ico(icon, 24) + '</span><span class="lt"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (o.right || '') + (o.noChev ? '' : K.ico('chev', 24)) + '</button>'; };
+  K.sw = function (on, title, sub) { return '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"><span class="tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + K.N(on ? 'On' : 'Off', 'switch state words (DS-V2 3.14); consent screens may use their existing allow/withdraw wording') + '</span></span></button>'; };
+  K.field = function (label, value, o) { o = o || {}; return '<div class="field"><label>' + label + '</label><div class="in' + (o.focus ? ' focus' : '') + (o.err ? ' err' : '') + '">' + (value ? '<span>' + value + '</span>' : '<span class="ph">' + (o.ph || '') + '</span>') + (o.focus ? '<i class="caret"></i>' : '') + '</div>' + (o.help ? '<div class="help' + (o.err ? ' err' : '') + '">' + o.help + '</div>' : '') + '</div>'; };
+  K.avatar = function (name, i) { return '<span class="av av' + ((i || 0) % 5) + '">' + Array.from(name)[0] + '</span>'; };
+  K.prow = function (name, i, sub, paise, state) { return '<li><button class="prow">' + K.avatar(name, i) + '<span class="pn"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="pa">' + K.M(paise) + '<em>' + state + '</em></span></button></li>'; };
+  K.banner = function (kind, icon, text, action) { return '<div class="banner ' + (kind || '') + '" role="status">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span>' + (action ? K.quiet(action) : '') + '</div>'; };
+  K.refuse = function (title, body) { return '<div class="refuse" role="alert">' + K.ico('warn', 24) + '<div><b>' + title + '</b><br>' + body + '</div></div>'; };
+  K.refbanner = function (title, body, nn) { return '<div class="refbanner' + (nn ? ' nn' : '') + '" role="alert"><b>' + title + '</b><br>' + body + '</div>'; };
+  K.empty = function (icon, text, ctaLabel, ctaIcon) { return '<div class="empty"><div class="ei">' + K.ico(icon, 44) + '</div><p>' + text + '</p>' + (ctaLabel ? K.primary(ctaLabel, '', ctaIcon) : '') + '</div>'; };
+  K.skel = function (n) { var h = '<div class="skel" aria-busy="true">'; for (var i = 0; i < (n || 4); i++) h += '<i></i>'; return h + '</div>'; };
+  K.sheet = function (title, inner) { return '<div class="scrim"></div><div class="sheet" role="dialog"><h2>' + title + '</h2><div class="scroll">' + inner + '</div></div>'; };
+  K.dialog = function (title, inner) { return '<div class="scrim"></div><div class="dialog" role="alertdialog"><h2>' + title + '</h2>' + inner + '</div>'; };
+  K.toast = function (icon, text) { return '<div class="toast" role="status">' + K.ico(icon || 'check', 24) + '<span>' + text + '</span></div>'; };
+  K.center = function (inner) { return '<div class="center">' + inner + '</div>'; };
+  K.dots = function (i, n) { var h = '<div class="dots">'; for (var k = 0; k < n; k++) h += '<i class="' + (k === i ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.otp = function (digits, cur) { var h = '<div class="otp">'; for (var i = 0; i < 6; i++) h += '<i class="' + (i === cur ? 'cur' : '') + '">' + (digits[i] || '') + '</i>'; return h + '</div>'; };
+  K.sec = function (t) { return '<div class="sec">' + t + '</div>'; };
+  K.list = function (rows) { return '<ul class="rows">' + rows.join('') + '</ul>'; };
+  K.names = { ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'], lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ'] };
+  K.nm = function (id) { return K.names[id][S.lang === 'en' ? 0 : 1]; }; /* demo names only; real names are user data, shown as typed */
+  K.shop = 'Subhadra Kirana';
+  K.date = function () { return K.t('t1.day.4') + ' 19 ' + K.t('t1.month.11'); };
+  K.screen = function (inner) { return inner; };
+
+  /* build.mjs runs the specs in Node (lang en) to write FLOWS.md from the very same mockup bodies */
+  K.frame = function (id) { curFrame = id; };
+  K.used = function (id) { return Object.keys(USED[id] || {}); };
+  K.newc = function (id) { return Object.keys(NEWC[id] || {}); };
+
+  /* ---- page ---- */
+  function frameHtml(sc) {
+    return '<div class="fwrap"><h3>' + sc.route + '</h3><div class="bezel"><div class="screen" id="fr-' + sc.id + '"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div>';
+  }
+  function noteHtml(sc) {
+    var used = Object.keys(USED[sc.id] || {}), nw = Object.keys(NEWC[sc.id] || {});
+    var flag = sc.flag === 'NEW' ? '<span class="tag new">NEW screen</span>' : sc.flag === 'CHG' ? '<span class="tag chg">Changed</span>' : '<span class="tag">Exists today</span>';
+    var dl = function (k, v) { return v ? '<dt>' + k + '</dt><dd>' + v + '</dd>' : ''; };
+    return '<div class="note"><h3>' + flag + sc.title + '</h3><dl>' + dl('Route', '<code>' + sc.route + '</code>') + dl('Purpose', sc.purpose) + dl('Primary action', sc.primary) + dl('Taps / target', sc.taps) + dl('Rules held', sc.rules) + dl('States / notes', sc.notes) + dl('For Saket to review', sc.review) + dl('Copy gaps (en only)', nw.length ? nw.map(function (x) { return '"' + x + '"'; }).join(' · ') + ' (od/hi DRAFT needed, H13)' : '') + '</dl><div class="keys"><b>Keys used:</b> ' + (used.length ? used.join(', ') : 'none') + '</div></div>';
+  }
+  function renderBodies(scr) { scr.forEach(function (sc) { curFrame = sc.id; var el = document.getElementById('fr-' + sc.id); var app = el.querySelector('.app'); var prev = app.querySelector('.scroll'); var top = prev ? prev.scrollTop : 0; app.innerHTML = sc.body(); var s2 = app.querySelector('.scroll'); if (s2) s2.scrollTop = top; }); }
+  function renderNotes(scr) { scr.forEach(function (sc) { document.getElementById('note-' + sc.id).innerHTML = noteHtml(sc); }); }
+  K.boot = function () {
+    var area = SPEC.area, scr = area.screens;
+    document.title = 'SWAFTO Retail Desk - Mitra - ' + area.title;
+    var q = function (id) { return document.getElementById(id); };
+    q('area-title').textContent = area.title + ' (' + scr.length + ' screen states)'; q('area-intro').innerHTML = area.intro;
+    q('toc').innerHTML = scr.map(function (s) { return '<a href="#c-' + s.id + '"' + (s.flag === 'NEW' ? ' class="new"' : '') + '>' + s.title + '</a>'; }).join('');
+    q('stage').innerHTML = scr.map(function (sc) { return '<section class="card" id="c-' + sc.id + '">' + frameHtml(sc) + '<div class="note" id="note-' + sc.id + '"></div></section>'; }).join('');
+    function all() { document.documentElement.lang = S.lang === 'od' ? 'or' : S.lang; document.body.setAttribute('data-lang', S.lang); document.body.setAttribute('data-theme', S.theme); document.body.style.setProperty('--z', S.size); document.body.style.setProperty('--zc', Math.min(S.size, 1.5)); USED = {}; NEWC = {}; renderBodies(scr); renderNotes(scr); }
+    [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { S.lang = b.getAttribute('data-lang-btn'); [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) { b.addEventListener('click', function () { S.theme = b.getAttribute('data-theme-btn'); [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (b) { b.addEventListener('click', function () { S.size = parseFloat(b.getAttribute('data-size-btn')); [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    all();
+  };
+})();
+</script>
+<script>/* AREA: Day close, end to end (T5 list, UPI check, adjustments, T19, T11 count, T13 balanced, T12 difference, closing, T14 closed).
+   Demo day, all integer paise and consistent across frames:
+   opening 1200000; cash sales +720000; udhar collected in cash +215000; cash purchase -150000; cash expenses -40000;
+   paid to suppliers -60000; owner took -40000  =>  should be 1845000 (D2: the 145000 of UPI receipts moves no cash).
+   Net sales 827000 (cash 720000 + UPI 107000), purchases 150000, expenses 40000 => estimated profit 637000 (withdrawal outside, D3).
+   Short case: counted 1815000, difference -30000, profit after cash difference 607000. Over case: counted 1870000, +25000. */
+(function () {
+  var t = K.t, M = K.M;
+  var EXPECTED = 1845000;
+  var UPI_ALL = 145000;
+
+  function top(title, chip) { return K.top({ title: title, back: true, right: chip || K.chip('ok') }); }
+  function card(title, inner) {
+    return '<section style="margin:8px 12px 0;padding:8px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px">' +
+      (title ? '<div style="font-weight:700;padding:4px 0">' + title + '</div>' : '') + inner + '</section>';
+  }
+  function ln(label, right) { return '<div class="ln" style="border-top:2px dashed var(--rule);min-height:48px"><span class="k">' + label + '</span>' + right + '</div>'; }
+  function para(txt, bold) { return '<p style="padding:8px 16px 0;line-height:1.5' + (bold ? ';font-weight:700' : '') + '">' + txt + '</p>'; }
+  function radio(on, label) {
+    return '<button class="lrow" role="radio" aria-checked="' + on + '" style="' + (on ? 'border-color:var(--act);background:var(--t1bg)' : '') + '"><span class="li">' + K.ico(on ? 'tick' : 'dash', 24) + '</span><span class="lt"><b>' + label + '</b></span></button>';
+  }
+  function hint() { return '<div style="text-align:center;color:var(--muted);line-height:1.4;padding:0 6px">' + K.N('Choose an answer above to close the day.', 'why Close the day is greyed') + '</div>'; }
+  function dateTxt(old) { return old ? t('t1.day.3') + ' 18 ' + t('t1.month.11') : K.date(); }
+
+  /* ---- T5 pieces ---- */
+  function prog(done, skipped, old) {
+    return '<div class="prog"><div class="pt"><b style="font-size:1.235em">' + t('t5.done', { done: done, total: 10 }) + '</b>' +
+      (skipped ? '<small>' + t('t5.skippedCount', { n: skipped }) + '</small>' : '') +
+      '<small>' + dateTxt(old) + ' · ' + K.shop + '</small></div>' + K.bar(done, 10) + '</div>';
+  }
+  function entriesTxt(n) { return n === 1 ? t('t5.entry') : t('t5.entries', { n: n }); }
+  function doneRow(name, paise, n) { return K.row({ state: 'done', name: name, sub: t('state.entered') + ' · ' + entriesTxt(n), paise: paise }); }
+  function openRow(num, name, isNext) { return K.row({ state: isNext ? 'next' : 'open', n: num, name: name, sub: t('state.untouched'), quiet: t('t5.nothingToday') }); }
+  function skipRow(name) { return K.row({ state: 'skip', name: name, sub: t('state.skipped'), quiet: t('t5.undo') }); }
+  function openingRow() { return K.row({ state: 'done', name: t('t6.title'), sub: t('t5.openingStep'), paise: 1200000 }); }
+  function lockRows(firstName) {
+    return K.row({ state: 'lock', name: t('t5.cashCheck'), sub: t('t5.locked') + (firstName ? ' · ' + t('t5.lockLine', { section: firstName }) : '') }) +
+      K.row({ state: 'lock', name: t('t1.closeDay'), sub: t('t5.locked') + ' · ' + t('t5.closeLocked') });
+  }
+  function checkRow() { return '<li class="row next"><button class="row tap" style="margin:0;border:0;background:transparent;width:100%;padding:0"><span class="mk"><b>10</b></span><span class="nm">' + t('t5.cashCheck') + '<small>' + t('t5.countBox') + '</small></span></button></li>'; }
+  function pinned(label) { return K.sticky(K.primary(label, '', 'chev')); }
+
+  /* ---- UPI and adjustments cards ---- */
+  function receipt(label, paise, actions) {
+    return '<div class="ln" style="border-top:2px dashed var(--rule);min-height:64px;gap:6px"><span style="flex:1;display:flex;flex-direction:column;line-height:1.4"><span>' + label + '</span>' + M(paise) + '</span>' + (actions ? K.btn2(t('upi.tick'), 'check') : '') + '</div>';
+  }
+  function upiCard(mode, actions) {
+    var h, body = '';
+    if (mode === 'not') {
+      h = '<div style="padding:2px 0 6px;font-weight:700">' + K.ico('info', 22) + ' ' + t('upi.status.not_checked') + '</div>' + ln(t('upi.expected'), M(UPI_ALL)) + ln(t('upi.confirmed'), M(0));
+      if (actions) body = '<p style="padding:8px 0 6px;color:var(--muted);line-height:1.4">' + t('upi.note') + '</p>' + K.primary(t('upi.all', { n: 3, amount: K.rupee(UPI_ALL) }), 'tonal') +
+        receipt(t('section.upi_sales'), 45000, true) + receipt(t('section.upi_sales'), 62000, true) + receipt(t('working.udhar_collected_upi'), 38000, true);
+    } else if (mode === 'part') {
+      h = '<div style="padding:2px 0 6px;font-weight:700">' + K.ico('clock', 22) + ' ' + t('upi.status.partly_checked', { done: 1, n: 3 }) + '</div>' + ln(t('upi.expected'), M(UPI_ALL)) + ln(t('upi.confirmed'), M(45000));
+      if (actions) body = '<p style="padding:8px 0 6px;color:var(--muted);line-height:1.4">' + t('upi.note') + '</p>' + K.primary(t('upi.all', { n: 2, amount: K.rupee(100000) }), 'tonal') +
+        receipt(t('section.upi_sales'), 62000, true) + receipt(t('working.udhar_collected_upi'), 38000, true);
+    } else {
+      h = '<div style="padding:2px 0 6px;font-weight:700">' + K.ico('check', 22) + ' ' + t('upi.status.checked') + '</div>' + ln(t('upi.expected'), M(UPI_ALL)) + ln(t('upi.confirmed'), M(UPI_ALL));
+    }
+    return card(t('upi.title'), h + body);
+  }
+  function adjCard(list, open) {
+    var inner = list ? ln(t('adjustment.rounding_given'), M(2000)) : '<p style="padding:2px 0 6px;color:var(--muted);line-height:1.4">' + t('adjust.none') + '</p>';
+    return card(t('adjust.title'), inner + (open ? '<div style="padding:6px 0 4px">' + K.primary(t('adjust.add'), 'tonal', 'plus') + '</div>' : ''));
+  }
+
+  /* ---- T11 ---- */
+  function working() {
+    return card('',
+      '<div class="ln" style="min-height:48px"><span class="k">' + t('working.opening_cash') + '</span>' + M(1200000) + '</div>' +
+      ln(t('working.cash_sales'), M(720000, { sign: true, tone: 'dir' })) +
+      ln(t('working.udhar_collected_cash'), M(215000, { sign: true, tone: 'dir' })) +
+      ln(t('working.cash_purchase'), M(150000, { out: true, tone: 'dir' })) +
+      ln(t('working.cash_expenses'), M(40000, { out: true, tone: 'dir' })) +
+      ln(t('working.cash_party_payment'), M(60000, { out: true, tone: 'dir' })) +
+      ln(t('working.withdrawal_cash'), M(40000, { out: true, tone: 'dir' })));
+  }
+  function counted(p) {
+    return '<div class="amt" style="flex-wrap:wrap;margin:8px 12px 0;padding:0 12px;border:2px solid var(--edge);border-radius:16px;background:var(--surface)"><span class="al">' + t('t11.counted') + '</span>' + M(p, { cls: 'amt-fig' }) + '</div>';
+  }
+  function countBody(p, refused) {
+    return top(t('t11.title')) +
+      '<div class="amt" style="flex-wrap:wrap;margin:0 12px;padding:0 4px;border-bottom:2px solid var(--rule)"><span class="al">' + t('t11.expected') + '</span>' + M(EXPECTED, { cls: 'amt-fig' }) + '</div>' +
+      K.scroll(working()) +
+      '<div style="flex:none">' + counted(p) + K.addbar(t('common.save'), 0, p === null) + K.keypad() + '</div>' +
+      (refused ? K.refbanner(t('refusal.title'), t('refusal.amount'), true) : '');
+  }
+
+  /* ---- T12 ---- */
+  function diffBody(kind, chosen) {
+    var short = kind === 'short', diff = short ? -30000 : 25000, cnt = short ? 1815000 : 1870000;
+    var hero = '<section class="hero" style="margin-top:8px"><div class="lbl"><span class="hi">' + K.ico(short ? 'down' : 'up', 28) + '</span><span>' + t('t12.difference') + '</span></div>' +
+      '<div class="fig">' + M(diff, { sign: true, tone: 'dir', cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.ico(short ? 'down' : 'up', 20, 'dirico') + (short ? t('working.cash_short') : t('working.cash_excess')) + '</span></div>' +
+      '<div class="ln"><span class="k">' + t('t11.expected') + '</span>' + M(EXPECTED) + '</div>' +
+      '<div class="ln"><span class="k">' + t('t11.counted') + '</span>' + M(cnt) + '</div></section>';
+    var ask = short
+      ? para(t('t12.check.prompt'), true) + para(t('t12.check.payments')) + para(t('t12.check.count')) +
+        '<div style="padding:10px 12px 0">' + K.btn2(t('t12.recount'), 'refresh') + '</div>' + '<div role="radiogroup">' + radio(chosen, t('t12.markLoss')) + '</div>'
+      : para(t('t12.reasonPrompt'), true) + '<div role="radiogroup">' + radio(chosen === 'sale', t('t12.reason.sale')) + radio(chosen === 'miscount', t('t12.reason.miscount')) + radio(chosen === 'unknown', t('t12.reason.unknown')) + '</div>';
+    var can = !!chosen;
+    return top(t('t12.title')) + K.scroll(hero, ask, upiCard('not', false)) +
+      K.sticky(can ? '' : hint(), K.primary(t('t1.closeDay'), can ? '' : 'dis', can ? '' : 'lock'));
+  }
+
+  /* ---- T13 ---- */
+  function balancedBody(busy) {
+    var match = '<section class="hero" style="margin-top:8px;text-align:center"><div style="width:72px;height:72px;margin:4px auto;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center">' + K.ico('check', 44) + '</div>' +
+      '<div style="font-size:1.6em;font-weight:700;line-height:1.3">' + t('t13.matches') + '</div><div class="fig">' + M(EXPECTED, { cls: 'hero-fig' }) + '</div>' +
+      '<div style="line-height:1.5;color:var(--muted)">' + t('t11.counted') + ' ' + M(EXPECTED) + ' · ' + t('t11.expected') + ' ' + M(EXPECTED) + '</div>' +
+      '<p style="padding-top:8px;line-height:1.5">' + t('t13.everyRupee') + '</p></section>';
+    var carry = card('', '<div class="ln" style="min-height:56px"><span class="k" style="flex:1;color:var(--muted)">' + t('t13.carry') + '</span>' + M(EXPECTED) + '</div>');
+    return top(t('t13.title')) + K.scroll(match, carry, upiCard('all', false)) +
+      K.sticky(busy ? K.primary(K.N('Closing the day', 'busy label while the day is being closed'), 'dis', 'clock') : K.primary(t('t1.closeDay'), '', 'lock'));
+  }
+
+  /* ---- T14 ---- */
+  function doneBody(chip, offline) {
+    var h = '<div class="lhero"><div class="h1"><span>' + t('t14.profit') + '</span><span class="big">' + M(637000, { cls: 'big' }) + '</span></div></div>';
+    var figs = card('',
+      '<div class="ln" style="min-height:48px"><span class="k">' + t('t14.netSales') + '</span>' + M(827000, { sign: true, tone: 'dir' }) + '</div>' +
+      ln(t('t14.purchases'), M(150000, { out: true, tone: 'dir' })) +
+      ln(t('t14.expenses'), M(40000, { out: true, tone: 'dir' })) +
+      ln(t('p1.toCollect'), M(2150000)));
+    var wd = card('', '<div class="ln" style="min-height:48px"><span class="k">' + t('t14.withdrawal') + '</span>' + M(40000, { out: true, tone: 'dir' }) + '</div>' +
+      '<p style="padding:6px 0;color:var(--muted);line-height:1.5">' + t('t14.withdrawalNote') + '</p>');
+    var cc = card(t('t14.cashCheck'),
+      '<div class="ln" style="min-height:48px"><span class="k">' + t('t14.expected') + '</span>' + M(EXPECTED) + '</div>' +
+      ln(t('t14.counted'), M(1815000)) +
+      ln(t('t12.difference') + ' · ' + t('t12.reason.loss'), M(-30000, { tone: 'dir', sign: true })) +
+      ln(t('t14.profitAfterCash'), M(607000, { tone: 'dir' })));
+    return top(t('t14.title'), chip) + K.scroll(offline ? K.banner('info', 'cloudoff', t('sync.waitingLong', { n: 3 })) : '', h, figs, wd, cc, upiCard('part', false)) +
+      K.sticky(K.primary(t('t14.done'), '', 'check'));
+  }
+
+  SPEC.area = {
+    title: 'Day close',
+    intro: 'The whole close, as one flow: the T5 list (opening cash counts as step 1, "nothing today" with a one-tap Undo, a locked cash check), the UPI check and typed adjustments cards, the T19 adjustment form, the cash count (T11) with its working, the balanced screen (T13), the difference screen (T12, reasons from a fixed list, no free text), the closing moment and the closed summary (T14). Demo day: should be ₹18,450.00 in the box. A UPI receipt never moves cash (D2); the withdrawal sits outside profit (D3); the actual UPI figure is the sum of receipts he ticks, never a bank balance.',
+    screens: [
+      {
+        id: 'close-start', route: 'T5', title: 'Day close list: just started, cash check locked', flag: 'EXISTS',
+        purpose: 'The day has opening cash and nothing else. He sees all the steps, which one is next, and that the cash check and the close come after.',
+        primary: 'Pinned button at the foot: "Enter Cash sales" (the first section nobody has answered). Each row opens its own form; "Nothing today" is a quiet link on the row.',
+        taps: 'Entering is on the forms. Per empty section: 1 tap on "Nothing today". See the end-to-end count on the "ready" frame.',
+        rules: 'D8 three states: entered, said-to-be-empty, not yet, each a mark plus words, never colour alone. Opening cash is drawn as step 1 because the engine counts it (1 of 10). The cash check and the close are locked lines with a padlock and the reason in words. No keypad on this screen.',
+        notes: 'At 2.0x the "Nothing today" link wraps under the row name; the list scrolls and the pinned button stays. Eleven rows do not fit one screen at 1.0x, so the lower rows and both cards sit below the fold (scroll).'
+        , body: function () {
+          var rows = openingRow() + openRow(2, t('section.cash_sales'), true) + openRow(3, t('section.upi_sales')) + openRow(4, t('section.udhar_sales')) + openRow(5, t('section.purchase')) +
+            openRow(6, t('section.expense')) + openRow(7, t('section.udhar_collection')) + openRow(8, t('section.party_payment')) + openRow(9, t('section.withdrawal')) + lockRows(t('section.cash_sales'));
+          return top(t('t5.title')) + K.scroll(prog(1, 0, false), K.list([rows])) + pinned(t('t5.next', { section: t('section.cash_sales') }));
+        }
+      },
+      {
+        id: 'close-mid', route: 'T5', title: 'Day close list: part way (done, skipped with Undo, open)', flag: 'EXISTS',
+        purpose: 'Part way through. Entered rows show their figure and entry count; a skipped row says so and offers one-tap Undo; the rest are open.',
+        primary: 'Pinned button: "Enter Expenses". Undo on a skipped row is one tap and needs no confirm.',
+        taps: 'Skip a section: 1 tap. Undo a skip: 1 tap. Open a row: 1 tap.',
+        rules: 'Skipped counts as answered (5 of 10 here: opening, cash, UPI, purchases and the skipped Credit sales), and the count of skipped sections is said under the total so "zero because nothing happened" and "zero because not reached" are never confused. Cash check still locked, with the section it is waiting for named.',
+        notes: 'The next open row is tinted AND numbered so it is not found by colour. Figures are derived from the entries; none is stored.',
+        body: function () {
+          var rows = openingRow() + doneRow(t('section.cash_sales'), 720000, 4) + doneRow(t('section.upi_sales'), 107000, 2) + skipRow(t('section.udhar_sales')) + doneRow(t('section.purchase'), 150000, 1) +
+            openRow(6, t('section.expense'), true) + openRow(7, t('section.udhar_collection')) + openRow(8, t('section.party_payment')) + openRow(9, t('section.withdrawal')) + lockRows(t('section.expense'));
+          return top(t('t5.title')) + K.scroll(prog(5, 1, false), K.list([rows])) + pinned(t('t5.next', { section: t('section.expense') }));
+        }
+      },
+      {
+        id: 'close-ready', route: 'T5', title: 'Day close list: all sections in, cash check unlocked', flag: 'EXISTS',
+        purpose: 'Every section is entered or marked "nothing today". The cash check opens; the close stays locked until the count is saved.',
+        primary: 'Pinned button: "Open cash check" (also the row).',
+        taps: 'END TO END, quiet day, nothing to enter on 6 empty sections: 6 x "Nothing today" + Open cash check (1) + 5 digits (for example 18450) + Save (1) + Close the day on the balanced screen (1) + Done (1) = 15 taps; add 1 tap ("All N received") if UPI receipts exist. Target under 3 min; estimate by the designer, not measured: well inside it, the count of the drawer itself being the long part.',
+        rules: 'Unlock is the engine rule (all eight answered), not a flag. A skip can still be undone here, which re-locks the cash check. On a closed day this screen draws no skip, no Undo and no footer, and the check row is ticked (real branch, not drawn).',
+        notes: 'Same list as before with the cash check row now open. Skipped rows stay visible so what was answered "nothing" is never hidden.',
+        body: function () {
+          var rows = openingRow() + doneRow(t('section.cash_sales'), 720000, 4) + doneRow(t('section.upi_sales'), 107000, 2) + skipRow(t('section.udhar_sales')) + doneRow(t('section.purchase'), 150000, 1) +
+            doneRow(t('section.expense'), 40000, 2) + doneRow(t('section.udhar_collection'), 253000, 2) + doneRow(t('section.party_payment'), 60000, 1) + doneRow(t('section.withdrawal'), 40000, 1) +
+            checkRow() + K.row({ state: 'lock', name: t('t1.closeDay'), sub: t('t5.locked') + ' · ' + t('t5.closeLocked') });
+          return top(t('t5.title')) + K.scroll(prog(9, 1, false), K.list([rows])) + pinned(t('t5.openCheck'));
+        }
+      },
+      {
+        id: 'close-stale', route: 'T5', title: 'Day close list: an earlier day still open (labelled with its date)', flag: 'CHG',
+        purpose: 'The open book is for yesterday. The list says which day it is closing, so he does not close the wrong one.',
+        primary: 'Same pinned button as a normal day: "Enter Expenses".',
+        taps: 'Reached by "Close it now" on Today (1 tap). Then as any close.',
+        rules: 'The date is in the header-line under the total, not only in the title. No inference: the app does not move entries between days.',
+        notes: 'The calm banner repeating t1.stale.body is a PROPOSAL; the real T5 shows only the date line. Day boundary: CLAUDE.md decision 1 (retailer-defined business day) supersedes the calendar date; the label here is the calendar date until dates.ts changes.',
+        review: 'Proposal: repeat the stale-day sentence at the top of T5 so the old date is unmissable.',
+        body: function () {
+          var rows = openingRow() + doneRow(t('section.cash_sales'), 720000, 4) + doneRow(t('section.upi_sales'), 107000, 2) + skipRow(t('section.udhar_sales')) + doneRow(t('section.purchase'), 150000, 1) +
+            openRow(6, t('section.expense'), true) + openRow(7, t('section.udhar_collection')) + openRow(8, t('section.party_payment')) + openRow(9, t('section.withdrawal')) + lockRows(t('section.expense'));
+          return top(t('t5.title')) + K.scroll(K.banner('', 'clock', t('t1.stale.body', { date: '18 ' + t('t1.month.11') })), prog(5, 1, true), K.list([rows])) + pinned(t('t5.next', { section: t('section.expense') }));
+        }
+      },
+      {
+        id: 'close-error', route: 'T5', title: 'Day close list: could not open', flag: 'EXISTS',
+        purpose: 'The list failed to open. Say plainly that nothing is lost and give one next step.',
+        primary: 'Try again.',
+        taps: '1 tap.',
+        rules: 'Calm words; entries are on the phone. The same Shell loading and error states apply to T11, T12, T13, T14 and T19; loading is the skeleton from Today, so only this one is drawn.',
+        notes: 'Icon plus words; the edge colour is not the only cue.',
+        body: function () {
+          return top(t('t5.title')) + K.scroll(K.banner('err', 'warn', t('common.error'), t('common.retry')), K.empty('refresh', t('common.error'), t('common.retry'), 'refresh'));
+        }
+      },
+      {
+        id: 'close-upi', route: 'T5', title: 'UPI check and adjustments cards: UPI not checked', flag: 'EXISTS',
+        purpose: 'The second equation, kept apart from cash. He ticks each UPI receipt he can see arrived in his UPI app. The actual UPI figure is the sum of those ticks, never a bank balance (decision 3).',
+        primary: '"All 3 received" confirms exactly the receipts it names; each receipt also has its own "Received" tick.',
+        taps: 'All receipts: 1 tap. One by one: 1 tap each (3 here). Optional, never blocking the close.',
+        rules: 'D2: nothing here changes the cash drawer. With receipts and no tick it says "UPI not checked" in words on every screen the day closes from, never a zero difference or a quiet tick. The note says "Not your bank balance". Adjustments are a fixed list (T19), never free text; "Add adjustment" opens T19.',
+        notes: 'This is the foot of the T5 scroll (pinned button as on "ready"). The Adjustments card shows one typed entry (for the list look); with none it says "None today". The card is hidden on a closed day when empty.',
+        body: function () {
+          return top(t('t5.title')) + K.scroll(upiCard('not', true), adjCard(true, true)) + pinned(t('t5.openCheck'));
+        }
+      },
+      {
+        id: 'close-upi-part', route: 'T5', title: 'UPI check: partly checked, no adjustments', flag: 'EXISTS',
+        purpose: 'One of three receipts ticked. The rest stay listed until ticked; a payment typed after "All received" stays unticked.',
+        primary: '"All 2 received" for what is left.',
+        taps: '1 tap for the rest.',
+        rules: 'Status in words ("1 of 3 UPI payments checked"), icon plus words. "As entered" and "you confirmed" are two figures, never merged. When all are ticked the card reads "All UPI payments checked" and the buttons go.',
+        notes: 'The mismatch between the two UPI lines is shown as two figures, not a "difference" verdict.',
+        body: function () {
+          return top(t('t5.title')) + K.scroll(upiCard('part', true), adjCard(false, true)) + pinned(t('t5.openCheck'));
+        }
+      },
+      {
+        id: 'close-adjust', route: 'T19', title: 'Adjustment: type chosen, amount typed', flag: 'CHG',
+        purpose: 'Record a typed adjustment (fake note, chhutta, goods for home, stock written off). What happened comes from a fixed list; how much comes from the keypad. There is no text box and no "Other", so an adjustment cannot silently absorb a cash difference (decision 2).',
+        primary: 'Save adjustment (disabled until a type is chosen and the amount is above 0).',
+        taps: 'Add adjustment (1) + type (1) + digits (3 for 500) + Save (1) = 6 taps.',
+        rules: 'Nothing is pre-selected or pre-filled. Each type states what it will move before saving. Home use and written-off move no cash. Append-only: a mistake is corrected by a new dated entry, not an edit.',
+        notes: 'The effect line sits right under the chosen type (the app puts it after the whole list, below the fold at 1.0x): a layout CHANGE. Five types as in the engine; the list scrolls. Rs 0 stays refused. Closed day: the types are disabled and no keypad is drawn (real branch).',
+        body: function () {
+          var list = '<div role="radiogroup">' + radio(true, t('adjustment.counterfeit_note')) +
+            '<p style="margin:0 12px;padding:4px 12px 8px;color:var(--muted);line-height:1.5">' + t('adjust.effect.counterfeit_note') + '</p>' +
+            radio(false, t('adjustment.rounding_given')) + radio(false, t('adjustment.rounding_kept')) + radio(false, t('adjustment.home_use')) + radio(false, t('adjustment.stock_written_off')) + '</div>';
+          return top(t('t19.title')) + K.scroll(para(t('t19.type'), true), list) +
+            '<div style="flex:none"><div class="amt" style="flex-wrap:wrap;margin:8px 12px 0;padding:0 12px;border:2px solid var(--edge);border-radius:16px;background:var(--surface)"><span class="al">' + t('t19.amount') + '</span>' + M(50000, { cls: 'amt-fig' }) + '</div>' +
+            K.addbar(t('t19.save'), 0) + K.keypad() + '</div>';
+        }
+      },
+      {
+        id: 'close-count', route: 'T11', title: 'Cash check: count the cash (nothing typed, Save disabled)', flag: 'CHG',
+        purpose: 'A reading screen with one input. "Should be" is one quiet line; the working below shows where it came from, each line with its sign, so he can see which line to doubt. He counts the drawer, then compares.',
+        primary: 'Type the count on the keypad, then Save.',
+        taps: 'Digits (5 for 18450) + Save = 6 taps. At 2.0x text the pad folds behind a tap on the counted figure (+1) so the working keeps the screen.',
+        rules: 'D2: UPI is not in the working. The expected figure is secondary to the count, so he counts first rather than typing the expected number back. No suggested count, no pre-fill. Save is greyed (dashed edge plus label), not hidden.',
+        notes: 'The working list scrolls (7 lines; about 4 visible at 1.0x above the pad). Frame fits "Should be", counted figure, Save and keypad without the list pushing them off. Proposal vs the app: "Should be" is pinned above the scroll and not in the header bar.',
+        body: function () { return countBody(null, false); }
+      },
+      {
+        id: 'close-count-refused', route: 'T11', title: 'Cash check: Save tapped with no count (QA-08)', flag: 'CHG',
+        purpose: 'Tapping the greyed Save gives a one-line reason instead of nothing (the device pass found no reason on tap, QA-08).',
+        primary: 'Type the count.',
+        taps: 'Shown only after the tap on Save; it leaves when he types a digit and never carries into another form.',
+        rules: 'A refusal never shows before a tap. Calm words: "Type an amount first." with a title; neutral edge, not red.',
+        notes: 'Uses refusal.title and refusal.amount, both existing. Whether the app shows this on tap today could not be confirmed from the code (T11 only disables the button); it is a proposal.',
+        review: 'Proposal: greyed Save explains itself on tap (QA-08).',
+        body: function () { return countBody(null, true); }
+      },
+      {
+        id: 'close-count-typed', route: 'T11', title: 'Cash check: count typed, Save ready', flag: 'EXISTS',
+        purpose: 'The count is typed. Save checks it against the working and routes to the balanced screen or the difference screen.',
+        primary: 'Save.',
+        taps: 'Save = 1 tap. Routing depends on the answer, so seeing T12 is not announced beforehand.',
+        rules: 'The figure is exactly what he typed (integer paise). Clear and delete keys sit on the pad.',
+        notes: 'The same count of 18450 drives T13. A count that differs goes to T12 (frames below use 18150 short and 18700 over).',
+        body: function () { return countBody(EXPECTED, false); }
+      },
+      {
+        id: 'close-balanced', route: 'T13', title: 'Cash check: it matches', flag: 'EXISTS',
+        purpose: 'The one good moment in the day. The same figure twice, so the match is seen rather than asserted; tomorrow opens on the counted cash.',
+        primary: 'Close the day.',
+        taps: 'Close the day = 1 tap, then T14 appears (Done = 1).',
+        rules: 'The match is recomputed from the engine on every render; if it did not hold the screen would not say so and the button would be off. D6: the carry-forward is the counted figure. The UPI card is stated (not mixed into the celebration) so a cash match is not read as a UPI match. No upsell, rating or nag.',
+        notes: 'Header carries no figure on purpose. Motion is absent in the app (a recorded gap); not drawn here.',
+        body: function () { return balancedBody(false); }
+      },
+      {
+        id: 'close-diff-short', route: 'T12', title: 'Cash check: difference, short in the box', flag: 'CHG',
+        purpose: 'Counted is less than should be. The difference is shown with its sign and in words, then two things to check, then a way to count again or record the gap as the day\'s loss.',
+        primary: 'Count again (secondary) or "Still short - record as today\'s loss" (chooses the reason); then Close the day.',
+        taps: 'Difference case, short: 6 x Nothing today + Open cash check (1) + 5 digits + Save (1) = 13 to reach this screen; then "Still short - record as today\'s loss" (1) + Close the day (1) + Done (1) = 16 taps. With one recount: Count again (1) + 5 digits + Save (1) = 23 taps in all. Estimate only, not measured.',
+        rules: 'No free text anywhere: the only answer for a short drawer is the fixed "Loss for the day", so a reason cannot absorb a difference silently. The copy is a question, never a verdict. The app does not check the payment app itself (no inference). Close the day stays greyed until the reason is chosen, with a hint saying why.',
+        notes: 'Short list per the code (HT-23): check, recount, mark loss. The four older short reasons (change from pocket, forgot to write something) are no longer offered but still read on old days. Sign and words both carry the meaning: "-₹300.00" and "Cash short (loss)".',
+        body: function () { return diffBody('short', false); }
+      },
+      {
+        id: 'close-diff-over', route: 'T12', title: 'Cash check: difference, extra in the box (reason chosen)', flag: 'CHG',
+        purpose: 'Counted is more than should be. He picks what he thinks happened from three fixed answers, including "Don\'t know".',
+        primary: 'Choose one reason (radio rows), then Close the day.',
+        taps: 'Reason (1) + Close the day (1) + Done (1) after Save: 16 taps in the same quiet-day scenario as the short case. Estimate only.',
+        rules: 'Fixed list: "Forgot to write a sale", "Counted wrong", "Don\'t know"; "Don\'t know" is a real value the engine can count, so he is never forced to claim a cause. The list depends on the sign: extra cash and missing cash have different causes. Chosen is marked by a tick icon, tint and border, never colour alone.',
+        notes: 'Frame shows "Forgot to write a sale" chosen and Close the day active; with none chosen it is greyed as on the short frame. A chosen reason is stored as a string key, so it reads in whichever language the book is opened in.',
+        body: function () { return diffBody('over', 'sale'); }
+      },
+      {
+        id: 'close-closing', route: 'T13', title: 'Closing the day: in progress', flag: 'NEW',
+        purpose: 'The close is being written. The button changes to a disabled "Closing the day" with a clock so a second tap cannot double-close.',
+        primary: 'None; waits for T14.',
+        taps: 'n/a',
+        rules: 'The close is local and append-only; nothing is lost if it takes a moment. It never needs the network (D7 is enforced by the database trigger on both engines).',
+        notes: 'The app has no such state today: store.close runs synchronously and goes straight to T14. This frame is for the build to decide whether it is needed at all.',
+        review: 'Not in the app today (close is instant); say if you want a busy state or none.',
+        body: function () { return balancedBody(true); }
+      },
+      {
+        id: 'close-done', route: 'T14', title: 'Day closed: summary (with a cash difference)', flag: 'CHG',
+        purpose: 'The day is closed and frozen. Profit first, what made it, the withdrawal outside it, and the cash check that closed the day, so the summary explains its own close.',
+        primary: 'Done (back to Today).',
+        taps: 'Done = 1 tap. Back is also visible.',
+        rules: 'D3: the owner\'s withdrawal sits in its own card with the sentence "not counted against profit", because a figure under a profit total reads as part of it. D7: nothing here can change a figure; a correction is a new dated entry on a later screen. Out-flows carry a printed minus sign. The "profit after cash difference" sits beside the estimated profit, never replaces it. UPI is stated as it closed, "not checked" or partly included.',
+        notes: 'Difference row carries its reason in words (Loss for the day). Rows are derived from the entries. Net sales "Cash sales" mislabel from earlier builds is fixed (F-9).',
+        body: function () { return doneBody(K.chip('ok'), false); }
+      },
+      {
+        id: 'close-done-offline', route: 'T14', title: 'Day closed offline (closes on the phone, chip amber)', flag: 'CHG',
+        purpose: 'There is no network and the day closed anyway. He must know it is safe on the phone and not yet on the server.',
+        primary: 'Done.',
+        taps: 'Same as online: no extra step because of the network.',
+        rules: 'The close and the freeze happen locally; the server catches up when signal returns (the queue drains by itself). The chip is amber with a clock and words "waiting - safe on phone", never red; the banner repeats it plainly.',
+        notes: 'Same summary as the online frame. Rows the server later refuses would be parked and listed on Today (see the Today area), not here.',
+        body: function () { return doneBody(K.chip('wait', 3), true); }
+      }
+    ]
+  };
+})();
+
+K.boot();</script>
+</body></html>

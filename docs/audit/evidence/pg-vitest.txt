@@ -1,0 +1,28 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+[33mBoth esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored.[39m The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.0.1 D:/SWAFTO/code base
+
+{"level":50,"time":1794939304347,"pid":29608,"hostname":"DESKTOP-7GNNJE7","reqId":"a369a592-6637-4c66-970d-f3e938b640c0","route":"/v1/sync/push","err":{"type":"Error","message":"timeout exceeded when trying to connect","stack":"Error: timeout exceeded when trying to connect\n    at Object.appendEntries (D:/SWAFTO/code base/apps/api/test/wave2-data.spec.ts:414:29)\n    at Object.<anonymous> (D:/SWAFTO/code base/apps/api/src/sync/routes.ts:665:59)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"},"method":"POST","status":503,"msg":"request failed"}
+{"level":40,"time":1794939304441,"pid":29608,"hostname":"DESKTOP-7GNNJE7","reqId":"dfb5efba-35e8-4d10-84aa-686b4f7f4839","route":"/v1/sync/push","rows":1,"first":"sync row refused by the ledger: entries_amount_ck","msg":"sync rows failed"}
+{"level":40,"time":1794939304513,"pid":29608,"hostname":"DESKTOP-7GNNJE7","reqId":"576453f0-d560-4f8d-a247-3bbd517e56da","route":"/v1/sync/push","rows":1,"first":"sync row failed: cannot read properties of undefined (reading \"x\")","msg":"sync rows failed"}
+{"level":50,"time":1794939305253,"pid":13500,"hostname":"DESKTOP-7GNNJE7","reqId":"2f78e0d6-9c71-49e1-aa14-f3053f1855cb","route":"/v1/auth/otp/request","err":{"type":"Error","message":"aborted","stack":"Error: aborted\n    at abortIncoming (node:_http_server:921:17)\n    at socketOnClose (node:_http_server:914:3)\n    at Socket.emit (node:events:526:24)\n    at TCP.<anonymous> (node:net:362:12)","code":"ECONNRESET"},"method":"POST","status":503,"msg":"request failed"}
+{"level":40,"time":1794939305724,"pid":17764,"hostname":"DESKTOP-7GNNJE7","reqId":"a0ddd210-1cfd-4861-8d6f-48ff2426be3d","route":"/v1/sync/push","rows":1,"first":"sync row failed: the repository could not store this party","msg":"sync rows failed"}
+{"level":40,"time":1794939310434,"pid":28128,"hostname":"DESKTOP-7GNNJE7","reqId":"16c8172c-2685-4b3e-a2aa-7b1a20cf7008","route":"/v1/auth/refresh","event":"refresh_reuse_revoked","msg":"refresh token reused; device revoked"}
+{"level":40,"time":1794939310532,"pid":28128,"hostname":"DESKTOP-7GNNJE7","reqId":"4d4ec7a7-9b21-41bf-a9db-7f9bbf663142","route":"/v1/auth/refresh","event":"refresh_reuse_revoked","msg":"refresh token reused; device revoked"}
+{"level":40,"time":1794939310770,"pid":28128,"hostname":"DESKTOP-7GNNJE7","reqId":"6eaeb47c-22a0-447e-a580-95c2aff81914","route":"/v1/auth/refresh","event":"refresh_reuse_revoked","msg":"refresh token reused; device revoked"}
+{"level":40,"time":1794939310839,"pid":28128,"hostname":"DESKTOP-7GNNJE7","reqId":"fa6a5557-82fa-4f04-a074-d03b418dc1c1","route":"/v1/auth/refresh","event":"refresh_reuse_revoked","msg":"refresh token reused; device revoked"}
+(node:20552) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+ Test Files  144 passed (144)
+      Tests  4233 passed (4233)
+   Start at  23:45:01
+   Duration  20.61s (tests 61%, import 29%, transform 9%, worker 1%)
+
+    Isolate  144 workers spawned · ~451ms startup each (spawn + environment, per file)
+             at least ~5.45s faster with isolate: false — reuses workers across files instead of one per file
+
+exit 0

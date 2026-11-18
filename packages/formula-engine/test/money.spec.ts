@@ -18,6 +18,7 @@ import {
   formatPaise,
   meanMoney,
   medianMoney,
+  paiseFromMicros,
   ratio,
   roundHalfAwayFromZero,
   stdevMoney,
@@ -194,6 +195,21 @@ describe('medianMoney', () => {
   it('orders negatives below zero, as a refund should sit below no movement', () => {
     expect(medianMoney([500, -100, 0])).toBe(0);
     expect(medianMoney([-500, -100, -300])).toBe(-300);
+  });
+});
+
+describe('paiseFromMicros converts a Play price exactly, or refuses it', () => {
+  it('₹99 and ₹799 in micros are 9,900 and 79,900 paise', () => {
+    expect(paiseFromMicros(99_000_000)).toBe(9900);
+    expect(paiseFromMicros(799_000_000)).toBe(79900);
+    expect(paiseFromMicros(10_000)).toBe(1);
+    expect(paiseFromMicros(0)).toBe(0);
+  });
+
+  it('refuses a fraction of a paisa, a negative, and a float rather than rounding', () => {
+    for (const bad of [9_999, 99_005_000, -10_000, 1.5, Number.NaN, 2 ** 60]) {
+      expect(() => paiseFromMicros(bad), String(bad)).toThrow(/whole, non-negative/);
+    }
   });
 });
 

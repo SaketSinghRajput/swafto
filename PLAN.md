@@ -135,11 +135,11 @@ Engine functions actually present: **26 of 26** named by TRACEABILITY
 |---|---|---|---|---|---|
 | P1 | How much cash came in today, from every source | `totalCashReceived` | 1 | T1 Today, T11 working | **DONE** |
 | P2 | How much cash went out today, for every reason | `totalCashPaid` | 1 | T1 Today, T11 working | **DONE** |
-| P3 | How much cash should be in the box right now | `expectedCashBalance` | 1 | T11 Cash check, as its working; T5 day close list, as its headline; T6 opening cash, which sets its opening term | **DONE** |
-| P4 | What did I really sell, after returns | `netSales` | 1 | T1 Today, T14 summary | **DONE** |
+| P3 | How much cash should be in the box right now | `expectedCashBalance` | 1 | T11 Cash check, as its working; T5 day close list, as its headline; T6 opening cash, T2 Today first run and X1 Onboarding, each of which sets its opening term; T3 Today closed, as its headline; C1 Ask, as the free "expected cash" answer | **DONE** |
+| P4 | What did I really sell, after returns | `netSales` | 1 | T1 Today, T3 Today closed, T14 summary, R1 Reports, C1 Ask (today free; a period on Premium) | **DONE** |
 | P5 | What did the stock really cost me | `netPurchase` | 1 | T14 summary | **DONE** |
-| P6 | What did it cost me to keep the doors open | `totalExpenses` | 1 | T14 summary | **DONE** |
-| P7 | How much of my money are my customers holding | `creditOutstanding` | 1 | T1 Today, P1 Parties, P2 Customer | **DONE** |
+| P6 | What did it cost me to keep the doors open | `totalExpenses` | 1 | T14 summary, R1 Reports | **DONE** |
+| P7 | How much of my money are my customers holding | `creditOutstanding` | 1 | T1 Today, P1 Parties, P2 Customer, R1 Reports, C1 Ask | **DONE** |
 | P8 | How much do I owe my suppliers | `supplierOutstanding` | 1 | T1 Today, P1 Parties, P3 Supplier | **DONE** |
 
 ### Operational outputs
@@ -348,10 +348,12 @@ Notification permission is a runtime prompt on current Android.
 invoicing product, and the copy says so in the user's own language so nobody mistakes
 an estimated profit figure for a filing.
 
-**Payments.** **No money moves through the app**, so no payment licence applies. The
-specific future feature that would change that: accepting or settling a payment inside
-the product, including a UPI collect request the app initiates. Recording that a UPI
-payment happened elsewhere does not.
+**Payments.** **None of the shop's money moves through the app**, so no payment licence
+applies. The specific future feature that would change that: accepting or settling a
+payment inside the product, including a UPI collect request the app initiates. Recording
+that a UPI payment happened elsewhere does not. The one thing the app sells is its own
+Premium plan, and Google Play collects that through Play Billing; the app never sees a
+card or a UPI handle, and selling it waits on the Play payments profile and a GSTIN.
 
 **Licences.** The bundled Odia font ships under an open font licence with its licence
 file included, and every dependency licence is recorded in the audit.
@@ -402,7 +404,7 @@ be moved to meet a result.
 
 | ID | Benchmark | Threshold | Measured |
 |---|---|---|---|
-| B1 | Golden vectors | >= 70, 100% pass | **77, 100% pass** - MET |
+| B1 | Golden vectors | >= 70, 100% pass | **92, 100% pass** - MET |
 | B2 | Node vs Hermes divergence | exactly 0 | **0** - MET |
 | B3 | Engine branch coverage | 100% | **86.34%** (196 of 227) - MISSED |
 | B5 | Backend line coverage | >= 85% | **86.42%** (681 of 788) - MET |
@@ -485,6 +487,15 @@ DLT registration and a live privacy policy cannot be compressed by building fast
 | H12 | ~~Re-paste injection 14~~ **RESOLVED at iteration 26** | - | - |
 | H13 | **Native review of the Odia and Hindi SCREEN copy** | 45 minutes | Any public release |
 | H14 | **An Android build environment and a release signing key** | 2 hours | The APK, and with it B14-B19, B24 and the APK half of B35 |
+| H15 | Play Console payments profile: bank account, PAN and GSTIN (R4-HA1). Needs H7 | 1 hour + review | Any paid sale of Premium |
+| H16 | GST registration and a CA's rulings on SAC code, threshold and invoices (R4-HA2) | 1-3 weeks | Selling Premium lawfully |
+| H17 | Google Cloud service account, Pub/Sub topic and push subscription for billing (R4-HA3) | 1 hour | Server verification of purchases, and the RTDN webhook |
+| H18 | The Premium subscription and its two base plans in Play Console (R4-HA4) | 30 minutes | The purchase sheet on the phone |
+| H19 | Counsel review of subscriptions and dark patterns (R4-HA5). Extends H9 | - | Public launch of Premium |
+| H20 | Choose the AI provider, if any (R4-HA6) | - | Any AI-derived feature |
+| H21 | Test the price with real shopkeepers (R4-HA7) | 1 day | Fixing the price in H18 |
+| H22 | Create the database roles' SSM parameters, with generated passwords | 20 minutes | The API booting in production (C-01) |
+| H23 | Decide on new-phone OTP lockout: accept the residual or add a second factor (RT-3) | 30 minutes | Public launch of sign-in |
 
 ---
 
@@ -518,16 +529,16 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 ---
 
 <!-- PLANHASH:START -->
-bfcf21d75a9e4e7b  traceability  docs/spec/TRACEABILITY.md
+1e05ea8f9c4e2663  traceability  docs/spec/TRACEABILITY.md
 02755df03079a51b  buildMap  docs/spec/source/SWAFTO-Retail-Desk-Build-Map.txt
-22eb0e0f66549859  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
+7de37bc9c491bedf  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 b89e4d932c2b86a2  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
-fde4f37830ebb082  humanActions  docs/handover/HUMAN-ACTIONS.md
-f1dbd3d30344e865  legal  docs/audits/LEGAL-AUDIT.md
+fe9bb22cfe403767  humanActions  docs/handover/HUMAN-ACTIONS.md
+ecdfd659e5c7e247  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
-726ca660df1993fe  techDecisions  docs/spec/TECH-DECISIONS.md
+c5434732575831f1  techDecisions  docs/spec/TECH-DECISIONS.md
 1352e51ba2027971  derivedConstraints  docs/governance/DERIVED-CONSTRAINTS.md
 c02fa42615ee69d0  projection  docs/governance/PROJECTION.md
-731391dfd0488fa3  prose  tools/plan-prose.md
+391a757abdb02d32  prose  tools/plan-prose.md
 <!-- PLANHASH:END -->
