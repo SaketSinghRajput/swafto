@@ -1,0 +1,242 @@
+[
+  {
+    "id": "A1",
+    "name": "Splash",
+    "file": "A1.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A2",
+    "name": "Language",
+    "file": "A2.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A3",
+    "name": "Phone number",
+    "file": "A3.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A4",
+    "name": "OTP verification",
+    "file": "A4.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A5",
+    "name": "OTP problems (reference)",
+    "file": "A5.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A6",
+    "name": "Session expired",
+    "file": "A6.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A7",
+    "name": "Number changed / lost",
+    "file": "A7.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "A8",
+    "name": "Logout confirmation",
+    "file": "A8.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S1",
+    "name": "Settings index",
+    "file": "S1.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S2",
+    "name": "Shop profile",
+    "file": "S2.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S3",
+    "name": "Owner profile",
+    "file": "S3.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S5",
+    "name": "Appearance & text size",
+    "file": "S5.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S7",
+    "name": "App lock setup",
+    "file": "S7.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S8",
+    "name": "Backup and data",
+    "file": "S8.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S9",
+    "name": "Delete account · what you lose",
+    "file": "S9.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S9B",
+    "name": "Delete account · confirm",
+    "file": "S9B.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S10",
+    "name": "About",
+    "file": "S10.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "S11",
+    "name": "Help and support",
+    "file": "S11.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "Y1",
+    "name": "Offline and sync (reference)",
+    "file": "Y1.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "Y2",
+    "name": "Force upgrade",
+    "file": "Y2.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "Y3",
+    "name": "Something went wrong",
+    "file": "Y3.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "Y4",
+    "name": "Notifications inbox",
+    "file": "Y4.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "Y5",
+    "name": "Notification permission primer",
+    "file": "Y5.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "X1",
+    "name": "Onboarding",
+    "file": "X1.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T2",
+    "name": "Today · first run",
+    "file": "T2.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T6",
+    "name": "Opening cash",
+    "file": "T6.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T1",
+    "name": "Today · open day",
+    "file": "T1.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T5",
+    "name": "Day close list",
+    "file": "T5.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T7",
+    "name": "Entry · Form A",
+    "file": "T7.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T8",
+    "name": "Entry · Form B",
+    "file": "T8.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T9",
+    "name": "Entry · Form C",
+    "file": "T9.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T10",
+    "name": "Entry · Form D",
+    "file": "T10.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T11",
+    "name": "Cash check · counting",
+    "file": "T11.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T12",
+    "name": "Cash check · difference",
+    "file": "T12.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T13",
+    "name": "Cash check · balanced",
+    "file": "T13.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T14",
+    "name": "Day closed summary",
+    "file": "T14.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "T3",
+    "name": "Today · already closed",
+    "file": "T3.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "P1",
+    "name": "Parties list",
+    "file": "P1.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "P2",
+    "name": "Customer detail",
+    "file": "P2.png",
+    "mode": "comfort"
+  },
+  {
+    "id": "P3",
+    "name": "Supplier detail",
+    "file": "P3.png",
+    "mode": "comfort"
+  }
+]

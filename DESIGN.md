@@ -11,7 +11,7 @@ Every fact is labelled **STATIC** (read from the source: cheap, complete, blind 
 anything computed at runtime) or **MEASURED** (render and instrument output: expensive,
 partial, and the only thing that tells the truth about a layout).
 
-**11 committed screens, 11 implemented.**
+**40 committed screens, 40 implemented.**
 
 > **No measured data.** `reports/design/measured.json` does not exist, so every MEASURED cell
 > reads `-`. The screen instruments that would produce it are tasks `I-001` through
@@ -25,7 +25,7 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T7 — Entry · Form A
 
-`apps\mobile\src\screens\T7.tsx`
+`apps/mobile/src/screens/T7.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
@@ -47,15 +47,15 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T1 — Today · open day
 
-`apps\mobile\src\screens\T1.tsx`
+`apps/mobile/src/screens/T1.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | P1, P2, P4, P7, P8, OP4, OP6 | - |
-| components composed | Pressable, Row, Shell, Text, View | - |
+| components composed | ActionGrid, ActionTile, Banner, BottomNav, Card, CashInBox, CollectToday, EmptyNote, ExitSheet, LinkRow, Observation, PartyTotals, PrimaryButton, ProgressCard, Quiet, SectionLabel, Shell, View | - |
 | tokens used | **none** | - |
 | keypad | no | - |
-| bottom nav | no | - |
+| bottom nav | yes | - |
 | states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
 | screenshots | canonical [x] · adversarial [x] | - |
 
@@ -69,7 +69,7 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T8 — Entry · Form B
 
-`apps\mobile\src\screens\T8.tsx`
+`apps/mobile/src/screens/T8.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
@@ -91,7 +91,7 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T9 — Entry · Form C
 
-`apps\mobile\src\screens\T9.tsx`
+`apps/mobile/src/screens/T9.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
@@ -113,7 +113,7 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T10 — Entry · Form D
 
-`apps\mobile\src\screens\T10.tsx`
+`apps/mobile/src/screens/T10.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
@@ -135,12 +135,12 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T5 — Day close list
 
-`apps\mobile\src\screens\T5.tsx`
+`apps/mobile/src/screens/T5.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | P3 | - |
-| components composed | Pressable, Row, Shell, Text, View | - |
+| components composed | AdjustmentsCard, Icon, Mark, Money, Pressable, PrimaryButton, ProgressRing, Shell, Text, UpiCheckCard, View | - |
 | tokens used | **none** | - |
 | keypad | no | - |
 | bottom nav | no | - |
@@ -157,12 +157,12 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T11 — Cash check · counting
 
-`apps\mobile\src\screens\T11.tsx`
+`apps/mobile/src/screens/T11.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | IN7, P1, P2, P3 | - |
-| components composed | Keypad, Money, PrimaryButton, Row, Shell, Text, View | - |
+| components composed | Keypad, Money, Pressable, PrimaryButton, Row, Shell, Text | - |
 | tokens used | **none** | - |
 | keypad | yes | - |
 | bottom nav | no | - |
@@ -179,12 +179,34 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T12 — Cash check · difference
 
-`apps\mobile\src\screens\T12.tsx`
+`apps/mobile/src/screens/T12.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | OP1 | - |
-| components composed | Pressable, Row, Shell, Text, TextInput, View | - |
+| components composed | Pressable, PrimaryButton, Row, Shell, Text, UpiCheckCard, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### T13 — Cash check · balanced
+
+`apps/mobile/src/screens/T13.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | OP1 | - |
+| components composed | Card, Money, PrimaryButton, Shell, Text, UpiCheckCard, View | - |
 | tokens used | **none** | - |
 | keypad | no | - |
 | bottom nav | no | - |
@@ -201,12 +223,12 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T14 — Day closed summary
 
-`apps\mobile\src\screens\T14.tsx`
+`apps/mobile/src/screens/T14.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | P4, P5, P6 | - |
-| components composed | Row, Shell, Text | - |
+| components composed | AdjustmentsCard, Card, PrimaryButton, Row, Shell, Text, UpiCheckCard | - |
 | tokens used | **none** | - |
 | keypad | no | - |
 | bottom nav | no | - |
@@ -223,11 +245,341 @@ partial, and the only thing that tells the truth about a layout).
 
 ### T6 — Opening cash
 
-`apps\mobile\src\screens\T6.tsx`
+`apps/mobile/src/screens/T6.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | P3 | - |
+| components composed | Keypad, Money, Pressable, PrimaryButton, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### T2 — Today · first run
+
+`apps/mobile/src/screens/T2.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P3 | - |
+| components composed | EmptyNote, ExitSheet, Money, PrimaryButton, ProgressCard, Quiet, Shell | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### T3 — Today · already closed
+
+`apps/mobile/src/screens/T3.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P3, P4 | - |
+| components composed | ActionGrid, ActionTile, BottomNav, EmptyNote, ExitSheet, Money, OpeningLine, PartyTotals, PrimaryButton, ProgressCard, SectionLabel, Shell, SoFarHeader, Text, TodayFigures, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | yes | - |
+| states | loading [ ] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### X1 — Onboarding
+
+`apps/mobile/src/screens/X1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P3 | - |
+| components composed | Keypad, Money, Pressable, PrimaryButton, Shell, Text, TextInput, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### P1 — Parties list
+
+`apps/mobile/src/screens/P1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P7, P8 | - |
+| components composed | Avatar, BottomNav, Card, Money, PartyRow, Pressable, Row, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | yes | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### P2 — Customer detail
+
+`apps/mobile/src/screens/P2.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P7 | - |
+| components composed | Card, LinkRow, PartyDetail, PrimaryButton, Row, Text, TextInput, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### P3 — Supplier detail
+
+`apps/mobile/src/screens/P3.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P8, OP4 | - |
+| components composed | PartyDetail | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### R1 — Reports · early
+
+`apps/mobile/src/screens/R1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P4, P6, P7, OP2, OP3, OP5, BI1, BI2, BI3, BI4, BI6 | - |
+| components composed | BasicReportCards, BottomNav, Card, Gate, LinkRow, Money, Note, PrimaryButton, Reading, Row, Shell, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | yes | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### T16 — Post a correction
+
+`apps/mobile/src/screens/T16.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Keypad, Money, PrimaryButton, Quiet, Row, Shell, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### T19 — (not in the build map)
+
+`apps/mobile/src/screens/T19.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Keypad, Money, Pressable, PrimaryButton, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### M1 — (not in the build map)
+
+`apps/mobile/src/screens/M1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, ForecastBody, Gate, Money, Note, PremiumCards, PrimaryButton, RangeLine, Reading, Row, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### C1 — (not in the build map)
+
+`apps/mobile/src/screens/C1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | P3, P4, P7 | - |
+| components composed | Answered, Card, Chips, Line, PrimaryButton, Row, Shell, Text, TextInput, Turn, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S9 — (not in the build map)
+
+`apps/mobile/src/screens/S9.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, PrimaryButton, Shell, Text, TextInput, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### I1 — (not in the build map)
+
+`apps/mobile/src/screens/I1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Keypad, Money, Pressable, PrimaryButton, Row, Segmented, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S11 — (not in the build map)
+
+`apps/mobile/src/screens/S11.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, PrimaryButton, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### P6 — (not in the build map)
+
+`apps/mobile/src/screens/P6.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
 | components composed | Keypad, Money, PrimaryButton, Shell, Text, View | - |
 | tokens used | **none** | - |
 | keypad | yes | - |
@@ -243,18 +595,304 @@ partial, and the only thing that tells the truth about a layout).
 
 *none found statically*
 
-### X0 — Consent notice
+### S12 — (not in the build map)
 
-`apps\mobile\src\screens\X0.tsx`
+`apps/mobile/src/screens/S12.tsx`
 
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | - | - |
-| components composed | Pressable, PrimaryButton, Shell, Text, View | - |
+| components composed | Card, LinkRow, Shell, Text | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S13 — (not in the build map)
+
+`apps/mobile/src/screens/S13.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Banner, Card, LinkRow, PrimaryButton, Quiet, Shell, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [ ] · adversarial [ ] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S14 — (not in the build map)
+
+`apps/mobile/src/screens/S14.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Banner, Card, PrimaryButton, Quiet, Sheet, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [x] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [ ] · adversarial [ ] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### X0 — Consent notice
+
+`apps/mobile/src/screens/X0.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Banner, PrimaryButton, Shell, Switch, Text, View | - |
 | tokens used | CONSENT_PURPOSES | - |
 | keypad | no | - |
 | bottom nav | no | - |
 | states | loading [ ] · empty [ ] · error [ ] · loaded [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S1 — Settings hub
+
+`apps/mobile/src/screens/S1.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, LinkRow, Shell, Text | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S2 — The shop
+
+`apps/mobile/src/screens/S2.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Segmented, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [x] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S3 — Language and text size
+
+`apps/mobile/src/screens/S3.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Segmented, Shell, Text, TextSizePicker, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S4 — Privacy and consent
+
+`apps/mobile/src/screens/S4.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, LinkRow, Shell, Text | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S5 — About, version and licences
+
+`apps/mobile/src/screens/S5.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, LinkRow, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S6 — Help and the grievance officer
+
+`apps/mobile/src/screens/S6.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S7 — Delete this account
+
+`apps/mobile/src/screens/S7.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, PrimaryButton, Shell, Text, View | - |
+| tokens used | DELETION_GRACE_DAYS | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S8 — Confirm deletion
+
+`apps/mobile/src/screens/S8.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Money, PrimaryButton, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### T18 — Return or exchange a sale
+
+`apps/mobile/src/screens/T18.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Keypad, Money, PartyPicker, Pressable, PrimaryButton, Quiet, Row, Segmented, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | yes | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### S10 — Your plan (PR-7)
+
+`apps/mobile/src/screens/S10.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | Card, Money, PlanNotice, PrimaryButton, Record, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [x] · error [ ] · loaded [x] | - |
 | screenshots | canonical [x] · adversarial [x] | - |
 
 **RAW VALUES** — this table should be empty.
@@ -272,21 +910,42 @@ partial, and the only thing that tells the truth about a layout).
 
 | component | file | used by | tokens | raw values |
 |---|---|---|---|---|
-| `EntryForm` | apps\mobile\src\components\EntryForm.tsx | T7, T8, T9, T10 | 0 | 0 |
-| `Keypad` | apps\mobile\src\components\Keypad.tsx | T11, T6 | 0 | 0 |
-| `Money` | apps\mobile\src\components\Money.tsx | T11, T6 | 0 | 0 |
-| `Shell` | apps\mobile\src\components\Shell.tsx | T1, T5, T11, T12, T14, T6, X0 | 0 | 0 |
+| `Avatar` | apps/mobile/src/components/Avatar.tsx | P1 | 0 | 0 |
+| `Banner` | apps/mobile/src/components/Banner.tsx | T1, S13, S14, X0 | 0 | 0 |
+| `DUES` | apps/mobile/src/components/BasicReports.tsx | **nothing** | 0 | 0 |
+| `PrimaryButton` | apps/mobile/src/components/Button.tsx | T1, T5, T11, T12, T13, T14, T6, T2, T3, X1, P2, R1, T16, T19, M1, C1, S9, I1, S11, P6, S13, S14, X0, S7, S8, T18, S10 | 0 | 0 |
+| `UpiCheckCard` | apps/mobile/src/components/DayFacts.tsx | T5, T12, T13, T14 | 0 | 0 |
+| `ProgressRing` | apps/mobile/src/components/DayParts.tsx | T5 | 0 | 0 |
+| `EntryForm` | apps/mobile/src/components/EntryForm.tsx | T7, T8, T9, T10 | 0 | 0 |
+| `TopItemsCard` | apps/mobile/src/components/ItemCards.tsx | **nothing** | 0 | 0 |
+| `Keypad` | apps/mobile/src/components/Keypad.tsx | T11, T6, X1, T16, T19, I1, P6, T18 | 0 | 0 |
+| `Money` | apps/mobile/src/components/Money.tsx | T5, T11, T13, T6, T2, T3, X1, P1, R1, T16, T19, M1, I1, P6, S8, T18, S10 | 0 | 0 |
+| `PartyDetail` | apps/mobile/src/components/PartyDetail.tsx | P2, P3 | 0 | 0 |
+| `PartyPicker` | apps/mobile/src/components/PartyPicker.tsx | T18 | 0 | 0 |
+| `Reading` | apps/mobile/src/components/ReportParts.tsx | R1, M1 | 0 | 0 |
+| `Sheet` | apps/mobile/src/components/Sheet.tsx | S14 | 0 | 0 |
+| `Shell` | apps/mobile/src/components/Shell.tsx | T1, T5, T11, T12, T13, T14, T6, T2, T3, X1, P1, R1, T16, T19, M1, C1, S9, I1, S11, P6, S12, S13, S14, X0, S1, S2, S3, S4, S5, S6, S7, S8, T18, S10 | 0 | 0 |
+| `SKELETON` | apps/mobile/src/components/States.tsx | **nothing** | 0 | 0 |
+| `Switch` | apps/mobile/src/components/Switch.tsx | X0 | 0 | 0 |
+| `TextSizePicker` | apps/mobile/src/components/TextSizePicker.tsx | S3 | 0 | 0 |
 
 **USED ONCE** — built as shared, used by a single screen. Not necessarily wrong, but a
 component with one caller is usually a screen section that got promoted for no reason.
 
-*none*
+- `Avatar` — only P1
+- `ProgressRing` — only T5
+- `PartyPicker` — only T18
+- `Sheet` — only S14
+- `Switch` — only X0
+- `TextSizePicker` — only S3
 
 **DUPLICATED** — near-identical component trees in more than one screen with no shared
 component.
 
 - `EntryForm` in T7, T8, T9, T10
-- `Pressable > Row > Shell > Text > View` in T1, T5
+- `Keypad > Money > Pressable > PrimaryButton > Shell > Text > View` in T6, T19
+- `Card > PrimaryButton > Shell > Text > View` in S11, S7
+- `Card > LinkRow > Shell > Text` in S12, S1, S4
 
 ---
 
@@ -303,16 +962,18 @@ component.
 
 | token | references |
 |---|---|
-| `OTP_TTL_SECONDS` | 3 |
-| `OTP_DIGITS` | 3 |
-| `OTP_LIMITS` | 3 |
-| `DELETION_GRACE_DAYS` | 2 |
+| `OTP_TTL_SECONDS` | 5 |
+| `OTP_DIGITS` | 8 |
+| `OTP_LIMITS` | 4 |
+| `DELETION_GRACE_DAYS` | 3 |
+| `MAX_ENTRY_PAISE` | 3 |
 | `EXPORT_DISCLAIMER` | 2 |
 | `PRIVACY_NOTICE_VERSION` | 2 |
 | `CONSENT_PURPOSES` | 5 |
 | `TOUCH_TARGET_MIN_DP` | 2 |
+| `INDIAN_MOBILE` | 3 |
 | `BODY_TEXT_MIN_SP` | 2 |
-| `CHROME_FONT_SCALE_CAP` | 1 |
+| `CHROME_FONT_SCALE_CAP` | 2 |
 | `CONTRAST_MIN_RATIO` | 1 |
 
 ### D.2 · defined, and never referenced by `apps/` or `packages/`
@@ -351,26 +1012,40 @@ gets disabled.
 
 | what the spec says | where | what the code does | where | severity |
 |---|---|---|---|---|
-| T1 displays P1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T1 displays P2 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T1 displays P4 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T1 displays P7 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T1 displays P8 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T1 displays OP4 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T1 displays OP6 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T1.tsx | REPORTED |
-| T9 displays IN2 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T9.tsx | REPORTED |
-| T9 displays IN3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T9.tsx | REPORTED |
-| T10 displays IN6 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T10.tsx | REPORTED |
-| T5 displays P3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T5.tsx | REPORTED |
-| T11 displays IN7 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
-| T11 displays P1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
-| T11 displays P2 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
-| T11 displays P3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T11.tsx | REPORTED |
-| T12 displays OP1 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T12.tsx | REPORTED |
-| T14 displays P4 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T14.tsx | REPORTED |
-| T14 displays P5 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T14.tsx | REPORTED |
-| T14 displays P6 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T14.tsx | REPORTED |
-| T6 displays P3 | TRACEABILITY.md | the component never references it | apps\mobile\src\screens\T6.tsx | REPORTED |
+| T1 displays P1 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T1 displays P2 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T1 displays P4 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T1 displays P7 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T1 displays P8 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T1 displays OP4 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T1 displays OP6 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T1.tsx | REPORTED |
+| T9 displays IN2 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T9.tsx | REPORTED |
+| T9 displays IN3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T9.tsx | REPORTED |
+| T10 displays IN6 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T10.tsx | REPORTED |
+| T5 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T5.tsx | REPORTED |
+| T11 displays IN7 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T11.tsx | REPORTED |
+| T11 displays P1 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T11.tsx | REPORTED |
+| T11 displays P2 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T11.tsx | REPORTED |
+| T11 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T11.tsx | REPORTED |
+| T12 displays OP1 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T12.tsx | REPORTED |
+| T13 displays OP1 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T13.tsx | REPORTED |
+| T14 displays P4 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T14.tsx | REPORTED |
+| T14 displays P5 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T14.tsx | REPORTED |
+| T14 displays P6 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T14.tsx | REPORTED |
+| T6 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T6.tsx | REPORTED |
+| T2 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T2.tsx | REPORTED |
+| T3 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T3.tsx | REPORTED |
+| T3 displays P4 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/T3.tsx | REPORTED |
+| X1 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/X1.tsx | REPORTED |
+| P2 displays P7 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/P2.tsx | REPORTED |
+| P3 displays P8 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/P3.tsx | REPORTED |
+| P3 displays OP4 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/P3.tsx | REPORTED |
+| R1 displays OP2 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/R1.tsx | REPORTED |
+| R1 displays OP3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/R1.tsx | REPORTED |
+| R1 displays OP5 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/R1.tsx | REPORTED |
+| C1 displays P3 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/C1.tsx | REPORTED |
+| C1 displays P4 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/C1.tsx | REPORTED |
+| C1 displays P7 | TRACEABILITY.md | the component never references it | apps/mobile/src/screens/C1.tsx | REPORTED |
 
 ---
 

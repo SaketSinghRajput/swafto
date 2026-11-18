@@ -272,6 +272,30 @@ describe('a shopkeeper signs in, enters a day, closes it, and the server has it'
     // A retry after a lost response must be safe, or no client can ever retry.
     expect(second.rejected).toEqual([]);
   });
+
+  it('PR-1: an item and its line, typed offline on a day closed before syncing, all reach the server', async () => {
+    const h = handset(s);
+    await signIn(s, h);
+    enterCashSale(h, '500');
+    const sale = h.store.state.entries[0]!;
+    const item = { id: h.newId(), name: 'Atta 5kg', createdAt: T0 };
+    h.store.addItem(item);
+    const line = { id: h.newId(), dayId: sale.dayId, entryId: sale.id, itemId: item.id, quantity: 2, amount: 30000, createdAt: T0 };
+    h.store.addItemLine(line);
+    // Closed before any sync: the lines must land before the close freezes the day.
+    h.session.goTo('T11');
+    for (const d of String(h.store.expectedCash().value / 100)) h.session.press(d as '0');
+    h.session.confirmCount();
+    h.session.closeDay();
+
+    const result = await h.client.push(h.store.pendingOutbox);
+    expect(result.rejected).toEqual([]);
+    h.store.ackOutbox(result.accepted);
+    expect(h.store.pendingOutbox).toEqual([]);
+    const shopId = (await s.deps.repo.findUserByPhone(PHONE))!.shopId;
+    expect(await s.deps.repo.itemsFor(shopId)).toEqual([item]);
+    expect(await s.deps.repo.itemLinesFor(shopId)).toEqual([line]);
+  });
 });
 
 /* ==================================================================== *
@@ -414,7 +438,16 @@ describe('what happens when the network or the server says no', () => {
   it('a rate-limit refusal arrives as a retryable error with the real wait', async () => {
     const h = handset(s);
     // The TB6 burst rule is three per phone; the fourth is refused.
-    for (let i = 0; i < 3; i += 1) await h.client.requestOtp(PHONE, 'en');
+    // Each request a resend-cooldown (60 s, RT-3) after the last: inside it a request
+    // sends nothing and spends no budget, so the burst rule is reached by paced requests.
+    const afterCooldown = () => {
+      s.clock.value = new Date(Date.parse(s.clock.value) + 61_000).toISOString();
+    };
+    for (let i = 0; i < 3; i += 1) {
+      afterCooldown();
+      await h.client.requestOtp(PHONE, 'en');
+    }
+    afterCooldown();
     const refused = await h.client.requestOtp(PHONE, 'en').catch((e: unknown) => e);
     expect(refused).toBeInstanceOf(ApiError);
     expect((refused as ApiError).status).toBe(429);

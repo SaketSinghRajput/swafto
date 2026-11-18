@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - Mitra - onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Anek Odia';font-weight:400;src:local('Anek Odia Regular'),url('../../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:500;src:local('Anek Odia Medium'),url('../../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:700;src:local('Anek Odia Bold'),url('../../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf')}
+/* Mitra screen kit: palette from concepts/C-mitra.html. CSS variable names are placeholders until DESIGN-SYSTEM-V2.md tokens land (see FLOWS.md "Token map"). */
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--z:1;--zc:1;
+--bg:#FFF6EA;--surface:#FFFFFF;--raised:#F6EADA;--ink:#2B2118;--muted:#5E4E41;--edge:#8A7560;--rule:#E6D5BF;
+--brand:#0A6B66;--act:#0A6B66;--onact:#FFFFFF;--sel:#0A6B66;--onsel:#FFFFFF;--pos:#1E6B2E;--neg:#A3410C;
+--waitbg:#FFE9B8;--waitfg:#6B4400;--hbg:#0A6B66;--hfg:#FFFFFF;--nbg:#FFFFFF;--nfg:#2B2118;--nselbg:#0A6B66;--nselfg:#FFFFFF;--sbg:#0A6B66;--sfg:#FFFFFF;
+--t1bg:#DDF3EF;--t1ic:#0A6B66;--t2bg:#EDE4F7;--t2ic:#5B2E91;--t3bg:#E3F2D6;--t3ic:#2F6B1B;--t4bg:#FDE6D3;--t4ic:#8F4408;--t5bg:#EFE7DC;--t5ic:#5E4E41;--scrim:rgba(43,33,24,.55)}
+body[data-theme="focus"]{--bg:#1A1410;--surface:#261E18;--raised:#30261E;--ink:#F6EDE2;--muted:#BFAF9E;--edge:#9C8A78;--rule:#3E3126;--brand:#4FC3BA;--act:#4FC3BA;--onact:#10201F;--sel:#4FC3BA;--onsel:#10201F;--pos:#6FD48A;--neg:#F2A06A;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#261E18;--hfg:#F6EDE2;--nbg:#261E18;--nfg:#F6EDE2;--nselbg:#4FC3BA;--nselfg:#10201F;--sbg:#261E18;--sfg:#F6EDE2;--t1bg:#12302D;--t1ic:#7EE0D8;--t2bg:#2A1F3D;--t2ic:#CDB2F0;--t3bg:#1F3018;--t3ic:#A5DB86;--t4bg:#3A2412;--t4ic:#FFB27A;--t5bg:#30261E;--t5ic:#BFAF9E;--scrim:rgba(0,0,0,.65)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1500px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}.page-head p{margin-top:6px;line-height:1.5;max-width:960px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:9px 14px;font:600 14px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.toc{max-width:1500px;margin:8px auto 0;padding:0 24px;font-size:14px;line-height:1.9}
+.toc a{display:inline-block;margin:0 6px 4px 0;padding:2px 10px;border:1px solid #888;border-radius:14px;color:#222;text-decoration:none;background:#fff}
+.toc a.new{border-color:#b00;border-style:dashed}
+.stage{max-width:1500px;margin:0 auto;padding:12px 24px 40px;display:flex;flex-direction:column;gap:30px}
+.card{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;background:#EDEDED;border-radius:16px;padding:18px;scroll-margin-top:12px}
+.card.hl{outline:4px solid #0A6B66}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:calc(17px*var(--z));line-height:1.8;font-weight:500;font-synthesis:none}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.note{flex:1;min-width:320px;max-width:700px;background:#fff;border-radius:12px;padding:14px 18px;line-height:1.5;font-size:14px}
+.note h3{font-size:18px;margin-bottom:6px}.note dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px}
+.note dt{font-weight:700;color:#444}.note dd{margin:0}.note code{background:#eee;padding:0 4px;font-size:13px}
+.note .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;margin-right:6px;background:#0A6B66;color:#fff}
+.note .tag.new{background:#b00}.note .tag.chg{background:#8F4408}
+.note .keys{margin-top:6px;font-size:12px;color:#555;word-break:break-word}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}small{font-size:1em;font-weight:400}.grow{flex:1}ul{list-style:none}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}.pos{color:var(--pos)}.neg{color:var(--neg)}.ico{flex:none;display:block}
+.newc{border-bottom:2px dashed #c00}
+body[data-lang="od"] .newc::after,body[data-lang="hi"] .newc::after{content:" [NEW en]";font:700 10px system-ui;color:#c00;white-space:nowrap}
+/* chrome */
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg);border-radius:0 0 24px 24px;padding-bottom:6px;font-size:calc(17px*var(--zc))}
+.top h1{font-size:1.235em;font-weight:700;line-height:1.5}.top .sn{font-size:1.235em;font-weight:700;line-height:1.5}.top .dt{line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;line-height:1.4;font-weight:500;border-radius:28px}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg);border-radius:24px 24px 0 0;border-top:2px solid var(--rule);padding:4px 6px 0;font-size:calc(17px*var(--zc))}
+.tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.4;border-radius:20px;margin:2px}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+/* today */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.tile{min-height:76px;min-width:56px;display:flex;flex-direction:row;align-items:center;gap:10px;padding:0 12px;line-height:1.4;border-radius:20px;font-size:1.12em;background:var(--t5bg);color:var(--ink);text-align:left;font-weight:700}
+.ti{width:48px;height:48px;flex:none;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.t-sale{background:var(--act);color:var(--onact)}.t-sale .ti{color:var(--act)}
+.t-udhar{background:var(--t2bg)}.t-udhar .ti{color:var(--t2ic)}.t-collect{background:var(--t3bg)}.t-collect .ti{color:var(--t3ic)}.t-expense{background:var(--t4bg)}.t-expense .ti{color:var(--t4ic)}
+.t-more{grid-column:1/-1;min-height:56px;justify-content:center}.t-more .ti{width:36px;height:36px;color:var(--t5ic)}
+.tile.off{opacity:1;background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}.tile.off .ti{color:var(--muted)}
+.hero{margin:0 12px;padding:12px;background:var(--surface);border:2px solid var(--rule);border-radius:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.12em}
+.hero .hi{width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none}
+.hero .fig{padding:2px 0 6px}.hero-fig{font-size:2.1em}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.4}.ln .k{display:flex;align-items:center;gap:6px}
+.hero .ln{border-top:2px dashed var(--rule)}
+.dirico{border-radius:50%;padding:2px;width:28px;height:28px}.ln.in .dirico{background:var(--t3bg);color:var(--t3ic)}.ln.out .dirico{background:var(--t4bg);color:var(--t4ic)}
+.facts{margin:8px 12px 0}.facts .ln{min-height:52px;border-bottom:2px solid var(--rule)}.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left;background:var(--raised);border:2px solid var(--edge);border-radius:24px}
+.closecard.quiet2{background:var(--surface);border-color:var(--rule)}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.4}.cc-t{font-weight:700;font-size:1.06em}.cc-c{grid-area:chev;display:flex}.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}.bar i{flex:1;height:10px;background:var(--rule);border-radius:5px}.bar i.on{background:var(--brand)}
+/* controls */
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--edge);background:var(--raised);min-height:56px;border-radius:28px;overflow:hidden}
+.seg.two,.seg.three{margin:4px 12px 0}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.4;border-radius:28px;padding:0 6px;text-align:center}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;border-radius:32px}
+.addbar.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.addbar .m{font-size:1.15em}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:32px;text-align:center;line-height:1.4;padding:4px 12px}
+.primary.tonal{background:var(--t1bg);color:var(--ink);border:2px solid var(--act)}
+.primary.outline{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.primary.warn{background:var(--surface);color:var(--neg);border:2px solid var(--neg)}
+.primary.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.btn2{min-height:56px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--act);border-radius:28px;font-weight:700;background:var(--surface);line-height:1.4;text-align:center}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:140px;text-align:center;line-height:1.4}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.stack{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
+/* keypad / entry */
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;border-radius:16px}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.4}
+.kp.hidden{display:none}
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:2px solid var(--rule)}.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:2px solid var(--rule)}.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}.cust .cn{font-size:1.235em;font-weight:700}.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}.amt .al{color:var(--muted)}.amt-fig{font-size:2em}
+.refuse{display:flex;gap:8px;align-items:flex-start;margin:6px 0;padding:8px 12px;border:2px solid var(--neg);border-radius:16px;background:var(--surface);color:var(--ink);line-height:1.4}
+.refuse b{color:var(--neg)}
+/* rows */
+.prog{padding:8px 12px 4px}.pt{display:flex;flex-direction:column;line-height:1.4;margin-bottom:6px}.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:64px;line-height:1.4;margin:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:50%;background:var(--raised);border:2px solid var(--edge)}
+.row.done .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row.next{background:var(--t1bg);border-color:var(--act)}.row.next .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}.row .rv small{color:var(--muted)}
+.row.lock{color:var(--muted);border-style:dashed}
+.row.tap{width:calc(100% - 24px);text-align:left}
+.row.warnr{border-color:var(--neg)}
+.sec{padding:10px 16px 0;font-weight:700;color:var(--muted)}
+/* ledger */
+.lhero{padding:12px;background:var(--t1bg);margin:12px;border-radius:24px}.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.4}.lhero .big{font-size:2.1em;color:var(--t1ic)}.lhero .mid{font-size:1.4em}.lhero .h2{margin-top:6px}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700;border:2px solid var(--act);border-radius:28px;padding:0 16px}
+.plist li{margin:6px 12px}.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;line-height:1.4;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.pn{flex:1;display:flex;flex-direction:column}.pn b{font-size:1.18em}.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}.pa .m{font-size:1.3em}.pa em{font-style:normal;color:var(--muted)}
+.av{display:flex;width:44px;height:44px;flex:none;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.12em}
+.av0{background:var(--t1bg);color:var(--t1ic)}.av1{background:var(--t2bg);color:var(--t2ic)}.av2{background:var(--t3bg);color:var(--t3ic)}.av3{background:var(--t4bg);color:var(--t4ic)}.av4{background:var(--t5bg);color:var(--t5ic)}
+/* settings rows, forms, switches */
+.lrow{display:flex;align-items:center;gap:12px;min-height:64px;margin:6px 12px;padding:4px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.lrow .li{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--t5bg);color:var(--t5ic)}
+.lrow .lt{flex:1;display:flex;flex-direction:column}.lrow .lt small{color:var(--muted)}
+.lrow.danger .li{background:var(--t4bg);color:var(--t4ic)}.lrow.danger{border-color:var(--neg)}
+.field{margin:8px 12px}.field label{display:block;color:var(--muted);line-height:1.4}
+.field .in{min-height:56px;display:flex;align-items:center;padding:0 14px;background:var(--surface);border:2px solid var(--edge);border-radius:16px;line-height:1.4}
+.field .in.focus{border-color:var(--act);border-width:3px}.field .in.err{border-color:var(--neg)}.field .in .ph{color:var(--muted)}
+.field .help{color:var(--muted);line-height:1.4;margin-top:2px}.field .help.err{color:var(--neg)}
+.caret{display:inline-block;width:2px;height:1.2em;background:var(--ink);margin-left:2px;vertical-align:text-bottom}
+.sw{display:flex;align-items:center;gap:12px;min-height:72px;margin:6px 12px;padding:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.sw .tx{flex:1;display:flex;flex-direction:column}.sw .tx small{color:var(--muted)}
+.sw .knob{min-width:84px;min-height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;padding:0 10px;border:2px solid var(--edge);background:var(--raised)}
+.sw.on .knob{background:var(--sel);color:var(--onsel);border-color:var(--sel)}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.4;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg);border-radius:20px;margin:8px 12px 0}
+.banner span{flex:1}.banner.err{background:var(--surface);color:var(--ink);border-color:var(--neg)}.banner.info{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:24px 16px}.empty .ei{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center}
+.empty p{margin-bottom:10px;line-height:1.5}.empty .primary{max-width:280px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px;padding:12px}.skel i{display:block;height:64px;background:var(--rule);border-radius:20px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px;gap:12px}
+.bigmsg{font-size:1.5em;font-weight:700;line-height:1.4}.lead{color:var(--muted);line-height:1.5}
+.otp{display:flex;gap:8px;padding:0 12px;justify-content:center}.otp i{width:46px;height:60px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:1.5em}.otp i.cur{border-color:var(--act);border-width:3px}
+.dots{display:flex;gap:6px;justify-content:center;padding:6px}.dots i{width:10px;height:10px;border-radius:5px;background:var(--rule)}.dots i.on{background:var(--brand);width:26px}
+/* overlays */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-radius:28px 28px 0 0;padding:12px 0 16px;max-height:84%;display:flex;flex-direction:column;border-top:2px solid var(--edge)}
+.sheet h2{font-size:1.235em;padding:0 16px 6px;line-height:1.4}.sheet .grab{width:48px;height:5px;border-radius:3px;background:var(--edge);margin:0 auto 8px}
+.dialog{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:6;background:var(--bg);border:2px solid var(--edge);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:10px;line-height:1.5}
+.dialog h2{font-size:1.235em;line-height:1.4}
+.toast{position:absolute;left:12px;right:12px;bottom:12px;z-index:7;background:var(--ink);color:var(--bg);border-radius:20px;padding:10px 14px;display:flex;gap:8px;align-items:center;line-height:1.4}
+.refbanner{position:absolute;left:76px;right:12px;top:12px;z-index:7;padding:10px 12px;background:var(--surface);border:2px solid var(--neg);border-radius:16px;line-height:1.4}
+.refbanner b{color:var(--neg)}.refbanner.nn{border-color:var(--edge)}.refbanner.nn b{color:var(--ink)}
+.gray{filter:grayscale(1);opacity:.55}
+.spin{width:22px;height:22px;border:3px solid var(--rule);border-top-color:var(--act);border-radius:50%;display:inline-block}
+.size-prev{font-size:calc(17px*var(--z))}
+.legend{max-width:1500px;margin:0 auto;padding:6px 24px 0;font-size:13px;color:#444}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1 id="area-title"></h1><p id="area-intro"></p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button><button data-lang-btn="hi" aria-pressed="false">हिन्दी</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div>
+<div class="grp"><button data-size-btn="1" aria-pressed="true">Text 1.0x</button><button data-size-btn="1.3" aria-pressed="false">1.3x</button><button data-size-btn="2" aria-pressed="false">2.0x</button></div></div></div>
+<div class="legend">Odia and Hindi are the app's unreviewed DRAFT strings (H13), taken verbatim from strings.ts. A dashed red underline means the string does not exist yet (English only). Text sizes above 1.5x leave the header and tab bar at 1.5x (the app's chrome cap); body text and figures keep growing. Browser render with Anek Odia, not the phone.</div>
+<nav class="toc" id="toc"></nav>
+<main class="stage" id="stage"></main>
+<script>window.STRINGS={"sync.waiting":{"en":"{n} waiting · safe on phone","hi":"{n} बाकी · फ़ोन में सुरक्षित","or":"{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ"},"sync.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"common.back":{"en":"Back","hi":"पीछे","or":"ପଛକୁ ଯାଆନ୍ତୁ"},"nav.today":{"en":"Today","hi":"आज","or":"ଆଜି"},"nav.parties":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"nav.reports":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"act.sale":{"en":"Sale","hi":"बिक्री","or":"ବିକ୍ରି"},"act.credit":{"en":"Udhar sale","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"act.collect":{"en":"Collect","hi":"वसूली","or":"ଆଦାୟ"},"act.expense":{"en":"Expense","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"t1.more":{"en":"More","hi":"और","or":"ଅଧିକ"},"box.title":{"en":"In the box now","hi":"अभी बॉक्स में","or":"ଏବେ ବାକ୍ସରେ"},"box.opening":{"en":"Opening","hi":"शुरुआत","or":"ଆରମ୍ଭ"},"box.in":{"en":"cash in","hi":"नकद आया","or":"ନଗଦ ଆସିଲା"},"box.out":{"en":"cash out","hi":"नकद गया","or":"ନଗଦ ଗଲା"},"box.sales":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"t1.toCollect":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ ବାକି ଉଧାର"},"t1.continueClose":{"en":"Continue day close","hi":"दिन बंद करना जारी रखें","or":"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ"},"t1.progress":{"en":"{done} of {total}","hi":"{total} में से {done}","or":"{total} ରୁ {done}"},"keypad.clear":{"en":"Clear","hi":"मिटाएँ","or":"ଖାଲି କରନ୍ତୁ"},"keypad.delete":{"en":"Delete last digit","hi":"आखिरी अंक मिटाएँ","or":"ଶେଷ ଅଙ୍କ ଲିଭାନ୍ତୁ"},"t1.day.4":{"en":"Thursday","hi":"गुरुवार","or":"ଗୁରୁବାର"},"t1.month.11":{"en":"November","hi":"नवंबर","or":"ନଭେମ୍ବର"},"a3.sending":{"en":"Sending…","hi":"भेज रहे हैं…","or":"ପଠାଉଛୁ…"},"a3.send":{"en":"Send code","hi":"कोड भेजें","or":"କୋଡ୍ ପଠାନ୍ତୁ"},"a3.bar":{"en":"Your phone number","hi":"आपका फ़ोन नंबर","or":"ଆପଣଙ୍କ ଫୋନ୍ ନମ୍ବର"},"a3.step":{"en":"Step 1 of 2","hi":"चरण 1 / 2","or":"ପର୍ଯ୍ୟାୟ 1 / 2"},"a3.help":{"en":"We will send a {digits}-digit code to confirm it is you.","hi":"यह आप ही हैं, यह पक्का करने के लिए हम {digits} अंकों का कोड भेजेंगे।","or":"ଏହା ଆପଣ ବୋଲି ନିଶ୍ଚିତ କରିବାକୁ ଆମେ {digits} ଅଙ୍କର କୋଡ୍ ପଠାଇବୁ।"},"a3.notMobile":{"en":"An Indian mobile number starts with 6, 7, 8 or 9. Check the first digit.","hi":"भारतीय मोबाइल नंबर 6, 7, 8 या 9 से शुरू होता है। पहला अंक जाँचें।","or":"ଭାରତୀୟ ମୋବାଇଲ୍ ନମ୍ବର 6, 7, 8 କିମ୍ବା 9 ରେ ଆରମ୍ଭ ହୁଏ। ପ୍ରଥମ ଅଙ୍କ ଯାଞ୍ଚ କରନ୍ତୁ।"},"a3.changed":{"en":"I changed my number.","hi":"मैंने अपना नंबर बदल लिया है।","or":"ମୁଁ ମୋ ନମ୍ବର ବଦଳାଇଛି।"},"a4.bar":{"en":"Verify your number","hi":"अपना नंबर पक्का करें","or":"ଆପଣଙ୍କ ନମ୍ବର ଯାଞ୍ଚ କରନ୍ତୁ"},"a4.step":{"en":"Step 2 of 2","hi":"चरण 2 / 2","or":"ପର୍ଯ୍ୟାୟ 2 / 2"},"a4.title":{"en":"Enter the code","hi":"कोड डालें","or":"କୋଡ୍ ଦିଅନ୍ତୁ"},"a4.sentTo":{"en":"Sent to +91 {phone}","hi":"+91 {phone} पर भेजा गया","or":"+91 {phone} କୁ ପଠାଗଲା"},"a4.edit":{"en":"Edit","hi":"बदलें","or":"ବଦଳାନ୍ତୁ"},"a4.checking":{"en":"Checking…","hi":"जाँच रहे हैं…","or":"ଯାଞ୍ଚ କରୁଛୁ…"},"common.retry":{"en":"Try again","hi":"फिर कोशिश करें","or":"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"},"a4.resend":{"en":"Resend code","hi":"कोड दोबारा भेजें","or":"କୋଡ୍ ପୁଣି ପଠାନ୍ତୁ"},"a5.noCode.title":{"en":"Still no code?","hi":"अब भी कोड नहीं आया?","or":"ଏବେ ବି କୋଡ୍ ଆସିନାହିଁ?"},"a4.trouble":{"en":"Trouble? I changed my number.","hi":"दिक्कत? मैंने अपना नंबर बदल लिया है।","or":"ଅସୁବିଧା? ମୁଁ ମୋ ନମ୍ବର ବଦଳାଇଛି।"},"a5.bar":{"en":"OTP problems","hi":"OTP में दिक्कत","or":"OTP ସମସ୍ୟା"},"consent.required":{"en":"Needed to keep your book","hi":"खाता रखने के लिए ज़रूरी","or":"ଖାତା ରଖିବାକୁ ଆବଶ୍ୟକ"},"consent.optional":{"en":"Your choice","hi":"आपकी मर्ज़ी","or":"ଆପଣଙ୍କ ଇଚ୍ଛା"},"consent.on":{"en":"Yes","hi":"हाँ","or":"ହଁ"},"consent.off":{"en":"No","hi":"नहीं","or":"ନା"},"consent.title":{"en":"Before we start","hi":"शुरू करने से पहले","or":"ଆରମ୍ଭ ପୂର୍ବରୁ"},"consent.intro":{"en":"This is what SWAFTO keeps, and why. Nothing is kept for any other reason.","hi":"SWAFTO यह रखता है, और इसीलिए रखता है। किसी और कारण से कुछ नहीं रखा जाता।","or":"SWAFTO ଏହା ରଖେ, ଏବଂ ଏଥିପାଇଁ ରଖେ। ଅନ୍ୟ କୌଣସି କାରଣରୁ କିଛି ରଖାଯାଏ ନାହିଁ।"},"consent.purpose.account_and_ledger":{"en":"Your number, your shop name, and the entries you type","hi":"आपका नंबर, दुकान का नाम, और आपकी दर्ज की गई बातें","or":"ଆପଣଙ୍କ ନମ୍ବର, ଦୋକାନ ନାମ, ଏବଂ ଆପଣ ଲେଖିଥିବା ବିଷୟ"},"consent.purpose.sms_reminders":{"en":"Send me reminders by SMS","hi":"मुझे SMS से याद दिलाएँ","or":"ମୋତେ SMS ରେ ମନେ ପକାନ୍ତୁ"},"consent.purpose.crash_diagnostics":{"en":"Send crash reports, never with money or names","hi":"क्रैश रिपोर्ट भेजें, पैसे या नाम कभी नहीं","or":"କ୍ରାସ ରିପୋର୍ଟ ପଠାନ୍ତୁ, ଟଙ୍କା କିମ୍ବା ନାମ କେବେ ନୁହେଁ"},"consent.rights":{"en":"You can see everything we hold, correct it, or have it erased. You can change any of these choices later, as easily as now.","hi":"आप सब कुछ देख सकते हैं, सुधार सकते हैं, या मिटवा सकते हैं। ये चुनाव बाद में भी उतनी ही आसानी से बदल सकते हैं।","or":"ଆପଣ ସବୁକିଛି ଦେଖିପାରିବେ, ସଂଶୋଧନ କରିପାରିବେ, କିମ୍ବା ହଟାଇପାରିବେ। ଏହି ପସନ୍ଦ ପରେ ମଧ୍ୟ ସହଜରେ ବଦଳାଇପାରିବେ।"},"consent.agree":{"en":"I agree","hi":"मैं सहमत हूँ","or":"ମୁଁ ସହମତ"},"x1.title":{"en":"Set up your shop","hi":"अपनी दुकान सेट करें","or":"ଆପଣଙ୍କ ଦୋକାନ ସେଟ୍ କରନ୍ତୁ"},"x1.heading":{"en":"Four questions, then your book.","hi":"चार सवाल, फिर आपकी किताब।","or":"ଚାରିଟି ପ୍ରଶ୍ନ, ତା ପରେ ଆପଣଙ୍କ ବହି।"},"x1.shopName":{"en":"Shop name","hi":"दुकान का नाम","or":"ଦୋକାନର ନାମ"},"x1.shopNamePrompt":{"en":"What is your shop called?","hi":"आपकी दुकान का नाम क्या है?","or":"ଆପଣଙ୍କ ଦୋକାନର ନାମ କ'ଣ?"},"x1.refusal.shopName":{"en":"Type the shop name first.","hi":"पहले दुकान का नाम लिखें।","or":"ପ୍ରଥମେ ଦୋକାନର ନାମ ଲେଖନ୍ତୁ।"},"x1.language":{"en":"Language","hi":"भाषा","or":"ଭାଷା"},"x1.languageHelp":{"en":"Words change. Amounts stay in the same numerals everywhere.","hi":"शब्द बदलते हैं। रकम हर जगह एक ही अंकों में रहती है।","or":"ଶବ୍ଦ ବଦଳେ। ରାଶି ସବୁଠି ସମାନ ଅଙ୍କରେ ରହେ।"},"s3.display":{"en":"Screen","hi":"स्क्रीन","or":"ସ୍କ୍ରୀନ"},"s3.comfort":{"en":"Light","hi":"हल्की","or":"ହାଲୁକା"},"s3.focus":{"en":"Dark, bigger text","hi":"गहरी, बड़े अक्षर","or":"ଗାଢ଼, ବଡ଼ ଅକ୍ଷର"},"x1.cashNow":{"en":"Cash in the box right now","hi":"अभी गल्ले में नकद","or":"ଏବେ ବାକ୍ସରେ ନଗଦ"},"x1.cashHelp":{"en":"Optional. Leave it and Today will ask before your first sale.","hi":"ज़रूरी नहीं। छोड़ दें तो \"आज\" पहली बिक्री से पहले पूछेगा।","or":"ବାଧ୍ୟତାମୂଳକ ନୁହେଁ। ଛାଡ଼ିଦେଲେ \"ଆଜି\" ପ୍ରଥମ ବିକ୍ରି ପୂର୍ବରୁ ପଚାରିବ।"},"x1.start":{"en":"Start the day","hi":"दिन शुरू करें","or":"ଦିନ ଆରମ୍ଭ କରନ୍ତୁ"},"a1.continue":{"en":"Continue","hi":"आगे बढ़ें","or":"ଆଗକୁ ବଢ଼ନ୍ତୁ"},"a2.title":{"en":"Choose your language","hi":"अपनी भाषा चुनें","or":"ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ"},"refusal.titleNotDone":{"en":"Could not do that","hi":"यह नहीं हो सका","or":"ଏହା ହୋଇପାରିଲା ନାହିଁ"},"refusal.consent":{"en":"Could not reach the server, so your choice was not changed. Try again with signal.","hi":"सर्वर से संपर्क नहीं हुआ, आपकी पसंद नहीं बदली। नेटवर्क मिलने पर फिर कोशिश करें।","or":"ସର୍ଭର ସହ ଯୋଗାଯୋଗ ହେଲା ନାହିଁ, ଆପଣଙ୍କ ପସନ୍ଦ ବଦଳିଲା ନାହିଁ। ନେଟୱର୍କ ମିଳିଲେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"auth.offline":{"en":"You're offline — a code can't be sent or checked without signal. Nothing you typed is lost. Try again when you're back.","hi":"आप ऑफ़लाइन हैं — सिग्नल के बिना कोड भेजा या जाँचा नहीं जा सकता। आपने जो लिखा वह नहीं खोया। सिग्नल आने पर फिर कोशिश करें।","or":"ଆପଣ ଅଫଲାଇନ୍ ଅଛନ୍ତି — ସିଗ୍ନାଲ୍ ବିନା କୋଡ୍ ପଠାଇବା କିମ୍ବା ଯାଞ୍ଚ କରିହେବ ନାହିଁ। ଆପଣ ଯାହା ଲେଖିଛନ୍ତି ତାହା ହଜିନାହିଁ। ସିଗ୍ନାଲ୍ ଆସିଲେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"a5.mismatch.title":{"en":"That code doesn't match.","hi":"यह कोड मेल नहीं खाता।","or":"ଏହି କୋଡ୍ ମେଳ ଖାଉନାହିଁ।"},"a5.mismatch.body":{"en":"Check the {digits} digits and try again.","hi":"{digits} अंक जाँचें और फिर कोशिश करें।","or":"{digits}ଟି ଅଙ୍କ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"a5.expired.title":{"en":"This code expired.","hi":"इस कोड का समय खत्म हो गया।","or":"ଏହି କୋଡ୍‌ର ସମୟ ସରିଗଲା।"},"a5.expired.body":{"en":"Codes are valid for {minutes} minutes. We'll send a new one.","hi":"कोड {minutes} मिनट तक चलता है। हम नया भेज देंगे।","or":"କୋଡ୍ {minutes} ମିନିଟ୍ ପର୍ଯ୍ୟନ୍ତ ଚାଲେ। ଆମେ ନୂଆ ପଠାଇଦେବୁ।"},"a5.expired.cta":{"en":"Send a new code","hi":"नया कोड भेजें","or":"ନୂଆ କୋଡ୍ ପଠାନ୍ତୁ"},"a5.locked.title":{"en":"Too many tries.","hi":"बहुत बार कोशिश हुई।","or":"ବହୁତ ଥର ଚେଷ୍ଟା ହେଲା।"},"a5.locked.body":{"en":"For your safety, try again in {minutes} minutes.","hi":"आपकी सुरक्षा के लिए {minutes} मिनट बाद फिर कोशिश करें।","or":"ଆପଣଙ୍କ ସୁରକ୍ଷା ପାଇଁ {minutes} ମିନିଟ୍ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"a5.noCode.body":{"en":"This can happen with some networks after two resends. We can help over WhatsApp.","hi":"कुछ नेटवर्क पर दो बार दोबारा भेजने के बाद भी ऐसा हो सकता है। हम WhatsApp पर मदद कर सकते हैं।","or":"କିଛି ନେଟୱର୍କରେ ଦୁଇ ଥର ପୁଣି ପଠାଇବା ପରେ ବି ଏପରି ହୋଇପାରେ। ଆମେ WhatsApp ରେ ସାହାଯ୍ୟ କରିପାରିବୁ।"},"a6.bar":{"en":"Session expired","hi":"सत्र समाप्त","or":"ସେସନ୍ ଶେଷ"},"a6.body":{"en":"This device signed out — usually because you signed in somewhere else. Your book is untouched and safe on our server.","hi":"यह फ़ोन साइन आउट हो गया — अक्सर इसलिए कि आपने कहीं और साइन इन किया। आपका खाता सुरक्षित है और हमारे सर्वर पर है।","or":"ଏହି ଫୋନ୍ ସାଇନ୍ ଆଉଟ୍ ହୋଇଗଲା — ସାଧାରଣତଃ ଆପଣ ଅନ୍ୟ କେଉଁଠି ସାଇନ୍ ଇନ୍ କରିଥିବାରୁ। ଆପଣଙ୍କ ଖାତା ସୁରକ୍ଷିତ ଓ ଆମ ସର୍ଭରରେ ଅଛି।"},"a6.verify":{"en":"Verify with +91 {phone}","hi":"+91 {phone} से पक्का करें","or":"+91 {phone} ସହ ଯାଞ୍ଚ କରନ୍ତୁ"},"a7.bar":{"en":"Change your number","hi":"अपना नंबर बदलें","or":"ଆପଣଙ୍କ ନମ୍ବର ବଦଳାନ୍ତୁ"},"a7.sub":{"en":"Two ways to fix this","hi":"ठीक करने के दो तरीके","or":"ଠିକ୍ କରିବାର ଦୁଇଟି ଉପାୟ"},"a7.intro":{"en":"SIM changed, phone lost, or a new device — pick what fits.","hi":"सिम बदला, फ़ोन खोया, या नया फ़ोन — जो सही हो वह चुनें।","or":"SIM ବଦଳିଲା, ଫୋନ୍ ହଜିଲା, କିମ୍ବା ନୂଆ ଫୋନ୍ — ଯାହା ଠିକ୍ ତାହା ବାଛନ୍ତୁ।"},"a7.haveOld":{"en":"I still have my old number","hi":"मेरे पास पुराना नंबर अभी भी है","or":"ମୋ ପାଖରେ ପୁରୁଣା ନମ୍ବର ଏବେ ବି ଅଛି"},"a7.haveOld.sub":{"en":"Verify it, then add the new one · a few minutes","hi":"उसे पक्का करें, फिर नया जोड़ें · कुछ मिनट","or":"ତାହା ଯାଞ୍ଚ କରନ୍ତୁ, ତାପରେ ନୂଆଟି ଯୋଡ଼ନ୍ତୁ · କିଛି ମିନିଟ୍"},"a7.noOld":{"en":"I don't have it anymore","hi":"अब वह नंबर मेरे पास नहीं है","or":"ସେ ନମ୍ବର ଆଉ ମୋ ପାଖରେ ନାହିଁ"},"a7.noOld.sub":{"en":"We check it is you by hand","hi":"हम आपको खुद जाँचते हैं","or":"ଆମେ ଆପଣଙ୍କୁ ହାତରେ ଯାଞ୍ଚ କରୁ"},"a7.handoff":{"en":"Without the old number we have to check it is you by hand. A support line for this is not set up yet. Until it is, the privacy page says how to write to us: give your shop name and your old number.","hi":"पुराने नंबर के बिना हमें आपको खुद जाँचना होगा। इसके लिए सहायता लाइन अभी शुरू नहीं हुई है। तब तक निजता पेज पर लिखा है कि हमें कैसे लिखें: अपनी दुकान का नाम और पुराना नंबर बताएँ।","or":"ପୁରୁଣା ନମ୍ବର ବିନା ଆମକୁ ଆପଣଙ୍କୁ ହାତରେ ଯାଞ୍ଚ କରିବାକୁ ପଡ଼ିବ। ଏଥିପାଇଁ ସହାୟତା ଲାଇନ୍ ଏପର୍ଯ୍ୟନ୍ତ ଆରମ୍ଭ ହୋଇନାହିଁ। ସେପର୍ଯ୍ୟନ୍ତ ଗୋପନୀୟତା ପୃଷ୍ଠାରେ ଆମକୁ କିପରି ଲେଖିବେ ଲେଖାଅଛି: ଦୋକାନ ନାମ ଓ ପୁରୁଣା ନମ୍ବର ଦିଅନ୍ତୁ।"},"a7.help":{"en":"Open the privacy page","hi":"निजता पेज खोलें","or":"ଗୋପନୀୟତା ପୃଷ୍ଠା ଖୋଲନ୍ତୁ"},"t6.title":{"en":"Opening cash","hi":"शुरुआती नकद","or":"ଆରମ୍ଭ ନଗଦ"},"t6.sub":{"en":"Before the first sale","hi":"पहली बिक्री से पहले","or":"ପ୍ରଥମ ବିକ୍ରି ପୂର୍ବରୁ"},"t6.question":{"en":"What's in the box right now?","hi":"अभी बॉक्स में कितना है?","or":"ବର୍ତ୍ତମାନ ବାକ୍ସରେ କେତେ ଅଛି?"},"t6.body":{"en":"Count the notes and coins before the first sale. Tomorrow onwards this is carried from tonight's count - you won't be asked.","hi":"पहली बिक्री से पहले नोट और सिक्के गिनें। कल से यह आज रात की गिनती से आएगा - आपसे नहीं पूछा जाएगा।","or":"ପ୍ରଥମ ବିକ୍ରି ପୂର୍ବରୁ ନୋଟ ଓ ମୁଦ୍ରା ଗଣନ୍ତୁ। ଆସନ୍ତାକାଲିଠାରୁ ଏହା ଆଜି ରାତିର ଗଣନାରୁ ଆସିବ - ଆପଣଙ୍କୁ ପଚରାଯିବ ନାହିଁ।"},"t6.save":{"en":"Save opening cash","hi":"शुरुआती नकद सहेजें","or":"ଆରମ୍ଭ ନଗଦ ସାଇତନ୍ତୁ"}};</script>
+<script>/* Mitra screen kit. Copy comes from window.STRINGS (extracted from apps/mobile/src/i18n/strings.ts by build.mjs, verbatim). Keys that do not exist yet are written K.N('English text') and are listed as NEW. Money is integer paise; the browser formatting mirrors formatPaise (Indian grouping, 2 decimals, sign always printed). */
+(function () {
+  'use strict';
+  var K = (window.K = {});
+  var SPEC = (window.SPEC = window.SPEC || {});
+  var LANGS = { en: 'en', od: 'or', hi: 'hi' };
+  var S = { lang: 'od', theme: 'comfort', size: 1 };
+  var USED = {}; var NEWC = {}; var curFrame = '';
+  K.state = S;
+
+  /* ---- copy ---- */
+  K.t = function (key, vars) {
+    var p = window.STRINGS[key];
+    if (!p) { return '<span class="newc" title="MISSING KEY ' + key + '">' + key + '</span>'; }
+    (USED[curFrame] = USED[curFrame] || {})[key] = 1;
+    var s = p[LANGS[S.lang]];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : '{' + k + '}'; });
+    return s;
+  };
+  K.N = function (en, hint) {
+    (NEWC[curFrame] = NEWC[curFrame] || {})[en] = hint || '';
+    return '<span class="newc" title="NEW string: no od/hi yet (H13)">' + en + '</span>';
+  };
+  K.plain = function (key, vars) { return K.t(key, vars); };
+  K.pick = function (en, od, hi) { return S.lang === 'en' ? en : (S.lang === 'od' ? od : hi); }; /* proper names only */
+
+  /* ---- money ---- */
+  K.rupee = function (p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100, s = String(r);
+    if (s.length > 3) { var l3 = s.slice(-3), rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + l3; }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  };
+  /* o.sign: print + on positives; o.out: an out-line (always -); o.tone:'dir' colours by direction (sign is always printed too) */
+  K.M = function (p, o) {
+    o = o || {}; var neg = o.out || p < 0, sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + K.rupee(p) + '</span>';
+  };
+
+  /* ---- icons (stroke, 24 grid) ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.6 14.4 9 14.4L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.5-3.5M12 12l3.5-3.5"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 5l-7 7 7 7"/>', bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>', up: '<path d="M12 5v14M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 5a3.5 3.5 0 0 1 0 7M19 20c0-2.500-1.500-4-3-4.700"/>',
+    warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    cloudoff: '<path d="M7 18h10a4 4 0 0 0 .8-7.900A6 6 0 0 0 6.500 9.500 4 4 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+    share: '<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 11l7.400-4M8.300 13l7.400 4"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    textsize: '<path d="M3 19L8 6l5 13M5 15h6M15 19l3.500-8 3.500 8M16.200 16.500h4.600"/>', shield: '<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', edit: '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>', logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+    sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>', swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    wa: '<path d="M4 20l1.500-4.500A8 8 0 1 1 8.500 18.500z"/><path d="M9 9c0 3 3 6 6 6l1.500-1.500-2-1-1 1c-1-.5-2-1.500-2.500-2.500l1-1-1-2z"/>',
+    star: '<path d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/>', pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+    bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+  K.ico = function (n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICO[n] || ICO.dots) + '</svg>';
+  };
+
+  /* ---- components: each returns an HTML string ---- */
+  K.chip = function (kind, n) {
+    if (kind === 'wait') { var s = K.t('sync.waiting', { n: n || 3 }); return '<button class="chip wait" aria-label="' + s + '">' + K.ico('clock', 22) + '<span>' + s + '</span></button>'; }
+    if (kind === 'off') { return '<button class="chip wait">' + K.ico('cloudoff', 22) + '<span>' + K.N('Offline') + '</span></button>'; }
+    return '<button class="chip ok">' + K.ico('check', 22) + '<span>' + K.t('sync.saved') + '</span></button>';
+  };
+  K.top = function (o) { /* {title, back, right, shop, date} */
+    var l = o.back ? '<button class="back" aria-label="' + K.t('common.back') + '">' + K.ico('back', 28) + '</button>' : '';
+    var mid = o.shop ? '<div class="shop"><div class="sn">' + o.shop + '</div><div class="dt">' + (o.date || '') + '</div></div>' : '<h1>' + (o.title || '') + '</h1>';
+    return '<header class="top">' + l + mid + '<div class="grow"></div>' + (o.right || '') + '</header>';
+  };
+  K.tabs = function (active) {
+    var d = [['today', 'box', K.t('nav.today')], ['parties', 'book', K.t('nav.parties')], ['reports', 'bars', K.t('nav.reports')]];
+    return '<nav class="tabs">' + d.map(function (x) { return '<button class="tab' + (x[0] === active ? ' on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + K.ico(x[1], 26) + '<span>' + x[2] + '</span></button>'; }).join('') + '</nav>';
+  };
+  K.tile = function (kind, icon, label, off) { return '<button class="tile t-' + kind + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : '') + '><span class="ti">' + K.ico(icon, 30) + '</span><span>' + label + '</span></button>'; };
+  K.tiles = function (off) {
+    return '<section class="tiles">' + K.tile('sale', 'coin', K.t('act.sale'), off) + K.tile('udhar', 'book', K.t('act.credit'), off) + K.tile('collect', 'tray', K.t('act.collect'), off) + K.tile('expense', 'receipt', K.t('act.expense'), off) + K.tile('more', 'dots', K.t('t1.more'), off) + '</section>';
+  };
+  K.hero = function (o) { /* {box, opening, cashIn, cashOut} paise */
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + K.t('box.title') + '</span></div><div class="fig">' + K.M(o.box, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.t('box.opening') + '</span>' + K.M(o.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + K.ico('down', 20, 'dirico') + K.t('box.in') + '</span>' + K.M(o.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + K.ico('up', 20, 'dirico') + K.t('box.out') + '</span>' + K.M(o.cashOut, { out: true, tone: 'dir' }) + '</div></section>';
+  };
+  K.facts = function (sales, collect) {
+    return '<section class="facts"><div class="ln"><span class="k">' + K.t('box.sales') + '</span>' + K.M(sales) + '</div><button class="ln link"><span class="k">' + K.t('t1.toCollect') + '</span>' + K.M(collect) + '</button></section>';
+  };
+  K.bar = function (done, total) { var h = '<div class="bar" role="img" aria-label="' + done + '/' + total + '">'; for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.closecard = function (done, total, quiet, label) {
+    return '<button class="closecard' + (quiet ? ' quiet2' : '') + '"><span class="cc-main"><span class="cc-t">' + (label || K.t('t1.continueClose')) + '</span><span>' + K.t('t1.progress', { done: done, total: total }) + '</span></span>' + K.bar(done, total) + '<span class="cc-c">' + K.ico('chev', 26) + '</span></button>';
+  };
+  K.seg = function (items, on, icons) { /* items: label html[]; on: index */
+    return '<div class="seg" role="radiogroup">' + items.map(function (l, i) { return '<button class="sg-b' + (i === on ? ' on' : '') + '" role="radio" aria-checked="' + (i === on) + '">' + (i === on ? K.ico('tick', 22) : (icons && icons[i] ? K.ico(icons[i], 22) : '')) + '<span>' + l + '</span></button>'; }).join('') + '</div>';
+  };
+  K.keypad = function (hidden) {
+    var k = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (x) { return '<button class="key">' + x + '</button>'; });
+    k.push('<button class="key aux">' + K.t('keypad.clear') + '</button>'); k.push('<button class="key">0</button>'); k.push('<button class="key aux" aria-label="' + K.t('keypad.delete') + '">' + K.ico('bksp', 30) + '</button>');
+    return '<div class="kp' + (hidden ? ' hidden' : '') + '">' + k.join('') + '</div>';
+  };
+  K.addbar = function (label, paise, dis) { return '<button class="addbar' + (dis ? ' dis' : '') + '"' + (dis ? ' aria-disabled="true"' : '') + '><span>' + label + '</span>' + (paise ? K.M(paise) : '') + '</button>'; };
+  K.primary = function (label, kind, icon) { return '<button class="primary' + (kind ? ' ' + kind : '') + '"' + (kind === 'dis' ? ' aria-disabled="true"' : '') + '>' + (icon ? K.ico(icon, 26) : '') + '<span>' + label + '</span></button>'; };
+  K.btn2 = function (label, icon) { return '<button class="btn2">' + (icon ? K.ico(icon, 24) : '') + '<span>' + label + '</span></button>'; };
+  K.quiet = function (label) { return '<button class="quiet">' + label + '</button>'; };
+  K.sticky = function () { return '<div class="sticky">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.scroll = function () { return '<div class="scroll">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.stack = function () { return '<div class="stack">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.row = function (o) { /* {state:'done'|'next'|'open'|'skip'|'lock', n, name, sub, paise, entries, quiet} */
+    var mk = o.state === 'done' ? K.ico('tick', 22) : o.state === 'skip' ? K.ico('dash', 22) : o.state === 'lock' ? K.ico('lock', 22) : '<b>' + (o.n || '') + '</b>';
+    var rv = o.paise !== undefined ? '<span class="rv">' + K.M(o.paise) + (o.entries ? '<small>' + o.entries + '</small>' : '') + '</span>' : '';
+    return '<li class="row ' + o.state + (o.cls ? ' ' + o.cls : '') + '"><span class="mk">' + mk + '</span><span class="nm">' + o.name + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' + rv + (o.quiet ? K.quiet(o.quiet) : '') + '</li>';
+  };
+  K.lrow = function (icon, title, sub, o) { o = o || {}; return '<button class="lrow' + (o.danger ? ' danger' : '') + '"><span class="li">' + K.ico(icon, 24) + '</span><span class="lt"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (o.right || '') + (o.noChev ? '' : K.ico('chev', 24)) + '</button>'; };
+  K.sw = function (on, title, sub) { return '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"><span class="tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + K.N(on ? 'On' : 'Off', 'switch state words (DS-V2 3.14); consent screens may use their existing allow/withdraw wording') + '</span></span></button>'; };
+  K.field = function (label, value, o) { o = o || {}; return '<div class="field"><label>' + label + '</label><div class="in' + (o.focus ? ' focus' : '') + (o.err ? ' err' : '') + '">' + (value ? '<span>' + value + '</span>' : '<span class="ph">' + (o.ph || '') + '</span>') + (o.focus ? '<i class="caret"></i>' : '') + '</div>' + (o.help ? '<div class="help' + (o.err ? ' err' : '') + '">' + o.help + '</div>' : '') + '</div>'; };
+  K.avatar = function (name, i) { return '<span class="av av' + ((i || 0) % 5) + '">' + Array.from(name)[0] + '</span>'; };
+  K.prow = function (name, i, sub, paise, state) { return '<li><button class="prow">' + K.avatar(name, i) + '<span class="pn"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="pa">' + K.M(paise) + '<em>' + state + '</em></span></button></li>'; };
+  K.banner = function (kind, icon, text, action) { return '<div class="banner ' + (kind || '') + '" role="status">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span>' + (action ? K.quiet(action) : '') + '</div>'; };
+  K.refuse = function (title, body) { return '<div class="refuse" role="alert">' + K.ico('warn', 24) + '<div><b>' + title + '</b><br>' + body + '</div></div>'; };
+  K.refbanner = function (title, body, nn) { return '<div class="refbanner' + (nn ? ' nn' : '') + '" role="alert"><b>' + title + '</b><br>' + body + '</div>'; };
+  K.empty = function (icon, text, ctaLabel, ctaIcon) { return '<div class="empty"><div class="ei">' + K.ico(icon, 44) + '</div><p>' + text + '</p>' + (ctaLabel ? K.primary(ctaLabel, '', ctaIcon) : '') + '</div>'; };
+  K.skel = function (n) { var h = '<div class="skel" aria-busy="true">'; for (var i = 0; i < (n || 4); i++) h += '<i></i>'; return h + '</div>'; };
+  K.sheet = function (title, inner) { return '<div class="scrim"></div><div class="sheet" role="dialog"><h2>' + title + '</h2><div class="scroll">' + inner + '</div></div>'; };
+  K.dialog = function (title, inner) { return '<div class="scrim"></div><div class="dialog" role="alertdialog"><h2>' + title + '</h2>' + inner + '</div>'; };
+  K.toast = function (icon, text) { return '<div class="toast" role="status">' + K.ico(icon || 'check', 24) + '<span>' + text + '</span></div>'; };
+  K.center = function (inner) { return '<div class="center">' + inner + '</div>'; };
+  K.dots = function (i, n) { var h = '<div class="dots">'; for (var k = 0; k < n; k++) h += '<i class="' + (k === i ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.otp = function (digits, cur) { var h = '<div class="otp">'; for (var i = 0; i < 6; i++) h += '<i class="' + (i === cur ? 'cur' : '') + '">' + (digits[i] || '') + '</i>'; return h + '</div>'; };
+  K.sec = function (t) { return '<div class="sec">' + t + '</div>'; };
+  K.list = function (rows) { return '<ul class="rows">' + rows.join('') + '</ul>'; };
+  K.names = { ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'], lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ'] };
+  K.nm = function (id) { return K.names[id][S.lang === 'en' ? 0 : 1]; }; /* demo names only; real names are user data, shown as typed */
+  K.shop = 'Subhadra Kirana';
+  K.date = function () { return K.t('t1.day.4') + ' 19 ' + K.t('t1.month.11'); };
+  K.screen = function (inner) { return inner; };
+
+  /* build.mjs runs the specs in Node (lang en) to write FLOWS.md from the very same mockup bodies */
+  K.frame = function (id) { curFrame = id; };
+  K.used = function (id) { return Object.keys(USED[id] || {}); };
+  K.newc = function (id) { return Object.keys(NEWC[id] || {}); };
+
+  /* ---- page ---- */
+  function frameHtml(sc) {
+    return '<div class="fwrap"><h3>' + sc.route + '</h3><div class="bezel"><div class="screen" id="fr-' + sc.id + '"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div>';
+  }
+  function noteHtml(sc) {
+    var used = Object.keys(USED[sc.id] || {}), nw = Object.keys(NEWC[sc.id] || {});
+    var flag = sc.flag === 'NEW' ? '<span class="tag new">NEW screen</span>' : sc.flag === 'CHG' ? '<span class="tag chg">Changed</span>' : '<span class="tag">Exists today</span>';
+    var dl = function (k, v) { return v ? '<dt>' + k + '</dt><dd>' + v + '</dd>' : ''; };
+    return '<div class="note"><h3>' + flag + sc.title + '</h3><dl>' + dl('Route', '<code>' + sc.route + '</code>') + dl('Purpose', sc.purpose) + dl('Primary action', sc.primary) + dl('Taps / target', sc.taps) + dl('Rules held', sc.rules) + dl('States / notes', sc.notes) + dl('For Saket to review', sc.review) + dl('Copy gaps (en only)', nw.length ? nw.map(function (x) { return '"' + x + '"'; }).join(' · ') + ' (od/hi DRAFT needed, H13)' : '') + '</dl><div class="keys"><b>Keys used:</b> ' + (used.length ? used.join(', ') : 'none') + '</div></div>';
+  }
+  function renderBodies(scr) { scr.forEach(function (sc) { curFrame = sc.id; var el = document.getElementById('fr-' + sc.id); var app = el.querySelector('.app'); var prev = app.querySelector('.scroll'); var top = prev ? prev.scrollTop : 0; app.innerHTML = sc.body(); var s2 = app.querySelector('.scroll'); if (s2) s2.scrollTop = top; }); }
+  function renderNotes(scr) { scr.forEach(function (sc) { document.getElementById('note-' + sc.id).innerHTML = noteHtml(sc); }); }
+  K.boot = function () {
+    var area = SPEC.area, scr = area.screens;
+    document.title = 'SWAFTO Retail Desk - Mitra - ' + area.title;
+    var q = function (id) { return document.getElementById(id); };
+    q('area-title').textContent = area.title + ' (' + scr.length + ' screen states)'; q('area-intro').innerHTML = area.intro;
+    q('toc').innerHTML = scr.map(function (s) { return '<a href="#c-' + s.id + '"' + (s.flag === 'NEW' ? ' class="new"' : '') + '>' + s.title + '</a>'; }).join('');
+    q('stage').innerHTML = scr.map(function (sc) { return '<section class="card" id="c-' + sc.id + '">' + frameHtml(sc) + '<div class="note" id="note-' + sc.id + '"></div></section>'; }).join('');
+    function all() { document.documentElement.lang = S.lang === 'od' ? 'or' : S.lang; document.body.setAttribute('data-lang', S.lang); document.body.setAttribute('data-theme', S.theme); document.body.style.setProperty('--z', S.size); document.body.style.setProperty('--zc', Math.min(S.size, 1.5)); USED = {}; NEWC = {}; renderBodies(scr); renderNotes(scr); }
+    [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { S.lang = b.getAttribute('data-lang-btn'); [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) { b.addEventListener('click', function () { S.theme = b.getAttribute('data-theme-btn'); [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (b) { b.addEventListener('click', function () { S.size = parseFloat(b.getAttribute('data-size-btn')); [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    all();
+  };
+})();
+</script>
+<script>/* AREA: Onboarding (A1 to A7, X0 in signup mode, X1, T6). Real screens: apps/mobile/src/screens/A1..A7.tsx, authParts.tsx, X0.tsx, X1.tsx, T6.tsx.
+   Sign-in screens have no tabs. Copy is by literal key; a string that does not exist is K.N. */
+(function () {
+  var t = K.t, M = K.M;
+  var PH = '98765 43210';
+
+  function top(titleHtml, back, chip) { return K.top({ title: titleHtml, back: back, right: chip || '' }); }
+  function phoneField(digits, o) {
+    o = o || {};
+    var f = digits.length > 5 ? digits.slice(0, 5) + ' ' + digits.slice(5) : digits;
+    return '<div class="field"><div class="in' + (o.err ? ' err' : ' focus') + '"><b style="padding-right:10px;margin-right:10px;border-right:2px solid var(--edge);color:var(--muted)">+91</b>' +
+      (digits ? '<b style="font-variant-numeric:tabular-nums">' + f + '</b>' : '<span class="ph" style="font-variant-numeric:tabular-nums">00000 00000</span>') + (o.err || o.busy ? '' : '<i class="caret"></i>') + '</div></div>';
+  }
+  function head(title, sub) { return '<div style="padding:12px 16px 0"><h2 style="margin:0;font-size:1.3em;line-height:1.3">' + title + '</h2>' + (sub ? '<p style="margin:6px 0 0;color:var(--muted);line-height:1.45">' + sub + '</p>' : '') + '</div>'; }
+  function sub(html) { return '<p style="margin:0;padding:6px 16px;color:var(--muted);line-height:1.45">' + html + '</p>'; }
+  function phoneFrame(digits, o) {
+    o = o || {};
+    var send = o.busy ? K.primary(t('a3.sending'), 'dis', '') : (digits.length === 10 && !o.err ? K.primary(t('a3.send'), '', 'chat') : K.primary(t('a3.send'), 'dis', 'chat'));
+    return top(t('a3.bar'), true, o.chip) + K.scroll(
+      sub(t('a3.step')), head(t('a3.bar'), t('a3.help', { digits: 6 })) + '<div style="height:8px"></div>'
+    ) + K.sticky(
+      phoneField(digits, { err: o.err, busy: o.busy }),
+      o.err ? K.banner('', 'info', t('a3.notMobile')) : '',
+      o.notice || '',
+      o.busy ? '' : K.keypad(),
+      send,
+      K.quiet(t('a3.changed'))
+    );
+  }
+  function codeFrame(digits, o) {
+    o = o || {};
+    return top(t('a4.bar'), true) + K.scroll(
+      sub(t('a4.step')), head(t('a4.title')) + '<p style="margin:6px 0 0;padding:0 16px;color:var(--muted);line-height:1.45">' + t('a4.sentTo', { phone: '+91 ' + PH }) + '</p>' + K.stack(K.btn2(t('a4.edit'), 'pencil')),
+      o.checking ? K.banner('info', 'clock', t('a4.checking')) : '',
+      o.retry ? K.stack(K.primary(t('common.retry'), '', 'refresh')) : '',
+      K.stack(K.btn2(t('a4.resend'), 'refresh') + (o.noCode ? K.btn2(t('a5.noCode.title'), 'info') : '') + K.btn2(t('a4.trouble'), 'phone'))
+    ) + K.sticky(K.otp(digits, digits.length), o.notice || '', o.checking ? '' : K.keypad());
+  }
+  function problemCard(kind, icon, title, body, cta) {
+    return top(t('a5.bar'), true) + K.scroll(
+      '<div class="banner ' + kind + '" role="alert" style="margin:12px;align-items:flex-start">' + K.ico(icon, 28) + '<span><b>' + title + '</b><br>' + body + '</span></div>'
+    ) + (cta ? K.sticky(cta) : '');
+  }
+  /* consent switch built locally: real X0 shows "Your choice: Yes/No" (consent.optional, consent.on/off) with the state also in an icon */
+  function csw(on, text, required) {
+    if (required) {
+      return '<div style="margin:6px 12px;padding:12px 14px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.45">' + text +
+        '<div style="margin-top:6px;display:flex;gap:8px;align-items:center;color:var(--muted)">' + K.ico('lock', 22) + '<span>' + t('consent.required') + '</span></div></div>';
+    }
+    return '<div style="margin:6px 12px;padding:12px 14px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.45">' + text +
+      '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '" style="margin:8px 0 0;width:100%;border:0;padding:0;min-height:56px;background:transparent"><span class="tx"><b>' + t('consent.optional') + '</b></span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + t(on ? 'consent.on' : 'consent.off') + '</span></span></button></div>';
+  }
+  function consentBody(sms, crash, extra, dialog) {
+    return K.top({ title: t('consent.title'), back: true }) + K.scroll(
+      '<p style="margin:0;padding:12px 16px;line-height:1.5">' + t('consent.intro') + '</p>',
+      csw(true, t('consent.purpose.account_and_ledger'), true),
+      csw(sms, t('consent.purpose.sms_reminders')),
+      csw(crash, t('consent.purpose.crash_diagnostics')),
+      '<p style="margin:0;padding:12px 16px;color:var(--muted);line-height:1.5">' + t('consent.rights') + '</p>', extra || ''
+    ) + K.sticky(K.primary(t('consent.agree'), '', 'check')) + (dialog || '');
+  }
+  function lang3(on) {
+    var items = ['ଓଡ଼ିଆ', 'हिन्दी', 'English'];
+    return K.seg(items, on);
+  }
+  function qlab(n, label) { return '<div style="padding:12px 16px 0;font-weight:700;display:flex;gap:10px;align-items:center"><span style="min-width:28px;height:28px;border-radius:14px;background:var(--raised);display:inline-flex;align-items:center;justify-content:center">' + n + '</span><span>' + label + '</span></div>'; }
+  function opt2(labels, on) { return K.seg(labels, on); }
+  function x1(o) {
+    o = o || {};
+    var cash = o.cash === undefined ? '<span class="ph">' + M(0) + '</span>' : M(o.cash);
+    return K.top({ title: t('x1.title') }) + K.scroll(
+      '<p style="margin:0;padding:10px 16px 0;color:var(--muted)">' + t('x1.heading') + '</p>',
+      qlab(1, t('x1.shopName')) + K.field('', o.name || '', { ph: t('x1.shopNamePrompt'), focus: !o.keypad && !o.name, err: o.err, help: o.err ? t('x1.refusal.shopName') : '' }),
+      qlab(2, t('x1.language')) + lang3(o.lang === undefined ? 2 : o.lang) + sub(t('x1.languageHelp')),
+      qlab(3, t('s3.display')) + (o.size || opt2([t('s3.comfort'), t('s3.focus')], 0)) + (o.sizeNote || ''),
+      qlab(4, t('x1.cashNow')) + '<div class="field"><div class="in' + (o.keypad ? ' focus' : '') + '" style="font-weight:700;font-size:1.2em">' + cash + '</div></div>' + sub(t('x1.cashHelp'))
+    ) + K.sticky(o.keypad ? '<div class="field" style="margin:0"><div class="in focus" style="font-weight:700;font-size:1.2em">' + cash + '</div></div>' + K.keypad() : '', K.primary(t('x1.start'), '', 'check')) + (o.over || '');
+  }
+
+  SPEC.area = {
+    title: 'Onboarding',
+    intro: 'First launch and sign-up, in the order the app runs them: splash, language, consent notice, phone number, code, then (new shop only) shop setup and opening cash. Plus the recovery screens: code problems, session expired, number changed. No tabs on any of them.',
+    screens: [
+      {
+        id: 'onboarding-splash', route: 'A1', title: 'Splash', flag: 'EXISTS',
+        purpose: 'The first frame. Names the product; one tap continues.',
+        primary: 'Tap anywhere (accessible name: Continue).',
+        taps: '1 tap.',
+        rules: 'No logo animation, no tour, no permissions primer. The wordmark SWAFTO is a name, not copy, and is the same in every language.',
+        notes: 'REAL FIRST-LAUNCH ORDER (from App.tsx, session.tsx chooseLanguage / agreeConsent, host.tsx consented): A1 splash -> A2 language -> X0 consent notice (in the language just chosen) -> A3 phone number -> A4 code -> then, if the book has no shop name yet, X1 shop setup -> T1 Today (T2 if no opening cash was typed, then T6 opening cash). A returning book goes A4 -> T1. Back: X0 returns to A2, A3 to A2, A4 to A3, A5 to A4; A1, A2 and A6 have no parent (Back leaves the app). Note: session.agreeConsent briefly sets X1, but the host then moves to A3 synchronously, so X1 is not shown before sign-in. The splash is a single tap target with no visible hint; I kept that (reads as a pause, not a screen with a dead button).',
+        body: function () {
+          return '<div class="center" style="background:var(--brand);color:var(--onact);align-items:center;text-align:center;flex:1"><div style="font-size:2.4em;font-weight:800;letter-spacing:.12em">SWAFTO</div><div style="opacity:.9;font-size:1.05em">' + t('a1.continue') + '</div></div>';
+        }
+      },
+      {
+        id: 'onboarding-language', route: 'A2', title: 'Choose your language', flag: 'EXISTS',
+        purpose: 'Pick Odia, Hindi or English before reading anything else. Each language is written in itself.',
+        primary: 'One of three large language rows; picking one goes straight to the consent notice in that language.',
+        taps: '1 tap.',
+        rules: 'Autonyms are literals, not translated copy. Nothing pre-selected. The hint is two-script because no language is chosen yet.',
+        notes: 'The real hint line is a hard-coded two-script string (CHOOSE_HINT), not in strings.ts. No device-locale guess is made (no inference).',
+        body: function () {
+          var rows = [['ଓଡ଼ିଆ', 'globe'], ['हिन्दी', 'globe'], ['English', 'globe']].map(function (x) { return K.lrow(x[1], '<span style="font-size:1.3em">' + x[0] + '</span>'); }).join('');
+          return K.top({ title: t('a2.title') }) + K.scroll('<p style="margin:0;padding:12px 16px;color:var(--muted)">' + 'भाषा चुनें · ଭାଷା ବାଛନ୍ତୁ' + '</p>', rows);
+        }
+      },
+      {
+        id: 'onboarding-consent', route: 'X0', title: 'Consent notice (sign-up): nothing pre-ticked', flag: 'CHG',
+        purpose: 'DPDP notice before an account exists: what is kept and why, three purposes each with its own choice, rights in one line.',
+        primary: 'I agree (agrees to exactly what the switches say; there is no agree-to-all).',
+        taps: 'Minimum 1 tap (agree with both optional purposes left off); each optional purpose adds 1 tap.',
+        rules: 'Itemised notice. Specific consent per purpose. Only the account and ledger purpose is required, and it is shown as locked (icon + words), not as a switch. SMS reminders and crash reports start OFF (consent.off). State is icon + words Yes/No, never colour alone. Back returns to A2.',
+        notes: 'Real screen as built has one button (agree) and rows with "Your choice: No/Yes". My switch is the same content, restyled with a tick or dash plus the word. The notice version and locale go with the decision to the server at verify (host.consented). The real X0 shows no grievance officer or privacy-page link; the DPDP grievance officer is human-blocked (HUMAN-ACTIONS) so I did not draw one. Copy in Odia and Hindi is DRAFT (H13).',
+        review: 'The notice has no link to the full privacy page or the grievance officer; add one row once the officer is published (human item).',
+        body: function () { return consentBody(false, false); }
+      },
+      {
+        id: 'onboarding-consent-optin', route: 'X0', title: 'Consent notice: one optional purpose turned on', flag: 'EXISTS',
+        purpose: 'Shows the state after he turns SMS reminders on himself. Crash reports stay off.',
+        primary: 'I agree (sends exactly: account and ledger, SMS reminders).',
+        taps: '2 taps (one switch, agree).',
+        rules: 'A switch is only ever turned on by the shopkeeper. Withdrawal later is the same screen from Today (manage mode, one tap, takes effect at once, no Save in the design target; the real manage screen today still has a Save button, consent.save, noted for the Settings area).',
+        notes: 'The ON state is filled teal with a tick and the word Yes.',
+        body: function () { return consentBody(true, false); }
+      },
+      {
+        id: 'onboarding-consent-decline', route: 'X0', title: 'Consent notice: he does not want to agree', flag: 'NEW',
+        purpose: 'The real screen has no refuse action: refusing is only possible by pressing Back. This frame proposes an equal-weight refuse so declining is as visible as agreeing, and says plainly what happens.',
+        primary: 'Go back (equal weight to the other button).',
+        taps: '1 tap to refuse; the answer is a calm dialog, 1 more tap to leave.',
+        rules: 'No confirm-shaming; equal visual weight; nothing is kept when he leaves. The account and ledger purpose is a precondition of having an account, so the honest answer is that without it the app cannot make one.',
+        notes: 'As built, Back on X0 goes to A2 and nothing has been sent or stored. The dialog copy below is NEW and needs native review (H13). This is a proposal, not what the app does today.',
+        review: 'Decide whether to add a visible "I do not agree" action on X0 (today only Back refuses).',
+        body: function () {
+          return consentBody(false, false, '', K.dialog(K.N('No account without this'), '<p style="margin:0 0 12px;line-height:1.5">' + K.N('SWAFTO cannot keep a book for you without the first item. Nothing has been sent or saved. You can come back any time.') + '</p>' + K.primary(K.N('Choose language again'), 'outline', 'back') + K.primary(t('consent.agree'), 'outline', 'check')));
+        }
+      },
+      {
+        id: 'onboarding-consent-unreached', route: 'X0', title: 'Consent: server not reached', flag: 'CHG',
+        purpose: 'The choice could not be recorded because there was no signal. Say it was not changed and what to do.',
+        primary: 'Try again with signal (tap I agree again).',
+        taps: '1 tap to retry.',
+        rules: 'Calm refusal, never red-only: icon, words, and the sentence says the choice was NOT changed. In sign-up no account exists yet, so nothing is half-saved.',
+        notes: 'refusal.consent is the real key for "your choice was not changed"; the app maps it in manage mode (and refusal.consentRead when it cannot read the choices). In sign-up mode the consent decision is posted together with the code at A4, so a missing signal there shows auth.offline / auth.failed on A4 (see the A4 frames) rather than this banner. Drawn here as the closest honest equivalent; I could not tell from the code that X0 in signup mode ever shows this exact banner.',
+        review: 'Confirm where the sign-up consent failure should appear: on A4 (as built) or back on X0.',
+        body: function () {
+          return consentBody(true, false, '', '') + K.refbanner(t('refusal.titleNotDone'), t('refusal.consent'), true);
+        }
+      },
+      {
+        id: 'onboarding-phone-empty', route: 'A3', title: 'Phone number: empty', flag: 'EXISTS',
+        purpose: 'Ask for the ten-digit mobile number that will receive the one-time code.',
+        primary: 'Keypad digits, then Send code (disabled until the number is a valid mobile series).',
+        taps: 'A full mobile number, one tap per figure, then Send code (one more tap); then the code on A4.',
+        rules: 'The number being typed is pinned above the keypad (HT-34). The app keypad is used, never the system keyboard. +91 is fixed. Send is greyed with a dashed edge until valid, and a refusal never shows before a tap.',
+        notes: 'Real screen also shows a "Step 1 of 2" line. The link "I changed my number" is a quiet text button at the foot.',
+        body: function () { return phoneFrame(''); }
+      },
+      {
+        id: 'onboarding-phone-typing', route: 'A3', title: 'Phone number: typing', flag: 'EXISTS',
+        purpose: 'Digits appear grouped 5 + 5 as he types.',
+        primary: 'Keep typing; Send code is still off while the number is incomplete.',
+        taps: '3 more digits, then Send.',
+        rules: 'Display grouping only; nothing is guessed, filled or remembered.',
+        notes: 'The caret sits in the field; keys are 56 dp.',
+        body: function () { return phoneFrame('9876543'); }
+      },
+      {
+        id: 'onboarding-phone-notmobile', route: 'A3', title: 'Phone number: ten digits but not a mobile', flag: 'EXISTS',
+        purpose: 'Ten digits were entered but the series is not an Indian mobile number. Explain quietly, with no red alert.',
+        primary: 'Fix the number with the delete key (Send stays off).',
+        taps: '1 delete tap, retype.',
+        rules: 'Shown only once ten digits are in (HT-5), as an informational line with an icon, polite live region.',
+        notes: 'The field border uses the error edge plus the sentence; colour is not the only cue.',
+        body: function () { return phoneFrame('1234567890', { err: true }); }
+      },
+      {
+        id: 'onboarding-phone-busy', route: 'A3', title: 'Phone number: sending the code', flag: 'EXISTS',
+        purpose: 'The request is in flight. The button says Sending and cannot be tapped twice.',
+        primary: 'None; wait for A4.',
+        taps: 'n/a',
+        rules: 'The screen moves only on the server answer. Keypad hidden while busy is a proposal; as built the keypad stays and the send button is disabled.',
+        notes: 'To stay faithful to the real screen the number remains visible and unchanged.',
+        body: function () { return phoneFrame(PH.replace(' ', ''), { busy: true }); }
+      },
+      {
+        id: 'onboarding-phone-offline', route: 'A3', title: 'Phone number: no signal', flag: 'EXISTS',
+        purpose: 'A code cannot be sent without signal. Say nothing typed is lost and what to do.',
+        primary: 'Send code again when signal returns.',
+        taps: '1 tap to retry.',
+        rules: 'Calm, "nothing is lost" (auth.offline). The sync chip does not apply before sign-in because there is no ledger sync yet.',
+        notes: 'Notice sits above the keypad so large text does not scroll it away (HT-18). The same key auth.failed covers a server fault with different words.',
+        body: function () { return phoneFrame(PH.replace(' ', ''), { notice: K.banner('info', 'cloudoff', t('auth.offline')) }); }
+      },
+      {
+        id: 'onboarding-code-empty', route: 'A4', title: 'Code entry: empty', flag: 'EXISTS',
+        purpose: 'Enter the six-digit code from the SMS. Shows where it was sent and lets him fix the number.',
+        primary: 'Keypad digits. The sixth digit verifies at once; there is no Verify button.',
+        taps: '6 digit taps.',
+        rules: 'Boxes pinned above the keypad. No autofill, no SMS auto-read in the entry path (no inference).',
+        notes: 'Edit goes to A3. "Trouble? I changed my number" goes to A7. Resend has no countdown in the code: it is only disabled while a request is busy. I did not draw a timer that does not exist.',
+        body: function () { return codeFrame(''); }
+      },
+      {
+        id: 'onboarding-code-typing', route: 'A4', title: 'Code entry: typing', flag: 'EXISTS',
+        purpose: 'Digits fill the boxes left to right; the live box carries the focus edge.',
+        primary: 'Keep typing.',
+        taps: '3 more taps.',
+        rules: 'The current box edge is the focus cue; digits are visible text.',
+        notes: 'Backspace and Clear are on the keypad.',
+        body: function () { return codeFrame('482'); }
+      },
+      {
+        id: 'onboarding-code-checking', route: 'A4', title: 'Code entry: checking', flag: 'EXISTS',
+        purpose: 'The sixth digit went in; the server is checking. Keypad and notice are removed while busy.',
+        primary: 'None; wait. Resend is disabled.',
+        taps: 'n/a',
+        rules: 'Screen moves only on the answer: A5 on a wrong or expired code, X1 or Today on success.',
+        notes: 'Real code hides the keypad and the notice while busy.',
+        body: function () { return codeFrame('482915', { checking: true }); }
+      },
+      {
+        id: 'onboarding-code-offline', route: 'A4', title: 'Code entry: could not check (no signal or server fault)', flag: 'EXISTS',
+        purpose: 'The code is fine but could not be checked. Offers Try again for the same code.',
+        primary: 'Try again (common.retry).',
+        taps: '1 tap.',
+        rules: 'Nothing typed is lost. Retry appears only for offline or failed.',
+        notes: 'Same frame for auth.failed with the other sentence.',
+        body: function () { return codeFrame('482915', { notice: K.banner('info', 'cloudoff', t('auth.offline')), retry: true }); }
+      },
+      {
+        id: 'onboarding-code-nocode', route: 'A4', title: 'Code entry: Still no code? (after two resends)', flag: 'EXISTS',
+        purpose: 'After two resends a third link appears so he can ask for help instead of looping.',
+        primary: 'Still no code? (opens A5 noCode).',
+        taps: '1 tap.',
+        rules: 'The link appears only after resends reach two (NO_CODE_AFTER_RESENDS).',
+        notes: 'This frame also shows all three quiet links: Resend, Still no code?, Trouble.',
+        body: function () { return codeFrame('', { noCode: true }); }
+      },
+      {
+        id: 'onboarding-a5-mismatch', route: 'A5', title: 'Code problem: wrong code', flag: 'EXISTS',
+        purpose: 'The code did not match. Say so calmly and let him re-enter.',
+        primary: 'Back (re-enter the code). No send button, the same code may still be right.',
+        taps: '1 tap (Back), 6 digits.',
+        rules: 'Icon + title + words. The entered code is cleared.',
+        notes: 'As built, a wrong code moves to A5; Back returns to A4.',
+        body: function () { return problemCard('err', 'warn', t('a5.mismatch.title'), t('a5.mismatch.body', { digits: 6 })); }
+      },
+      {
+        id: 'onboarding-a5-expired', route: 'A5', title: 'Code problem: code expired', flag: 'EXISTS',
+        purpose: 'The code is too old. Offer a new one.',
+        primary: 'Send a new code.',
+        taps: '1 tap, then 6 digits on A4.',
+        rules: 'Says how many minutes the code lives. Resend counts toward the Still no code? link.',
+        notes: 'The footer button is the only A5 state with a primary action besides retry.',
+        body: function () { return problemCard('', 'clock', t('a5.expired.title'), t('a5.expired.body', { minutes: 10 }), K.primary(t('a5.expired.cta'), '', 'refresh')); }
+      },
+      {
+        id: 'onboarding-a5-locked', route: 'A5', title: 'Code problem: too many tries', flag: 'EXISTS',
+        purpose: 'The server paused attempts. Say how long to wait.',
+        primary: 'None; wait. Back is available.',
+        taps: 'n/a',
+        rules: 'Minutes are rounded up so the wait is never understated. If the server gave no wait, a gentler "try later" line is shown.',
+        notes: 'Here a 2 minute wait. The 10 minute value in the expired frame is a placeholder from OTP_TTL_SECONDS, not measured here.',
+        body: function () { return problemCard('err', 'lock', t('a5.locked.title'), t('a5.locked.body', { minutes: 2 })); }
+      },
+      {
+        id: 'onboarding-a5-nocode', route: 'A5', title: 'Code problem: still no code', flag: 'EXISTS',
+        purpose: 'Help for a code that never arrives.',
+        primary: 'Back to A4 (check the number, or use the changed-number route).',
+        taps: '1 tap.',
+        rules: 'Neutral tint, info icon; no alarm.',
+        notes: 'No send button in this state in the real screen.',
+        body: function () { return problemCard('info', 'info', t('a5.noCode.title'), t('a5.noCode.body')); }
+      },
+      {
+        id: 'onboarding-session-expired', route: 'A6', title: 'Session expired', flag: 'EXISTS',
+        purpose: 'This phone holds a book but the server no longer trusts the session. The book is untouched; verify the same number to continue.',
+        primary: 'Verify with the saved number (sends a code to it).',
+        taps: '1 tap, then 6 digits.',
+        rules: 'The shop name is shown so he knows it is his book. If no number is on file the button goes to A3 instead. No log-out, nothing is lost.',
+        notes: 'Shop name falls back to s2.unnamed when the book has none.',
+        body: function () {
+          return top(t('a6.bar'), false) + K.scroll(K.center('<div style="text-align:center"><div style="font-size:1.4em;font-weight:700">' + K.shop + '</div><p style="color:var(--muted);line-height:1.5">' + t('a6.body') + '</p></div>')) + K.sticky(K.primary(t('a6.verify', { phone: '+91 ' + PH }), '', 'phone'));
+        }
+      },
+      {
+        id: 'onboarding-numberchanged-decide', route: 'A7', title: 'Number changed: two ways', flag: 'EXISTS',
+        purpose: 'He changed his SIM. Two paths: he still has the old number, or he does not.',
+        primary: 'Choose one of two option cards.',
+        taps: '1 tap.',
+        rules: 'Each option names what it does and what it needs. No account is created or changed here.',
+        notes: 'Have old number goes to A3; no old number goes to the handoff frame.',
+        body: function () {
+          function opt(title, sub) { return '<button class="lrow" style="min-height:96px"><span class="lt"><b>' + title + '</b><small>' + sub + '</small></span>' + K.ico('chev', 24) + '</button>'; }
+          return top(t('a7.bar'), true) + K.scroll(sub(t('a7.sub')), '<p style="margin:0;padding:6px 16px 10px;line-height:1.5">' + t('a7.intro') + '</p>', opt(t('a7.haveOld'), t('a7.haveOld.sub')), opt(t('a7.noOld'), t('a7.noOld.sub')));
+        }
+      },
+      {
+        id: 'onboarding-numberchanged-handoff', route: 'A7', title: 'Number changed: no old number (hand-off)', flag: 'EXISTS',
+        purpose: 'The app cannot change a number by itself. Say how to ask for help.',
+        primary: 'Open the privacy page (it says how to write to us).',
+        taps: '1 tap.',
+        rules: 'Honest: no pretend self-service. Back returns to the two options.',
+        notes: 'Opens the web privacy page in the browser. The real grievance route is human-blocked until the officer is published.',
+        body: function () {
+          return top(t('a7.bar'), true) + K.scroll(sub(t('a7.sub')), '<div class="banner info" style="margin:12px;display:block"><p style="margin:0;line-height:1.5">' + t('a7.handoff') + '</p></div>', K.stack(K.primary(t('a7.help'), 'outline', 'shield')));
+        }
+      },
+      {
+        id: 'onboarding-x1-empty', route: 'X1', title: 'Shop setup: fresh', flag: 'EXISTS',
+        purpose: 'Four questions and no more: shop name, language, screen, cash in the box. Reached only by a book with no shop name, after sign-in.',
+        primary: 'Start the day (always pressable; without a name it refuses and says why).',
+        taps: 'Name typed + Start = 2 actions plus the letters; opening cash is optional (digits + 1 tap to raise the keypad).',
+        rules: 'No tour, no carousel, no consent copy here. Opening cash null is UNKNOWN, never zero, so the field shows a muted ₹0.00 placeholder. The name box uses the system keyboard with autocorrect off; cash uses the app keypad only. No bottom nav.',
+        notes: 'The language question reuses the current choice (Odia first). Question 3 is the display mode as built: Light or Dark, bigger text (s3.comfort / s3.focus, HT-29), and it applies at once. See the next frames for the text-size proposal.',
+        body: function () { return x1({}); }
+      },
+      {
+        id: 'onboarding-x1-refusal', route: 'X1', title: 'Shop setup: Start tapped without a name', flag: 'EXISTS',
+        purpose: 'Start the day needs a name. The refusal appears only after the tap and names the missing field.',
+        primary: 'Type the shop name.',
+        taps: 'n/a',
+        rules: 'A button is never dead: it stays pressable and the field says what it is waiting for. The refusal clears when he types.',
+        notes: 'Real refusal key is x1.refusal.shopName.',
+        body: function () { return x1({ err: true, over: K.refbanner(t('refusal.titleNotDone'), t('x1.refusal.shopName'), true) }); }
+      },
+      {
+        id: 'onboarding-x1-cash', route: 'X1', title: 'Shop setup: opening cash with the keypad', flag: 'EXISTS',
+        purpose: 'Tapping the cash field raises the app keypad and repeats the figure directly above the keys.',
+        primary: 'Digits, then Start the day.',
+        taps: '4 digits (1,200) + 1 tap to raise the keypad + Start = 6 taps, plus the name.',
+        rules: 'Digits are whole rupees; the app writes paise by appending 00 (1,200 becomes 120000 paise). No suggested amount. Tapping the name field lowers the keypad.',
+        notes: 'The typed figure is full ink and the placeholder is muted so an answer and a placeholder cannot be confused.',
+        body: function () { return x1({ name: K.shop, keypad: true, cash: 120000 }); }
+      },
+      {
+        id: 'onboarding-x1-textsize', route: 'X1', title: 'Shop setup: text size choice with live preview (proposal)', flag: 'NEW',
+        purpose: 'Propose Normal / Large / Extra large as its own question, with a preview line that already uses the chosen size, separate from light and dark.',
+        primary: 'Pick a size; the preview line resizes at once.',
+        taps: '1 tap to change size (default Normal).',
+        rules: 'Size and dark mode are separate settings. The preview is a real shop line with a printed rupee figure (a sample, not his data) so he can judge legibility at arm length.',
+        notes: 'Today the app has ONE axis: Light, or Dark with bigger text, so the real X1 does not offer a size on its own (chat.md U-2 left this open). The labels Normal, Large and Extra large do not exist in strings.ts. Extra large would need a new token step (a frontend build item). The preview figure is a demo, not a derived total.',
+        review: 'Decide whether to split text size from dark mode (needs tokens.ts change) and approve the labels.',
+        body: function () {
+          var preview = '<div style="margin:8px 12px;padding:12px 14px;background:var(--surface);border:2px solid var(--rule);border-radius:16px;line-height:1.4"><div style="color:var(--muted)">' + K.N('Preview') + '</div><div style="font-size:1.25em;font-weight:700">' + t('box.title') + '  ' + M(120000) + '</div></div>';
+          return x1({ name: K.shop, size: K.seg([K.N('Normal'), K.N('Large'), K.N('Extra large')], 1) + opt2([t('s3.comfort'), t('s3.focus')], 0) + preview });
+        }
+      },
+      {
+        id: 'onboarding-opening-cash', route: 'T6', title: 'Opening cash: empty', flag: 'EXISTS',
+        purpose: 'Count the notes and coins before the first sale. Reached from Today on the first day (T2) when it was left out in setup.',
+        primary: 'Digits, then Save opening cash (disabled until a digit is typed).',
+        taps: 'Tap the figure, 4 digits, Save = 6 taps.',
+        rules: 'Null is unknown, not zero: Save stays disabled until he types, even though the figure reads ₹0.00. The opening figure has one write path (same method as X1). No suggestion from yesterday.',
+        notes: 'In the real screen Back is shown; the keypad opens on tap in Dark mode and stays open in Light.',
+        body: function () {
+          return top(t('t6.title'), true) + K.scroll(sub(t('t6.sub')), head(t('t6.question'), t('t6.body'))) + K.sticky('<div class="field" style="margin:0"><div class="in focus" style="font-weight:700;font-size:1.3em"><span class="ph">' + M(0) + '</span></div></div>', K.keypad(), K.primary(t('t6.save'), 'dis', 'coin'));
+        }
+      },
+      {
+        id: 'onboarding-opening-cash-typed', route: 'T6', title: 'Opening cash: typed', flag: 'EXISTS',
+        purpose: 'The figure he counted, ready to save.',
+        primary: 'Save opening cash.',
+        taps: '1 tap.',
+        rules: 'Integer paise (1200 rupees = 120000 paise). A typed zero would be an answer; the button enables on any typed digit.',
+        notes: 'After saving, Today shows the hero "In the box now" with this opening cash and no entries.',
+        body: function () {
+          return top(t('t6.title'), true) + K.scroll(sub(t('t6.sub')), head(t('t6.question'), t('t6.body'))) + K.sticky('<div class="field" style="margin:0"><div class="in focus" style="font-weight:700;font-size:1.3em">' + M(120000) + '</div></div>', K.keypad(), K.primary(t('t6.save'), '', 'coin'));
+        }
+      }
+    ]
+  };
+})();
+
+K.boot();</script>
+</body></html>

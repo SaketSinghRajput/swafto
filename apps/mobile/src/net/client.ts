@@ -28,6 +28,7 @@
  */
 import type { OutboxRow } from '../store/index.ts';
 import type { ConsentPurpose } from '@swafto/values';
+import type { PlanAnswer } from '../app/plan.ts';
 
 /* ---- the ports -------------------------------------------------------- */
 
@@ -42,6 +43,8 @@ export interface HttpRequest {
 export interface HttpResponse {
   readonly status: number;
   readonly body: unknown;
+  /** The `Retry-After` header, as whole seconds, when the server sent one. */
+  readonly retryAfterSeconds?: number;
 }
 
 /**
@@ -117,7 +120,14 @@ export interface VerifyRequest {
   readonly code: string;
   readonly platform: 'android' | 'ios';
   readonly shopName?: string;
-  readonly consent: ConsentDecision;
+  /**
+   * Required for a FIRST sign-in, and absent on a returning one. A session
+   * that expired after a restart has no consent decision in memory, and
+   * inventing `granted: true` for it would be recording a consent nobody gave
+   * on this run. The server ignores consent for an existing account and
+   * answers `consent_required` for a new one, which the host routes to X0.
+   */
+  readonly consent?: ConsentDecision;
 }
 
 export interface PushRejection {
@@ -212,23 +222,62 @@ export class ApiClient {
     return this.#unwrap(response);
   }
 
-  async #refresh(session: SessionTokens): Promise<SessionTokens> {
+  /**
+   * ONE REFRESH IN FLIGHT AT A TIME. The server rotates the refresh token and
+   * treats a replay of an old one as theft, so two calls that 401 together must
+   * not both spend the same token: the second waits for the first's result.
+   */
+  #inflight: Promise<SessionTokens> | null = null;
+
+  #refresh(session: SessionTokens): Promise<SessionTokens> {
+    this.#inflight ??= this.#refreshOnce(session).finally(() => {
+      this.#inflight = null;
+    });
+    return this.#inflight;
+  }
+
+  async #refreshOnce(session: SessionTokens): Promise<SessionTokens> {
     const response = await this.#send({
       method: 'POST',
       path: '/v1/auth/refresh',
       body: { refreshToken: session.refreshToken },
       headers: {},
     });
-    if (response.status !== 200) {
+    if (response.status === 401 || response.status === 403) {
       /*
-       * The refresh token is dead - expired, or the device was revoked from
-       * another handset. Clearing is the point: a device that keeps a dead
-       * token retries forever and never shows the sign-in screen.
+       * C-18 / FE-3: ONLY A DEFINITIVE "NO" ENDS THE SESSION. A 401 or 403
+       * says the refresh token is dead - expired, or the device was revoked
+       * from another handset. Clearing is the point: a device that keeps a
+       * dead token retries forever and never shows the sign-in screen.
        */
       this.#tokens.write(null);
       throw new Unauthenticated();
     }
-    const next = { ...session, accessToken: (response.body as { accessToken: string }).accessToken };
+    if (response.status !== 200) {
+      /*
+       * ANYTHING ELSE IS THE SERVER'S BAD MOMENT, NOT THE TOKEN'S: a 502/503
+       * during a deploy, a 429 from the limiter, a 500. A timeout never gets
+       * here (it is `Offline`, thrown by #send). The tokens stay, so the next
+       * attempt can still refresh; wiping them would cost the shopkeeper an
+       * SMS and risk the OTP lockout. The caller backs off (Host.syncLatest).
+       */
+      throw this.#apiError(response);
+    }
+    /*
+     * REFRESH-TOKEN ROTATION (client half). When the answer carries a new
+     * `refreshToken` it replaces the old one in the SAME write as the new
+     * access token: two writes could leave a fresh access token beside a
+     * refresh token the server has already retired. An answer without one
+     * (an older server) keeps the stored token, as before.
+     */
+    const answer = response.body as { accessToken: string; refreshToken?: string };
+    const next = {
+      ...session,
+      accessToken: answer.accessToken,
+      ...(typeof answer.refreshToken === 'string' && answer.refreshToken
+        ? { refreshToken: answer.refreshToken }
+        : {}),
+    };
     this.#tokens.write(next);
     return next;
   }
@@ -236,20 +285,24 @@ export class ApiClient {
   /** A 2xx body, or the server's own error turned into something catchable. */
   #unwrap(response: HttpResponse): unknown {
     if (response.status >= 200 && response.status < 300) return response.body;
+    if (response.status === 401) {
+      this.#tokens.write(null);
+      throw new Unauthenticated();
+    }
+    throw this.#apiError(response);
+  }
+
+  #apiError(response: HttpResponse): ApiError {
     const body = (response.body ?? {}) as {
       error?: string;
       message?: string;
       retryAfterSeconds?: number;
     };
-    if (response.status === 401) {
-      this.#tokens.write(null);
-      throw new Unauthenticated();
-    }
-    throw new ApiError(
+    return new ApiError(
       response.status,
       body.error ?? 'error',
       body.message ?? body.error ?? 'the server refused the request',
-      body.retryAfterSeconds,
+      body.retryAfterSeconds ?? response.retryAfterSeconds,
     );
   }
 
@@ -268,12 +321,14 @@ export class ApiClient {
   async requestOtp(
     phone: string,
     locale: 'en' | 'hi' | 'or' = 'en',
+    /** F-24: this install's id, the key of the server's per-device send limit. */
+    deviceId?: string,
   ): Promise<{ expiresInSeconds: number }> {
     const body = await this.#unwrap(
       await this.#send({
         method: 'POST',
         path: '/v1/auth/otp/request',
-        body: { phone, language: wireLocale(locale) },
+        body: { phone, language: wireLocale(locale), ...(deviceId ? { deviceId } : {}) },
         headers: {},
       }),
     );
@@ -291,38 +346,117 @@ export class ApiClient {
    * he ticked is simply not recorded rather than half-recorded.
    */
   async verify(request: VerifyRequest): Promise<SessionTokens> {
-    const body = (await this.#unwrap(
-      await this.#send({
-        method: 'POST',
-        path: '/v1/auth/otp/verify',
-        body: {
-          phone: request.phone,
-          code: request.code,
-          device: { platform: request.platform },
-          ...(request.shopName ? { shopName: request.shopName } : {}),
-          consent: {
-            granted: true,
-            noticeVersion: request.consent.noticeVersion,
-            locale: wireLocale(request.consent.locale),
-          },
-        },
-        headers: {},
-      }),
-    )) as SessionTokens;
+    const consent = request.consent;
+    const response = await this.#send({
+      method: 'POST',
+      path: '/v1/auth/otp/verify',
+      body: {
+        phone: request.phone,
+        code: request.code,
+        device: { platform: request.platform },
+        ...(request.shopName ? { shopName: request.shopName } : {}),
+        ...(consent
+          ? {
+              consent: {
+                granted: true,
+                noticeVersion: consent.noticeVersion,
+                locale: wireLocale(consent.locale),
+              },
+            }
+          : {}),
+      },
+      headers: {},
+    });
+    /*
+     * A 401 HERE IS A WRONG CODE, NOT A DEAD SESSION. `#unwrap` reads every
+     * 401 as "the session is gone" and throws `Unauthenticated`, which on this
+     * route would tell the sign-in screen that a mistyped digit was a signed-out
+     * device. The route says `code_invalid` for a wrong, expired or used-up
+     * code alike, so that is passed through as the ApiError it is.
+     */
+    if (response.status === 401) {
+      const code = (response.body as { error?: string } | null)?.error ?? 'code_invalid';
+      throw new ApiError(401, code, 'the code was not accepted');
+    }
+    const body = this.#unwrap(response) as SessionTokens;
 
     this.#tokens.write(body);
 
-    for (const purpose of request.consent.granted) {
+    /*
+     * THE OPTIONAL PURPOSES CANNOT UNDO THE SIGN-IN. The doc comment above has
+     * always said so and the loop did not: one dropped request here threw out
+     * of `verify` AFTER the tokens were written, so the caller saw a failure
+     * for a sign-in that had succeeded. Now a refused optional write leaves the
+     * purpose unrecorded - off, which is the safe direction - and he is in.
+     */
+    for (const purpose of consent?.granted ?? []) {
       if (purpose === 'account_and_ledger') continue;
-      await this.setConsent(purpose, true, request.consent.locale);
+      await this.setConsent(purpose, true, consent!.locale).catch(() => undefined);
     }
 
     return body;
   }
 
+  /**
+   * Sign this handset out. The server is TOLD when it can be, and the tokens
+   * go either way.
+   *
+   * A shopkeeper who taps "Log out" with no signal is logged out: the local
+   * tokens are cleared regardless, because a button that only works online is
+   * a button that sometimes does nothing. The revoke is best-effort - when it
+   * does not reach the server the refresh token still dies at its own expiry.
+   * The ledger on the phone is not this method's business and is not touched.
+   */
+  async signOut(): Promise<void> {
+    const session = this.#tokens.read();
+    if (session) await this.revokeDevice(session.deviceId).catch(() => undefined);
+    this.#tokens.write(null);
+  }
+
+  /**
+   * M3, S14: the shop's devices. Which shop is the server's business (`shopOf`,
+   * S-11) - nothing in this request could name another. Each row is checked
+   * for shape, so a malformed answer is an error rather than a screen of
+   * blanks.
+   */
+  async listDevices(): Promise<
+    readonly {
+      readonly id: string;
+      readonly platform: string;
+      readonly lastSeenAt: string | null;
+      readonly revokedAt: string | null;
+      readonly current: boolean;
+    }[]
+  > {
+    const body = (await this.#authed('GET', '/v1/devices')) as { devices?: unknown };
+    if (!Array.isArray(body?.devices)) throw new Error('device list: unexpected answer');
+    return body.devices.map((raw) => {
+      const d = raw as Record<string, unknown>;
+      if (typeof d.id !== 'string' || typeof d.platform !== 'string') {
+        throw new Error('device list: a row without an id or platform');
+      }
+      return {
+        id: d.id,
+        platform: d.platform,
+        lastSeenAt: typeof d.lastSeenAt === 'string' ? d.lastSeenAt : null,
+        revokedAt: typeof d.revokedAt === 'string' ? d.revokedAt : null,
+        current: d.current === true,
+      };
+    });
+  }
+
   /** Sign out this handset from another one. */
   async revokeDevice(deviceId: string): Promise<void> {
     await this.#authed('POST', '/v1/auth/devices/' + encodeURIComponent(deviceId) + '/revoke');
+  }
+
+  /**
+   * DV-13: the shop's name, as he typed it on X1. The account is created at
+   * verify, which on a new install is BEFORE X1 asks the name, so without
+   * this the server's `shops.name` stayed empty for ever.
+   */
+  async setShopName(name: string): Promise<void> {
+    await this.#authed('POST', '/v1/me/shop', { name });
   }
 
   /* ---- the outbox drain ------------------------------------------------ */
@@ -336,17 +470,75 @@ export class ApiClient {
    * has - which is harmless, because push is idempotent by entry id - rather
    * than dropping rows the server never got.
    */
-  async push(rows: readonly OutboxRow[]): Promise<PushResult> {
+  async push(
+    rows: readonly OutboxRow[],
+    /**
+     * FE-5: CALLED AFTER EACH BATCH THE SERVER ANSWERED, so the caller can ack
+     * it at once. Without it a failure in batch N threw away batches 1..N-1,
+     * and a flapping link resent them on every attempt.
+     */
+    onBatch?: (batch: PushResult, rowsSent: readonly OutboxRow[]) => void,
+  ): Promise<PushResult> {
+    /*
+     * AN OUTBOX LARGER THAN ONE REQUEST. The route caps each array
+     * (`maxItems`), and a body over a cap is a 400 for the WHOLE batch - so a
+     * phone offline for a busy week, with more than a thousand entries queued,
+     * sent the same oversized batch on every sync and never synced again.
+     * Requests are sent in order; a failure throws and acks nothing, which is
+     * safe because every request is idempotent.
+     */
+    let merged: PushResult = {
+      accepted: [],
+      rejected: [],
+      daysWritten: 0,
+      entriesInserted: 0,
+      alreadyPresent: 0,
+    };
+    for (const batch of batches(rows)) {
+      const r = await this.#pushOne(batch);
+      onBatch?.(r, batch);
+      merged = {
+        accepted: [...merged.accepted, ...r.accepted],
+        rejected: [...merged.rejected, ...r.rejected],
+        daysWritten: merged.daysWritten + r.daysWritten,
+        entriesInserted: merged.entriesInserted + r.entriesInserted,
+        alreadyPresent: merged.alreadyPresent + r.alreadyPresent,
+      };
+    }
+    return merged;
+  }
+
+  async #pushOne(rows: readonly OutboxRow[]): Promise<PushResult> {
     const entries = rows.filter((r) => r.kind === 'entry');
     const days = rows.filter((r) => r.kind === 'day');
+    /*
+     * PARTIES TRAVEL TOO. `accepted` below is "every row not refused", so a
+     * kind left out of the body would be acked without ever being sent - a new
+     * customer deleted from the queue by the act of syncing.
+     */
+    const parties = rows.filter((r) => r.kind === 'party');
+    // Decisions 2 and 3: the day facts travel the same way, for the same reason.
+    const confirmations = rows.filter((r) => r.kind === 'upi_confirmation');
+    const adjustments = rows.filter((r) => r.kind === 'adjustment');
+    // PR-1: the item list and the item lines travel the same way.
+    const items = rows.filter((r) => r.kind === 'item');
+    const itemLines = rows.filter((r) => r.kind === 'item_line');
+    // R5 FR-6: a party fact, so it travels too - left out, it would be acked unsent.
+    const creditLimits = rows.filter((r) => r.kind === 'credit_limit');
 
-    if (entries.length === 0 && days.length === 0) {
+    if (rows.length === 0) {
       return { accepted: [], rejected: [], daysWritten: 0, entriesInserted: 0, alreadyPresent: 0 };
     }
 
     const body = (await this.#authed('POST', '/v1/sync/push', {
       ...(days.length ? { days: days.map((r) => dayPayload(r)) } : {}),
+      ...(parties.length ? { parties: parties.map((r) => r.payload) } : {}),
       ...(entries.length ? { entries: entries.map((r) => r.payload) } : {}),
+      ...(confirmations.length ? { upiConfirmations: confirmations.map((r) => r.payload) } : {}),
+      ...(adjustments.length ? { adjustments: adjustments.map((r) => r.payload) } : {}),
+      ...(items.length ? { items: items.map((r) => r.payload) } : {}),
+      ...(itemLines.length ? { itemLines: itemLines.map((r) => r.payload) } : {}),
+      ...(creditLimits.length ? { creditLimits: creditLimits.map((r) => r.payload) } : {}),
     })) as {
       daysWritten: number;
       entriesInserted: number;
@@ -502,9 +694,105 @@ export class ApiClient {
   async grievance(): Promise<unknown> {
     return this.#authed('GET', '/v1/me/grievance');
   }
+
+  /* ---- PR-7 · the plan. The server decides; this only carries it. ------ */
+
+  async planAnswer(): Promise<PlanAnswer> {
+    return (await this.#authed('GET', '/v1/billing/entitlement')) as PlanAnswer;
+  }
+
+  /** The 14-day preview. Idempotent: a second call returns the first grant. */
+  async startPreview(): Promise<PlanAnswer & { started: boolean }> {
+    return (await this.#authed('POST', '/v1/billing/preview')) as PlanAnswer & { started: boolean };
+  }
+
+  /** A purchase token from Play, for the server to check with Google. Nothing else is sent. */
+  async verifyPurchase(purchaseToken: string, productId: string): Promise<PlanAnswer> {
+    return (await this.#authed('POST', '/v1/billing/play/verify', { purchaseToken, productId })) as PlanAnswer;
+  }
 }
 
 /* ---- payload shaping, kept out of the methods -------------------------- */
+
+/**
+ * The route's `maxItems` for each array. A test pins these equal to the
+ * route's own, so the two cannot drift apart quietly.
+ */
+export const PUSH_MAX_ITEMS = {
+  days: 400,
+  parties: 2000,
+  entries: 1000,
+  upiConfirmations: 1000,
+  adjustments: 1000,
+  items: 1000,
+  itemLines: 1000,
+  creditLimits: 2000,
+} as const;
+
+/**
+ * The outbox cut into requests the route will take.
+ *
+ * A DAY TRAVELS WITH ITS ENTRIES. A closed day applied in one request and
+ * its entries in a later one would freeze the day first, and every entry
+ * after it would be refused `entries_closed_day` for ever - the route's
+ * two-pass close only works inside one request. So days are packed whole,
+ * oldest first, and parties go no later than the first request, before any
+ * entry that names one.
+ *
+ * ponytail: a single day with more entries than `PUSH_MAX_ITEMS.entries`
+ * still goes as one oversized request and is refused. Splitting it needs the
+ * day sent open in the early requests and closed in the last.
+ */
+function batches(rows: readonly OutboxRow[]): OutboxRow[][] {
+  // PR-1: an item has no day, like a party, and a line may name one - so items
+  // go up front with the parties. A list of 20-40 sits far inside either cap.
+  // ponytail: more than `PUSH_MAX_ITEMS.items` items in one outbox share the party chunks unchecked.
+  // R5 FR-6: a credit limit is a PARTY fact with no day, so it rides with the
+  // parties - no later than its party, and never filed under a day it lacks.
+  const isPartyRow = (r: OutboxRow) => r.kind === 'party' || r.kind === 'item' || r.kind === 'credit_limit';
+  const parties = rows.filter(isPartyRow);
+  const byDay = new Map<string, OutboxRow[]>();
+  for (const r of rows) {
+    if (isPartyRow(r)) continue;
+    const date =
+      r.kind === 'day'
+        ? (r.payload as { date: string }).date
+        : (r.payload as { dayId: string }).dayId;
+    byDay.set(date, [...(byDay.get(date) ?? []), r]);
+  }
+
+  const out: OutboxRow[][] = [];
+  for (let i = 0; i < parties.length; i += PUSH_MAX_ITEMS.parties) {
+    out.push(parties.slice(i, i + PUSH_MAX_ITEMS.parties));
+  }
+  // The last party request carries the first days too, so a small outbox is
+  // still exactly one call.
+  let current: OutboxRow[] = out.pop() ?? [];
+  let days = 0;
+  let entries = 0;
+  for (const date of [...byDay.keys()].sort()) {
+    const group = byDay.get(date)!;
+    const d = group.filter((r) => r.kind === 'day').length;
+    // Entries AND day facts together against the entries cap: stricter than
+    // each of their own caps (which equal it), so no array can overflow.
+    const e = group.length - d;
+    const hasDayRows = days + entries > 0;
+    if (
+      hasDayRows &&
+      (days + d > PUSH_MAX_ITEMS.days || entries + e > PUSH_MAX_ITEMS.entries)
+    ) {
+      out.push(current);
+      current = [];
+      days = 0;
+      entries = 0;
+    }
+    current.push(...group);
+    days += d;
+    entries += e;
+  }
+  if (current.length) out.push(current);
+  return out;
+}
 
 /** Which id the SERVER will report a rejection against, per row kind. */
 const payloadId = (row: OutboxRow): string => {
@@ -528,8 +816,11 @@ const dayPayload = (row: OutboxRow): Record<string, unknown> => {
     countedCash?: number | null;
     differenceReason?: string | null;
     closedAt?: string | null;
+    startsAt?: string;
   };
   const out: Record<string, unknown> = { date: day.date, state: day.state };
+  // Decision 1: the rule the day was made under. Absent on an older day: 00:00.
+  if (day.startsAt) out.startsAt = day.startsAt;
   if (typeof day.openingCash === 'number') out.openingCash = day.openingCash;
   if (typeof day.countedCash === 'number') out.countedCash = day.countedCash;
   if (day.differenceReason) out.differenceReason = day.differenceReason;

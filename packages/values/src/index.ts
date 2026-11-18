@@ -94,6 +94,28 @@ export const OTP_LIMITS = {
 export const DELETION_GRACE_DAYS = 30;
 
 /**
+ * C-09 · THE LARGEST AMOUNT ONE ENTRY MAY CARRY, IN PAISE: ten crore paise, one
+ * crore rupees.
+ *
+ * The ledger is append-only (D1), so an entry nobody should have accepted can
+ * never be removed. Two entries of Number.MAX_SAFE_INTEGER were accepted once,
+ * and the day's sum then overflowed the audited helpers: the summary, the close
+ * and the reports answered 500 for that shop for ever. A bound at the door is
+ * the only fix, because there is no fix after it.
+ *
+ * Far above any single counter transaction of a small retail shop. The
+ * arithmetic, stated honestly: Number.MAX_SAFE_INTEGER is about 9.007e15, so
+ * about 9.0 million entries AT THE MAXIMUM, summed in one figure, would overflow
+ * it (the red team computed the same). A thousand a day for ten thousand days
+ * would be 1e16 and does NOT fit; it is not a realistic ledger (that is ten
+ * million maximum-size sales), but it is a bound, not a guarantee. The sums
+ * already throw loudly rather than wrap. REVERSIBLE DEFAULT: a product decision, not a law of
+ * arithmetic. The API refuses above it with a 400 and the keypad stops the same
+ * digit; both import THIS constant so they cannot drift.
+ */
+export const MAX_ENTRY_PAISE = 1_000_000_000;
+
+/**
  * L-15 · WHAT EVERY EXPORTED FILE MUST SAY IT IS NOT.
  *
  * LEGAL-AUDIT §7: the app produces no tax invoice and makes no tax
@@ -159,6 +181,14 @@ export type { ConsentPurpose };
  * guidance - which is exactly why it sits under OURS and not under EXTERNAL.
  */
 export const TOUCH_TARGET_MIN_DP = 56;
+
+/**
+ * An Indian mobile number as the shopkeeper types it: ten digits, the first
+ * 6, 7, 8 or 9 - the leading digits of India's mobile number series. One rule
+ * for the sign-in screen, the party phone field and the OTP route, so they
+ * cannot disagree. HT-5: A3 accepted 1234567890 and the server sent it a code.
+ */
+export const INDIAN_MOBILE = /^[6-9][0-9]{9}$/;
 
 /**
  * Minimum body text. Ours, and again stricter than convention, for the same reason:

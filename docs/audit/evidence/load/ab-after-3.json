@@ -1,0 +1,559 @@
+{
+  "meta": {
+    "label": "ab-after-3",
+    "generatedAt": "2026-11-17T08:00:02.279Z",
+    "node": "v24.22.3",
+    "machine": {
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13420H",
+      "logicalCores": 12
+    },
+    "mode": "memory",
+    "seed": {
+      "shops": 2000,
+      "heavyShops": 10,
+      "daysPerShop": 60,
+      "entriesPerDay": 30,
+      "totalEntries": 3792626
+    },
+    "config": {
+      "steps": [
+        750,
+        900
+      ],
+      "holdSeconds": 40,
+      "warmupSeconds": 8,
+      "thinkMsMean": 1000,
+      "mix": "planned",
+      "generatorWorkers": 4
+    },
+    "aborted": null,
+    "idleServerEventLoopDelayMs": {
+      "mean": 15.8,
+      "p50": 16.05,
+      "p95": 17.48,
+      "p99": 22.41,
+      "max": 25.76
+    },
+    "excludes": "PostgreSQL: no database round trip, no RLS transaction, no pool wait, no network between API and DB"
+  },
+  "steps": [
+    {
+      "vus": 750,
+      "measuredSeconds": 40.4,
+      "requests": 25311,
+      "throughputRps": 626.8,
+      "latencyMs": {
+        "n": 25311,
+        "mean": 189.47,
+        "p50": 179.8,
+        "p95": 383.01,
+        "p99": 423.09,
+        "max": 463.34
+      },
+      "errors": {
+        "ok": 25311,
+        "limited": 0,
+        "client": 0,
+        "server": 0,
+        "net": 0,
+        "logical": 0,
+        "errorRatePercent": 0
+      },
+      "routes": {
+        "GET /v1/billing/entitlement": {
+          "n": 7554,
+          "mean": 189,
+          "p50": 178.02,
+          "p95": 383.01,
+          "p99": 427.32,
+          "max": 452.96,
+          "counts": {
+            "ok": 7554,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 7556,
+            "mean": 0.88,
+            "p50": 0.78,
+            "p95": 1.79,
+            "p99": 2.62,
+            "max": 7.51,
+            "status": {
+              "200": 7556
+            }
+          }
+        },
+        "GET /v1/alerts": {
+          "n": 472,
+          "mean": 184.77,
+          "p50": 174.51,
+          "p95": 390.71,
+          "p99": 423.09,
+          "max": 437.16,
+          "counts": {
+            "ok": 472,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 472,
+            "mean": 2.18,
+            "p50": 1.72,
+            "p95": 4.31,
+            "p99": 5.98,
+            "max": 12.53,
+            "status": {
+              "200": 472
+            }
+          }
+        },
+        "POST /v1/sync/push (interactive 1-3 rows)": {
+          "n": 14811,
+          "mean": 188.99,
+          "p50": 178.02,
+          "p95": 379.22,
+          "p99": 423.09,
+          "max": 460.28,
+          "counts": {
+            "ok": 14811,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 15291,
+            "mean": 1.22,
+            "p50": 1.06,
+            "p95": 2.42,
+            "p99": 4.06,
+            "max": 14.39,
+            "status": {
+              "200": 15291
+            }
+          }
+        },
+        "GET /v1/parties/outstanding": {
+          "n": 503,
+          "mean": 196.04,
+          "p50": 185.25,
+          "p95": 371.75,
+          "p99": 431.59,
+          "max": 452.04,
+          "counts": {
+            "ok": 503,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 503,
+            "mean": 5.68,
+            "p50": 5.31,
+            "p95": 8.14,
+            "p99": 9.74,
+            "max": 29.24,
+            "status": {
+              "200": 503
+            }
+          }
+        },
+        "POST /v1/auth/refresh": {
+          "n": 236,
+          "mean": 197.18,
+          "p50": 181.6,
+          "p95": 390.71,
+          "p99": 423.09,
+          "max": 437.33,
+          "counts": {
+            "ok": 236,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 236,
+            "mean": 1.08,
+            "p50": 0.98,
+            "p95": 1.98,
+            "p99": 3.07,
+            "max": 3.63,
+            "status": {
+              "200": 236
+            }
+          }
+        },
+        "GET /v1/reports (30 days)": {
+          "n": 261,
+          "mean": 197.25,
+          "p50": 187.1,
+          "p95": 375.47,
+          "p99": 423.09,
+          "max": 454.31,
+          "counts": {
+            "ok": 261,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 261,
+            "mean": 5.58,
+            "p50": 5.42,
+            "p95": 7.52,
+            "p99": 8.39,
+            "max": 20.99,
+            "status": {
+              "200": 261
+            }
+          }
+        },
+        "GET /v1/days/:date/summary": {
+          "n": 995,
+          "mean": 191.85,
+          "p50": 185.25,
+          "p95": 379.22,
+          "p99": 427.32,
+          "max": 463.34,
+          "counts": {
+            "ok": 995,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 995,
+            "mean": 2.56,
+            "p50": 2.1,
+            "p95": 4.76,
+            "p99": 6.74,
+            "max": 24.26,
+            "status": {
+              "200": 995
+            }
+          }
+        },
+        "POST /v1/sync/push (backlog 50-200 rows)": {
+          "n": 479,
+          "mean": 196.32,
+          "p50": 185.25,
+          "p95": 406.58,
+          "p99": 431.59,
+          "max": 438.4,
+          "counts": {
+            "ok": 479,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 0,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 15291,
+            "mean": 1.22,
+            "p50": 1.06,
+            "p95": 2.42,
+            "p99": 4.06,
+            "max": 14.39,
+            "status": {
+              "200": 15291
+            }
+          }
+        }
+      },
+      "server": {
+        "rssMbMax": 1744,
+        "heapUsedMb": 1564.7,
+        "cpuPercentOfOneCore": 77.8,
+        "eventLoopDelayMs": {
+          "mean": 134.88,
+          "p50": 131.79,
+          "p95": 297.01,
+          "p99": 341.05,
+          "max": 419.43
+        }
+      },
+      "generator": {
+        "workers": 4,
+        "cpuPercentOfOneCoreMax": 18.2,
+        "eventLoopDelayP99MsMax": 19.92,
+        "saturated": false
+      }
+    },
+    {
+      "vus": 900,
+      "measuredSeconds": 40,
+      "requests": 29469,
+      "throughputRps": 736.2,
+      "latencyMs": {
+        "n": 29036,
+        "mean": 227.06,
+        "p50": 7.67,
+        "p95": 593.41,
+        "p99": 2830.16,
+        "max": 5347.85
+      },
+      "errors": {
+        "ok": 29036,
+        "limited": 0,
+        "client": 0,
+        "server": 0,
+        "net": 433,
+        "logical": 0,
+        "errorRatePercent": 1.469
+      },
+      "routes": {
+        "GET /v1/billing/entitlement": {
+          "n": 8625,
+          "mean": 224.34,
+          "p50": 7.16,
+          "p95": 587.54,
+          "p99": 2858.46,
+          "max": 5322.52,
+          "counts": {
+            "ok": 8625,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 133,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 8626,
+            "mean": 0.53,
+            "p50": 0.37,
+            "p95": 1.36,
+            "p99": 2.47,
+            "max": 8.6,
+            "status": {
+              "200": 8626
+            }
+          }
+        },
+        "POST /v1/sync/push (interactive 1-3 rows)": {
+          "n": 16932,
+          "mean": 225.58,
+          "p50": 7.67,
+          "p95": 587.54,
+          "p99": 2802.14,
+          "max": 5347.85,
+          "counts": {
+            "ok": 16932,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 249,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 17508,
+            "mean": 0.81,
+            "p50": 0.52,
+            "p95": 2,
+            "p99": 4.1,
+            "max": 53.1,
+            "status": {
+              "200": 17508
+            }
+          }
+        },
+        "POST /v1/auth/refresh": {
+          "n": 306,
+          "mean": 236.8,
+          "p50": 7.6,
+          "p95": 815.9,
+          "p99": 2802.14,
+          "max": 5159.25,
+          "counts": {
+            "ok": 306,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 6,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 306,
+            "mean": 0.65,
+            "p50": 0.46,
+            "p95": 1.5,
+            "p99": 3.04,
+            "max": 7.89,
+            "status": {
+              "200": 306
+            }
+          }
+        },
+        "GET /v1/alerts": {
+          "n": 558,
+          "mean": 266.1,
+          "p50": 8.91,
+          "p95": 892.34,
+          "p99": 2774.4,
+          "max": 5255.81,
+          "counts": {
+            "ok": 558,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 10,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 558,
+            "mean": 1.55,
+            "p50": 1.1,
+            "p95": 3.53,
+            "p99": 11.09,
+            "max": 15.78,
+            "status": {
+              "200": 558
+            }
+          }
+        },
+        "POST /v1/sync/push (backlog 50-200 rows)": {
+          "n": 575,
+          "mean": 226.32,
+          "p50": 10.04,
+          "p95": 593.41,
+          "p99": 2802.14,
+          "max": 5225.17,
+          "counts": {
+            "ok": 575,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 7,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 17508,
+            "mean": 0.81,
+            "p50": 0.52,
+            "p95": 2,
+            "p99": 4.1,
+            "max": 53.1,
+            "status": {
+              "200": 17508
+            }
+          }
+        },
+        "GET /v1/parties/outstanding": {
+          "n": 602,
+          "mean": 242.67,
+          "p50": 9.09,
+          "p95": 587.54,
+          "p99": 2887.05,
+          "max": 5244.06,
+          "counts": {
+            "ok": 602,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 5,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 602,
+            "mean": 4.01,
+            "p50": 2.89,
+            "p95": 7.23,
+            "p99": 19.36,
+            "max": 50.8,
+            "status": {
+              "200": 602
+            }
+          }
+        },
+        "GET /v1/days/:date/summary": {
+          "n": 1127,
+          "mean": 246.08,
+          "p50": 8.23,
+          "p95": 617.51,
+          "p99": 3385.29,
+          "max": 5313,
+          "counts": {
+            "ok": 1127,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 20,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 1127,
+            "mean": 1.94,
+            "p50": 1.31,
+            "p95": 3.75,
+            "p99": 15.71,
+            "max": 67.77,
+            "status": {
+              "200": 1127
+            }
+          }
+        },
+        "GET /v1/reports (30 days)": {
+          "n": 311,
+          "mean": 205.48,
+          "p50": 11.54,
+          "p95": 570.26,
+          "p99": 2830.16,
+          "max": 3369.44,
+          "counts": {
+            "ok": 311,
+            "limited": 0,
+            "client": 0,
+            "server": 0,
+            "net": 3,
+            "logical": 0
+          },
+          "serverSide": {
+            "n": 311,
+            "mean": 5.55,
+            "p50": 3.23,
+            "p95": 10.24,
+            "p99": 25.83,
+            "max": 176.91,
+            "status": {
+              "200": 311
+            }
+          }
+        }
+      },
+      "server": {
+        "rssMbMax": 1766,
+        "heapUsedMb": 1510.9,
+        "cpuPercentOfOneCore": 87.6,
+        "eventLoopDelayMs": {
+          "mean": 16.33,
+          "p50": 7.49,
+          "p95": 16.56,
+          "p99": 257.95,
+          "max": 1081.08
+        }
+      },
+      "generator": {
+        "workers": 4,
+        "cpuPercentOfOneCoreMax": 18.4,
+        "eventLoopDelayP99MsMax": 20.77,
+        "saturated": false
+      }
+    }
+  ]
+}

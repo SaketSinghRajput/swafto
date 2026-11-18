@@ -19,7 +19,7 @@ reported is a result.
 
 | benchmark | threshold | measured | command | when |
 |---|---|---|---|---|
-| B1 Golden vectors | >= 70, 100% pass | **77, 100% pass** - MET | `npm run test:vectors:node` | iteration 36 |
+| B1 Golden vectors | >= 70, 100% pass | **92, 100% pass** - MET | `npm run test:vectors:node` | 2026-10-26 |
 | B2 Node vs Hermes divergence | exactly 0 | **0** - MET | `npm run test:vectors:diff` | iteration 19 |
 | B3 Engine branch coverage | 100% | **86.34%** (196 of 227) - MISSED | `npm run coverage:engine` | iteration 19, re-measured at 32 and again at 35 |
 | B5 Backend line coverage | >= 85% | **86.42%** (681 of 788) - MET | `npm run coverage:api` | iteration 20, re-derived at 26, re-measured at 35 against a backend eight times larger |
@@ -46,13 +46,16 @@ backend is now 788 lines of auth, sync, read and DPDP routes, and the figure is
 
 ---
 
-## BENCHMARK-MET · B1 · 77 vectors against 70
+## BENCHMARK-MET · B1 · 92 vectors against 70
 
-**Measured: 77. Threshold: 70. Met with 7 to spare, 100% pass, divergence NONE.**
+**Measured: 92. Threshold: 70. Met with 22 to spare, 100% pass, divergence NONE.**
 
 Recorded so the path is auditable rather than only the result: 51 (injection 08
 section D) -> 59 (the DC-002 grouping vectors) -> 63 (adversary pass F-03, F-04,
-F-09) -> 77 (iteration 36).
+F-09) -> 77 (iteration 36) -> 83 (2026-10-25: six NEW vectors for decisions 2 and 3,
+the UPI ledger and typed adjustments; no existing expected value changed) -> 92
+(2026-10-26, the merge: nine NEW §2.3 return/refund/exchange vectors join them; the 77
+are byte-identical).
 
 **The fourteen added at iteration 36 were not added to move the number.** They were
 added because finding V-7 named engine functions that TRACEABILITY cited as covered

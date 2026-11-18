@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - concept A - Khata (calm ledger paper)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--herobg:#FFFDF7;--herofg:#1C2733;--herofig:#1C2733;--herorule:#D8CDB4;--hpos:#1F6B43;--hneg:#8A3A10;--stripe:#EFE7D2;--t1bg:#EFE7D2;--t1ic:#1C2733;--t2bg:#EFE7D2;--t2ic:#1C2733;--t3bg:#EFE7D2;--t3ic:#1C2733;--t4bg:#EFE7D2;--t4ic:#1C2733;--t5bg:#EFE7D2;--t5ic:#1C2733;--bg:#F7F1E3;--surface:#FFFDF7;--raised:#EFE7D2;--ink:#1C2733;--muted:#4F5B66;--edge:#7A705D;--rule:#D8CDB4;--brand:#1E3A5F;--onbrand:#FFFFFF;--act:#1E3A5F;--onact:#FFFFFF;--sel:#1E3A5F;--onsel:#FFFFFF;--pos:#1F6B43;--neg:#8A3A10;--waitbg:#FBEBC2;--waitfg:#6B4400;--hbg:#F7F1E3;--hfg:#1C2733;--nbg:#FFFDF7;--nfg:#1C2733;--nselbg:#EFE7D2;--nselfg:#1E3A5F;--sbg:#F7F1E3;--sfg:#1C2733;--sbg:#F7F1E3;--sfg:#1C2733}
+body[data-theme="focus"]{--herobg:#1A2431;--herofg:#ECEFF3;--herofig:#ECEFF3;--herorule:#2C3A4D;--hpos:#5CCB8B;--hneg:#F0A070;--stripe:#223042;--t1bg:#223042;--t1ic:#ECEFF3;--t2bg:#223042;--t2ic:#ECEFF3;--t3bg:#223042;--t3ic:#ECEFF3;--t4bg:#223042;--t4ic:#ECEFF3;--t5bg:#223042;--t5ic:#ECEFF3;--bg:#121A24;--surface:#1A2431;--raised:#223042;--ink:#ECEFF3;--muted:#A3AEBB;--edge:#7F8B9A;--rule:#2C3A4D;--brand:#9CB8E6;--onbrand:#121A24;--act:#9CB8E6;--onact:#121A24;--sel:#9CB8E6;--onsel:#121A24;--pos:#5CCB8B;--neg:#F0A070;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#121A24;--hfg:#ECEFF3;--nbg:#1A2431;--nfg:#ECEFF3;--nselbg:#223042;--nselfg:#9CB8E6;--sbg:#121A24;--sfg:#ECEFF3}
+/* ---- page chrome (not part of the concept) ---- */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1560px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}
+.page-head p{margin-top:6px;line-height:1.5;max-width:900px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;gap:0;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:10px 16px;font:600 15px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.stage{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:20px 12px}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink)}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column}
+.specs{max-width:1200px;margin:0 auto;padding:8px 24px 48px;font-size:15px;line-height:1.55}
+.specs h2{font-size:20px;margin:28px 0 8px}
+.specs table{border-collapse:collapse;width:100%;background:#fff;margin:8px 0}
+.specs th,.specs td{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top;font-size:14px}
+.specs .sw{display:inline-block;width:16px;height:16px;border:1px solid #000;vertical-align:-3px;margin-right:6px}
+.specs code{background:#eee;padding:0 4px}
+.spec-grid{display:flex;flex-wrap:wrap;gap:20px}
+#states{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.spec-card{width:360px;background:var(--bg);color:var(--ink);border-radius:12px;padding:12px;font-family:var(--ff)}
+.spec-card h4{font:700 14px system-ui;margin-bottom:8px;color:var(--ink)}
+
+/* ---- the concept: everything below reads CSS variables only ---- */
+.screen,.spec-card{font-family:var(--ff);font-size:17px;line-height:1.8;font-weight:500;font-synthesis:none}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}
+small{font-size:17px;font-weight:400}
+.grow{flex:1}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.hero .pos{color:var(--hpos)}.hero .neg{color:var(--hneg)}
+.ico{flex:none;display:block}
+ul{list-style:none}
+
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg)}
+.top h1{font-size:21px;font-weight:700;line-height:1.8}
+.top .sn{font-size:21px;font-weight:700;line-height:1.5}
+.top .dt{font-size:17px;line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;font-size:17px;line-height:1.5;font-weight:500}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tiles{display:grid;gap:8px;padding:12px}
+.tile{min-height:72px;min-width:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2px 2px;gap:0;line-height:1.5}
+.tile .tl{font-weight:700}
+.hero{margin:0 12px;padding:12px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px}
+.hero .fig{padding:2px 0 6px}
+.hero-fig{font-size:36px}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.5}
+.ln .k{display:flex;align-items:center;gap:6px}
+.facts{margin:8px 12px 0}
+.facts .ln{min-height:52px}
+.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.5}
+.cc-t{font-weight:700;font-size:18px}
+.cc-c{grid-area:chev;display:flex}
+.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}
+.bar i{flex:1;height:8px;background:var(--rule)}
+.bar i.on{background:var(--brand)}
+
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg)}
+.tab{flex:1;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.5}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+
+/* sale entry */
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:1px solid var(--rule)}
+.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}
+.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:1px solid var(--rule)}
+.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.5}
+.cust .cn{font-size:21px;font-weight:700}
+.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}
+.amt .al{color:var(--muted)}
+.amt-fig{font-size:34px}
+.seg{display:flex;border:2px solid var(--edge);background:var(--raised);min-height:56px}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.5}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:21px;font-weight:700}
+.addbar .m{font-size:24px}
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.5}
+
+/* day close */
+.prog{padding:8px 12px 4px}
+.pt{display:flex;flex-direction:column;line-height:1.5;margin-bottom:6px}
+.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 12px;min-height:64px;border-bottom:1px solid var(--rule);line-height:1.5}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}
+.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}
+.row .rv small{color:var(--muted)}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:128px;text-align:center}
+.row.lock{color:var(--muted)}
+.row.next{background:var(--raised)}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule)}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:21px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+
+/* ledger */
+.lhero{padding:12px}
+.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.5}
+.lhero .big{font-size:36px}
+.lhero .mid{font-size:24px}
+.lhero .h2{margin-top:6px}
+.lbl{font-weight:500}
+.seg.two{margin:4px 12px 0}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700}
+.plist{margin-top:4px}
+.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;border-bottom:1px solid var(--rule);line-height:1.5}
+.pn{flex:1;display:flex;flex-direction:column}
+.pn b{font-size:20px}
+.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}
+.pa .m{font-size:22px}
+.pa em{font-style:normal;color:var(--muted)}
+.av{display:none}
+
+/* text size picker + state specimens */
+.seg.three{margin:8px 12px}
+.note-ph{margin:8px 12px 0;color:var(--muted);line-height:1.5}
+.preview{margin:8px 12px;padding:12px;background:var(--surface);border:1.5px solid var(--edge)}
+.preview .lbl.pv{font-size:calc(17px*var(--z))}
+.preview .hero-fig{font-size:calc(28px*var(--z))}
+.preview .ln.pv{font-size:calc(17px*var(--z))}
+.hint{margin:4px 12px;color:var(--muted);line-height:1.5}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.5;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.banner span{flex:1}
+.banner.err{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:12px}
+.empty p{margin-bottom:8px;line-height:1.6}
+.empty .primary{max-width:220px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px}
+.skel i{display:block;height:48px;background:var(--rule)}
+.chiprow{display:flex}
+.spec-card .row{padding:4px 0}
+
+/* A - Khata: calm ledger paper. Flat, hairline rules, square corners, no icons beyond status marks. */
+.m{font-weight:500}
+.hero-fig{font-weight:500}
+.top{border-bottom:3px double var(--ink)}
+.chip{border-radius:4px}
+.tiles{grid-template-columns:repeat(4,1fr)}
+.tile{background:var(--surface);border:1.5px solid var(--edge);border-radius:4px;font-size:17px}
+.t-sale{grid-column:1/-1;background:var(--brand);color:var(--onbrand);border-color:var(--brand);min-height:72px;font-size:21px}
+.hero{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--edge);border-radius:2px}
+.hero .fig .m{display:inline-block;border-bottom:6px double var(--ink);padding-bottom:0}
+.hero .ln{border-bottom:1px dotted var(--edge)}
+.hero .ln:last-child{border-bottom:0}
+.facts .ln{border-bottom:1px solid var(--rule)}
+.closecard{background:var(--raised);border:1.5px solid var(--edge);border-radius:4px}
+.bar i{border-radius:0}
+.tabs{border-top:3px double var(--ink)}
+.tab.on{border-top:4px solid var(--brand);padding-top:0}
+.seg{border-radius:4px}
+.sg-b{border-radius:2px}
+.addbar,.primary{border-radius:4px}
+.key{border-radius:4px}
+.mk{border:2px solid var(--edge);border-radius:4px;background:var(--surface)}
+.row.done .mk{border-color:var(--ink)}
+.row.open .mk.num{font-size:19px}
+.row.next .mk{background:var(--brand);color:var(--onbrand);border-color:var(--brand)}
+.row.done .rv .m{color:var(--ink)}
+.preview{border-radius:4px}
+.banner,.skel i{border-radius:4px}
+.lhero{background:var(--surface);margin:12px;border:1px solid var(--rule);border-left:4px solid var(--edge)}
+.lhero .big{display:inline-block;border-bottom:6px double var(--ink)}
+.addp{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1>Concept A - Khata (calm ledger paper)</h1>
+<p>Same four screens (Today, Sale entry with keypad, Day close, Ledger) plus the text-size picker at 360 x 800 CSS px. Tap the keypad, the Cash / UPI / Udhar selector, "Add", "Nothing today" and "Undo", the sync chip and the Ledger tabs: figures update from entries, nothing is stored. Odia copy is copied from <code>strings.ts</code> and is an unreviewed draft (H13). Amounts use the Money rules: integer paise, Indian grouping, rupee sign, always two decimals, sign always printed.</p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div></div></div>
+<div class="stage"><div class="fwrap"><h3>1 · Today</h3><div class="bezel"><div class="screen" id="f-today"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div><div class="fwrap"><h3>2 · Sale entry + keypad</h3><div class="bezel"><div class="screen" id="f-sale"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div><div class="fwrap"><h3>3 · Day close</h3><div class="bezel"><div class="screen" id="f-close"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div><div class="fwrap"><h3>4 · Ledger</h3><div class="bezel"><div class="screen" id="f-ledger"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div><div class="fwrap"><h3>5 · Text size (Settings)</h3><div class="bezel"><div class="screen" id="f-text"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div></div>
+<div class="specs">
+<h2>State specimens (empty, loading, error, offline, stale day, locked)</h2><div id="states"></div>
+<h2>Palette and measured contrast: Comfort</h2><table><tr><th>Pair</th><th>Foreground</th><th>Background</th><th>Ratio</th><th>Need</th></tr><tr><td>Body text on ground</td><td><span class="sw" style="background:#1C2733"></span>#1C2733</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>13.44:1</b></td><td>4.5:1</td></tr><tr><td>Body text on card</td><td><span class="sw" style="background:#1C2733"></span>#1C2733</td><td><span class="sw" style="background:#FFFDF7"></span>#FFFDF7</td><td><b>14.88:1</b></td><td>4.5:1</td></tr><tr><td>Muted text on ground</td><td><span class="sw" style="background:#4F5B66"></span>#4F5B66</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>6.17:1</b></td><td>4.5:1</td></tr><tr><td>Muted text on card</td><td><span class="sw" style="background:#4F5B66"></span>#4F5B66</td><td><span class="sw" style="background:#FFFDF7"></span>#FFFDF7</td><td><b>6.83:1</b></td><td>4.5:1</td></tr><tr><td>Muted text on raised</td><td><span class="sw" style="background:#4F5B66"></span>#4F5B66</td><td><span class="sw" style="background:#EFE7D2"></span>#EFE7D2</td><td><b>5.64:1</b></td><td>4.5:1</td></tr><tr><td>Money in (sign + green) on card</td><td><span class="sw" style="background:#1F6B43"></span>#1F6B43</td><td><span class="sw" style="background:#FFFDF7"></span>#FFFDF7</td><td><b>6.37:1</b></td><td>4.5:1</td></tr><tr><td>Money out (sign + brick) on card</td><td><span class="sw" style="background:#8A3A10"></span>#8A3A10</td><td><span class="sw" style="background:#FFFDF7"></span>#FFFDF7</td><td><b>7.67:1</b></td><td>4.5:1</td></tr><tr><td>Money in on ground</td><td><span class="sw" style="background:#1F6B43"></span>#1F6B43</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>5.75:1</b></td><td>4.5:1</td></tr><tr><td>Money out on ground</td><td><span class="sw" style="background:#8A3A10"></span>#8A3A10</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>6.92:1</b></td><td>4.5:1</td></tr><tr><td>Action label on action fill</td><td><span class="sw" style="background:#FFFFFF"></span>#FFFFFF</td><td><span class="sw" style="background:#1E3A5F"></span>#1E3A5F</td><td><b>11.50:1</b></td><td>4.5:1</td></tr><tr><td>Selected label on selected fill</td><td><span class="sw" style="background:#FFFFFF"></span>#FFFFFF</td><td><span class="sw" style="background:#1E3A5F"></span>#1E3A5F</td><td><b>11.50:1</b></td><td>4.5:1</td></tr><tr><td>Waiting chip text</td><td><span class="sw" style="background:#6B4400"></span>#6B4400</td><td><span class="sw" style="background:#FBEBC2"></span>#FBEBC2</td><td><b>7.24:1</b></td><td>4.5:1</td></tr><tr><td>Header text</td><td><span class="sw" style="background:#1C2733"></span>#1C2733</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>13.44:1</b></td><td>4.5:1</td></tr><tr><td>Tab text</td><td><span class="sw" style="background:#1C2733"></span>#1C2733</td><td><span class="sw" style="background:#FFFDF7"></span>#FFFDF7</td><td><b>14.88:1</b></td><td>4.5:1</td></tr><tr><td>Active tab text</td><td><span class="sw" style="background:#1E3A5F"></span>#1E3A5F</td><td><span class="sw" style="background:#EFE7D2"></span>#EFE7D2</td><td><b>9.33:1</b></td><td>4.5:1</td></tr><tr><td>Control edge on ground (non-text, 3:1)</td><td><span class="sw" style="background:#7A705D"></span>#7A705D</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>4.33:1</b></td><td>3:1</td></tr><tr><td>Control edge on card (non-text, 3:1)</td><td><span class="sw" style="background:#7A705D"></span>#7A705D</td><td><span class="sw" style="background:#FFFDF7"></span>#FFFDF7</td><td><b>4.80:1</b></td><td>3:1</td></tr><tr><td>Action fill on ground (non-text, 3:1)</td><td><span class="sw" style="background:#1E3A5F"></span>#1E3A5F</td><td><span class="sw" style="background:#F7F1E3"></span>#F7F1E3</td><td><b>10.21:1</b></td><td>3:1</td></tr><tr><td>Selected fill on raised tray (non-text, 3:1)</td><td><span class="sw" style="background:#1E3A5F"></span>#1E3A5F</td><td><span class="sw" style="background:#EFE7D2"></span>#EFE7D2</td><td><b>9.33:1</b></td><td>3:1</td></tr></table>
+<h2>Palette and measured contrast: Focus</h2><table><tr><th>Pair</th><th>Foreground</th><th>Background</th><th>Ratio</th><th>Need</th></tr><tr><td>Body text on ground</td><td><span class="sw" style="background:#ECEFF3"></span>#ECEFF3</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>15.19:1</b></td><td>4.5:1</td></tr><tr><td>Body text on card</td><td><span class="sw" style="background:#ECEFF3"></span>#ECEFF3</td><td><span class="sw" style="background:#1A2431"></span>#1A2431</td><td><b>13.58:1</b></td><td>4.5:1</td></tr><tr><td>Muted text on ground</td><td><span class="sw" style="background:#A3AEBB"></span>#A3AEBB</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>7.78:1</b></td><td>4.5:1</td></tr><tr><td>Muted text on card</td><td><span class="sw" style="background:#A3AEBB"></span>#A3AEBB</td><td><span class="sw" style="background:#1A2431"></span>#1A2431</td><td><b>6.96:1</b></td><td>4.5:1</td></tr><tr><td>Muted text on raised</td><td><span class="sw" style="background:#A3AEBB"></span>#A3AEBB</td><td><span class="sw" style="background:#223042"></span>#223042</td><td><b>5.94:1</b></td><td>4.5:1</td></tr><tr><td>Money in (sign + green) on card</td><td><span class="sw" style="background:#5CCB8B"></span>#5CCB8B</td><td><span class="sw" style="background:#1A2431"></span>#1A2431</td><td><b>7.74:1</b></td><td>4.5:1</td></tr><tr><td>Money out (sign + brick) on card</td><td><span class="sw" style="background:#F0A070"></span>#F0A070</td><td><span class="sw" style="background:#1A2431"></span>#1A2431</td><td><b>7.43:1</b></td><td>4.5:1</td></tr><tr><td>Money in on ground</td><td><span class="sw" style="background:#5CCB8B"></span>#5CCB8B</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>8.65:1</b></td><td>4.5:1</td></tr><tr><td>Money out on ground</td><td><span class="sw" style="background:#F0A070"></span>#F0A070</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>8.31:1</b></td><td>4.5:1</td></tr><tr><td>Action label on action fill</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><span class="sw" style="background:#9CB8E6"></span>#9CB8E6</td><td><b>8.68:1</b></td><td>4.5:1</td></tr><tr><td>Selected label on selected fill</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><span class="sw" style="background:#9CB8E6"></span>#9CB8E6</td><td><b>8.68:1</b></td><td>4.5:1</td></tr><tr><td>Waiting chip text</td><td><span class="sw" style="background:#F2CF7A"></span>#F2CF7A</td><td><span class="sw" style="background:#3A2E12"></span>#3A2E12</td><td><b>8.85:1</b></td><td>4.5:1</td></tr><tr><td>Header text</td><td><span class="sw" style="background:#ECEFF3"></span>#ECEFF3</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>15.19:1</b></td><td>4.5:1</td></tr><tr><td>Tab text</td><td><span class="sw" style="background:#ECEFF3"></span>#ECEFF3</td><td><span class="sw" style="background:#1A2431"></span>#1A2431</td><td><b>13.58:1</b></td><td>4.5:1</td></tr><tr><td>Active tab text</td><td><span class="sw" style="background:#9CB8E6"></span>#9CB8E6</td><td><span class="sw" style="background:#223042"></span>#223042</td><td><b>6.63:1</b></td><td>4.5:1</td></tr><tr><td>Control edge on ground (non-text, 3:1)</td><td><span class="sw" style="background:#7F8B9A"></span>#7F8B9A</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>5.06:1</b></td><td>3:1</td></tr><tr><td>Control edge on card (non-text, 3:1)</td><td><span class="sw" style="background:#7F8B9A"></span>#7F8B9A</td><td><span class="sw" style="background:#1A2431"></span>#1A2431</td><td><b>4.52:1</b></td><td>3:1</td></tr><tr><td>Action fill on ground (non-text, 3:1)</td><td><span class="sw" style="background:#9CB8E6"></span>#9CB8E6</td><td><span class="sw" style="background:#121A24"></span>#121A24</td><td><b>8.68:1</b></td><td>3:1</td></tr><tr><td>Selected fill on raised tray (non-text, 3:1)</td><td><span class="sw" style="background:#9CB8E6"></span>#9CB8E6</td><td><span class="sw" style="background:#223042"></span>#223042</td><td><b>6.63:1</b></td><td>3:1</td></tr></table>
+<p>Ratios are computed with the WCAG relative-luminance formula by the generator script that wrote this file; any pair under its threshold stops generation. Large-text threshold 3:1 is not relied on anywhere: every text pair is held to 4.5:1.</p>
+<p>Ground: every concept uses a warm, non-white ground. #F7F1E3 (A), #FFFBEA (B), #FFF6EA (C); pure white is only a card. Reason (assumption, to be confirmed by the M4 daylight test on the real phone): an all-white screen is the brightest possible surface in a sunlit shop, and the audit records that the current warm paper was chosen to cut that glare. A is the darkest ground (relative luminance 0.882, against 0.952 for today's #FFF9EF) and is the largest daylight change proposed; B and C stay within 0.962 to 0.931.</p>
+<h2>Type</h2><p>Anek Odia only (the bundled family; static Regular / Medium / Bold are the only weights used, so no new font, no check:font change, +0 bytes). Latin, digits and the rupee sign render in the same face. Money is Medium with tabular figures (`tnum`); body 17, heading 21, figure 24-34, hero 36. Leading 1.8 on all text. No letter-spacing, no all-caps. The mockup loads the Google Fonts (variable) Anek Odia for preview only; the app uses its own static files.</p>
+<h2>Icons</h2><p>View-drawn marks only (approach B in the audit): tick, dash, lock, clock, chevron, back, backspace, plus (8 marks, 0 bytes, 0 native modules). Tiles carry words, not pictograms. Status marks never stand alone: each sits beside its word.</p>
+<h2>Shape, edge and depth</h2><p>Square corners (radius 4 control, 2 card). Depth by fill step and hairline: ground, card, raised. No elevation anywhere in the mockup (the system's 2 and 8 would still be available). Edges: 1.5 px in the muted-ink edge colour for controls, 1 px rule colour for separators. The accounting double rule under the hero figure, the header and the tab bar is the signature; in React Native it is two Views (Android has no double border style).</p>
+<h2>Why this for this user</h2><p>This direction treats the money figures as the product. A shopkeeper who has kept a paper khata for thirty years already trusts a ruled page, a total with a double underline and a running list that reads top to bottom, so the screen borrows that grammar instead of asking him to learn a new one. The warm paper ground cuts the glare of a bright shop front, the ink is near black and heavy, and nothing relies on a pale tint or a thin stroke, which a sun-washed screen erases first. One hand: the biggest control is the indigo Sale bar at the top and the full-width Add bar sits directly above the keypad on the thumb side. Low literacy: icons are deliberately absent from the tiles, which is the weakness of this direction and the reason the recommendation borrows C's pictograms for four tiles. Trust: green and brick are always paired with the printed sign and the words "cash in" / "cash out", never colour alone.</p>
+<h2>Risks</h2><ul style="margin-left:20px"><li>Low-literacy scanning is weakest here: four tiles are words only. Mitigation: adopt four pictograms from C (needs an icon font, see C).</li><li>Brick (#8A3A10) for money out is close to red; the sign and the word carry the meaning and red proper is not used for money anywhere. Needs a check with a red-green colour-blind reader in M4.</li><li>The double rule is cheap in Views but will not survive a quick port as a border style; it must be drawn as two Views.</li><li>Hero 36 vs today's hero token 32: +4 dp, and Latin-digit money at 1.4 leading (the app token is 1.8): needs a figure-leading token and a check:layout run (keypad fold at 1.5x).</li><li>The calm look is the least distinctive; the risk is that it reads as "the old app, tidied".</li></ul>
+<h2>Audit yardstick</h2><p>Yes, with value-only changes (Phase A in the audit): hero 36 (token is 32) and a Latin-digit figure leading of about 1.4 (token is 1.8) need a token step and a check:layout run; the ground moves from #FFF9EF to #F7F1E3 (about 5% darker, justified below). No font, icon, native-module or check change. Two View-drawn double rules.</p>
+<p>Mockup honesty: rendered in a browser with Google Fonts Anek Odia (variable), not on the Android phone. Layout, Odia rendering at 1.5x/2.0x and tabular figures on device are M2/M3 checks.</p>
+</div>
+<script>window.__DIR="A";</script>
+<script>(function () {
+  'use strict';
+  var DIR = window.__DIR; // 'A' | 'B' | 'C'
+
+  /* ---- copy: [en, od]. Odia strings are copied verbatim from apps/mobile/src/i18n/strings.ts (DRAFT, unreviewed, H13). ---- */
+  var T = {
+    today: ['Today', 'ଆଜି'],
+    ledger: ['Ledger', 'ଖାତା'],
+    reports: ['Reports', 'ରିପୋର୍ଟ'],
+    sale: ['Sale', 'ବିକ୍ରି'],
+    saleTitle: ['Sales', 'ବିକ୍ରି'],
+    udharSale: ['Udhar sale', 'ଉଧାର ବିକ୍ରି'],
+    collect: ['Collect', 'ଆଦାୟ'],
+    expense: ['Expenses', 'ଖର୍ଚ୍ଚ'],
+    more: ['More', 'ଅଧିକ'],
+    boxNow: ['In the box now', 'ଏବେ ବାକ୍ସରେ'],
+    opening: ['Opening', 'ଆରମ୍ଭ'],
+    cashIn: ['cash in', 'ନଗଦ ଆସିଲା'],
+    cashOut: ['cash out', 'ନଗଦ ଗଲା'],
+    salesToday: ['Sales today', 'ଆଜିର ବିକ୍ରି'],
+    toCollect: ['Udhar to collect', 'ଆଦାୟ ବାକି ଉଧାର'],
+    continueClose: ['Continue day close', 'ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ'],
+    progress: ['{done} of {total}', '{total} ରୁ {done}'],
+    syncSaved: ['Saved', 'ସାଇତା ହେଲା'],
+    syncWaiting: ['{n} waiting · safe on phone', '{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ'],
+    syncWaitingShort: ['{n} waiting', '{n} ବାକି'],
+    total: ['Total so far', 'ଏପର୍ଯ୍ୟନ୍ତ ମୋଟ'],
+    amount: ['Amount', 'ପରିମାଣ'],
+    cash: ['Cash', 'ନଗଦ'],
+    upi: ['UPI', 'UPI'],
+    udhar: ['Udhar', 'ଉଧାର'],
+    add: ['Add', 'ଯୋଡ଼ନ୍ତୁ'],
+    clear: ['Clear', 'ଖାଲି କରନ୍ତୁ'],
+    back: ['Back', 'ପଛକୁ'],
+    savedLong: ['Saved {amount}, {mode}', '{amount} ସାଇତା ହେଲା, {mode}'],
+    dayClose: ['Day close', 'ଦିନ ବନ୍ଦ'],
+    doneOf: ['{done} of {total} done', '{total} ରୁ {done} ସମ୍ପୂର୍ଣ୍ଣ'],
+    entries: ['{n} entries', '{n}ଟି ଏଣ୍ଟ୍ରି'],
+    nothingToday: ['Nothing today', 'ଆଜି କିଛି ନାହିଁ'],
+    undo: ['Undo', 'ଫେରାଇ ନିଅନ୍ତୁ'],
+    skippedCount: ['{n} marked "nothing today"', '{n}ଟିରେ "ଆଜି କିଛି ନାହିଁ"'],
+    cashCheck: ['Cash check', 'ନଗଦ ଯାଞ୍ଚ'],
+    locked: ['Locked', 'ତାଲା ପଡ଼ିଛି'],
+    closeLocked: ['After the cash check', 'ନଗଦ ଯାଞ୍ଚ ପରେ'],
+    next: ['Enter {section}', '{section} ଲେଖନ୍ତୁ'],
+    openCheck: ['Open cash check', 'ନଗଦ ଯାଞ୍ଚ ଖୋଲନ୍ତୁ'],
+    closeDay: ['Close the day', 'ଦିନ ବନ୍ଦ କରନ୍ତୁ'],
+    s_opening: ['Opening cash', 'ଆରମ୍ଭ ନଗଦ'],
+    s_cash_sales: ['Cash sales', 'ନଗଦ ବିକ୍ରି'],
+    s_upi_sales: ['UPI sales', 'UPI ବିକ୍ରି'],
+    s_udhar_sales: ['Credit sales', 'ଉଧାର ବିକ୍ରି'],
+    s_purchase: ['Purchases', 'କିଣା'],
+    s_expense: ['Expenses', 'ଖର୍ଚ୍ଚ'],
+    s_udhar_collection: ['Udhar collected', 'ଉଧାର ଆଦାୟ'],
+    s_party_payment: ['Paid to suppliers', 'ଯୋଗାଣକାରୀଙ୍କୁ ଦିଆଗଲା'],
+    s_withdrawal: ['Taken by owner', 'ମାଲିକ ନେଇଛନ୍ତି'],
+    customers: ['Customers', 'ଗ୍ରାହକ'],
+    suppliers: ['Suppliers', 'ଯୋଗାଣକାରୀ'],
+    youOwe: ['You owe suppliers', 'ଆପଣଙ୍କୁ ଦେବାର'],
+    toCollectL: ['Udhar to collect', 'ଆଦାୟ ବାକି'],
+    changedToday: ['changed today', 'ଆଜି ବଦଳିଲା'],
+    overdue: ['31+ days', '31+ ଦିନ'],
+    owes: ['owes', 'ଦେବାର ଅଛି'],
+    youOweRow: ['you owe', 'ଆପଣଙ୍କୁ ଦେବାର'],
+    newCustomer: ['New customer', 'ନୂଆ ଗ୍ରାହକ'],
+    newSupplier: ['New supplier', 'ନୂଆ ଯୋଗାଣକାରୀ'],
+    customer: ['Customer', 'ଗ୍ରାହକ'],
+    date: ['Thursday 19 November', 'ଗୁରୁବାର 19 ନଭେମ୍ବର']
+  };
+
+  var NAMES = {
+    ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'],
+    lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ']
+  };
+
+  /* ---- state. All money is integer paise (CLAUDE.md). Whole-rupee keypad input is x100. ---- */
+  var S = {
+    lang: 'od',
+    waiting: 0,
+    amt: '',
+    mode: 'cash',
+    toast: '',
+    toastTimer: null,
+    opening: 1200000,
+    cashIn: 935000,
+    cashOut: 290000,
+    sales: 1472000,
+    salesTotal: 1472000,
+    recent: [
+      { p: 35000, m: 'upi', t: '11:20' },
+      { p: 12000, m: 'cash', t: '11:04' },
+      { p: 4500, m: 'cash', t: '10:48' }
+    ],
+    cust: [
+      { id: 'ramesh', b: 4520000, chg: true },
+      { id: 'sunita', b: 3875000 },
+      { id: 'bijay', b: 2100000, chg: true },
+      { id: 'lakshmi', b: 1250000, late: true },
+      { id: 'pradeep', b: 600000 }
+    ],
+    supp: [
+      { n: 'Maa Tarini Agencies', b: 2150000 },
+      { n: 'Jagannath Wholesale', b: 1120000 },
+      { n: 'Utkal Distributors', b: 550000 }
+    ],
+    seg: 'cust',
+    steps: [
+      { k: 'opening', done: true, p: 1200000 },
+      { k: 'cash_sales', done: true, n: 7, p: 935000 },
+      { k: 'upi_sales', done: true, n: 5, p: 342000 },
+      { k: 'udhar_sales', done: true, n: 2, p: 195000 },
+      { k: 'purchase' },
+      { k: 'expense', done: true, n: 3, p: 290000 },
+      { k: 'udhar_collection' },
+      { k: 'party_payment', skip: true },
+      { k: 'withdrawal' }
+    ]
+  };
+
+  function t(k) { return T[k][S.lang === 'od' ? 1 : 0]; }
+  function fmt(s, o) { return s.replace(/\{(\w+)\}/g, function (_, k) { return o[k]; }); }
+  function nm(id) { return NAMES[id][S.lang === 'od' ? 1 : 0]; }
+
+  /* Indian grouping, always two decimals, always the rupee sign: mirrors formatPaise / the Money component. */
+  function rupee(p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100;
+    var s = String(r);
+    if (s.length > 3) {
+      var last3 = s.slice(-3), rest = s.slice(0, -3);
+      rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+      s = rest + ',' + last3;
+    }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  }
+  /* opts.sign: show + on positives. opts.out: an out-line, always drawn negative. */
+  function M(p, o) {
+    o = o || {};
+    var neg = o.out || p < 0;
+    var sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + rupee(p) + '</span>';
+  }
+
+  /* ---- icons. Stroke weight and fill language differ per direction; see each file's spec. ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.600 14.400 9 14.400L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.500-3.500M12 12l3.500-3.500"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.600"/><circle cx="12" cy="12" r="1.600"/><circle cx="18" cy="12" r="1.600"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>',
+    tick: '<path d="M5 12.500l4.500 4.500L19 7.500"/>',
+    dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.500l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>',
+    bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.500l5 5M17 9.500l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.500"/>',
+    phone: '<rect x="7" y="2.500" width="10" height="19" rx="2"/><path d="M11 18h2"/>',
+    up: '<path d="M12 5v14M6 11l6-6 6 6"/>',
+    down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'
+  };
+  var SW = { A: 1.8, B: 3.6, C: 2.4 }[DIR];
+  function ico(n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="' + SW + '" stroke-linecap="' + (DIR === 'B' ? 'square' : 'round') + '" stroke-linejoin="' + (DIR === 'B' ? 'miter' : 'round') + '" aria-hidden="true">' + ICO[n] + '</svg>';
+  }
+  var showIcons = DIR !== 'A'; /* A keeps icons to status marks only */
+  function i2(n, size) { return showIcons ? ico(n, size) : ''; }
+
+  /* ---- derived figures: nothing stored, everything computed from entries ---- */
+  function boxNow() { return S.opening + S.cashIn - S.cashOut; }
+  function toCollect() { return S.cust.reduce(function (a, c) { return a + c.b; }, 0); }
+  function youOwe() { return S.supp.reduce(function (a, c) { return a + c.b; }, 0); }
+  function doneCount() { return S.steps.filter(function (s) { return s.done || s.skip; }).length; }
+  function skipCount() { return S.steps.filter(function (s) { return s.skip; }).length; }
+  function nextStep() { for (var i = 0; i < S.steps.length; i++) { if (!S.steps[i].done && !S.steps[i].skip) return S.steps[i]; } return null; }
+  function totalSteps() { return S.steps.length + 1; } /* + cash check */
+  function modeName(m) { return t(m); }
+
+  function chip(compact) {
+    if (S.waiting) {
+      return '<button class="chip wait" data-act="sync" aria-label="' + fmt(t('syncWaiting'), { n: S.waiting }) + '">' + ico('clock', 22) + '<span>' + fmt(t(compact ? 'syncWaitingShort' : 'syncWaiting'), { n: S.waiting }) + '</span></button>';
+    }
+    return '<button class="chip ok" data-act="sync">' + ico('check', 22) + '<span>' + t('syncSaved') + '</span></button>';
+  }
+
+  function bar(done, total) {
+    var h = '<div class="bar" role="img" aria-label="' + fmt(t('doneOf'), { done: done, total: total }) + '">';
+    for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>';
+    return h + '</div>';
+  }
+
+  function tabs(active) {
+    var defs = [['today', 'f-today', 'box'], ['ledger', 'f-ledger', 'book'], ['reports', '', 'bars']];
+    return '<nav class="tabs">' + defs.map(function (d) {
+      return '<button class="tab' + (d[0] === active ? ' on' : '') + '"' + (d[1] ? ' data-go="' + d[1] + '"' : '') + (d[0] === active ? ' aria-current="page"' : '') + '>' + i2(d[2], 26) + '<span>' + t(d[0]) + '</span></button>';
+    }).join('') + '</nav>';
+  }
+
+  function backTop(title, right) {
+    return '<header class="top sub"><button class="back" data-go="f-today" aria-label="' + t('back') + '">' + ico('back', 28) + '</button><h1>' + title + '</h1><div class="grow"></div>' + (right || '') + '</header>';
+  }
+
+  /* ================= TODAY ================= */
+  function today() {
+    var tiles = [
+      ['sale', 'coin', 'sale', 'f-sale'], ['udhar', 'book', 'udharSale', 'f-sale'],
+      ['collect', 'tray', 'collect', ''], ['expense', 'receipt', 'expense', '']
+    ];
+    var th = tiles.map(function (x) {
+      return '<button class="tile t-' + x[0] + '"' + (x[3] ? ' data-go="' + x[3] + '"' : '') + '>' + (showIcons ? '<span class="ti">' + ico(x[1], DIR === 'B' ? 34 : 30) + '</span>' : '') + '<span class="tl">' + t(x[2]) + '</span></button>';
+    }).join('') +
+      '<button class="tile t-more"><span class="ti">' + (showIcons ? ico('dots', 30) : '') + '</span><span class="tl">' + t('more') + '</span></button>';
+
+    var hero = '<section class="hero"><div class="lbl">' + (DIR === 'C' ? '<span class="hi">' + ico('box', 28) + '</span>' : '') + '<span>' + t('boxNow') + '</span></div>' +
+      '<div class="fig">' + M(boxNow(), { cls: 'hero-fig' }) + '</div>' +
+      '<div class="work">' +
+      '<div class="ln"><span class="k">' + t('opening') + '</span>' + M(S.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + (DIR !== 'A' ? ico(DIR === 'B' ? 'up' : 'down', 20, 'dirico') : '') + t('cashIn') + '</span>' + M(S.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + (DIR !== 'A' ? ico(DIR === 'B' ? 'down' : 'up', 20, 'dirico') : '') + t('cashOut') + '</span>' + M(S.cashOut, { out: true, tone: 'dir' }) + '</div>' +
+      '</div></section>';
+
+    var facts = '<section class="facts">' +
+      '<div class="ln"><span class="k">' + t('salesToday') + '</span>' + M(S.sales) + '</div>' +
+      '<button class="ln link" data-go="f-ledger"><span class="k">' + t('toCollect') + '</span>' + M(toCollect()) + '</button></section>';
+
+    var cc = '<button class="closecard" data-go="f-close"><span class="cc-main"><span class="cc-t">' + t('continueClose') + '</span>' +
+      '<span class="cc-p">' + fmt(t('progress'), { done: doneCount(), total: totalSteps() }) + '</span></span>' + bar(doneCount(), totalSteps()) + '<span class="cc-c">' + ico('chev', 26) + '</span></button>';
+
+    return '<header class="top"><div class="shop"><div class="sn">Subhadra Kirana</div><div class="dt">' + t('date') + '</div></div><div class="grow"></div>' + chip(false) + '</header>' +
+      '<div class="scroll"><section class="tiles">' + th + '</section>' + hero + facts + cc + '</div>' + tabs('today');
+  }
+
+  /* ================= SALE ENTRY ================= */
+  function keypad() {
+    var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (k) { return '<button class="key" data-k="' + k + '">' + k + '</button>'; });
+    keys.push('<button class="key aux" data-k="clr">' + t('clear') + '</button>');
+    keys.push('<button class="key" data-k="0">0</button>');
+    keys.push('<button class="key aux" data-k="bk" aria-label="' + t('back') + '">' + ico('bksp', 30) + '</button>');
+    return '<div class="kp">' + keys.join('') + '</div>';
+  }
+  function sale() {
+    var amtP = (S.amt === '' ? 0 : parseInt(S.amt, 10)) * 100;
+    var modes = ['cash', 'upi', 'udhar'];
+    var micon = { cash: 'note', upi: 'phone', udhar: 'book' };
+    var seg = '<div class="seg" role="radiogroup">' + modes.map(function (m) {
+      var on = S.mode === m;
+      return '<button class="sg-b' + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-mode="' + m + '">' + (on ? ico('tick', 24) : (showIcons ? ico(micon[m], 24) : '')) + '<span>' + modeName(m) + '</span></button>';
+    }).join('') + '</div>';
+
+    var list;
+    if (S.mode === 'udhar') {
+      var c = S.cust[0];
+      var st = t('owes');
+      var line = S.lang === 'od' ? '<span class="cn">' + nm(c.id) + '</span><span class="cb">' + M(c.b) + ' <em>' + st + '</em></span>' : '<span class="cn">' + nm(c.id) + '</span><span class="cb"><em>' + st + '</em> ' + M(c.b) + '</span>';
+      list = '<div class="cust"><span class="cl">' + t('customer') + '</span><div class="cr">' + line + '</div></div>';
+    } else {
+      list = '<ul class="recent">' + S.recent.slice(0, 2).map(function (r, i) {
+        return '<li class="' + (i === 0 && S.toast ? 'fresh' : '') + '"><span class="rk">' + (showIcons ? ico(micon[r.m], 22) : '') + '<span>' + modeName(r.m) + '</span><small>' + r.t + '</small></span>' + M(r.p) + '</li>';
+      }).join('') + '</ul>';
+    }
+    var tot = S.toast
+      ? '<div class="total toast" role="status">' + ico('check', 24) + '<span>' + S.toast + '</span></div>'
+      : '<div class="total"><span>' + t('total') + '</span>' + M(S.salesTotal) + '</div>';
+
+    return backTop(t('saleTitle'), chip(true)) +
+      '<div class="entry">' + tot + list +
+      '<div class="amt"><span class="al">' + t('amount') + '</span>' + M(amtP, { cls: 'amt-fig' }) + '</div>' + seg + '</div>' +
+      '<button class="addbar" data-act="add"><span>' + t('add') + '</span>' + (amtP ? M(amtP) : '') + '</button>' + keypad();
+  }
+
+  /* ================= DAY CLOSE ================= */
+  function close() {
+    var done = doneCount(), total = totalSteps(), nxt = nextStep();
+    var rows = S.steps.map(function (s, i) {
+      var name = t('s_' + s.k);
+      if (s.done) {
+        return '<li class="row done"><span class="mk">' + ico('tick', 22) + '</span><span class="nm">' + name + '</span><span class="rv">' + M(s.p) + (s.n ? '<small>' + fmt(t('entries'), { n: s.n }) + '</small>' : '') + '</span></li>';
+      }
+      if (s.skip) {
+        return '<li class="row skip"><span class="mk">' + ico('dash', 22) + '</span><span class="nm">' + name + '<small>' + t('nothingToday') + '</small></span><button class="quiet" data-undo="' + s.k + '">' + t('undo') + '</button></li>';
+      }
+      return '<li class="row open' + (nxt === s ? ' next' : '') + '"><span class="mk num">' + (i + 1) + '</span><button class="nm" aria-label="' + name + '">' + name + '</button><button class="quiet" data-skip="' + s.k + '">' + t('nothingToday') + '</button></li>';
+    }).join('');
+    var allIn = !nxt;
+    rows += '<li class="row ' + (allIn ? 'open next' : 'lock') + '"><span class="mk">' + (allIn ? '<b class="num">10</b>' : ico('lock', 22)) + '</span><span class="nm">' + t('cashCheck') + '<small>' + (allIn ? '' : t('locked')) + '</small></span></li>';
+    rows += '<li class="row lock"><span class="mk">' + ico('lock', 22) + '</span><span class="nm">' + t('closeDay') + '<small>' + t('closeLocked') + '</small></span></li>';
+
+    var sk = skipCount();
+    var head = '<div class="prog"><div class="pt"><b>' + fmt(t('doneOf'), { done: done, total: total }) + '</b>' + (sk ? '<small>' + fmt(t('skippedCount'), { n: sk }) + '</small>' : '') + '</div>' + bar(done, total) + '</div>';
+    var nextLabel = nxt ? fmt(t('next'), { section: t('s_' + nxt.k) }) : t('openCheck');
+    return backTop(t('dayClose'), chip(true)) + '<div class="scroll">' + head + '<ul class="rows">' + rows + '</ul></div>' +
+      '<div class="sticky"><button class="primary" data-act="nextstep">' + nextLabel + '</button></div>';
+  }
+
+  /* ================= LEDGER ================= */
+  function ledger() {
+    var isC = S.seg === 'cust';
+    var list = isC ? S.cust.slice().sort(function (a, b) { return b.b - a.b; }) : S.supp.slice().sort(function (a, b) { return b.b - a.b; });
+    var rows = list.map(function (c, idx) {
+      var name = isC ? nm(c.id) : c.n;
+      var init = isC ? Array.from(name)[0] : name.charAt(0);
+      var meta = '';
+      if (c.chg) meta += '<small class="tagc">' + ico('clock', 18) + t('changedToday') + '</small>';
+      if (c.late) meta += '<small class="tagl">' + ico('clock', 18) + t('overdue') + '</small>';
+      return '<li><button class="prow"><span class="av av' + (idx % 5) + '">' + init + '</span><span class="pn"><b>' + name + '</b>' + meta + '</span><span class="pa">' + M(c.b) + '<em>' + (isC ? t('owes') : t('youOweRow')) + '</em></span></button></li>';
+    }).join('');
+    var heroH = '<section class="lhero"><div class="h1"><span class="lbl">' + t('toCollectL') + '</span>' + M(toCollect(), { cls: 'big' }) + '</div>' +
+      '<div class="h2"><span class="lbl">' + t('youOwe') + '</span>' + M(youOwe(), { cls: 'mid' }) + '</div></section>';
+    var seg = '<div class="seg two" role="tablist">' + [['cust', 'customers'], ['supp', 'suppliers']].map(function (x) {
+      var on = S.seg === x[0];
+      return '<button class="sg-b' + (on ? ' on' : '') + '" role="tab" aria-selected="' + on + '" data-seg="' + x[0] + '">' + (on ? ico('tick', 22) : '') + '<span>' + t(x[1]) + '</span></button>';
+    }).join('') + '</div>';
+    var add = '<button class="addp">' + ico('plus', 24) + '<span>' + t(isC ? 'newCustomer' : 'newSupplier') + '</span></button>';
+    return '<header class="top"><h1>' + t('ledger') + '</h1><div class="grow"></div>' + chip(true) + '</header>' +
+      '<div class="scroll">' + heroH + seg + add + '<ul class="plist">' + rows + '</ul></div>' + tabs('ledger');
+  }
+
+  /* ================= TEXT SIZE PICKER (shown in the recommended direction only) ================= */
+  var SIZES = [['Normal', 1], ['Large', 1.25], ['Extra large', 1.5]];
+  function textsize() {
+    var opts = SIZES.map(function (z, i) {
+      var on = S.size === i;
+      return '<button class="sg-b' + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-size="' + i + '">' + (on ? ico('tick', 22) : '') + '<span>' + z[0] + '</span></button>';
+    }).join('');
+    var sc = SIZES[S.size][1];
+    return backTop('Text size', '') +
+      '<div class="scroll"><div class="note-ph">Labels in English: no Odia string exists yet (to be drafted, H13).</div>' +
+      '<div class="seg three" role="radiogroup">' + opts + '</div>' +
+      '<section class="preview" style="--z:' + sc + '"><div class="lbl pv">' + t('boxNow') + '</div><div class="fig pv">' + M(boxNow(), { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln pv"><span class="k">' + t('cashIn') + '</span>' + M(S.cashIn, { sign: true, tone: 'dir' }) + '</div></section>' +
+      '<p class="hint">Preview. Applies to body text and figures. Navigation and tabs stop at 1.5x so they never push the content away.</p></div>';
+  }
+
+  /* ================= STATE SPECIMENS: empty, loading, error, offline, stale day, locked ================= */
+  function states() {
+    var el = document.getElementById('states');
+    if (!el) return;
+    el.innerHTML =
+      '<div class="spec-card"><h4>Stale day (compact banner, does not push the tiles)</h4><div class="banner stale">' + ico('clock', 24) + '<span>' + (S.lang === 'od' ? 'ଏହି ଖାତା ଏବେ ବି ଖୋଲା ଅଛି' : 'This book is still open for 18 November.') + '</span><button class="quiet">' + (S.lang === 'od' ? 'ବର୍ତ୍ତମାନ ବନ୍ଦ କରନ୍ତୁ' : 'Close it now') + '</button></div></div>' +
+      '<div class="spec-card"><h4>Empty (with a next action)</h4><div class="empty"><p>' + (S.lang === 'od' ? 'ଆଜି ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଲେଖା ହୋଇନାହିଁ। ବିକ୍ରିରୁ ଆରମ୍ଭ କରନ୍ତୁ।' : 'Nothing entered yet today. Start with a sale.') + '</p><button class="primary">' + ico('plus', 24) + '<span>' + t('sale') + '</span></button></div></div>' +
+      '<div class="spec-card"><h4>Loading (still placeholder rows, no spinner on save)</h4><div class="skel"><i></i><i></i><i></i></div></div>' +
+      '<div class="spec-card"><h4>Error (calm, nothing lost, a next step)</h4><div class="banner err">' + ico('lock', 24) + '<span>' + (S.lang === 'od' ? 'କିଛି ହଜିନାହିଁ।' : 'Could not load. Nothing is lost.') + '</span><button class="quiet">' + (S.lang === 'od' ? 'ପୁଣି' : 'Try again') + '</button></div></div>' +
+      '<div class="spec-card"><h4>Offline (chip, never red, safe on phone)</h4><div class="chiprow"><button class="chip wait">' + ico('clock', 22) + '<span>' + fmt(t('syncWaiting'), { n: 3 }) + '</span></button></div></div>' +
+      '<div class="spec-card"><h4>Locked (mark + one line why)</h4><ul class="rows"><li class="row lock"><span class="mk">' + ico('lock', 22) + '</span><span class="nm">' + t('closeDay') + '<small>' + t('closeLocked') + '</small></span></li></ul></div>';
+  }
+
+  /* ---- render ---- */
+  var FR = { 'f-today': today, 'f-sale': sale, 'f-close': close, 'f-ledger': ledger };
+  if (document.getElementById('f-text')) FR['f-text'] = textsize;
+  S.size = 0;
+  function renderOne(id) {
+    var root = document.getElementById(id);
+    var app = root.querySelector('.app');
+    var sc = app.querySelector('.scroll');
+    var top = sc ? sc.scrollTop : 0;
+    app.innerHTML = FR[id]();
+    var sc2 = app.querySelector('.scroll');
+    if (sc2) sc2.scrollTop = top;
+  }
+  function renderAll() {
+    document.documentElement.lang = S.lang === 'od' ? 'or' : 'en';
+    document.body.setAttribute('data-lang', S.lang);
+    Object.keys(FR).forEach(renderOne);
+    states();
+    var tb = document.querySelectorAll('[data-theme-btn]');
+    for (var j = 0; j < tb.length; j++) tb[j].setAttribute('aria-pressed', String(tb[j].getAttribute('data-theme-btn') === document.body.getAttribute('data-theme')));
+    var b = document.querySelectorAll('[data-lang-btn]');
+    for (var i = 0; i < b.length; i++) b[i].setAttribute('aria-pressed', String(b[i].getAttribute('data-lang-btn') === S.lang));
+  }
+
+  function addEntry() {
+    var p = (S.amt === '' ? 0 : parseInt(S.amt, 10)) * 100;
+    if (!p) return;
+    S.recent.unshift({ p: p, m: S.mode, t: '11:42' });
+    S.sales += p; S.salesTotal += p;
+    if (S.mode === 'cash') S.cashIn += p;
+    if (S.mode === 'udhar') S.cust[0].b += p;
+    S.waiting += 1;
+    S.toast = fmt(t('savedLong'), { amount: rupee(p), mode: modeName(S.mode) });
+    S.amt = '';
+    clearTimeout(S.toastTimer);
+    S.toastTimer = setTimeout(function () { S.toast = ''; renderOne('f-sale'); }, 3500);
+    renderAll();
+  }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('button') : null;
+    if (!el) return;
+    var d = el.dataset;
+    if (d.themeBtn) { document.body.setAttribute('data-theme', d.themeBtn); renderAll(); return; }
+    if (d.size !== undefined) { S.size = parseInt(d.size, 10); renderOne('f-text'); return; }
+    if (d.langBtn) { S.lang = d.langBtn; S.toast = ''; renderAll(); return; }
+    if (d.k !== undefined) {
+      if (d.k === 'clr') S.amt = '';
+      else if (d.k === 'bk') S.amt = S.amt.slice(0, -1);
+      else if (S.amt.length < 7 && !(S.amt === '' && d.k === '0')) S.amt += d.k;
+      renderOne('f-sale'); return;
+    }
+    if (d.mode) { S.mode = d.mode; renderOne('f-sale'); return; }
+    if (d.seg) { S.seg = d.seg; renderOne('f-ledger'); return; }
+    if (d.skip) { S.steps.forEach(function (s) { if (s.k === d.skip) s.skip = true; }); renderAll(); return; }
+    if (d.undo) { S.steps.forEach(function (s) { if (s.k === d.undo) s.skip = false; }); renderAll(); return; }
+    if (d.act === 'add') { addEntry(); return; }
+    if (d.act === 'sync') { S.waiting = 0; renderAll(); return; }
+    if (d.go) { var f = document.getElementById(d.go); if (f) f.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }
+  });
+
+  renderAll();
+})();
+</script>
+</body></html>

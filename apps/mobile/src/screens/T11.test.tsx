@@ -36,7 +36,7 @@ describe('T11 renders all four states', () => {
   it('loading', () => {
     const tree = render(<CashCheck store={canonicalStore()} status="loading" />);
     expect(byTestId(tree, 't11-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error', () => {
@@ -63,9 +63,26 @@ describe('the working is the engine working, sign for sign', () => {
     const tree = render(<CashCheck store={store} />);
     for (const line of store.expectedCash().working.lines) {
       const shown = line.sign === '-' ? subtract(0, line.amount) : line.amount;
-      expect(text(byTestId(tree, 't11-working-' + line.key))).toContain(
-        formatPaise(shown, { withSign: true }),
-      );
+      // A zero out-line is "-₹0.00", as the reference's `neg` draws it - not "+₹0.00".
+      const expected =
+        line.sign === '-' && line.amount === 0
+          ? `-${formatPaise(0)}`
+          : formatPaise(shown, { withSign: true });
+      expect(text(byTestId(tree, 't11-working-' + line.key))).toContain(expected);
+    }
+  });
+
+  it('a zero out-line is signed negative, never "+₹0.00" (reference store.js neg)', () => {
+    // emptyStore: nothing taken, nothing paid - every out-line is zero.
+    const store = emptyStore();
+    const tree = render(<CashCheck store={store} />);
+    const outs = store.expectedCash().working.lines.filter((l) => l.sign === '-');
+    expect(outs.length).toBeGreaterThan(0);
+    for (const line of outs) {
+      expect(line.amount).toBe(0);
+      const shown = text(byTestId(tree, 't11-working-' + line.key));
+      expect(shown, line.key).toContain(`-${formatPaise(0)}`);
+      expect(shown, line.key).not.toContain('+');
     }
   });
 
@@ -191,5 +208,28 @@ describe('T11 accessibility, and the one input it has', () => {
     byTestId(tree, 'keypad-5').props.onPress();
     expect(pressed).toEqual(['5']);
     expect(store.state.day.countedCash).toBe(before);
+  });
+});
+
+/* ---- USABILITY §4 item 9 - the working list at 2.0x (U-69) ------------- */
+describe('USABILITY item 9 - at large text the working list gets the screen', () => {
+  it('folded, the keypad is absent and the counted figure is the control that brings it back', () => {
+    const asked: boolean[] = [];
+    const tree = render(<CashCheck store={canonicalStore()} keypadOpen={false} onKeypad={(o) => asked.push(o)} />);
+    expect(all(tree).some((n) => n.props?.testID === 'keypad')).toBe(false);
+    const counted = byTestId(tree, 't11-counted');
+    expect(counted.props.accessibilityState).toEqual({ expanded: false });
+    counted.props.onPress();
+    expect(asked).toEqual([true]);
+    // Every working line is still there to check, line by line.
+    expect(all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('t11-working-')).length).toBe(
+      canonicalStore().expectedCash().working.lines.length,
+    );
+  });
+
+  it('by default the pad is up - at an ordinary size counting stays two taps away', () => {
+    const tree = render(<CashCheck store={canonicalStore()} />);
+    expect(byTestId(tree, 'keypad')).toBeTruthy();
+    expect(byTestId(tree, 't11-counted').props.accessibilityState).toEqual({ expanded: true });
   });
 });

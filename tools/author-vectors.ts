@@ -27,7 +27,11 @@ type Section =
   | 'purchase'
   | 'udhar_collection'
   | 'party_payment'
-  | 'withdrawal';
+  | 'withdrawal'
+  | 'sales_return'
+  | 'exchange_out'
+  | 'exchange_receipt'
+  | 'refund_paid';
 
 interface VEntry {
   id: string;
@@ -38,6 +42,7 @@ interface VEntry {
   partyId?: string;
   dueDate?: string;
   correctsDayId?: string;
+  refersToEntryId?: string;
   createdAt: string;
   // The real union, not 'manual'. F-04 added an imported-source vector and silenced
   // the mismatch with `'imported' as 'manual'` - a cast that lies, written while the
@@ -92,6 +97,15 @@ interface Vector {
     entries: VEntry[];
     priorCreditOutstanding: number;
     priorSupplierOutstanding: number;
+    // Decisions 2 and 3 (2026-10). Absent on every vector written before them.
+    adjustments?: { id: string; dayId: string; type: string; amount: number; createdAt: string }[];
+    upiConfirmations?: {
+      id: string;
+      dayId: string;
+      entryId: string;
+      batchId?: string;
+      confirmedAt: string;
+    }[];
   };
   context: {
     today: string;
@@ -107,6 +121,8 @@ interface Vector {
     openSupplierDues: { partyId: string; amount: number; purchasedOn: string; dueDate?: string }[];
     openCustomerCredit: { partyId: string; amount: number; since: string }[];
     horizonDays?: number;
+    // PR-3: real, valid-dated closed days for the sales forecast only.
+    forecastHistory?: { date: string; netSales: number; netPurchase: number; totalExpenses: number; profit: number; countedCash: number; expectedCash: number }[];
   };
   expect: Record<string, unknown>;
 }
@@ -1684,6 +1700,445 @@ vectors.push({
   },
   context: ctx({ trailing: closedRun(14) }),
   expect: { p7: R(1000) },
+});
+
+/* =================================================================== *
+ * 2.3 · Returns, refunds and exchanges (review §6-§7, EX-2 to EX-12)
+ *
+ * NEW VECTORS ONLY. None of the vectors above holds a return, so each new
+ * term sums over nothing and every expected value above is unchanged (EX-14).
+ * Opening cash is ₹1,500 throughout (`day()`). The sale a return points at was
+ * made on an earlier day; P1-P8 read only today's rows, so its id is enough.
+ * =================================================================== */
+
+const PRIOR_SALE = '01890000-0000-7000-8000-9999000000aa';
+const P3_KEYS = [
+  'working.opening_cash',
+  'working.cash_sales',
+  'working.udhar_collected_cash',
+  'working.cash_purchase',
+  'working.cash_expenses',
+  'working.cash_party_payment',
+  'working.withdrawal_cash',
+];
+
+{
+  const ret = e('sales_return', R(400), 'other', { refersToEntryId: PRIOR_SALE });
+  vectors.push({
+    name: 'return-refunded-in-cash',
+    proves:
+      'A return reduces Net Sales by the goods that came back; the cash refund leaves the ' +
+      'drawer as its own P3 line. Revenue follows the goods, settlement follows the money.',
+    source: 'Review §7, EX-2, EX-8',
+    input: {
+      day: day(),
+      entries: [
+        e('cash_sales', R(1000), 'cash'),
+        ret,
+        e('refund_paid', R(400), 'cash', { refersToEntryId: ret.id }),
+      ],
+      priorCreditOutstanding: 0,
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    expect: {
+      p1: R(1000),
+      p2: R(400),
+      p3: R(2100), // 1,500 + 1,000 - 400
+      p4: R(600), // 1,000 - 400
+      p6: 0,
+      profit: R(600),
+      p3WorkingKeys: [...P3_KEYS, 'working.refund_paid_cash'],
+      p3WorkingSigns: ['+', '+', '+', '-', '-', '-', '-', '-'],
+    },
+  });
+}
+
+vectors.push({
+  name: 'return-pending-closes-with-zero-difference',
+  proves:
+    'Returned + Pending settlement: P4 falls at once, nothing moves in the cash equation, ' +
+    'and a day counted at the expected figure closes with difference 0 (EX-9).',
+  source: 'Review §7, EX-9',
+  input: {
+    day: day({ state: 'closed', countedCash: R(2500) }),
+    entries: [
+      e('cash_sales', R(1000), 'cash'),
+      e('sales_return', R(400), 'other', { partyId: 'c1', refersToEntryId: PRIOR_SALE }),
+    ],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: {
+    p3: R(2500), // 1,500 + 1,000 - nothing
+    p4: R(600),
+    op1Difference: 0,
+    op1ReasonRequired: false,
+    nextOpeningCash: R(2500),
+    p3WorkingKeys: P3_KEYS,
+  },
+});
+
+{
+  const ret = e('sales_return', R(400), 'other', { partyId: 'c1', refersToEntryId: PRIOR_SALE });
+  vectors.push({
+    name: 'return-credit-issued-against-udhar',
+    proves:
+      'Returned + Credit issued: the refund is adjusted against what the customer owes, so P7 ' +
+      'falls and the drawer does not move. A day of only a return has NEGATIVE Net Sales, and ' +
+      'expense pressure against it is unanswerable (null), not 0% (EX-10).',
+    source: "Review §7, EX-10, lead's decision 2026-10-25",
+    input: {
+      day: day(),
+      entries: [ret, e('refund_paid', R(400), 'udhar', { partyId: 'c1', refersToEntryId: ret.id })],
+      priorCreditOutstanding: R(1000),
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    expect: { p3: R(1500), p4: R(-400), p7: R(600), op2BasisPoints: null },
+  });
+}
+
+{
+  const ret = e('sales_return', R(500), 'other', { refersToEntryId: PRIOR_SALE });
+  vectors.push({
+    name: 'refund-excluded-from-expenses',
+    proves:
+      'A refund is not an expense and never touches P6 - it reverses a sale, which the return ' +
+      'already does in P4. Counted in P6 as well, profit would fall twice for one event (EX-2).',
+    source: 'EX-2',
+    input: {
+      day: day(),
+      entries: [
+        e('expense', R(200), 'cash'),
+        ret,
+        e('refund_paid', R(500), 'cash', { refersToEntryId: ret.id }),
+      ],
+      priorCreditOutstanding: 0,
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    expect: { p2: R(700), p4: R(-500), p6: R(200), profit: R(-700), p3: R(800) },
+  });
+}
+
+{
+  const ret = e('sales_return', R(900), 'other', { refersToEntryId: PRIOR_SALE });
+  vectors.push({
+    name: 'exchange-with-additional-payment',
+    proves:
+      'Scenario 14. A ₹900 shirt swapped for a ₹1,200 one with ₹300 paid in cash is ONE event: ' +
+      'P4 moves by ₹300, not ₹1,200, and the drawer by the ₹300 actually handed over.',
+    source: 'Review §6, scenario 14, EX-2',
+    input: {
+      day: day(),
+      entries: [
+        ret,
+        e('exchange_out', R(1200), 'other', { refersToEntryId: ret.id }),
+        e('exchange_receipt', R(300), 'cash', { refersToEntryId: ret.id }),
+      ],
+      priorCreditOutstanding: 0,
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    expect: {
+      p1: R(300),
+      p3: R(1800),
+      p4: R(300),
+      profit: R(300),
+      p3WorkingKeys: [...P3_KEYS, 'working.exchange_received_cash'],
+    },
+  });
+}
+
+{
+  const ret = e('sales_return', R(1200), 'other', { refersToEntryId: PRIOR_SALE });
+  vectors.push({
+    name: 'exchange-refund-due-by-upi',
+    proves:
+      'The mirror case: ₹1,200 returned for a ₹900 replacement, ₹300 refunded by UPI. P4 falls ' +
+      'by ₹300; a UPI refund puts nothing through the drawer (D2), so P3 is untouched.',
+    source: 'EX-12, D2',
+    input: {
+      day: day(),
+      entries: [
+        ret,
+        e('exchange_out', R(900), 'other', { refersToEntryId: ret.id }),
+        e('refund_paid', R(300), 'upi', { refersToEntryId: ret.id }),
+      ],
+      priorCreditOutstanding: 0,
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    expect: { p2: 0, p3: R(1500), p4: R(-300) },
+  });
+}
+
+{
+  const ret = e('sales_return', R(900), 'other', { partyId: 'c1', refersToEntryId: PRIOR_SALE });
+  vectors.push({
+    name: 'exchange-difference-on-udhar',
+    proves: 'An exchange difference taken on udhar goes onto the customer\'s P7 and not into the drawer.',
+    source: 'EX-12, P7',
+    input: {
+      day: day(),
+      entries: [
+        ret,
+        e('exchange_out', R(1200), 'other', { partyId: 'c1', refersToEntryId: ret.id }),
+        e('exchange_receipt', R(300), 'udhar', { partyId: 'c1', refersToEntryId: ret.id }),
+      ],
+      priorCreditOutstanding: 0,
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    expect: { p1: 0, p3: R(1500), p4: R(300), p7: R(300) },
+  });
+}
+
+vectors.push({
+  name: 'negative-net-sales-business-movement-ratio-null',
+  proves:
+    'Against a positive baseline, a day of negative Net Sales still reads "down" - but its ' +
+    'share of the baseline is withheld (null) rather than shown as a negative percentage (EX-10).',
+  source: 'EX-10',
+  input: {
+    day: day(),
+    entries: [e('sales_return', R(500), 'other', { refersToEntryId: PRIOR_SALE })],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx({ trailing: closedRun(21) }),
+  expect: { p4: R(-500), op5Direction: 'down', op5BasisPoints: null },
+});
+
+vectors.push({
+  name: 'd7-correction-names-the-entry-it-corrects',
+  proves:
+    'HT-11: a correction that also names the closed day\'s entry it corrects counts exactly as ' +
+    'the day-level correction does - the link states what it corrects and moves nothing itself.',
+  source: 'D7, HT-11',
+  input: {
+    day: day(),
+    entries: [
+      e('cash_sales', R(1000), 'cash'),
+      e('cash_sales', R(180), 'cash', {
+        correctsDayId: '2026-07-12',
+        refersToEntryId: '01890000-0000-7000-8000-9999000000bb',
+      }),
+    ],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+  },
+  context: ctx(),
+  expect: { p1: R(1180), p3: R(2680), p4: R(1180) },
+});
+
+/* =================================================================== *
+ * Decisions 2 and 3 (co-founder review, 2026-10-22). NEW vectors only:
+ * nothing above changes, and none of these carries an adjustment or a
+ * confirmation into an older vector's input.
+ * =================================================================== */
+
+const fact = (n: number) => `01890000-0000-7000-8000-9${String(n).padStart(11, '0')}`;
+const CT = '2026-07-15T21:00:00.000Z';
+
+{
+  const sale = e('upi_sales', R(300), 'upi');
+  const collect = e('udhar_collection', R(120), 'upi', { partyId: 'c1' });
+  vectors.push({
+    name: 'upi-ledger-is-a-second-equation',
+    proves:
+      'Expected UPI is UPI in minus UPI out by the same sections as the cash equation, and ' +
+      'none of it moves P3 (D2). With nothing confirmed the check is "not checked", never ' +
+      'a zero difference (decision 3).',
+    input: {
+      day: day(),
+      entries: [
+        e('cash_sales', R(500), 'cash'),
+        sale,
+        collect,
+        e('expense', R(40), 'upi'),
+        e('purchase', R(90), 'upi'),
+        e('withdrawal', R(20), 'upi'),
+      ],
+      priorCreditOutstanding: R(120),
+      priorSupplierOutstanding: 0,
+    },
+    context: ctx(),
+    // 300 + 120 - 40 - 90 - 20 = 270. P3 = 1,500 + 500 = 2,000.
+    expect: {
+      upiExpected: R(270),
+      upiExpectedReceived: R(420),
+      upiConfirmedReceived: 0,
+      upiStatus: 'not_checked',
+      p3: R(2000),
+    },
+  });
+
+  vectors.push({
+    name: 'upi-confirmed-per-entry-partly-checked',
+    proves: 'Actual UPI is the sum of the receipts he confirmed - one of two here.',
+    input: {
+      day: day(),
+      entries: [sale, collect],
+      priorCreditOutstanding: R(120),
+      priorSupplierOutstanding: 0,
+      upiConfirmations: [{ id: fact(1), dayId: DAY, entryId: sale.id, confirmedAt: CT }],
+    },
+    context: ctx(),
+    expect: { upiConfirmedReceived: R(300), upiStatus: 'partly_checked' },
+  });
+
+  vectors.push({
+    name: 'upi-confirmed-in-bulk-checked',
+    proves: 'The bulk tap writes one confirmation per receipt; all confirmed is "checked".',
+    input: {
+      day: day(),
+      entries: [sale, collect],
+      priorCreditOutstanding: R(120),
+      priorSupplierOutstanding: 0,
+      upiConfirmations: [
+        { id: fact(2), dayId: DAY, entryId: sale.id, batchId: fact(9), confirmedAt: CT },
+        { id: fact(3), dayId: DAY, entryId: collect.id, batchId: fact(9), confirmedAt: CT },
+      ],
+    },
+    context: ctx(),
+    expect: { upiConfirmedReceived: R(420), upiStatus: 'checked' },
+  });
+}
+
+vectors.push({
+  name: 'adjustment-counterfeit-note-moves-cash-and-profit',
+  proves:
+    'A fake note taken as a cash sale is not money (RBI impounds it, no credit): expected cash ' +
+    'and profit both fall by it, as a working line of its own after the seven.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(2000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+    adjustments: [{ id: fact(4), dayId: DAY, type: 'counterfeit_note', amount: R(500), createdAt: CT }],
+  },
+  context: ctx(),
+  // P3 = 1,500 + 2,000 - 500 = 3,000. Profit = 2,000 - 500 = 1,500.
+  expect: {
+    p1: R(2000),
+    p3: R(3000),
+    profit: R(1500),
+    p3WorkingKeys: [
+      'working.opening_cash',
+      'working.cash_sales',
+      'working.udhar_collected_cash',
+      'working.cash_purchase',
+      'working.cash_expenses',
+      'working.cash_party_payment',
+      'working.withdrawal_cash',
+      'adjustment.counterfeit_note',
+    ],
+  },
+});
+
+vectors.push({
+  name: 'adjustment-home-use-moves-profit-not-cash',
+  proves:
+    'Goods taken home move no cash (D2); they are a drawing in kind (D3), so their cost comes ' +
+    'back out of the purchase already in profit. Stock written off moves neither: its cost is ' +
+    'already in P5.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(1000), 'cash'), e('purchase', R(600), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+    adjustments: [
+      { id: fact(5), dayId: DAY, type: 'home_use', amount: R(80), createdAt: CT },
+      { id: fact(6), dayId: DAY, type: 'stock_written_off', amount: R(50), createdAt: CT },
+    ],
+  },
+  context: ctx(),
+  // P3 = 1,500 + 1,000 - 600 = 1,900. Profit = 1,000 - 600 + 80 = 480.
+  expect: {
+    p3: R(1900),
+    profit: R(480),
+    profitWorkingKeys: [
+      'working.net_sales',
+      'working.purchase_all_modes',
+      'working.expenses_all_modes',
+      'adjustment.home_use',
+    ],
+  },
+});
+
+vectors.push({
+  name: 'adjustment-chhutta-given-and-kept',
+  proves: 'Rounding for want of change moves cash and profit, each in its own direction.',
+  input: {
+    day: day(),
+    entries: [e('cash_sales', R(1000), 'cash')],
+    priorCreditOutstanding: 0,
+    priorSupplierOutstanding: 0,
+    adjustments: [
+      { id: fact(7), dayId: DAY, type: 'rounding_given', amount: R(5), createdAt: CT },
+      { id: fact(8), dayId: DAY, type: 'rounding_kept', amount: R(2), createdAt: CT },
+    ],
+  },
+  context: ctx(),
+  // P3 = 1,500 + 1,000 - 5 + 2 = 2,497. Profit = 1,000 - 5 + 2 = 997.
+  expect: { p3: R(2497), profit: R(997) },
+});
+
+/* =================================================================== *
+ * PR-3 · the sales forecast (forecast.ts), under Node AND Hermes
+ * =================================================================== */
+
+/** `count` real closed days ending 14 July 2026 (the day before DAY), net sales from `f(k)`. */
+const salesHistory = (count: number, f: (k: number) => number) =>
+  Array.from({ length: count }, (_, k) => {
+    const d = new Date(Date.UTC(2026, 6, 14 - (count - 1) + k)).toISOString().slice(0, 10);
+    return { date: d, netSales: f(k), netPurchase: 0, totalExpenses: 0, profit: f(k), countedCash: 0, expectedCash: 0 };
+  });
+const WEEKDAYS = [R(100), R(200), R(300), R(400), R(500), R(600), R(700)];
+
+vectors.push({
+  name: 'pr3-forecast-gate-shut-at-13',
+  proves: 'A sales forecast over fewer than 14 closed days is withheld, not shown thin.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({ forecastHistory: salesHistory(13, (k) => WEEKDAYS[k % 7]!) }),
+  expect: { forecastAvailable: false, forecastMethod: null },
+});
+
+vectors.push({
+  name: 'pr3-forecast-seasonal-naive-repeats-last-week',
+  proves:
+    'Two identical weeks (1-14 July: 100, 200 ... 700 rupees, then again) forecast the ' +
+    'same week again, from the day after today: 16 July is index 15 of the series, a ' +
+    'Thursday-slot 200; 22 July wraps round to 100. Every backtest error is zero, so ' +
+    'the range is the point and the typical miss is 0.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({ forecastHistory: salesHistory(14, (k) => WEEKDAYS[k % 7]!) }),
+  expect: {
+    forecastAvailable: true,
+    forecastMethod: 'seasonal_naive',
+    forecastDates: ['2026-07-16', '2026-07-17', '2026-07-18', '2026-07-19', '2026-07-20', '2026-07-21', '2026-07-22'],
+    forecastPoints: [R(200), R(300), R(400), R(500), R(600), R(700), R(100)],
+    forecastLow: [R(200), R(300), R(400), R(500), R(600), R(700), R(100)],
+    forecastHigh: [R(200), R(300), R(400), R(500), R(600), R(700), R(100)],
+    forecastTypicalMiss: 0,
+    forecastMaseBasisPoints: null,
+    forecastBacktestPoints: 49,
+  },
+});
+
+vectors.push({
+  name: 'pr3-forecast-holt-winters-beats-last-week-on-a-rising-line',
+  proves:
+    'Sales rising 10 rupees a day on a weekday pattern: "same as last week" is always ' +
+    '70 rupees behind, a trend model is not, so after 63 closed days Holt-Winters is ' +
+    'the method shown. The exact points are not hand-workable; Node and Hermes must ' +
+    'agree on them to the paisa.',
+  input: { day: day(), entries: [], priorCreditOutstanding: 0, priorSupplierOutstanding: 0 },
+  context: ctx({ forecastHistory: salesHistory(63, (k) => R(1000) + R(10) * k + WEEKDAYS[k % 7]!) }),
+  expect: { forecastAvailable: true, forecastMethod: 'holt_winters' },
 });
 
 /* =================================================================== *

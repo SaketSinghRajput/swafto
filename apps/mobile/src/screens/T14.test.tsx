@@ -16,7 +16,7 @@ import { canonicalStore, adversarialStore, emptyStore } from './registry.tsx';
 import { render, all, byTestId, byType, text } from '../../test/render.tsx';
 import { undersizedTargets, undersizedText, failingContrast } from '../../test/a11y.tsx';
 import { CANONICAL_DATE } from '@swafto/fixtures';
-import { formatPaise, type Entry } from '@swafto/formula-engine';
+import { formatPaise, subtract, type Entry } from '@swafto/formula-engine';
 import { TOUCH_TARGET_MIN_DP, CHROME_FONT_SCALE_CAP } from '@swafto/values';
 import { phrase, type Language } from '../i18n/strings.ts';
 
@@ -35,7 +35,7 @@ describe('T14 renders all four states', () => {
   it('loading', () => {
     const tree = render(<DayClosed store={canonicalStore()} status="loading" />);
     expect(byTestId(tree, 't14-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error', () => {
@@ -78,6 +78,17 @@ describe('D3 - the withdrawal is shown, and it is not inside the profit', () => 
     expect(text(byTestId(tree, 't14-withdrawal'))).toContain(
       formatPaise(store.sectionTotal('withdrawal'), { withSign: false }),
     );
+  });
+
+  it('a day with nothing taken signs every out-line negative, never "+₹0.00"', () => {
+    // The reference (store.js `neg`) draws purchases, expenses and the
+    // withdrawal as "−" lines whatever their size.
+    const tree = render(<DayClosed store={emptyStore()} />);
+    for (const id of ['t14-purchases', 't14-expenses', 't14-withdrawal']) {
+      const shown = text(byTestId(tree, id));
+      expect(shown, id).toContain(`-${formatPaise(0)}`);
+      expect(shown, id).not.toContain('+');
+    }
   });
 
   it('the note says it was not deducted, in words', () => {
@@ -165,5 +176,21 @@ describe('T14 accessibility, and the fact that nothing on it is editable', () =>
   it('there is no action on it that could change a figure', () => {
     const tree = render(<DayClosed store={canonicalStore()} />);
     expect(all(tree).filter((n) => n.type === 'Pressable')).toEqual([]);
+  });
+});
+
+describe('HT-23 - a short drawer is the day\u2019s loss, shown beside Estimated Profit', () => {
+  it('profit after the cash difference is Estimated Profit less the shortage', () => {
+    const store = canonicalStore();
+    const expected = store.expectedCash().value;
+    expect(expected).toBeGreaterThan(10000);
+    store.close(subtract(expected, 10000), 't12.reason.loss');
+    const tree = render(<DayClosed store={store} />);
+    const profit = store.primary().estimatedProfit.value;
+    expect(text(byTestId(tree, 't14-profit-after-cash'))).toContain(
+      formatPaise(subtract(profit, 10000), { withSign: false }),
+    );
+    // The headline is still the sheet's Estimated Profit.
+    expect(text(byTestId(tree, 't14-headline'))).toBe(formatPaise(profit, { withSign: false }));
   });
 });

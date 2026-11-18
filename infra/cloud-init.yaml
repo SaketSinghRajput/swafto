@@ -1,0 +1,653 @@
+#cloud-config
+# ============================================================================
+# SWAFTO origin server - ap-south-1 (Mumbai)
+# Paste into: EC2 launch wizard -> Advanced details -> User data.
+#
+# CONTAINS NO SECRETS, BY DESIGN.
+# Anything placed in user data can be read back from inside the instance at
+# http://169.254.169.254/latest/user-data by any local process, and EC2 keeps
+# it for the life of the instance. Secrets are fetched from SSM Parameter
+# Store at service start using the instance role (decision S-17).
+#
+# Edit the three REPLACE_ME values in /etc/swafto/site.env below. Nothing
+# else in this file needs changing.
+# ============================================================================
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - jq
+  - unzip
+  - acl
+  - unattended-upgrades
+
+write_files:
+
+  # -- the only file you edit -------------------------------------------------
+  - path: /etc/swafto/site.env
+    permissions: '0644'
+    content: |
+      SWAFTO_DOMAIN=REPLACE_ME.swafto.app
+      SWAFTO_ACME_EMAIL=REPLACE_ME@swafto.app
+      SWAFTO_BACKUP_BUCKET=REPLACE_ME-swafto-backups
+      SWAFTO_SSM_PREFIX=/swafto/prod
+      AWS_DEFAULT_REGION=ap-south-1
+      # Optional. When set, a failed scheduled job also publishes to this SNS
+      # topic. The instance role needs sns:Publish on it (not in HOSTING.md's
+      # inline policy today). Empty = journal and CloudWatch Logs only.
+      SWAFTO_ALERT_TOPIC_ARN=
+
+  # -- TLS terminates here, not at a CDN (decision AD-008: data stays in India)
+  - path: /etc/caddy/Caddyfile
+    permissions: '0644'
+    content: |
+      {
+        email {$SWAFTO_ACME_EMAIL}
+        admin off
+      }
+
+      {$SWAFTO_DOMAIN} {
+        encode zstd gzip
+
+        # NOTE ON TLS VERSION - read before changing.
+        # Caddy's default floor is TLS 1.2 with only forward-secret suites and
+        # no cleartext. Decision S-06 asks for TLS 1.3. Forcing 1.3 here would
+        # refuse Android 7-9 handsets, which minSdk 24 still supports and which
+        # is exactly the price bracket this product targets. The conflict is
+        # recorded in docs/infra/HOSTING.md; resolving it is a product
+        # decision, not a server one. To force 1.3 once Android 9 is dropped:
+        #   tls { protocols tls1.3 }
+
+        header {
+          Strict-Transport-Security  "max-age=31536000; includeSubDomains"
+          X-Content-Type-Options     nosniff
+          X-Frame-Options            DENY
+          Referrer-Policy            no-referrer
+          Cross-Origin-Opener-Policy same-origin
+          -Server
+        }
+
+        # The two pages Google Play requires before it will publish the app: a
+        # reachable privacy policy, and an account-deletion page usable after
+        # the app has been uninstalled. Served from THIS origin on purpose.
+        # apps/api/src/app.ts sets no Access-Control-Allow-Origin, deliberately,
+        # so the deletion page's fetch to /v1/deletion/* works only same-origin.
+        # Hosting these pages elsewhere would need CORS the API refuses to have.
+        handle /legal/* {
+          root * /srv/swafto/apps/web
+          file_server
+        }
+        handle /delete-account* {
+          root * /srv/swafto/apps/web
+          file_server
+        }
+
+        # Everything else is the API the Android app talks to.
+        handle {
+          reverse_proxy 127.0.0.1:8080 {
+            header_up X-Forwarded-For {remote_host}
+            # Fail fast rather than queue. The client is offline-first and will
+            # retry; a piled-up queue turns a slow minute into an outage.
+            transport http {
+              dial_timeout 2s
+            }
+          }
+        }
+
+        log {
+          output file /var/log/caddy/access.log {
+            roll_size 32mb
+            roll_keep 4
+          }
+          format json
+        }
+      }
+
+  # -- one helper, two callers ------------------------------------------------
+  - path: /usr/local/bin/swafto-pgenv
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env python3
+      """Turn a libpq connection URL on stdin into shell `export PG*=` lines.
+
+      Why this exists rather than passing the URL to pg_dump directly:
+      /proc/<pid>/cmdline is world-readable, so a connection string given as a
+      command-line argument leaks the database password to every local user.
+      /proc/<pid>/environ is readable only by the owner. The URL arrives on
+      stdin, so it is never an argument at any point.
+      """
+      import sys, shlex, urllib.parse as u
+
+
+      def exports(url):
+          p = u.urlparse(url.strip())
+          return [
+              "export %s=%s" % (key, shlex.quote(value))
+              for key, value in (
+                  ("PGHOST",     p.hostname or ""),
+                  ("PGPORT",     str(p.port or 5432)),
+                  ("PGUSER",     u.unquote(p.username or "")),
+                  ("PGPASSWORD", u.unquote(p.password or "")),
+                  ("PGDATABASE", (p.path or "/").lstrip("/")),
+                  ("PGSSLMODE",  "require"),
+              )
+          ]
+
+
+      if sys.argv[1:2] == ["--self-test"]:
+          # Run this after any edit to this file.
+          #
+          # The check puts a password full of shell metacharacters through a
+          # real shell, because the callers wrap this output in `eval` as root.
+          # Comparing shlex.quote() against shlex.quote() would pass even if
+          # the quoting were wrong, so the assertion is made against the
+          # original string after the shell has had its way with it.
+          import subprocess
+
+          hostile = "p;echo PWNED;#$(id)'\""
+          url = ("postgresql://u:" + u.quote(hostile, safe="")
+                 + "@localhost:5432/d")
+          shell = "\n".join(exports(url)) + '\nprintf %s "$PGPASSWORD"'
+          done = subprocess.run(["sh", "-c", shell],
+                                capture_output=True, text=True)
+          assert done.stdout == hostile, (
+              "password altered or command executed: %r" % done.stdout)
+          assert done.stderr == "", "shell wrote to stderr: %r" % done.stderr
+          assert exports("postgresql://u:p@localhost/d")[1] == \
+              "export PGPORT=5432"
+          print("swafto-pgenv: self-test PASS")
+          sys.exit(0)
+
+      print("\n".join(exports(sys.stdin.read())))
+
+  # -- secrets -> tmpfs, read by systemd as root, never written to the disk ---
+  - path: /usr/local/bin/swafto-env
+    permissions: '0750'
+    content: |
+      #!/bin/bash
+      # Fetch runtime secrets from SSM into a tmpfs file only root can read.
+      # /run is tmpfs, so nothing here survives a reboot or touches the EBS
+      # volume - which also means it is absent from every EBS snapshot.
+      # Usage: swafto-env [output-file]   (default /run/swafto/env)
+      set -euo pipefail
+      source /etc/swafto/site.env
+      out="${1:-/run/swafto/env}"
+      install -d -m 0700 -o root -g root /run/swafto
+      umask 077
+      : > "$out"
+      err=$(mktemp -p /run/swafto)
+      trap 'rm -f "$err"' EXIT
+
+      # Required: a missing one stops the start, loudly.
+      # DATABASE_URL is the app role (swafto_app, NOBYPASSRLS); SYSTEM_DATABASE_URL
+      # is the system role (swafto_system, BYPASSRLS). C-01: loadConfig refuses
+      # to boot in production without both, and the two must be different roles.
+      for key in DATABASE_URL SYSTEM_DATABASE_URL SESSION_SIGNING_KEY RATE_LIMIT_KEY; do
+        value=$(aws ssm get-parameter \
+                  --name "${SWAFTO_SSM_PREFIX}/${key}" \
+                  --with-decryption --query Parameter.Value --output text)
+        printf '%s=%s\n' "$key" "$value" >> "$out"
+      done
+
+      # Optional billing parameters (OPS-15). apps/api/src/config.ts BILLING_ENV
+      # lists exactly these five. Absent = Premium purchases stay closed, which
+      # the API reports on stderr; the boot is not blocked. Only a genuine
+      # ParameterNotFound is tolerated: AccessDenied or a network error stops the
+      # start, so a broken role cannot masquerade as "billing not configured".
+      for key in BILLING_ACCOUNT_KEY PLAY_PRODUCT_ID PLAY_SERVICE_ACCOUNT_JSON \
+                 PLAY_RTDN_AUDIENCE PLAY_RTDN_SERVICE_ACCOUNT; do
+        if value=$(aws ssm get-parameter \
+                     --name "${SWAFTO_SSM_PREFIX}/${key}" \
+                     --with-decryption --query Parameter.Value --output text \
+                     2>"$err"); then
+          :
+        elif grep -q ParameterNotFound "$err"; then
+          echo "swafto-env: ${key} not set in SSM - billing stays closed" >&2
+          continue
+        else
+          cat "$err" >&2
+          exit 1
+        fi
+        case "$value" in *$'\n'*) echo "swafto-env: ${key} contains a newline" >&2; exit 1;; esac
+        if [ "$key" = PLAY_SERVICE_ACCOUNT_JSON ]; then
+          # One line, and single-quoted so systemd's EnvironmentFile parser
+          # leaves the backslash escapes in the private key untouched.
+          value=$(printf '%s' "$value" | jq -c .)
+          case "$value" in *"'"*) echo "swafto-env: ${key} contains a single quote" >&2; exit 1;; esac
+          printf "%s='%s'\n" "$key" "$value" >> "$out"
+        else
+          printf '%s=%s\n' "$key" "$value" >> "$out"
+        fi
+      done
+
+      printf 'NODE_ENV=production\nPORT=8080\nHOST=127.0.0.1\n' >> "$out"
+      chmod 0600 "$out"
+
+  - path: /etc/systemd/system/swafto-api.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=SWAFTO API
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=swafto
+      Group=swafto
+      WorkingDirectory=/srv/swafto/apps/api
+
+      # '+' runs this as root so it can write the tmpfs secret file. systemd
+      # reads EnvironmentFile as root before dropping to User=, so the service
+      # account itself never needs read access to the secrets.
+      ExecStartPre=+/usr/local/bin/swafto-env
+      EnvironmentFile=/run/swafto/env
+      Environment=NODE_OPTIONS=--max-old-space-size=768
+
+      ExecStart=/usr/local/bin/node src/server.ts
+
+      Restart=always
+      RestartSec=2
+      # Never stop retrying: a crash loop must not decay into a silent outage.
+      StartLimitIntervalSec=0
+
+      # Soft throttle ahead of the kernel OOM killer, on a 2 GiB box.
+      MemoryHigh=900M
+      MemoryMax=1200M
+
+      NoNewPrivileges=true
+      PrivateTmp=true
+      PrivateDevices=true
+      ProtectSystem=strict
+      ProtectHome=true
+      ReadWritePaths=/run/swafto
+      ProtectKernelTunables=true
+      ProtectKernelModules=true
+      ProtectControlGroups=true
+      RestrictSUIDSGID=true
+      RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+      LockPersonality=true
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # -- Retention is 90 days because the published privacy policy promises -----
+  # -- "backups rotate out within 90 days". Do not change one without the -----
+  # -- other: apps/web/legal/privacy.html is a commitment to the user. --------
+  - path: /usr/local/bin/swafto-backup
+    permissions: '0750'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      source /etc/swafto/site.env
+
+      eval "$(aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/DATABASE_URL" \
+                --with-decryption --query Parameter.Value --output text \
+              | /usr/local/bin/swafto-pgenv)"
+
+      stamp=$(date -u +%Y%m%dT%H%M%SZ)
+      dump=$(mktemp /tmp/swafto-XXXXXX.dump)
+      trap 'shred -u "$dump" 2>/dev/null || unlink "$dump" 2>/dev/null || true' EXIT
+
+      pg_dump --format=custom --no-owner --no-privileges --file="$dump"
+
+      # A truncated dump is worse than no dump, because it looks like a backup.
+      # Refuse to upload one, and prove it is readable before trusting it.
+      size=$(stat -c%s "$dump")
+      if [ "$size" -lt 4096 ]; then
+        echo "swafto-backup: dump only ${size} bytes - refusing to upload" >&2
+        exit 1
+      fi
+      pg_restore --list "$dump" > /dev/null
+
+      aws s3 cp "$dump" "s3://${SWAFTO_BACKUP_BUCKET}/pg/${stamp}.dump" \
+        --sse AES256 --only-show-errors
+      echo "swafto-backup: uploaded ${stamp}.dump (${size} bytes)"
+
+  # -- S-19 says an untested backup is not a backup. This is the test. --------
+  - path: /usr/local/bin/swafto-restore-drill
+    permissions: '0750'
+    content: |
+      #!/bin/bash
+      # Restore the newest dump into a scratch database, count rows, discard
+      # it, report PASS or FAIL. Safe against production: it only ever creates
+      # and discards swafto_drill, and never writes to the live database. Run
+      # monthly, and after any change to swafto-backup.
+      set -euo pipefail
+      source /etc/swafto/site.env
+
+      eval "$(aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/DATABASE_URL" \
+                --with-decryption --query Parameter.Value --output text \
+              | /usr/local/bin/swafto-pgenv)"
+
+      # Keys are %Y%m%dT%H%M%SZ, so lexical order is chronological order.
+      newest=$(aws s3 ls "s3://${SWAFTO_BACKUP_BUCKET}/pg/" \
+                 | sort | tail -1 | awk '{print $4}')
+      [ -n "$newest" ] || { echo "DRILL FAIL: bucket holds no dump" >&2; exit 1; }
+
+      dump=$(mktemp /tmp/drill-XXXXXX.dump)
+      cleanup() {
+        unlink "$dump" 2>/dev/null || true
+        PGDATABASE=postgres dropdb --if-exists swafto_drill || true
+      }
+      trap cleanup EXIT
+
+      aws s3 cp "s3://${SWAFTO_BACKUP_BUCKET}/pg/${newest}" "$dump" --only-show-errors
+
+      PGDATABASE=postgres dropdb --if-exists swafto_drill
+      PGDATABASE=postgres createdb swafto_drill
+      PGDATABASE=swafto_drill pg_restore --no-owner --no-privileges \
+        --exit-on-error --dbname=swafto_drill "$dump"
+
+      rows=$(PGDATABASE=swafto_drill psql -tAc 'select count(*) from entries')
+      echo "DRILL: restored ${newest}; entries table holds ${rows} rows"
+      echo "DRILL PASS"
+
+  # -- database roles and grants (C-01) ----------------------------------------
+  # Runs packages/schema/sql/roles.postgres.sql AS THE RDS MASTER USER, then sets
+  # the two role passwords in the same psql session. The SQL file creates
+  # swafto_app and swafto_system, sets their attributes and grants, and sets NO
+  # passwords. It is idempotent and must run AFTER every migration (its grants
+  # skip tables that do not exist yet), so run it on every deploy:
+  #   sudo /usr/local/bin/swafto-db-roles
+  # SINGLE SOURCE FOR THE PASSWORDS: they are read out of the very same SSM
+  # SecureStrings the API connects with (DATABASE_URL -> swafto_app,
+  # SYSTEM_DATABASE_URL -> swafto_system), so the password the API presents and
+  # the one set on the role cannot diverge. The script refuses to run if either
+  # URL names a different user than the fixed role. The master URL is
+  # MASTER_DATABASE_URL (see H22). No password is in this file or the repo, and
+  # none is a command-line argument: they reach psql on stdin as \set lines
+  # (/proc/<pid>/cmdline is world-readable).
+  - path: /usr/local/bin/swafto-db-roles
+    permissions: '0750'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      source /etc/swafto/site.env
+      sql=/srv/swafto/packages/schema/sql/roles.postgres.sql
+      [ -r "$sql" ] || { echo "swafto-db-roles: $sql missing - deploy first" >&2; exit 1; }
+      get() { aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/$1" \
+                --with-decryption --query Parameter.Value --output text; }
+      APP_URL=$(get DATABASE_URL)
+      SYS_URL=$(get SYSTEM_DATABASE_URL)
+      export APP_URL SYS_URL
+      eval "$(get MASTER_DATABASE_URL | /usr/local/bin/swafto-pgenv)"
+      {
+        python3 -c '
+      import os, sys, urllib.parse as u
+      def q(v): return "\x27" + v.replace("\\", "\\\\").replace("\x27", "\\\x27") + "\x27"
+      for tag, var, role in (("app", "APP_URL", "swafto_app"), ("system", "SYS_URL", "swafto_system")):
+          p = u.urlparse(os.environ[var].strip())
+          if u.unquote(p.username or "") != role or not p.password:
+              sys.exit("swafto-db-roles: %s must name user %s and carry a password" % (var, role))
+          print("\\set %s_password %s" % (tag, q(u.unquote(p.password))))
+      '
+        printf '\\i %s\n' "$sql"
+        printf '%s\n' "ALTER ROLE swafto_app PASSWORD :'app_password';"
+        printf '%s\n' "ALTER ROLE swafto_system PASSWORD :'system_password';"
+      } | psql -v ON_ERROR_STOP=1 -X -q
+      echo "swafto-db-roles: roles.postgres.sql applied and role passwords set"
+
+  # -- DPDP erasure and rate_events pruning (C-07 / OPS-07) -------------------
+  # Daily. Output goes to the journal: journalctl -u swafto-purge. A failure
+  # triggers swafto-alert@, which writes a crit line to the journal and to
+  # /var/log/swafto-alerts.log (shipped to CloudWatch Logs, group swafto-alerts).
+  - path: /usr/local/bin/swafto-purge
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # Runs as User=swafto with the tmpfs env that swafto-env wrote.
+      set -uo pipefail
+      rc=0
+
+      # 1. The DPDP erasure job. Safe to run twice and safe to miss a day (see
+      #    the header of apps/api/src/jobs/purge-due.ts). Exit 1 = a shop failed.
+      #    This is the body of the `purge-due` script in apps/api/package.json
+      #    ("node src/jobs/purge-due.ts"), called directly rather than through
+      #    `npm run`: the unit has no home directory for npm's cache and logs.
+      /usr/local/bin/node src/jobs/purge-due.ts || {
+        echo "swafto-purge: purge-due FAILED (exit $?)" >&2
+        rc=1
+      }
+
+      # 2. rate_events pruning. Rows older than the longest rate window plus
+      #    lockout can never affect a decision. That horizon is 2 days today
+      #    (86400 s + 86400 s, packages/values/src/index.ts:78); 7 days keeps
+      #    a wide margin, so this never deletes a row a limiter still needs.
+      #    The limiter has its own prune() (apps/api/src/rate-limit/store.ts)
+      #    that nothing calls yet; once purge-due calls it, this step is
+      #    redundant but harmless.
+      eval "$(printf '%s' "$DATABASE_URL" | /usr/local/bin/swafto-pgenv)"
+      if n=$(psql -v ON_ERROR_STOP=1 -tA -c \
+               "WITH d AS (DELETE FROM rate_events WHERE at < now() - interval '7 days' RETURNING 1) SELECT count(*) FROM d"); then
+        echo "swafto-purge: pruned ${n} rate_events rows"
+      else
+        echo "swafto-purge: rate_events prune FAILED" >&2
+        rc=1
+      fi
+
+      [ "$rc" -eq 0 ] && echo "swafto-purge: OK"
+      exit "$rc"
+
+  - path: /usr/local/bin/swafto-alert
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # Called by systemd OnFailure=. Never fails itself: an alert that errors
+      # out would hide the failure it was raised for.
+      source /etc/swafto/site.env 2>/dev/null || true
+      msg="swafto-alert: unit ${1:-unknown} FAILED on $(hostname) at $(date -u +%FT%TZ)"
+      logger -t swafto-alert -p user.crit "$msg"
+      echo "$msg" >> /var/log/swafto-alerts.log
+      if [ -n "${SWAFTO_ALERT_TOPIC_ARN:-}" ]; then
+        aws sns publish --topic-arn "$SWAFTO_ALERT_TOPIC_ARN" \
+          --subject "SWAFTO job failed: ${1:-unknown}" --message "$msg" \
+          --only-show-errors 2>&1 | logger -t swafto-alert -p user.err || true
+      fi
+      exit 0
+
+  - path: /etc/systemd/system/swafto-alert@.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=SWAFTO failure alert for %i
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/swafto-alert %i
+
+  - path: /etc/systemd/system/swafto-purge.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=SWAFTO DPDP purge and rate_events pruning
+      After=network-online.target
+      Wants=network-online.target
+      OnFailure=swafto-alert@%n.service
+      # Skipped (not failed) until the first deploy puts the code on the box.
+      ConditionPathExists=/srv/swafto/apps/api/src/jobs/purge-due.ts
+
+      [Service]
+      Type=oneshot
+      User=swafto
+      Group=swafto
+      WorkingDirectory=/srv/swafto/apps/api
+      TimeoutStartSec=30min
+      # Separate env file from the API's so a purge never rewrites it.
+      ExecStartPre=+/usr/local/bin/swafto-env /run/swafto/purge.env
+      EnvironmentFile=/run/swafto/purge.env
+      ExecStart=/usr/local/bin/swafto-purge
+      ExecStopPost=+/bin/rm -f /run/swafto/purge.env
+
+      NoNewPrivileges=true
+      PrivateTmp=true
+      PrivateDevices=true
+      ProtectSystem=strict
+      ProtectHome=true
+      ProtectKernelTunables=true
+      ProtectKernelModules=true
+      ProtectControlGroups=true
+      RestrictSUIDSGID=true
+      RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+      LockPersonality=true
+
+  - path: /etc/systemd/system/swafto-purge.timer
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Daily SWAFTO DPDP purge and rate_events pruning
+
+      [Timer]
+      # 20:00 UTC = 01:30 IST, thirty minutes after the 19:30 UTC backup, so a
+      # purge never races the dump.
+      OnCalendar=*-*-* 20:00:00 UTC
+      RandomizedDelaySec=300
+      # A box that was off at 20:00 runs the job when it comes back.
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+  - path: /etc/cron.d/swafto-backup
+    permissions: '0644'
+    content: |
+      SHELL=/bin/bash
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      # 19:30 UTC = 01:00 IST, after every shop has closed for the day.
+      30 19 * * * root /usr/local/bin/swafto-backup >> /var/log/swafto-backup.log 2>&1
+
+  # -- API stdout -> file, so the CloudWatch agent can ship it (4.3) ------------
+  # The API logs one JSON line per event to stdout, which systemd keeps in the
+  # journal. The agent tails FILES, so this unit copies the journal for swafto-api
+  # into /var/log/swafto-api.log (message text only, `-o cat`, so each line is still
+  # one pino JSON object). The cursor file lets it resume after a restart without
+  # re-sending or skipping lines. Metric filter and alarm: docs/runbooks/error-tracking.md.
+  - path: /etc/systemd/system/swafto-api-log.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Copy the swafto-api journal to a file for the CloudWatch agent
+      After=swafto-api.service
+
+      [Service]
+      Type=simple
+      ExecStart=/bin/sh -c 'exec /usr/bin/journalctl -u swafto-api.service -o cat -f --cursor-file=/var/lib/swafto-api-log.cursor >> /var/log/swafto-api.log'
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # copytruncate: the shipper holds the file open, and the agent follows a truncated
+  # file correctly. Three days locally; CloudWatch keeps the long copy.
+  - path: /etc/logrotate.d/swafto-api
+    permissions: '0644'
+    content: |
+      /var/log/swafto-api.log {
+        daily
+        rotate 3
+        maxsize 64M
+        compress
+        missingok
+        notifempty
+        copytruncate
+      }
+
+  - path: /etc/swafto/cloudwatch.json
+    permissions: '0644'
+    content: |
+      {
+        "agent": { "metrics_collection_interval": 300, "omit_hostname": true },
+        "logs": {
+          "logs_collected": {
+            "files": {
+              "collect_list": [
+                {
+                  "file_path": "/var/log/swafto-api.log",
+                  "log_group_name": "swafto-api",
+                  "log_stream_name": "{instance_id}",
+                  "retention_in_days": 30
+                },
+                {
+                  "file_path": "/var/log/swafto-alerts.log",
+                  "log_group_name": "swafto-alerts",
+                  "log_stream_name": "{instance_id}",
+                  "retention_in_days": 90
+                }
+              ]
+            }
+          }
+        },
+        "metrics": {
+          "namespace": "SWAFTO",
+          "append_dimensions": { "InstanceId": "${aws:InstanceId}" },
+          "metrics_collected": {
+            "mem":  { "measurement": [ "mem_used_percent" ] },
+            "disk": { "measurement": [ "disk_used_percent" ], "resources": [ "/" ] }
+          }
+        }
+      }
+
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    permissions: '0644'
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+  - path: /etc/systemd/system/caddy.service.d/override.conf
+    permissions: '0644'
+    content: |
+      [Service]
+      EnvironmentFile=/etc/swafto/site.env
+
+runcmd:
+  # Swap, so a memory spike degrades instead of OOM-killing the API on 2 GiB.
+  - [ bash, -lc, "fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab" ]
+  - [ bash, -lc, "sysctl -w vm.swappiness=10 && echo 'vm.swappiness=10' > /etc/sysctl.d/99-swafto.conf" ]
+
+  # The SSM agent is the only way in - port 22 is closed. Make certain it runs.
+  - [ bash, -lc, "snap list amazon-ssm-agent >/dev/null 2>&1 && snap start --enable amazon-ssm-agent || systemctl enable --now amazon-ssm-agent || (snap install amazon-ssm-agent --classic && snap start --enable amazon-ssm-agent)" ]
+
+  # OPS-14: nothing below pipes the network into a shell. Every download is a
+  # pinned version whose sha256 is checked before it is unpacked or installed;
+  # a mismatch aborts that step (bash -e), it is never "warned and continued".
+  # To bump a version: download it, run sha256sum yourself, update both lines.
+
+  # AWS CLI v2.40.4. sha256 computed from the zip fetched from awscli.amazonaws.com.
+  - [ bash, -lec, "curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.40.4.zip -o /tmp/awscli.zip && echo '81f573c2a0ace70cfb97aa4d014c17cbd605cb04cbad09adbc7aaf9c0979ae8e  /tmp/awscli.zip' | sha256sum -c - && unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install && unlink /tmp/awscli.zip" ]
+
+  # Node 24.22.3 from nodejs.org, not the NodeSource setup script. The API
+  # entrypoint is TypeScript run through Node's own type stripping, so the
+  # major version is not interchangeable - see .nvmrc. sha256 is the line for
+  # node-v24.22.3-linux-x64.tar.xz in https://nodejs.org/dist/v24.22.3/SHASUMS256.txt
+  - [ bash, -lec, "curl -fsSL https://nodejs.org/dist/v24.22.3/node-v24.22.3-linux-x64.tar.xz -o /tmp/node.tar.xz && echo '4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb  /tmp/node.tar.xz' | sha256sum -c - && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner && unlink /tmp/node.tar.xz && /usr/local/bin/node --version" ]
+
+  # pg_dump must be >= the server version, so take the client from PGDG. The
+  # signing key must be the one with the published fingerprint, or abort.
+  # B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8 is the PostgreSQL apt repository key.
+  - [ bash, -lec, "install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && gpg --show-keys --with-colons /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc | grep -q '^fpr:::::::::B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8:' && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && apt-get install -y postgresql-client-17" ]
+
+  # Caddy 2.11.9 from the Caddy apt repo, key fingerprint checked first.
+  # 65760C51EDEA2017CEA2CA15155B6D79CA56EA34 is the key of the Cloudsmith repo.
+  - [ bash, -lec, "curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key -o /tmp/caddy.key && gpg --show-keys --with-colons /tmp/caddy.key | grep -q '^fpr:::::::::65760C51EDEA2017CEA2CA15155B6D79CA56EA34:' && gpg --dearmor < /tmp/caddy.key > /usr/share/keyrings/caddy-stable-archive-keyring.gpg && unlink /tmp/caddy.key && curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt > /etc/apt/sources.list.d/caddy-stable.list && apt-get update && apt-get install -y caddy=2.11.9" ]
+
+  # CloudWatch agent 1.300074.1b2005 (a versioned path, not .../latest/).
+  # sha256 computed from the .deb at that path; it matched the then-current
+  # latest/ file byte for byte.
+  - [ bash, -lec, "curl -fsSL https://amazoncloudwatch-agent-ap-south-1.s3.ap-south-1.amazonaws.com/ubuntu/amd64/1.300074.1b2005/amazon-cloudwatch-agent.deb -o /tmp/cwa.deb && echo '3477032345ce3b325ed21269505f992813ee0508aafc516feb2eaf00f58270de  /tmp/cwa.deb' | sha256sum -c - && dpkg -i -E /tmp/cwa.deb && unlink /tmp/cwa.deb" ]
+  - [ bash, -lc, "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/swafto/cloudwatch.json" ]
+
+  # Service account: no login shell, no home directory to leak into.
+  - [ bash, -lc, "useradd --system --no-create-home --shell /usr/sbin/nologin swafto || true" ]
+  - [ bash, -lc, "install -d -o swafto -g swafto /srv/swafto && install -d -o caddy -g caddy /var/log/caddy" ]
+  - [ bash, -lc, "systemctl daemon-reload && systemctl enable caddy && systemctl enable swafto-api && systemctl enable --now swafto-api-log.service swafto-purge.timer" ]
+
+  # swafto-api is deliberately NOT started here: /srv/swafto is still empty.
+  # The first deploy is a documented step over SSM - see docs/infra/HOSTING.md.
+  - [ bash, -lc, "echo \"cloud-init finished $(date -u +%FT%TZ)\" >> /var/log/swafto-build.log" ]
+
+final_message: "SWAFTO origin built. Connect with SSM Session Manager, then deploy per docs/infra/HOSTING.md."

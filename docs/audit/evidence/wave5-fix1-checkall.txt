@@ -1,0 +1,356 @@
+
+> swafto@0.1.0 check:all
+> npm run check:governance && npm run check:benchmarks && npm run check:prose && npm run check:sms && npm run check:sms:segments && npm run check:tooling && npm run check:generated && npm run check:font && npm run check:money && npm run check:purity && npm run check:shadow && npm run check:plan && npm run check:tasks && npm run check:design && npm run check:layout && npm run check:client-logs && npm run check:naming && npm run check:push && npm run check:licences && npm run check:crossdoc && npm run check:divergence && npm run typecheck && npm run check:secrets && npm run check:traceability && npm run check:registry && npm run check:findings && npm run check:verifiers
+
+
+> swafto@0.1.0 check:governance
+> node tools/check-governance.mjs
+
+  ok   no "BLOCKED-ON-HUMAN" status anywhere
+  ok   21 autonomous decisions, all with a reversal trigger
+  ok   HUMAN-ACTIONS.md present and non-blocking
+  ok   B40: no stubs or TODOs in shipped paths
+  ok   C.1: one money-formatting path, no Intl/toLocaleString in shipped code
+  ok   21 verbatim injections, all matching INJECTIONS/injections.lock
+
+governance: all invariants hold
+
+> swafto@0.1.0 check:benchmarks
+> node tools/check-benchmarks-lock.mjs
+
+BENCHMARKS.md sha256 : ae1a719c2a7551e6038fe3681f27fa6133710960b6294dbf159aafb9f5c4b395
+benchmarks.lock      : ae1a719c2a7551e6038fe3681f27fa6133710960b6294dbf159aafb9f5c4b395
+frozen               : OK, hash matches
+
+> swafto@0.1.0 check:prose
+> node tools/check-prose.mjs
+
+  files scanned      : 110 (21 verbatim, not ours to edit)
+  sentences scanned  : 45953
+  repeated strong labels : 2 document(s) - a count, not a failure (F-A5)
+       docs\benchmarks\BENCHMARKS-RESULTS.md (MISSED - SCOPEx2)
+       docs\governance\PROJECTION.md (COMMITTEDx2)
+  ids defined        : 21 AD · 40 B · 21 G · 23 H
+
+prose: no contradictory sentences, no dangling IDs
+
+> swafto@0.1.0 check:sms
+> node tools/check-sms-templates.mjs
+
+  OTP_TTL_SECONDS       : 600s (registry) · 1 duration(s) in copy
+  templates in markdown : 15
+  templates in code     : 15
+  distinct ids          : 5
+
+sms templates: markdown and code agree, all ids registered
+
+> swafto@0.1.0 check:sms:segments
+> node tools/check-sms-segments.mjs
+
+  template                 enc     units  lim   seg  head  bytes  retriever+hash
+  otp_signin/en            GSM-7   87     160   1    73    77     87B fits
+  otp_signin/hi            UCS-2   64     70    1    6     128    152B OVER 140
+  otp_signin/od            UCS-2   64     70    1    6     128    152B OVER 140
+  otp_number_change_old/en GSM-7   103    160   1    57    91     101B fits
+  otp_number_change_old/hi UCS-2   52     70    1    18    104    128B fits
+  otp_number_change_old/od UCS-2   56     70    1    14    112    136B fits
+  otp_number_change_new/en GSM-7   100    160   1    60    88     98B fits
+  otp_number_change_new/hi UCS-2   51     70    1    19    102    126B fits
+  otp_number_change_new/od UCS-2   55     70    1    15    110    134B fits
+  otp_pin_reset/en         GSM-7   96     160   1    64    84     95B fits
+  otp_pin_reset/hi         UCS-2   48     70    1    22    96     120B fits
+  otp_pin_reset/od         UCS-2   52     70    1    18    104    128B fits
+  otp_account_deletion/en  GSM-7   96     160   1    64    84     95B fits
+  otp_account_deletion/hi  UCS-2   49     70    1    21    98     122B fits
+  otp_account_deletion/od  UCS-2   49     70    1    21    98     122B fits
+
+  SMS Retriever viable across ALL templates: NO (2 of 15 exceed 140 bytes once an 11-char hash is appended)
+
+sms segments: every template fits one segment
+
+> swafto@0.1.0 check:tooling
+> node tools/check-tooling.mjs
+
+  tooling files scanned : 61
+  ok   no cross-language string surgery in tooling
+  ok   no known platform assumptions in tooling
+  ok   no Windows reserved-name files in the tree
+  ok   all 57 npm scripts reference files that exist
+
+tooling: no cross-language surgery, no known platform traps
+
+> swafto@0.1.0 check:generated
+> node tools/check-generated.mjs
+
+  generated artifacts checked : 20
+
+generated: every artifact matches its authoring script
+
+> swafto@0.1.0 check:font
+> node tools/check-font-coverage.mjs
+
+  odia strings       : 5
+  codepoints required: 58 · 30 inside the Odia block
+  required OUTSIDE the Odia block: U+0964 U+20B9
+
+  AnekOdia-Regular.ttf    163252 B ·  317 cp ·  90 odia · digits PROPORTIONAL, tabular @ 1087 only via tnum
+  AnekOdia-Medium.ttf     162948 B ·  317 cp ·  90 odia · digits PROPORTIONAL, tabular @ 1107 only via tnum
+  AnekOdia-Bold.ttf       163620 B ·  317 cp ·  90 odia · digits PROPORTIONAL, tabular @ 1179 only via tnum
+
+  C.4 · 3 of 3 weights have PROPORTIONAL digits by default.
+        Measured on AnekOdia-Regular.ttf: ten 1s are 6720 units against ten 0s at 11320 -
+        a 4600-unit gap in one row. With tnum both are 10870.
+        `tnum` is present and resolves all ten to one width, so the capability
+        exists - but it is OFF unless the money style asks for it. Every money
+        style MUST set fontVariant: ['tabular-nums'].
+        Owed at G10: a check-governance rule that the money style sets it, and a
+        render test. Owed at H8: DEVICE-CHECKLIST B4, because React Native
+        fontVariant support on Android is the part no static check can settle.
+
+  bundled total      : 489820 bytes · 1.87% of the B24 25 MB budget
+
+fonts: every character has a real glyph in every weight; digits are tabular ONLY with tnum applied
+
+> swafto@0.1.0 check:money
+> node tools/check-money-lint.mjs
+
+  files linted       : 351
+  rule               : swafto/no-money-float (ADR-003, four clauses)
+
+money lint: no float arithmetic, no coercion, no decimal literals in the engine
+
+> swafto@0.1.0 check:purity
+> node tools/check-engine-purity.mjs
+
+  files scanned      : 17
+  rules              : no clock, no randomness, no Intl/locale, no process/env, no node built-ins
+
+engine purity: the formula engine is clock-free and environment-free (ADR-012)
+
+> swafto@0.1.0 check:shadow
+> node tools/check-shadow-copies.mjs
+
+  directories walked     : 113
+  shadow trees found     : 0
+  a hazard is            : package.json, a spec/test file, or a vitest config
+  ignored counts as      : untracked - vitest does not read .gitignore
+
+shadow copies: no untracked tree that a test runner could discover
+
+> swafto@0.1.0 check:plan
+> node tools/gen-plan.mjs --check
+
+  sources tracked        : 12
+  sources changed        : 0
+  feature rows derived   : 27
+  screens parsed         : 27
+
+plan: every source is exactly as it was when PLAN.md was written
+
+> swafto@0.1.0 check:tasks
+> node tools/gen-tasks.mjs --check
+
+  tasks                  : 388
+  done / ready / blocked : 350 / 10 / 5
+  dependency edges       : 964
+
+tasks: every box derived, no cycle, no duplicate id, no human blocker
+
+> swafto@0.1.0 check:design
+> node tools/gen-design.mjs --check
+
+  committed screens      : 38, 38 implemented
+  raw values             : 0 (this must be zero)
+  unregistered screens   : 11 - scanned, but absent from COMMITTED_SCREENS.ids: apps\mobile\src\screens\A1.tsx, apps\mobile\src\screens\A2.tsx, apps\mobile\src\screens\A3.tsx, apps\mobile\src\screens\A4.tsx, apps\mobile\src\screens\A5.tsx, apps\mobile\src\screens\A6.tsx, apps\mobile\src\screens\A7.tsx, apps\mobile\src\screens\A8.tsx, apps\mobile\src\screens\actSections.ts, apps\mobile\src\screens\authParts.tsx, apps\mobile\src\screens\entryRoutes.ts
+  drift rows             : 34 (0 enforced)
+  measured data          : absent - MEASURED is blind
+
+design: no raw values, no keypad beside a nav, no static/measured disagreement
+
+> swafto@0.1.0 check:layout
+> node --experimental-strip-types tools/check-layout.mjs
+
+  cases measured     : 269 x 3 font scales
+  viewport           : 360x800 css px
+  font scales        : 1, 1.5, 2 (chrome cap is 1.5)
+  results            : reports\layout.json
+
+layout: nothing overflows its container or the screen, at any measured font scale
+
+> swafto@0.1.0 check:client-logs
+> node tools/check-client-logs.mjs
+
+  client source files: 85 under apps/mobile/src
+  log statements     : 0 (this must be zero)
+
+client-logs: no client code can write to logcat, so no amount, name or phone can reach it
+
+> swafto@0.1.0 check:naming
+> node tools/check-export-naming.mjs
+
+  source files walked    : 148 (every .ts/.tsx/.html in the product)
+  strings read           : 13416
+  forbidden terms        : 7 (LEGAL-AUDIT section 7)
+  permitted, as guidance : day book, cash book, ledger export, summary for your accountant, transaction record
+  NOT covered here       : the same words in Devanagari or Odia script (H13)
+
+export naming: no copy calls a day book an invoice, a return or a filing (Latin script)
+
+> swafto@0.1.0 check:push
+> node tools/check-push-payload.mjs
+
+  files scanned      : 478
+  push integrations  : 0 (V1 ships none)
+  what this proves   : that L-11 has NOT silently become applicable
+  what it does NOT   : that a real payload is trigger-only - no payload exists
+
+push payload: no push integration exists, so nothing can put a name or a figure in one
+
+> swafto@0.1.0 check:licences
+> node tools/check-licences.mjs
+
+  shipped workspaces  : 4
+  runtime packages    : 281 (276 third-party)
+  undeclared imports  : 0 (this must be zero)
+  copyleft blocking   : 0 (this must be zero)
+  unknown licence     : 0 (this must be zero)
+  data processors     : 0 in the shipped closure (this must be zero)
+  bundled font files  : 4 (0 problems, this must be zero)
+  manifest            : docs/handover/LICENCES.md
+
+licences: nothing in the shipped closure conditions a Play Store release
+
+> swafto@0.1.0 check:crossdoc
+> node tools/check-crossdoc.mjs
+
+  engine functions       : 26 of 26 present
+  screens built          : 38
+  documents cross-checked: 3
+  facts re-derived here  : independently, not read from a generator
+
+crossdoc: PLAN, TASKS and DESIGN describe the same repository
+
+> swafto@0.1.0 check:divergence
+> npm run test:vectors:node && npm run test:vectors:hermes && npm run test:vectors:diff
+
+
+> swafto@0.1.0 test:vectors:node
+> node tools/run-vectors.mjs --runtime=node --out=reports/vectors-node.json
+
+(node:12144) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/SWAFTO/code%20base/tools/vector-harness.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\SWAFTO\code base\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+runtime        : node v24.22.3
+vector count   : 95
+results written: reports/vectors-node.json
+expectations   : ALL PASS (95 vectors, >= 30 required)
+
+> swafto@0.1.0 test:vectors:hermes
+> node tools/run-vectors-hermes.mjs --out=reports/vectors-hermes.json
+
+runtime        : Hermes (node_modules/hermes-engine-cli/win64-bin/hermes.exe)
+vector count   : 95
+results written: reports/vectors-hermes.json
+hermes run     : no vector threw
+
+> swafto@0.1.0 test:vectors:diff
+> node tools/diff-vectors.mjs reports/vectors-node.json reports/vectors-hermes.json
+
+compared       : 95 vectors
+node result    : reports/vectors-node.json
+hermes result  : reports/vectors-hermes.json
+divergence     : NONE. Node and Hermes agree on every value of every vector.
+
+> swafto@0.1.0 typecheck
+> tsc --noEmit
+
+
+> swafto@0.1.0 check:secrets
+> node tools/check-secrets.mjs
+
+  files scanned          : 2386
+  rules applied          : 9
+  allowlisted hits       : 6 (each with a written reason)
+  B35 repo half          : 0 secret(s)
+  B35 APK half           : BLOCKED - no APK is built yet (G9)
+
+secrets: none found in the repository
+
+> swafto@0.1.0 check:traceability
+> node tools/check-traceability.mjs
+
+  rows parsed            : 37
+  feature IDs required   : 26 (BI5 reserved by D5)
+  empty cells (B13)      : 0
+  engine exports seen    : 148
+  vectors seen           : 95
+  unresolved references  : 0 function(s), 0 vector(s)
+  B39 complete           : 14 of 26
+  held back by column    : engine 0 · test 0 · api 0 · screen 5 · stale status 7
+  subjects present       : API routes yes · screen components yes
+  !    P7: every artifact resolves but the status still reads TODO
+  !    P8: every artifact resolves but the status still reads TODO
+  !    OP1: every artifact resolves but the status still reads TODO
+  !    OP2: every artifact resolves but the status still reads TODO
+  !    OP3: every artifact resolves but the status still reads TODO
+  !    OP4: every artifact resolves but the status still reads TODO
+  !    OP5: every artifact resolves but the status still reads TODO
+
+traceability: no empty cells, and every DONE row resolves to something real
+
+> swafto@0.1.0 check:registry
+> node tools/check-registry.mjs
+
+  documents scanned      : 104
+  value claims checked   : 36
+  quotation exemptions   : 1 (quoted AND attributed; B.2)
+  code files scanned     : 149
+  hand-typed fields      : 0 (BUILD_LOG exempt - it records history)
+  external values        : 6, each with an authority and a date
+
+registry: every document agrees with the module, and no code keeps its own copy
+
+> swafto@0.1.0 check:findings
+> node tools/check-findings.mjs
+
+  findings          : 22
+  FIXED (derived)   : 21
+  OPEN              : 0
+  WITHDRAWN         : 1 (premise was false)
+
+findings: every status derived from the repository, none asserted
+
+> swafto@0.1.0 check:verifiers
+> node tools/check-verifiers.mjs
+
+  iteration (derived)    : 36
+  judgements             : 12, of which 9 STALE (older than 5 iterations)
+  !    STALE since 21: docs/governance/PROJECTION.md - the ranked cut-list, cheapest harm first
+  !    STALE since 21: docs/handover/DEFERRED.md - the cost-to-build figure on each of the four cuts
+  !    STALE since 22: docs/governance/DECISIONS-AUTONOMOUS.md - AD-019's three reversal triggers
+  !    STALE since 19: docs/benchmarks/BENCHMARKS-RESULTS.md - B1's attempts narrative - close it at G7
+  !    STALE since 25: docs/benchmarks/BENCHMARKS-RESULTS.md - B3's attempts narrative - the gap has THREE shapes, the third being bodies below early returns
+  !    STALE since 13: docs/governance/FINDINGS.md - the severity implied by each finding’s wording
+  !    STALE since 24: docs/benchmarks/BENCHMARKS-RESULTS.md - that the twelve money mutants are ALL killed - re-adjudicate whenever money.ts or its tests change
+  !    STALE since 24: tools/check-money-mutants.mjs - that the two DB-bound specs cannot observe money.ts, which is what makes excluding them safe
+  !    STALE since 20: docs/governance/REVIEW.md - the A12 audit's two 'partly' verdicts and their owed plants
+       §5.15.2: re-STATE these from current facts, do not re-read them.
+  !    §5.15.4: PROJECTION.md is due a re-statement at 30 and again at 35.
+  gate numbers re-derived: 5, 0 stale
+  verifiers inventoried  : 35
+  §5.16 response-tested  : 14 of 15 benchmark-bearing; 1 DISPROVEN (its number does not move)
+
+  BENCHMARKS INSTRUMENTED: 23 of 40
+  BENCHMARKS MET         : 6 of 7 measured (B1 B2 B5 B12 B33 B40)
+                           1 MISSED (B3), 33 never measured
+
+  overdue - subject EXISTS, nothing measures it : 2
+     B4 B6
+  blocked - subject does not exist yet          : 15
+     B7 B9 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B25 B34 B38
+  known MISSED - SCOPE   : 2 · B38 B39
+     a scope miss is a DECISION; a performance miss is a FAILURE. Never merged.
+  gates marked PASS      : 6
+
+verifiers: every cited command exists, every benchmark is accounted for

@@ -206,10 +206,12 @@ Notification permission is a runtime prompt on current Android.
 invoicing product, and the copy says so in the user's own language so nobody mistakes
 an estimated profit figure for a filing.
 
-**Payments.** **No money moves through the app**, so no payment licence applies. The
-specific future feature that would change that: accepting or settling a payment inside
-the product, including a UPI collect request the app initiates. Recording that a UPI
-payment happened elsewhere does not.
+**Payments.** **None of the shop's money moves through the app**, so no payment licence
+applies. The specific future feature that would change that: accepting or settling a
+payment inside the product, including a UPI collect request the app initiates. Recording
+that a UPI payment happened elsewhere does not. The one thing the app sells is its own
+Premium plan, and Google Play collects that through Play Billing; the app never sees a
+card or a UPI handle, and selling it waits on the Play payments profile and a GSTIN.
 
 **Licences.** The bundled Odia font ships under an open font licence with its licence
 file included, and every dependency licence is recorded in the audit.

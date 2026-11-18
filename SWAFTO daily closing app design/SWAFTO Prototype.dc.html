@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="./tokens.css">
+<script src="./store.js"></script>
+<style>body{margin:0;background:#F1ECE0}</style>
+</helmet>
+<div style="min-height:100vh;padding:24px;display:flex;flex-direction:column;gap:20px;font-family:var(--font-sans)">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="font-size:22px;font-weight:700;color:#12181F">SWAFTO — Retail Desk prototype</div>
+    <div style="font-size:14px;color:#57606A">Sharma Kirana Store · Rajanikanta · Tuesday 15 July. One shared day record — navigate either phone, both stay in sync. Jump chips below are a QA shortcut, not part of the product flow.</div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px">
+    <sc-for list="{{ screens }}" as="sc" hint-placeholder-count="15">
+      <button onClick="{{ sc.go }}" style="{{ sc.style }}">{{ sc.id }}</button>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+    <dc-import name="Phone" mode="comfort" hint-size="420px,900px"></dc-import>
+    <dc-import name="Phone" mode="focus" hint-size="420px,900px"></dc-import>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.unsub = window.SwaftoStore.subscribe(() => this.forceUpdate());
+  }
+  componentWillUnmount() {
+    if (this.unsub) this.unsub();
+  }
+  renderVals() {
+    const current = window.SwaftoStore.screen;
+    const screens = window.SwaftoStore.SCREEN_ORDER.map(id => {
+      const active = id === current;
+      return {
+        id,
+        go: () => window.SwaftoStore.jump(id),
+        style: `min-height:44px;padding:0 12px;border-radius:8px;border:1px solid ${active ? '#13294B' : '#C9BFA6'};background:${active ? '#13294B' : '#FFFFFF'};color:${active ? '#FFFFFF' : '#12181F'};font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer`,
+      };
+    });
+    return { screens };
+  }
+}
+</script>
+</body>
+</html>

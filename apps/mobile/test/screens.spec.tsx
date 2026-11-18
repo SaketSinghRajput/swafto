@@ -19,7 +19,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { SCREEN_CASES, COVERED_SCREENS } from '../src/screens/registry.tsx';
-import { render, all, text, type Node } from './render.tsx';
+import { render, all, byType, text, type Node } from './render.tsx';
 import { undersizedTargets, undersizedText, failingContrast, contrast } from './a11y.tsx';
 import { tokens } from '../src/theme/tokens.ts';
 import { STRINGS, phrase, type StringKey, type Language } from '../src/i18n/strings.ts';
@@ -212,8 +212,38 @@ describe('chrome is capped and money is not, on every case', () => {
         .filter((n) => n.type === 'Text')
         .filter((n) => n.props?.allowFontScaling !== true)
         .filter((n) => n.props?.maxFontSizeMultiplier === undefined)
+        /*
+         * v2: an icon glyph does not scale AT ALL (`allowFontScaling={false}`,
+         * the Icon contract, DESIGN-SYSTEM-V2 section 2) - stricter than capped,
+         * not uncapped. Exempt only the icon family drawn unscaled; any other
+         * Text with no cap is still reported.
+         */
+        .filter(
+          (n) =>
+            !(n.props?.allowFontScaling === false && n.props?.style?.fontFamily === tokens().font.icons),
+        )
         .map((n) => n.text.slice(0, 24));
       expect(uncapped).toEqual([]);
     });
   }
+});
+
+/* ---- HT-50 · one tap on a button while the keyboard is up --------------- */
+describe('HT-50 - with the keyboard up, one tap on a button acts, on every case', () => {
+  // A ScrollView without `keyboardShouldPersistTaps="handled"` spends the first
+  // tap closing the keyboard: S9 Add to list and P2 Save number saved nothing
+  // and said nothing. Every scroll container on every screen keeps the tap.
+  it('every ScrollView keeps taps for its buttons, S9 and P2 among them', () => {
+    const seen: string[] = [];
+    const dropping: string[] = [];
+    for (const c of SCREEN_CASES) {
+      for (const n of byType(render(c.element()), 'ScrollView')) {
+        seen.push(String(n.props.testID));
+        if (n.props.keyboardShouldPersistTaps !== 'handled') dropping.push(c.id + ':' + String(n.props.testID));
+      }
+    }
+    expect(seen).toContain('s9-body');
+    expect(seen).toContain('p2-body');
+    expect(dropping).toEqual([]);
+  }, 30_000);
 });

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="omelette-print-source" content="v1788976031859838 SWAFTO Prototype.dc.html">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="./tokens.css">
+<script src="./store.js"></script>
+<script src="./doc-page.js"></script>
+<style>
+  doc-page:not(:defined){visibility:hidden}
+  body{margin:0;background:#F1ECE0}
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  * { animation-delay: -99s !important; animation-duration: .001s !important;
+      animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+      animation-play-state: running !important; transition-duration: 0s !important; }
+</style>
+</helmet>
+<doc-page content-width="900px" content-height="1040px" size="letter">
+  <div style="width:900px;height:1040px;box-sizing:border-box;padding:24px;display:flex;flex-direction:column;gap:20px;font-family:var(--font-sans);background:#F1ECE0">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="font-size:22px;font-weight:700;color:#12181F">SWAFTO — Retail Desk prototype</div>
+      <div style="font-size:14px;color:#57606A">Sharma Kirana Store · Rajanikanta · Tuesday 15 July. Snapshot of the current screen, Comfort and Focus modes side by side.</div>
+    </div>
+    <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+      <dc-import name="Phone" mode="comfort" hint-size="420px,900px"></dc-import>
+      <dc-import name="Phone" mode="focus" hint-size="420px,900px"></dc-import>
+    </div>
+  </div>
+</doc-page>
+</x-dc>
+</body>
+</html>

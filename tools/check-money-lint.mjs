@@ -38,7 +38,22 @@ function walk(dir, out = []) {
     if (SKIP.has(n) || n.startsWith('.')) continue;
     const p = join(dir, n);
     if (statSync(p).isDirectory()) walk(p, out);
-    else if (/\.(ts|mjs)$/.test(n)) out.push(p);
+    /*
+     * `.tsx` AS WELL AS `.ts`, AND IT WAS NOT HERE UNTIL 2026-10-22.
+     *
+     * The pattern was `/\.(ts|mjs)$/`, which matches nothing ending in `x`. So
+     * every screen, every component and `Money.tsx` itself - the one file whose
+     * whole job is rendering money - had never been linted by the check that
+     * exists to keep money off floating point. CLAUDE.md states the rule applies
+     * "in source and in tests"; for the entire mobile client it did not.
+     *
+     * This is the second instrument found blind to the same extension on the
+     * same day: the tsconfig include globs also covered only `.ts`, so no `.tsx`
+     * in this repository had ever been type checked either. A check that has
+     * quietly stopped checking reports success forever, which is worse than a
+     * check that fails.
+     */
+    else if (/\.(ts|tsx|mjs)$/.test(n)) out.push(p);
   }
   return out;
 }
@@ -46,8 +61,14 @@ function walk(dir, out = []) {
 const linter = new Linter();
 const config = [
   {
-    files: ['**/*.ts', '**/*.mjs'],
-    languageOptions: { parser, ecmaVersion: 2023, sourceType: 'module' },
+    files: ['**/*.ts', '**/*.tsx', '**/*.mjs'],
+    languageOptions: {
+      parser,
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      // Without this the parser throws on the first `<View>` it meets.
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
     plugins: { swafto: { rules: { 'no-money-float': noMoneyFloat } } },
     rules: { 'swafto/no-money-float': 'error' },
   },

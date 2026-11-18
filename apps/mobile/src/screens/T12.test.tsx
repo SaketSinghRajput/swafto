@@ -12,7 +12,7 @@
  * whole ledger stops being true.
  */
 import { describe, it, expect } from 'vitest';
-import { CashDifference } from './T12.tsx';
+import { CashDifference, SHORT_REASON } from './T12.tsx';
 import { canonicalStore, adversarialStore, emptyStore } from './registry.tsx';
 import { render, all, byTestId, byType, text } from '../../test/render.tsx';
 import { undersizedTargets, undersizedText, failingContrast } from '../../test/a11y.tsx';
@@ -29,7 +29,7 @@ describe('T12 renders all four states', () => {
       <CashDifference store={canonicalStore()} countedPaise={0} status="loading" />,
     );
     expect(byTestId(tree, 't12-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error', () => {
@@ -146,29 +146,75 @@ describe('a difference cannot be closed without a reason', () => {
     expect(byTestId(tree, 't12-close').props?.disabled).toBe(false);
   });
 
+  /** Over the book by 500 rupees: the side that still asks for a cause. */
+  const over = (store = canonicalStore()) => add(store.expectedCash().value, 50000);
+
   it('the prompt is a question, never a verdict', () => {
-    const tree = render(<CashDifference store={canonicalStore()} countedPaise={0} />);
+    const store = canonicalStore();
+    const tree = render(<CashDifference store={store} countedPaise={over(store)} />);
     const prompt = text(byTestId(tree, 't12-prompt'));
     expect(prompt).toBe(phrase('t12.reasonPrompt', 'en'));
     expect(prompt.toLowerCase()).not.toContain('wrong');
     expect(prompt.toLowerCase()).not.toContain('missing');
   });
 
-  it('choosing a quick reason reports it, and free text stays available', () => {
+  it('choosing a listed reason reports its key', () => {
+    const store = canonicalStore();
     const chosen: string[] = [];
-    const typed: string[] = [];
     const tree = render(
-      <CashDifference
-        store={canonicalStore()}
-        countedPaise={0}
-        onChooseReason={(k) => chosen.push(k)}
-        onReasonText={(x) => typed.push(x)}
-      />,
+      <CashDifference store={store} countedPaise={over(store)} onChooseReason={(k) => chosen.push(k)} />,
     );
-    byTestId(tree, 't12-reason-t12.reason.change').props.onPress();
-    byTestId(tree, 't12-reason-text').props.onChangeText('a supplier paid me in coins');
-    expect(chosen).toEqual(['t12.reason.change']);
-    expect(typed).toEqual(['a supplier paid me in coins']);
+    byTestId(tree, 't12-reason-t12.reason.sale').props.onPress();
+    expect(chosen).toEqual(['t12.reason.sale']);
+  });
+
+  it('the chosen reason is shown as selected (it was compared to the translation, never matched)', () => {
+    const store = canonicalStore();
+    const tree = render(<CashDifference store={store} countedPaise={over(store)} reason="t12.reason.sale" />);
+    expect(byTestId(tree, 't12-reason-t12.reason.sale').props.accessibilityState).toEqual({ selected: true });
+  });
+
+  /*
+   * THE REASON IS TYPED, FROM A FIXED LIST. Co-founder review 2026-10-22,
+   * decision 2. A free-form reason absorbs any discrepancy, and a discrepancy
+   * that can always be explained away makes expected-vs-actual - and the Cash
+   * Confidence score built on it - mean nothing.
+   *
+   * The assertion is behavioural rather than a search for a `TextInput`
+   * element: anything that accepts typed text accepts a free-form reason,
+   * whichever component it happens to be built from.
+   */
+  it('refuses free text: nothing on the screen accepts typing', () => {
+    for (const counted of [0, 999999999]) {
+      const tree = render(<CashDifference store={canonicalStore()} countedPaise={counted} />);
+      expect(all(tree).filter((n) => typeof n.props?.onChangeText === 'function')).toHaveLength(0);
+    }
+  });
+
+  /*
+   * The causes of a short drawer and a full one are not the same causes, so
+   * the lists are not the same list. Offering "forgot a sale" to a man who is
+   * short invites him to pick the answer that fits worst.
+   */
+  it('the reasons depend on the sign, and "Don\'t know" is always offered', () => {
+    const store = canonicalStore();
+    const keysFor = (counted: number) =>
+      all(render(<CashDifference store={store} countedPaise={counted} />))
+        .map((n) => String(n.props?.testID ?? ''))
+        .filter((id) => id.startsWith('t12-reason-t12.'))
+        .map((id) => id.replace('t12-reason-', ''));
+
+    const short = keysFor(0);
+    const over = keysFor(add(store.expectedCash().value, 50000));
+
+    // HT-23 (product owner): short is checked first, then it is the day's loss.
+    expect(short).toEqual(['t12.reason.loss']);
+    expect(over).toEqual(['t12.reason.sale', 't12.reason.miscount', 't12.reason.unknown']);
+    // Over, a man who does not know why is never forced to claim a cause.
+    expect(over).toContain('t12.reason.unknown');
+    // Giving change out of your own pocket leaves the drawer OVER, so neither
+    // side offers it as the cause of a shortage any more.
+    expect([...short, ...over]).not.toContain('t12.reason.change');
   });
 });
 
@@ -181,26 +227,30 @@ describe('T12 against both fixtures and every language', () => {
 
   for (const language of ['en', 'hi', 'or'] as readonly Language[]) {
     it(language + ': the title and the prompt are in that language', () => {
+      const store = canonicalStore();
       const tree = render(
-        <CashDifference store={canonicalStore()} countedPaise={0} language={language} />,
+        <CashDifference store={store} countedPaise={add(store.expectedCash().value, 50000)} language={language} />,
       );
       expect(text(byTestId(tree, 't12-title'))).toBe(phrase('t12.title', language));
       expect(text(byTestId(tree, 't12-prompt'))).toBe(phrase('t12.reasonPrompt', language));
+      const short = render(<CashDifference store={store} countedPaise={0} language={language} />);
+      expect(text(byTestId(short, 't12-prompt'))).toBe(phrase('t12.check.prompt', language));
     });
   }
 
-  it('longest string mode keeps both quick reasons', () => {
+  it('longest string mode keeps every listed reason', () => {
+    const store = adversarialStore();
     const tree = render(
       <CashDifference
-        store={adversarialStore()}
-        countedPaise={0}
+        store={store}
+        countedPaise={add(store.expectedCash().value, 50000)}
         language="longest"
         display="focus"
       />,
     );
     expect(
       all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('t12-reason-t12.')),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
   });
 
   it('chrome is capped; money is not', () => {
@@ -245,5 +295,41 @@ describe('T12 accessibility, and the absence of a keypad', () => {
       <CashDifference store={store} countedPaise={shortBy(store.expectedCash().value, 30000)} />,
     );
     expect(byTestId(tree, 't12-close').props?.accessibilityState).toEqual({ disabled: true });
+  });
+});
+
+describe('HT-23 - short in the box: check the payments and recount, then it is a loss for the day', () => {
+  it('a shortage lists both checks before anything can be recorded', () => {
+    const tree = render(<CashDifference store={canonicalStore()} countedPaise={0} />);
+    expect(text(byTestId(tree, 't12-t12.check.payments'))).toBe(phrase('t12.check.payments', 'en'));
+    expect(text(byTestId(tree, 't12-t12.check.count'))).toBe(phrase('t12.check.count', 'en'));
+    expect(byTestId(tree, 't12-close').props?.disabled).toBe(true);
+  });
+
+  it('Count again goes back to the count and records nothing', () => {
+    const recount: string[] = [];
+    const chosen: string[] = [];
+    const tree = render(
+      <CashDifference
+        store={canonicalStore()}
+        countedPaise={0}
+        onRecount={() => recount.push('T11')}
+        onChooseReason={(k) => chosen.push(k)}
+      />,
+    );
+    byTestId(tree, 't12-recount').props.onPress();
+    expect(recount).toEqual(['T11']);
+    expect(chosen).toEqual([]);
+  });
+
+  it('still short records the loss reason, and then the day can close', () => {
+    const chosen: string[] = [];
+    const store = canonicalStore();
+    const tree = render(<CashDifference store={store} countedPaise={0} onChooseReason={(k) => chosen.push(k)} />);
+    byTestId(tree, 't12-reason-' + SHORT_REASON).props.onPress();
+    expect(chosen).toEqual(['t12.reason.loss']);
+    const closing = render(<CashDifference store={store} countedPaise={0} reason={SHORT_REASON} />);
+    expect(byTestId(closing, 't12-close').props?.disabled).toBe(false);
+    expect(phrase('t12.reason.loss', 'en')).toBe('Loss for the day');
   });
 });

@@ -20,7 +20,7 @@
  *   node tools/check-findings.mjs              derive and check every status
  *   node tools/check-findings.mjs --update-md  regenerate FINDINGS.md
  */
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 
 const read = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split('\r\n').join('\n') : '');
 
@@ -48,8 +48,15 @@ const all =
  * same derivation rather than from a sentence somebody kept up to date.
  */
 function traceabilityUnresolved() {
-  const engine = ['money', 'dates', 'types', 'primary', 'operational', 'intelligence', 'input']
-    .map((n) => read(`packages/formula-engine/src/${n}.ts`))
+  /*
+   * EVERY ENGINE SOURCE FILE, NOT A LIST OF SEVEN. The list predated returns.ts,
+   * upi.ts, adjustments.ts and credit.ts, so a real export in any of them read as
+   * "does not exist" - scoped by a list somebody had to remember to extend, the
+   * same hole check-export-naming closed by walking (A12).
+   */
+  const engine = readdirSync('packages/formula-engine/src')
+    .filter((f) => f.endsWith('.ts'))
+    .map((f) => read(`packages/formula-engine/src/${f}`))
     .join('');
   const vectors = new Set(
     (JSON.parse(read('packages/formula-engine/vectors.json') || '{"vectors":[]}').vectors ?? []).map(

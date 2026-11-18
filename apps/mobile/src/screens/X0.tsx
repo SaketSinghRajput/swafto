@@ -28,8 +28,10 @@
  * nobody here can read it - which is why the notice from the API carries a
  * `reviewState` and why this screen is on the contact sheet.
  */
-import { View, Text, Pressable } from '@swafto/ui';
+import { View, Text } from '@swafto/ui';
 import { Shell, PrimaryButton, type LoadStatus } from '../components/Shell.tsx';
+import { Switch } from '../components/Switch.tsx';
+import { Banner } from '../components/Banner.tsx';
 import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
 import { strings, type RenderLanguage, type StringKey } from '../i18n/strings.ts';
 import { CONSENT_PURPOSES, type ConsentPurpose } from '@swafto/values';
@@ -49,6 +51,13 @@ export interface ConsentNoticeProps {
   readonly onToggle?: (purpose: ConsentPurpose) => void;
   readonly onAgree?: () => void;
   readonly onRetry?: () => void;
+  /**
+   * M3: the purpose he has just turned OFF in manage mode, so the screen can
+   * say "Turned off. This takes effect now." under it. Null otherwise.
+   */
+  readonly justWithdrawn?: ConsentPurpose | null;
+  /** Manage mode's visible way out (there is no Save button to leave by). */
+  readonly onBack?: (() => void) | undefined;
 }
 
 export function ConsentNotice({
@@ -60,7 +69,10 @@ export function ConsentNotice({
   onToggle = () => {},
   onAgree = () => {},
   onRetry = () => {},
+  justWithdrawn = null,
+  onBack,
 }: ConsentNoticeProps) {
+  const manage = mode === 'manage';
   const t = tokens(display);
   const s = strings(language);
 
@@ -70,15 +82,26 @@ export function ConsentNotice({
       s={s}
       display={display}
       status={status}
-      titleKey={mode === 'manage' ? 'consent.manage.title' : 'consent.title'}
+      titleKey={manage ? 'consent.manage.title' : 'consent.title'}
       onRetry={onRetry}
+      onBack={manage ? onBack : undefined}
+      /*
+       * M2 (Saket): MANAGE MODE HAS NO SAVE BUTTON. Each switch IS the change -
+       * the toggle posts at once (App wires `onConsentChange` to it) - so a
+       * Save after it only made withdrawal one step harder than giving, which
+       * is the DPDP requirement broken by friction (USABILITY: "withdrawal
+       * needs switch plus Save"). Sign-up keeps its one button: there, the
+       * agreement IS a separate act, and it agrees to exactly the switches.
+       */
       footer={
-        <PrimaryButton
-          testID="x0-agree"
-          label={s(mode === 'manage' ? 'consent.save' : 'consent.agree')}
-          onPress={onAgree}
-          display={display}
-        />
+        manage ? undefined : (
+          <PrimaryButton
+            testID="x0-agree"
+            label={s('consent.agree')}
+            onPress={onAgree}
+            display={display}
+          />
+        )
       }
     >
       <Text
@@ -135,49 +158,31 @@ export function ConsentNotice({
               </Text>
             ) : (
               /*
-               * A real switch, with its state in the accessibility tree as well
-               * as in its label. A control whose only signal is a colour is one
-               * a screen reader cannot report and this reader may not see.
+               * v2's SWITCH (DESIGN-SYSTEM-V2 3.14): a real switch, with its
+               * state in the accessibility tree, in the track's fill, in the
+               * thumb's tick or dash AND in a word beside it. On is filled, not
+               * outlined - at arm's length in shop daylight a border colour is
+               * not a state - and it is never the only signal.
                */
-              <Pressable
+              <Switch
                 testID={'x0-toggle-' + key}
-                accessibilityRole="switch"
-                accessibilityLabel={s(('consent.purpose.' + key) as StringKey)}
-                accessibilityState={{ checked: on }}
-                onPress={() => onToggle(key)}
-                style={{
-                  minHeight: t.touchTarget,
-                  minWidth: t.touchTarget,
-                  marginTop: t.space.xs,
-                  paddingHorizontal: t.space.md,
-                  borderRadius: t.radius.md,
-                  borderWidth: t.hairline,
-                  borderColor: on ? t.color.accent : t.color.border,
-                  /*
-                   * ON IS FILLED, NOT OUTLINED. The first version of this screen
-                   * showed the two states as a grey border and an orange one, and
-                   * the contact sheet answered that question the moment somebody
-                   * looked at it: in shop daylight, on a INR 7,000 panel, at
-                   * arm's length, a border colour is not a state. The fill is.
-                   */
-                  backgroundColor: on ? t.color.accent : t.color.bg,
-                  alignSelf: 'flex-start',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  maxFontSizeMultiplier={t.maxFontScale}
-                  style={{
-                    fontFamily: t.font.medium,
-                    fontSize: t.type.body,
-                    lineHeight: t.leading(t.type.body),
-                    color: on ? t.color.onAccent : t.color.ink,
-                  }}
-                >
-                  {s('consent.optional') + ': ' + s(on ? 'consent.on' : 'consent.off')}
-                </Text>
-              </Pressable>
+                label={s(('consent.purpose.' + key) as StringKey)}
+                value={on}
+                onChange={() => onToggle(key)}
+                onWord={s('consent.on')}
+                offWord={s('consent.off')}
+                display={display}
+              />
             )}
+            {manage && justWithdrawn === key && !on ? (
+              <Banner
+                testID={'x0-withdrawn-' + key}
+                kind="info"
+                icon="tick"
+                text={s('consent.withdrawn')}
+                display={display}
+              />
+            ) : null}
           </View>
         );
       })}

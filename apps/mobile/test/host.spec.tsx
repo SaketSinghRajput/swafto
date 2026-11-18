@@ -10,8 +10,14 @@
  * WRONG: no signal, a refused row, a dead session, a response lost in flight.
  * The happy path is one case, because it is the one that was never in doubt.
  */
-import { describe, it, expect } from 'vitest';
-import { Host, fetchTransport, secureTokenStore, type FetchLike } from '../src/host.tsx';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  Host,
+  fetchTransport,
+  secureTokenStore,
+  REQUEST_TIMEOUT_MS,
+  type FetchLike,
+} from '../src/host.tsx';
 import { Store, memoryPort, type StoreState } from '../src/store/index.ts';
 import { canonicalInput, CANONICAL_PARTIES, CANONICAL_DATE } from '@swafto/fixtures';
 import type { Entry } from '@swafto/formula-engine';
@@ -38,9 +44,10 @@ function memoryStorage(initial: string | null = null) {
   };
 }
 
-const freshStore = () => {
+const freshStore = (shopName?: string) => {
   const base = canonicalInput();
   const state: StoreState = {
+    ...(shopName ? { shopName } : {}),
     shopId: TOKENS.shopId,
     day: { ...base.day, state: 'open', openingCash: null },
     entries: [],
@@ -89,8 +96,12 @@ const PUSH_OK = {
   body: { daysWritten: 1, entriesInserted: 1, entriesAlreadyPresent: 0, rejected: [] },
 };
 
-function host(doFetch: FetchLike, storage = memoryStorage(JSON.stringify(TOKENS))) {
-  const store = freshStore();
+function host(
+  doFetch: FetchLike,
+  storage = memoryStorage(JSON.stringify(TOKENS)),
+  shopName?: string,
+) {
+  const store = freshStore(shopName);
   return {
     store,
     storage,
@@ -183,14 +194,112 @@ describe('the token store survives what the platform does to it', () => {
 });
 
 describe('the host opens on the right screen', () => {
-  it('no tokens means the consent notice, because there is no account yet', () => {
+  it('no tokens and no book means the splash, because there is no account yet', () => {
+    /*
+     * A1, NOT X0 - the consent notice moved behind the language choice
+     * (A1 -> A2 -> X0 -> A3), so it is read in a language he chose. The full
+     * order is driven in auth-flow.spec.tsx.
+     */
     const { host: h } = host(fakeFetch(() => PUSH_OK).doFetch, memoryStorage(null));
-    expect(h.session.state.screen).toBe('X0');
+    expect(h.session.state.screen).toBe('A1');
   });
 
-  it('tokens mean Today, because he is already signed in', () => {
-    const { host: h } = host(fakeFetch(() => PUSH_OK).doFetch);
+  it('tokens and a named shop mean Today, because he is already set up', () => {
+    const { host: h } = host(fakeFetch(() => PUSH_OK).doFetch, undefined, 'Test Store');
     expect(h.session.state.screen).toBe('T1');
+  });
+
+  it('HT-2: tokens WITHOUT a shop name resume onboarding (X1), not a nameless Today', () => {
+    const { host: h } = host(fakeFetch(() => PUSH_OK).doFetch);
+    expect(h.session.state.screen).toBe('X1');
+  });
+});
+
+describe('HT-16 - language and display survive a relaunch', () => {
+  const boot = (prefs: ReturnType<typeof memoryStorage>) =>
+    new Host({
+      baseUrl: 'https://api.example.test',
+      fetch: fakeFetch(() => PUSH_OK).doFetch,
+      storage: memoryStorage(JSON.stringify(TOKENS)),
+      store: freshStore('Test Store'),
+      now: () => T0,
+      newId: () => '5a1e0000-0000-4000-8000-000000000999',
+      prefs,
+    });
+
+  it('what he chose in Settings is what the next launch shows', () => {
+    const prefs = memoryStorage();
+    const first = boot(prefs);
+    first.session.setLanguage('or');
+    first.session.setDisplay('focus');
+    const again = boot(prefs);
+    expect(again.session.state.language).toBe('or');
+    expect(again.session.state.display).toBe('focus');
+  });
+
+  it('an unreadable or unknown value is dropped, never rendered', () => {
+    expect(boot(memoryStorage('{"language":"xx","display":"neon"}')).session.state.language).toBe('en');
+    expect(boot(memoryStorage('not json')).session.state.display).toBe('comfort');
+  });
+});
+
+describe('HT-21 - a half-typed entry survives the process being killed', () => {
+  const customer = CANONICAL_PARTIES.find((p) => p.kind === 'customer')!;
+  let tick = 0;
+  // Real time passes between keys; HT-22 swallows keys for a moment after the picker closes.
+  const clock = () => new Date(Date.parse(T0) + 1000 * tick++).toISOString();
+  const boot = (store: Store, draft: ReturnType<typeof memoryStorage>) =>
+    new Host({
+      baseUrl: 'https://api.example.test',
+      fetch: fakeFetch(() => PUSH_OK).doFetch,
+      storage: memoryStorage(JSON.stringify(TOKENS)),
+      store,
+      now: clock,
+      newId: () => '5a1e0000-0000-4000-8000-000000000999',
+      draft,
+    });
+  const typeCredit = (h: Host) => {
+    h.session.openSection('udhar_sales');
+    for (const d of '250') h.session.press(d as '0');
+    h.session.chooseEntryParty(customer.id);
+  };
+
+  it('digits, section, segment and party come back on relaunch, and nothing is saved', () => {
+    const store = freshStore('Test Store');
+    const draft = memoryStorage();
+    const first = boot(store, draft);
+    typeCredit(first);
+    const commit = first.session.state.selectedCommit;
+    // the process dies here; a new one starts on the same disk
+    const again = boot(store, draft);
+    expect(again.session.state.entrySection).toBe('udhar_sales');
+    expect(again.session.state.selectedCommit).toBe(commit);
+    expect(again.session.state.draftPaise).toBe(25000);
+    expect(again.session.state.entryPartyId).toBe(customer.id);
+    expect(store.state.entries).toHaveLength(0);
+  });
+
+  it('is cleared on save and on discard', () => {
+    const store = freshStore('Test Store');
+    const draft = memoryStorage();
+    const h = boot(store, draft);
+    typeCredit(h);
+    expect(draft.raw).not.toBeNull();
+    h.session.back(); // discard: leave the form
+    expect(draft.raw).toBeNull();
+    h.session.openSection('cash_sales');
+    h.session.press('5');
+    expect(draft.raw).not.toBeNull();
+    h.session.commit({ labelKey: 'formA.mode.cash', section: 'cash_sales', mode: 'cash' });
+    expect(store.state.entries).toHaveLength(1);
+    expect(draft.raw).toBeNull();
+  });
+
+  it('a draft from another day, or an unreadable one, is dropped', () => {
+    const store = freshStore('Test Store');
+    const other = JSON.stringify({ dayId: '1999-01-01', section: 'cash_sales', commit: 0, digits: '9', partyId: null });
+    expect(boot(store, memoryStorage(other)).session.state.screen).toBe('T1');
+    expect(boot(store, memoryStorage('{"section":"nope"}')).session.state.draftPaise).toBeNull();
   });
 });
 
@@ -258,9 +367,15 @@ describe('the drain forgets only what the server took', () => {
     expect(outcome.rejected).toHaveLength(1);
     expect(outcome.rejected[0]!.field).toBe('partyId');
 
-    const left = store.pendingOutbox;
-    expect(left).toHaveLength(1);
-    expect(left[0]!.payload).toMatchObject({ id: '5a1e0000-0000-4000-8000-000000000002' });
+    /*
+     * FE-11: the refused row is no longer RE-SENT on every drain - it is PARKED.
+     * It must still be on the phone (never dropped, never acked) and visible.
+     */
+    expect(store.pendingOutbox.map((r) => r.id)).not.toContain('ob-5a1e0000-0000-4000-8000-000000000002');
+    const parked = store.parkedOutbox;
+    expect(parked).toHaveLength(1);
+    expect(parked[0]!.id).toBe('ob-5a1e0000-0000-4000-8000-000000000002');
+    expect(parked[0]!.reason).toContain('a credit sale has to name somebody');
   });
 
   it('a dead session asks for sign-in and keeps every row', async () => {
@@ -321,6 +436,215 @@ describe('the drain forgets only what the server took', () => {
 
     const second = await h.sync();
     expect(second.accepted).toBe(2);
+    expect(store.pendingOutbox).toEqual([]);
+  });
+});
+
+describe('F-8 - consent review is reachable, and never fails quietly', () => {
+  it('opens manage mode on what the server holds', async () => {
+    const { doFetch } = fakeFetch(() => ({
+      status: 200,
+      body: { noticeVersion: 'v1', current: { account_and_ledger: true, sms_reminders: true }, consents: [] },
+    }));
+    const { host: h } = host(doFetch);
+    await h.openPrivacy();
+    expect(h.session.state.screen).toBe('X0');
+    expect(h.session.state.consentMode).toBe('manage');
+    expect(h.session.state.grantedConsents).toEqual(['sms_reminders']);
+  });
+
+  it('an unreachable server is a refusal on screen, not a silent no-op', async () => {
+    const { host: h } = host(async () => {
+      throw new TypeError('Network request failed');
+    });
+    const before = h.session.state.screen;
+    await h.openPrivacy();
+    expect(h.session.state.screen).toBe(before); // nothing moved
+    // HT-31: its own copy - nothing was chosen, so 'your choice was not changed' was wrong.
+    expect(h.session.state.lastRefusal?.field).toBe('consentRead');
+  });
+
+  it('a withdrawal the server did not take is put back, and said', async () => {
+    const { doFetch } = fakeFetch(() => ({ status: 500, body: { error: 'boom' } }));
+    const { host: h } = host(doFetch);
+    h.session.toggleConsent('sms_reminders'); // the screen flips it first
+    await h.changeConsent('sms_reminders', true);
+    expect(h.session.state.grantedConsents).toEqual([]);
+    expect(h.session.state.lastRefusal?.field).toBe('consent');
+  });
+});
+
+describe('DV-12 - a sync ack re-renders the screen', () => {
+  it('notifies the session after the queue shrinks', async () => {
+    const { doFetch } = fakeFetch(() => PUSH_OK);
+    const { host: h, store } = host(doFetch);
+    store.append(sale(77, 1000));
+    let renders = 0;
+    h.session.subscribe(() => {
+      renders += 1;
+    });
+    await h.sync();
+    expect(store.pendingOutbox).toEqual([]);
+    expect(renders).toBeGreaterThan(0);
+  });
+});
+
+describe('a stalled connection gives up instead of hanging the drain for ever', () => {
+  /** A fetch on a dead 2G cell: it never answers. It does record the abort. */
+  const stalled = () => {
+    const seen: { aborted: boolean } = { aborted: false };
+    const doFetch: FetchLike = (_url, init) => {
+      init.signal?.addEventListener('abort', () => {
+        seen.aborted = true;
+      });
+      return new Promise(() => undefined);
+    };
+    return { doFetch, seen };
+  };
+
+  it('the transport throws after its timeout and aborts the request', async () => {
+    const { doFetch, seen } = stalled();
+    await expect(
+      fetchTransport('https://x.test', doFetch, 5).send({
+        method: 'GET',
+        path: '/v1/alerts',
+        headers: {},
+      }),
+    ).rejects.toThrow('timed out');
+    expect(seen.aborted).toBe(true);
+  });
+
+  it('a sync that times out is OFFLINE, acks nothing, and the next drain can run', async () => {
+    vi.useFakeTimers();
+    try {
+      const { doFetch } = stalled();
+      const { host: h, store } = host(doFetch);
+      store.append(sale(1, 45000));
+      const queued = store.pendingOutbox;
+      const pending = h.sync();
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      const outcome = await pending;
+      expect(outcome.offline).toBe(true);
+      expect(store.pendingOutbox).toEqual(queued);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('DV-13: the shop name reaches the server, whenever it can', () => {
+  const shopCalls = (calls: { url: string; body?: string }[]) =>
+    calls.filter((c) => c.url.endsWith('/v1/me/shop')).map((c) => JSON.parse(c.body!));
+
+  it('sends the name on sync, once per run, with the session', async () => {
+    const { doFetch, calls } = fakeFetch(() => ({ status: 200, body: { name: 'Ma Tarini Store' } }));
+    const { host: h, store } = host(doFetch);
+    store.setShopName('Ma Tarini Store');
+    await h.sync();
+    await h.sync();
+    expect(shopCalls(calls)).toEqual([{ name: 'Ma Tarini Store' }]);
+    expect(calls[0]!.headers.authorization).toBe('Bearer access-token');
+  });
+
+  it('a refused send is retried on the next sync, not dropped', async () => {
+    let status = 500;
+    const { doFetch, calls } = fakeFetch(() => ({ status, body: {} }));
+    const { host: h, store } = host(doFetch);
+    store.setShopName('Ma Tarini Store');
+    await h.sync();
+    status = 200;
+    await h.sync();
+    await h.sync();
+    expect(shopCalls(calls)).toHaveLength(2);
+  });
+
+  it('no signal: the outbox is not tried and nothing is acked', async () => {
+    let tries = 0;
+    const doFetch: FetchLike = async () => {
+      tries += 1;
+      throw new Error('network down');
+    };
+    const { host: h, store } = host(doFetch);
+    store.setShopName('Ma Tarini Store');
+    store.append(sale(1, 45000));
+    const queued = store.pendingOutbox;
+    expect((await h.sync()).offline).toBe(true);
+    expect(tries).toBe(1);
+    expect(store.pendingOutbox).toEqual(queued);
+  });
+
+  it('nothing is sent without a session or without a name', async () => {
+    const { doFetch, calls } = fakeFetch(() => PUSH_OK);
+    const signedOut = host(doFetch, memoryStorage(null));
+    signedOut.store.setShopName('Ma Tarini Store');
+    await signedOut.host.sync();
+    const nameless = host(doFetch);
+    await nameless.host.sync();
+    expect(shopCalls(calls)).toEqual([]);
+  });
+});
+
+describe("F-24: the code request carries this install's id", () => {
+  it('makes the id once, keeps it, and sends the same one every time', async () => {
+    const { doFetch, calls } = fakeFetch(() => ({
+      status: 202,
+      body: { sent: true, expiresInSeconds: 600, digits: 6 },
+    }));
+    const install = memoryStorage(null);
+    let n = 0;
+    const h = new Host({
+      baseUrl: 'https://api.example.test',
+      fetch: doFetch,
+      storage: memoryStorage(null),
+      install,
+      store: freshStore(),
+      now: () => T0,
+      newId: () => '0192f0a1-0000-7000-8000-00000000000' + String((n += 1)),
+    });
+    for (const k of '9876500001') h.session.pressPhone(k as '0');
+    await h.sendCode();
+    await h.sendCode();
+    const ids = calls.map((c) => JSON.parse(c.body!).deviceId);
+    const first = '0192f0a1-0000-7000-8000-000000000001';
+    expect(ids).toEqual([first, first]);
+    expect(install.raw).toBe(first);
+  });
+});
+
+describe('HT-4 - the book syncs while the app is in front', () => {
+  it('a write triggers a sync; a keypress (no write) does not', async () => {
+    const { doFetch } = fakeFetch(() => PUSH_OK);
+    const { host: h, store } = host(doFetch);
+    const spy = vi.spyOn(h, 'sync');
+    await h.syncLatest(true); // launch
+    expect(spy).toHaveBeenCalledTimes(1);
+    h.session.press('5'); // a digit is a session change, not a write
+    await h.syncLatest();
+    expect(spy).toHaveBeenCalledTimes(1); // no network attempt per keypress
+    store.append(sale(91, 500));
+    await h.syncLatest();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(store.pendingOutbox).toEqual([]);
+  });
+
+  it('a write that lands during a drain gets one more pass, not a wait for foreground', async () => {
+    let release!: () => void;
+    let first = true;
+    const doFetch: FetchLike = async () => {
+      if (first) {
+        first = false;
+        await new Promise<void>((r) => (release = r));
+      }
+      return { status: 200, text: async () => JSON.stringify(PUSH_OK.body) };
+    };
+    const { host: h, store } = host(doFetch);
+    store.append(sale(92, 100));
+    const drain = h.syncLatest();
+    await Promise.resolve();
+    store.append(sale(93, 200)); // while the first push is in flight
+    void h.syncLatest(); // the trigger fires mid-drain: must not be dropped
+    release();
+    await drain;
     expect(store.pendingOutbox).toEqual([]);
   });
 });

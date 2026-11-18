@@ -13,13 +13,14 @@
  */
 
 import { add, subtract, sum, type Paise } from './money.ts';
+import { adjustmentLines } from './adjustments.ts';
 import type {
   DayInput,
   Entry,
   Figure,
   Mode,
+  EntrySection,
   PrimaryOutputs,
-  Section,
   Working,
   WorkingLine,
 } from './types.ts';
@@ -28,17 +29,33 @@ import type {
  * Selectors
  * ------------------------------------------------------------------ */
 
-const bySection = (entries: readonly Entry[], section: Section): Entry[] =>
+const bySection = (entries: readonly Entry[], section: EntrySection): Entry[] =>
   entries.filter((e) => e.section === section);
 
 const totalOf = (entries: readonly Entry[]): Paise => sum(entries.map((e) => e.amount));
 
 /** Entries in a section, restricted to one payment mode. */
-const sectionModeTotal = (entries: readonly Entry[], section: Section, mode: Mode): Paise =>
+const sectionModeTotal = (entries: readonly Entry[], section: EntrySection, mode: Mode): Paise =>
   totalOf(bySection(entries, section).filter((e) => e.mode === mode));
 
+/**
+ * THE EVENT LINES, ONLY ON A DAY THAT HAS THE EVENT.
+ *
+ * A return's terms are real working lines, but a day with no return has nothing
+ * for them to explain - and the cash check is read line by line against the
+ * paper sheet, which has no "refund paid" row. So a line for an event section
+ * appears only when that section has an entry today, whatever its amount. Every
+ * day without one keeps exactly the working it has always had, which is also
+ * what leaves the existing vector corpus byte-identical (EX-14).
+ */
+const whenPresent = (
+  entries: readonly Entry[],
+  section: EntrySection,
+  line: WorkingLine,
+): WorkingLine[] => (entries.some((e) => e.section === section) ? [line] : []);
+
 /** Build a Figure from its lines, summing signs. Total is derived, never passed in. */
-function figure(lines: readonly WorkingLine[]): Figure {
+export function figure(lines: readonly WorkingLine[]): Figure {
   let total = 0;
   for (const l of lines) {
     total = l.sign === '+' ? add(total, l.amount) : subtract(total, l.amount);
@@ -67,6 +84,12 @@ export function totalCashReceived(input: DayInput): Figure {
       sign: '+',
       amount: sectionModeTotal(entries, 'udhar_collection', 'cash'),
     },
+    // An exchange difference paid in CASH is cash in the drawer; by UPI or udhar it is not (D2).
+    ...whenPresent(entries, 'exchange_receipt', {
+      key: 'working.exchange_received_cash',
+      sign: '+',
+      amount: sectionModeTotal(entries, 'exchange_receipt', 'cash'),
+    }),
   ]);
 }
 
@@ -104,6 +127,12 @@ export function totalCashPaid(input: DayInput): Figure {
       sign: '+',
       amount: sectionModeTotal(entries, 'withdrawal', 'cash'),
     },
+    // A refund handed over in CASH leaves the drawer. By UPI or as udhar it does not (D2).
+    ...whenPresent(entries, 'refund_paid', {
+      key: 'working.refund_paid_cash',
+      sign: '+',
+      amount: sectionModeTotal(entries, 'refund_paid', 'cash'),
+    }),
   ]);
 }
 
@@ -149,16 +178,66 @@ export function expectedCashBalance(input: DayInput): Figure {
       sign: '-',
       amount: sectionModeTotal(entries, 'withdrawal', 'cash'),
     },
+    /*
+     * A RETURN MOVES CASH ONLY WHEN CASH MOVES (D2, EX-8). The return itself
+     * (`sales_return`) is goods, not money, and is absent here: a refund still
+     * pending has moved nothing, so a day may close on it with a zero difference.
+     * Review §4 lists Exchange Receivables and Refund Payables inside the cash
+     * equation - the same defect as "UPI Sale" in Cash Received - and only the
+     * settled, cash-mode part belongs in the drawer.
+     */
+    ...whenPresent(entries, 'exchange_receipt', {
+      key: 'working.exchange_received_cash',
+      sign: '+',
+      amount: sectionModeTotal(entries, 'exchange_receipt', 'cash'),
+    }),
+    ...whenPresent(entries, 'refund_paid', {
+      key: 'working.refund_paid_cash',
+      sign: '-',
+      amount: sectionModeTotal(entries, 'refund_paid', 'cash'),
+    }),
+    /*
+     * DECISION 2: the typed adjustments that are cash facts - a fake note, chhutta
+     * given or kept. Appended only when the day has one, so a day without any has
+     * exactly the seven lines above. P1 and P2 stay the entries' own totals; on a
+     * day with a cash adjustment P3 is P1 - P2 + opening PLUS these lines.
+     */
+    ...adjustmentLines(input, 'cash'),
   ]);
 }
 
-/** P4 · Net Sales = cash + UPI + udhar sales. The sheet's "TOTAL SALES (B)". */
+/**
+ * P4 · Net Sales = cash + UPI + udhar sales - returns + exchange goods out.
+ * The sheet's "TOTAL SALES (B)", and its first minus term (EX-2).
+ *
+ * REVENUE FOLLOWS THE GOODS; SETTLEMENT FOLLOWS THE MONEY. A return reduces
+ * Net Sales the moment the goods come back, whether or not anything has been
+ * paid out - that split is the Return-vs-Refund distinction review §7 asks for.
+ * So `refund_paid` and `exchange_receipt` are NEVER here: counting the money as
+ * well as the goods would move sales twice for one event.
+ *
+ * An exchange is one event: the return (-) and the replacement (+) net to the
+ * price difference, so a ₹900 shirt swapped for a ₹1,200 one moves P4 by ₹300,
+ * not by ₹1,200. Net Sales may now go negative on a day of more returns than
+ * sales; that is the right arithmetic, and `ratio` treats a non-positive
+ * denominator as unanswerable rather than as a smaller number (EX-10).
+ */
 export function netSales(input: DayInput): Figure {
   const { entries } = input;
   return figure([
     { key: 'working.cash_sales', sign: '+', amount: totalOf(bySection(entries, 'cash_sales')) },
     { key: 'working.upi_sales', sign: '+', amount: totalOf(bySection(entries, 'upi_sales')) },
     { key: 'working.udhar_sales', sign: '+', amount: totalOf(bySection(entries, 'udhar_sales')) },
+    ...whenPresent(entries, 'sales_return', {
+      key: 'working.sales_returned',
+      sign: '-',
+      amount: totalOf(bySection(entries, 'sales_return')),
+    }),
+    ...whenPresent(entries, 'exchange_out', {
+      key: 'working.exchange_goods_out',
+      sign: '+',
+      amount: totalOf(bySection(entries, 'exchange_out')),
+    }),
   ]);
 }
 
@@ -221,6 +300,29 @@ export function creditOutstanding(input: DayInput): Figure {
       sign: '-',
       amount: totalOf(bySection(entries, 'udhar_collection')),
     },
+    /*
+     * A RETURN SETTLED AGAINST UDHAR (lead's decision 1, 2026-10-25): the credit
+     * is adjusted against what the customer owes, so it comes off P7 - and an
+     * exchange difference he takes on udhar goes onto it. Two named lines, so the
+     * working still explains the number on screen line by line.
+     *
+     * KNOWN TENSION, recorded rather than hidden: review EX-13 recommends a
+     * separate "credit notes outstanding" figure, because a credit issued to a
+     * customer who owed nothing would drive his balance below zero. The lead's
+     * ruling is the reading built here; "Credit issued" always names a customer
+     * (the parser and the schema both require one), and T18 asks for one when
+     * the sale itself named nobody.
+     */
+    ...whenPresent(entries, 'exchange_receipt', {
+      key: 'working.exchange_on_udhar',
+      sign: '+',
+      amount: sectionModeTotal(entries, 'exchange_receipt', 'udhar'),
+    }),
+    ...whenPresent(entries, 'refund_paid', {
+      key: 'working.credit_issued_on_return',
+      sign: '-',
+      amount: sectionModeTotal(entries, 'refund_paid', 'udhar'),
+    }),
   ]);
 }
 
@@ -265,6 +367,35 @@ export function estimatedProfit(input: DayInput): Figure {
     { key: 'working.net_sales', sign: '+', amount: netSales(input).value },
     { key: 'working.purchase_all_modes', sign: '-', amount: netPurchase(input).value },
     { key: 'working.expenses_all_modes', sign: '-', amount: totalExpenses(input).value },
+    // Decision 2: only adjustments that move profit (adjustments.ts). Absent, none.
+    ...adjustmentLines(input, 'profit'),
+  ]);
+}
+
+/**
+ * Profit after the cash difference: Estimated Profit, then the counted-vs-expected gap.
+ *
+ * A SHORT DRAWER IS A LOSS AND AN OVER DRAWER IS INCOME, as Indian books carry them:
+ * Tally files a "cash short" ledger under Indirect Expenses and an excess under
+ * Indirect Income, and both flow to Profit & Loss (help.tallysolutions.com, Groups).
+ * Product owner, 2026-10-25 (HT-23): a shortage still unexplained after the checks
+ * is the day's loss.
+ *
+ * A NEW FIGURE BESIDE Estimated Profit, NOT A CHANGE TO IT. Estimated Profit is the
+ * sheet's formula, pinned by the vector corpus; this is derived from it and from
+ * the count, so a day not yet counted has no such figure (null), never a zero.
+ * Withdrawal stays out (D3): it is not in Estimated Profit, and it is not in the gap,
+ * because expected cash already subtracts it.
+ */
+export function profitAfterCashDifference(input: DayInput): Figure | null {
+  const counted = input.day.countedCash;
+  if (counted === null) return null;
+  const difference = subtract(counted, expectedCashBalance(input).value);
+  return figure([
+    { key: 'working.estimated_profit', sign: '+', amount: estimatedProfit(input).value },
+    difference < 0
+      ? { key: 'working.cash_short', sign: '-', amount: subtract(0, difference) }
+      : { key: 'working.cash_excess', sign: '+', amount: difference },
   ]);
 }
 

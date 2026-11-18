@@ -56,6 +56,51 @@ export const StyleSheet = {
   absoluteFill: {} as object,
 };
 
+/**
+ * MOTION, RECORDED AND NEVER RUN. An `Animated.View` is a `View` here, so the
+ * contrast walker and the target check see its style exactly as they see any
+ * other. A value remembers where it was told to go and `interpolate` returns
+ * the config it was given, so a test can read what a screen ASKED the animation
+ * to do - which is all a Node process can honestly say about motion.
+ */
+class AnimatedValue {
+  constructor(public value: number) {}
+  setValue(v: number): void {
+    this.value = v;
+  }
+  interpolate(config: Record<string, unknown>): Record<string, unknown> {
+    return { interpolate: config, from: this };
+  }
+}
+/** Every `Animated.timing` started, in order. A test clears it with `length = 0`. */
+export const timings: { toValue: number; duration: number }[] = [];
+export const Animated = {
+  View: host('View'),
+  Value: AnimatedValue,
+  /** Records the request and lands at the end immediately. */
+  timing: (value: AnimatedValue, config: { toValue: number; duration: number }) => ({
+    start: (done?: () => void) => {
+      timings.push({ toValue: config.toValue, duration: config.duration });
+      value.setValue(config.toValue);
+      done?.();
+    },
+  }),
+};
+export const Easing = { bezier: () => (t: number) => t };
+/** The reduce-motion listeners a screen registered, so a test can flip the setting. */
+export const reduceMotionListeners: ((on: boolean) => void)[] = [];
+export const AccessibilityInfo = {
+  isReduceMotionEnabled: () => Promise.resolve(false),
+  addEventListener: (_event: string, handler: (on: boolean) => void) => {
+    reduceMotionListeners.push(handler);
+    return { remove: () => {} };
+  },
+};
+
+/** The system font scale a screen reads; 1 unless a test sets `fontScale.value`. */
+export const fontScale = { value: 1 };
+export const PixelRatio = { getFontScale: () => fontScale.value };
+
 export type ViewStyle = Record<string, unknown>;
 export type TextStyle = Record<string, unknown>;
 

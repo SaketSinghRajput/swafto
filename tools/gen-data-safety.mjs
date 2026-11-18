@@ -133,7 +133,7 @@ notice the app shows before an account is created.
 |---|---|---|
 | Does your app collect or share any of the required user data types? | **Yes** | ${rows.length} items, listed below |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** | TLS 1.3 only; cleartext is refused |
-| Do you provide a way for users to request that their data be deleted? | **Yes** | In the app, and at \`swafto.app/delete-account\` with the app uninstalled |
+| Do you provide a way for users to request that their data be deleted? | **Yes** | In the app, and at \`swafto.com/delete-account\` with the app uninstalled |
 | Is any data shared with third parties? | **No** | No analytics SDK, no advertising SDK, no third party receives personal data |
 | Is any data processed ephemerally? | **No** | What is collected is stored, and the retention column says for how long |
 | Is data collection required to use the app? | **Partly** | Only the account-and-ledger purpose is required; the other two are refusable |
@@ -167,8 +167,8 @@ never restored.
 
 | Field | Value |
 |---|---|
-| Privacy policy | \`https://swafto.app/privacy\` (\`apps/web/legal/privacy.html\`) |
-| Account deletion | \`https://swafto.app/delete-account\` (\`apps/web/delete-account/index.html\`) |
+| Privacy policy | \`https://swafto.com/privacy\` (\`apps/web/legal/privacy.html\`) |
+| Account deletion | \`https://swafto.com/delete-account\` (\`apps/web/delete-account/index.html\`) |
 
 Both must be **live** before submission. Publishing them is H5; the pages exist.
 

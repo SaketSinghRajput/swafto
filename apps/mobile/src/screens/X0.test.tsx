@@ -171,10 +171,18 @@ describe('the same screen is the WITHDRAWAL screen - DPDP 1.2, as easy as giving
     expect(off).toEqual([OPTIONAL[0]]);
   });
 
-  it('it says what it is, and its button is not "I agree" a second time', () => {
+  /*
+   * M3, AN INTENDED CHANGE (approved at M2): this asserted manage mode's button
+   * read "Save" rather than "I agree". Manage mode now has NO button: each
+   * switch is the write (DPDP withdrawal as easy as giving). The title half is
+   * unchanged; the button half becomes "there is none, and nothing says I agree".
+   */
+  it('it says what it is, and has no Save - and no "I agree" a second time', () => {
     const tree = render(<ConsentNotice mode="manage" />);
     expect(text(byTestId(tree, 'x0-title'))).toBe(phrase('consent.manage.title', 'en'));
-    expect(text(byTestId(tree, 'x0-agree'))).toBe(phrase('consent.save', 'en'));
+    expect(testIDs(tree)).not.toContain('x0-agree');
+    expect(text(tree)).not.toContain(phrase('consent.agree', 'en'));
+    expect(text(tree)).not.toContain(phrase('consent.save', 'en'));
   });
 
   it('the required purpose still has no switch here either', () => {

@@ -1,0 +1,131 @@
+/* SWAFTO design tokens — palette A1 "Marigold Ledger".
+   The ONLY file in design-system/ permitted to contain hex literals.
+   Comfort = default (light). Focus = opt-in (dark), set [data-mode="focus"].
+   Component previews inline this file verbatim; never edit a copy. */
+
+:root,
+[data-mode="comfort"] {
+  /* surfaces */
+  --surface-ground:   #FFF9EF;  /* warm paper, cuts shop-daylight glare */
+  --surface-card:     #FFFFFF;
+  --surface-raised:   #FDF4E4;
+
+  /* brand */
+  --brand:            #13294B;
+  --brand-soft:       #2A4571;
+  --on-brand:         #FFFFFF;
+
+  /* action — marigold is a FILL, never type */
+  --action:           #F5A524;
+  --action-pressed:   #DB9317;
+  --on-action:        #12181F;
+
+  /* money */
+  --money-in:         #0B6B3A;
+  --money-out:        #C2371F;
+
+  /* text */
+  --text-primary:     #12181F;
+  --text-secondary:   #3C4552;
+  --text-muted:       #57606A;
+  --text-disabled:    #8C939C;
+
+  /* rules */
+  --rule:             #E3D9C6;
+  /* rule-strong is a TABLE HEAD / INSET rule only. It is 1.87:1 on card and
+     fails the 3:1 control-boundary gate. Input and control borders use
+     --text-muted (6.39:1 Comfort, 5.72:1 Focus). See OPEN.md decision 1. */
+  --rule-strong:      #C9BCA3;
+
+  /* tints */
+  --tint-gold:        #FDEBCF;
+  --tint-green:       #DCEBE0;
+  --tint-red:         #FCE8E4;
+  --tint-indigo:      #E7EBF2;
+
+  --focus-ring:       #13294B;
+
+  /* type — Comfort scale */
+  --money-hero-size:  32px;  --money-hero-weight: 700;
+  --money-row-size:   20px;  --money-row-weight:  700;
+  --title-size:       19px;  --title-weight:      600;
+  --body-size:        17px;  --body-weight:       400;
+  --label-size:       13px;  --label-weight:      500;
+  --caption-size:     13px;  --caption-weight:    400;
+
+  /* touch */
+  --touch-min:        56px;
+}
+
+[data-mode="focus"] {
+  --surface-ground:   #0E1521;
+  --surface-card:     #171F2E;
+  --surface-raised:   #1E2839;
+
+  --brand:            #0E1521;  /* brand surface becomes the ground */
+  --brand-soft:       #8FB0E4;  /* indigo becomes a text colour */
+  --on-brand:         #EAEEF4;
+
+  --action:           #F5A524;  /* unchanged — one accent to maintain */
+  --action-pressed:   #DB9317;
+  --on-action:        #12181F;
+
+  --money-in:         #4FCB89;
+  --money-out:        #FF8A72;
+
+  --text-primary:     #EAEEF4;
+  --text-secondary:   #C0C8D4;
+  --text-muted:       #8E99A8;
+  --text-disabled:    #5E6B7D;  /* 3.05:1 on card — clears the disabled-boundary rule */
+
+  --rule:             #283243;
+  --rule-strong:      #3D4A60;
+
+  --tint-gold:        #33291A;
+  --tint-green:       #16301F;
+  --tint-red:         #331C18;
+  --tint-indigo:      #1B2436;  /* 13.34:1 with text-primary */
+
+  --focus-ring:       #F5A524;
+
+  --money-hero-size:  26px;
+  --money-row-size:   18px;
+  --title-size:       17px;
+  --body-size:        15px;
+  --label-size:       12px;
+  --caption-size:     12px;
+
+  --touch-min:        48px;
+}
+
+/* mode-independent ------------------------------------------------------ */
+:root {
+  --font-sans: "Anek Latin", "Anek Devanagari", "Anek Odia", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --leading-latin:  1.5;
+  --leading-indic:  1.6;   /* Odia/Devanagari conjuncts need the room */
+
+  --space-1:  4px;  --space-2:  8px;  --space-3: 12px;
+  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+  --space-7: 32px;  --space-8: 40px;  --space-9: 56px;
+
+  --radius-control: 8px;
+  --radius-card:   12px;
+  --radius-sheet:  24px;
+  --radius-pill:  999px;
+
+  --elevation-card:  0 1px 3px rgba(19, 41, 75, .11);
+  --elevation-sheet: 0 -2px 16px rgba(19, 41, 75, .16);
+
+  --motion-state: 160ms;
+  --motion-sheet: 240ms;
+  --easing: cubic-bezier(.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-state: 0ms; --motion-sheet: 0ms; }
+}
+
+/* every amount, everywhere */
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }

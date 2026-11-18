@@ -129,7 +129,7 @@ The ones on the critical path to a public launch:
 | **H14** | A JDK, the Android SDK, a release keystore | **No APK exists.** This machine has no `java`, no `adb` and no SDK — checked, not assumed. The JavaScript side is complete and exported; §5.1 is the honest assessment |
 | **H8** | The physical device pass | B14–B19 cannot be had any other way, and this build refuses to claim them from a browser |
 | **H1** | DLT registration | No real SMS is delivered without it. Fifteen templates are registration-ready in `docs/spec/SMS-TEMPLATES.md` |
-| **H5** | Publish three pages | `swafto.app/delete-account` **blocks Play submission**; the policy and terms are required alongside it. All three exist in `apps/web` |
+| **H5** | Publish three pages | `swafto.com/delete-account` **blocks Play submission**; the policy and terms are required alongside it. All three exist in `apps/web` |
 | **H6** | Name the grievance officer | DPDP §13 wants a person, and the app currently names an address |
 | **H13** | Native review of the Odia and Hindi copy | Nobody on this build reads Odia. Every string renders and fits; whether it reads correctly is not mine to judge |
 | **H9** | Counsel review | The policy and terms say on their own first screen that no lawyer has read them |
@@ -214,7 +214,7 @@ adversary pass is skipped is the day the numbers start meaning less than they sa
    the screen copy and the SMS templates; counsel for the policy and the terms. Neither
    blocks your work and both block launch.
 4. **H5 and H1: publish and register.** The three pages in `apps/web` need hosting —
-   `swafto.app/delete-account` is a Play submission blocker — and the DLT entity,
+   `swafto.com/delete-account` is a Play submission blocker — and the DLT entity,
    header and templates need submitting.
 5. **Then the deferred set, from the top of `DEFERRED.md`: the app lock first.** It is
    the one cut item that is a disclosed security risk rather than a missing

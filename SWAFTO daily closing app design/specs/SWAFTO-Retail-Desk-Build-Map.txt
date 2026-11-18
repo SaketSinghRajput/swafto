@@ -1,0 +1,326 @@
+S W A F T O · S C R E E N A N D C O M P O N E N T I N V E N T O R Y · D E R I V E D F R O M T H E N I N E D E C I S I O N S
+27 screens, 36 components, and
+3 forms doing most of the work.
+Both inventories fall out of the decisions rather than out of taste. The
+measure of whether planning first was worth it is in the numbers below:
+this is what changed against the lists I handed you before those decisions
+existed.
+7
+new
+components
+the decisions
+created
+5
+components
+whose shape
+changed
+3
+screens with
+no earlier
+equivalent
+1
+whole tab
+deleted
+0 1 — T H E C O M P R E S S I O N
+Eight entry sections, four forms
+The paper sheet has nine numbered sections, which reads like nine screens to
+build. It isn't. Eight of them are entry, and those eight collapse into four form
+shapes — three of which carry almost everything. The ninth is the reconciliation
+and is nothing like the others, which is why it gets its own treatment.
+SWAFTO · Retail Desk Build Map 	1
+
+-- 1 of 10 --
+
+FORM A · 2 SECTIONS
+Repeating lines 1 · Cash sales 2 · UPI sales
+Amount, added over and over, with a sticky running total.
+No party, no mode, no description. The keypad should stay up
+between entries — this is the screen a shopkeeper touches
+most in a day, and every dismissed keyboard is a tap he didn't
+need.
+FORM B · 3 SECTIONS
+Party and
+amount
+3 · Udhar sales 6 · Udhar collection 7 · Party payment
+Party (name + phone, matching an existing one without auto-
+filling it), amount, and mode on the two collection forms.
+These three are the entire party ledger: 3 creates the debt, 6
+and 7 settle it. Build them as one form with a direction flag
+rather than three near-identical screens.
+FORM C · 2 SECTIONS
+Label,
+amount, mode
+4 · Expenses 5 · Purchase
+A description, an amount, and the mode selector carrying
+decision 2's cash / non-cash split. Purchase adds an
+optional supplier and the optional due-date chips from decision
+4. This is the form most likely to be built wrong, because the
+mode selector looks like a styling choice and is actually
+arithmetic.
+FORM D · 1 SECTION
+Field pair 8 · Personal withdrawal
+Cash and UPI, two fields, done. Trivial to build and easy to get
+wrong downstream — decision 3 says this reduces cash and
+never touches profit, and the screen should say so in a line of
+copy so nobody has to go and read the spec.
+Section 9 is not a form
+Cash check is a reading screen with one input. It shows the expected
+balance as its working, takes a counted figure, and then either
+congratulates or demands a reason. Treating it as a fifth form is the
+mistake that turns the most important screen in the product into a data-
+entry chore.
+SWAFTO · Retail Desk Build Map 	2
+
+-- 2 of 10 --
+
+0 2 — S C R E E N S
+27 screens, 15 of them needed to close one day
+Grouped by tab. P0 is the minimum set that lets a shopkeeper open a day, enter it,
+count his cash and close it — build nothing else until all fifteen exist. P1 covers the
+edges that make it survivable in the real world; P2 can wait for the second release.
+Today
+The core loop. Everything that turns an unentered day into a closed one.
+SWAFTO · Retail Desk Build Map 	3
+
+-- 3 of 10 --
+
+T1 	Today · open day 	Progress, today's figures,
+outstandings, alerts, entry
+rails
+P0
+T2 	Today · first run 	No history, one action: enter
+opening cash P0
+T3 	Today · already closed 	What he sees at 10pm and
+again next morning P0
+T4 	Today · unclosed gap 	Decision 6 — banner, and
+the fresh-count prompt P1
+T5 	Day close list 	Nine rows, three states each
+per decision 8 P0
+T6 	Opening cash 	First run and after a gap
+only; otherwise carried, not
+asked
+P0
+T7 	Entry · Form A 	Repeating lines with running
+total P0
+T8 	Entry · Form B 	Party and amount, three
+directions P0
+T9 	Entry · Form C 	Label, amount, mode split 	P0
+T10 	Entry · Form D 	Withdrawal, cash and UPI 	P1
+T11 	Cash check · counting 	Expected shown as its
+working, line by line P0
+T12 	Cash check · difference 	Reason required before the
+day can close P0
+T13 	Cash check · balanced 	The good case, and it
+deserves a real moment P0
+T14 	Day closed summary 	Figures, estimated profit,
+withdrawal shown outside it P0
+T15 	Past day · read-only 	Decision 7 — frozen, with
+one correction action P1
+SWAFTO · Retail Desk Build Map 	4
+
+-- 4 of 10 --
+
+T16 	Post a correction 	Adjustment on today,
+referencing the closed day P1
+T17 	Day history 	Date control on Today —
+replaces the deleted Day
+book tab
+P1
+Parties
+The second job: knowing who owes you and who you owe.
+P1 	Parties list 	Customers and suppliers,
+with both outstanding totals P0
+P2 	Customer detail 	Ledger, running balance,
+aging, record a collection P0
+P3 	Supplier detail 	What you owe, due dates
+where set, record a payment P0
+P4 	Parties empty 	Day one — must read as
+new, not broken P1
+P5 	Edit party 	Fix a name or phone typed in
+a hurry P2
+Reports
+Appears after the first close. Mostly gated for the first fortnight, and honest about it.
+R1 	Reports · early 	Two live metrics, the rest
+stating their gate plainly P1
+R2 	Reports · mature 	All five live, after 30 closed
+days P2
+Across the app
+Not in a tab, but nothing works without the first one.
+SWAFTO · Retail Desk Build Map 	5
+
+-- 5 of 10 --
+
+X1 	Onboarding 	Shop name, language, text
+size, opening cash. Four
+questions, no more
+P0
+X2 	More · settings 	Language, appearance,
+backup, help P1
+X3 	Language switch 	Odia / Hindi / English,
+reachable without settings P1
+0 3 — C O M P O N E N T S
+36 components, and the twelve the decisions rewrote
+NEW means the decisions created it — it does not exist in the design-system build
+brief and the build session isn't expecting it. CHANGED means it's in the brief but
+the shape in there is now wrong. Both need to reach that session before it builds
+them.
+M O N E Y
+MoneyText 	In / out / neutral × hero, row, label. Always signed,
+always tabular.
+as briefed
+MetricCell 	Label, value, direction arrow, optional tint. 	as briefed
+DeltaChip 	Up / down / flat against a stated baseline. 	as briefed
+WorkingPanel 	A total shown as the lines that produced it. The
+cash check depends on this and so does the day
+summary.
+changed
+E N T R Y
+AmountField 	Numeric keypad, ₹ prefix, tabular, keypad persists
+across repeated entries.
+as briefed
+PartyField 	Name + phone, matches an existing party without
+auto-filling anything.
+as briefed
+ModeSelector 	Cannot be five equal chips. Cash sits apart from
+UPI / Other / Udhar / Shop stock — decision 2.
+changed
+SWAFTO · Retail Desk Build Map 	6
+
+-- 6 of 10 --
+
+DueDateChips 	7 / 15 / 30 / pick a date, remembered per supplier,
+always skippable — decision 4.
+new
+LineItemRow 	Editable, deletable, in an open day only. 	as briefed
+SectionTotalBar 	Sticky running total. 	as briefed
+NothingToEnterAction 	Marks a section deliberately skipped rather than
+untouched — decision 8. Without it the
+reconciliation cannot distinguish a zero from a gap.
+new
+D A Y C L O S E
+DayProgressRing 	n of 9, with skipped counted as done. 	as briefed
+SectionStepRow 	Three states, not two: entered with a total,
+explicitly skipped, untouched — decision 8.
+changed
+DayStateBadge 	Open / ready / closed / not closed — decision 6.
+The fourth value is the one that matters.
+new
+CashCheckPanel 	Expected as its working, so he can see which line is
+wrong.
+as briefed
+DifferenceCallout 	Owns its reason chips — the reason is required, so
+they are one component, not two.
+changed
+BalancedState 	The zero-difference case. Not an absence of the
+callout — its own thing, and the only celebratory
+moment in the product.
+new
+CarryForwardNote 	"Tomorrow's opening will be what you counted." 	as briefed
+CorrectionRow 	Renders on both the open day that carries it and
+the closed day it references — decision 7.
+new
+P A R T I E S
+PartyRow 	Customer and supplier variants, outstanding, last
+activity.
+as briefed
+LedgerEntryRow 	One line of a party's history — what, when, which
+day it belongs to.
+new
+SWAFTO · Retail Desk Build Map 	7
+
+-- 7 of 10 --
+
+AgingBadge 	Two vocabularies, deliberately: "overdue" only
+where a due date exists, "31+ days" everywhere
+else — decision 4.
+changed
+OutstandingSummary 	To collect against you owe, side by side. 	as briefed
+F E E D B A C K
+AlertBanner 	Info / warning / critical, each with an icon and a
+lead phrase, never colour alone.
+as briefed
+EmptyState 	Nothing yet / nothing today / not applicable. Three
+different messages.
+as briefed
+GateCard 	"Available after 14 closed days · 6 so far". States
+the gate, never an empty chart.
+as briefed
+SyncIndicator 	Quiet, never blocking. A write already succeeded
+locally before this renders — decision 9.
+new
+InlineError 	What went wrong and how to fix it. 	as briefed
+ConfirmSheet 	Used for closing the day and for deleting a line.
+Nothing else.
+as briefed
+N A V I G A T I O N
+AppBar 	Today variant with greeting and date; back variant
+with a title.
+as briefed
+BottomNav 	Three tabs, and Reports appears only after the first
+close.
+changed
+DateStepper 	Moves Today between days. Carries the whole of
+the deleted Day book tab.
+new
+SectionHeader 	In-page grouping. 	as briefed
+R E P O R T S A N D F O U N D A T I O N S
+TrendRow 	Sparkline, current value, baseline. 	as briefed
+ReportCard 	One metric, its formula visible on tap. 	as briefed
+SWAFTO · Retail Desk Build Map 	8
+
+-- 8 of 10 --
+
+Buttons ×5 	Primary, secondary, tertiary, destructive, icon. All
+states, both modes.
+as briefed
+Foundations ×6 	Colour, type, space, elevation, iconography,
+numerals. One already built.
+as briefed
+0 4 — O R D E R
+What to build, in what order
+Not by tab and not by screen count — by what has to be true before the next thing
+can be judged.
+Send the twelve deltas to the design-system session first
+Seven new components and five changed shapes. That session is currently building
+against a brief that no longer matches, and every component it finishes before this
+reaches it is a component built to the wrong spec.
+01
+Finish Phase 1 of the design system
+Foundations, Money, Actions, Entry, Day close — now with the corrected shapes.
+Nothing here depends on screens, and screens generated before it have no
+components to reference.
+02
+Design the four form archetypes, not the eight sections
+Forms A, B, C, D. Get the mode selector and the party field right once and eight
+screens are right by construction.
+03
+Design the cash check trio together
+Counting, difference-with-reason, and balanced. These three are the product; if
+they don't feel right nothing downstream saves it. Design them as one flow, never
+as three separate artboards.
+04
+Then the Today screen, last of the P0 set
+Counter-intuitive, but Today is a summary of everything above it. Design it once
+you know what it's summarising, or you'll design a dashboard and retrofit the
+product to it.
+05
+SWAFTO · Retail Desk Build Map 	9
+
+-- 9 of 10 --
+
+The one number to watch while building
+Fifteen P0 screens is the whole of a working day close. If that count
+starts climbing during design, something has been added that the nine
+decisions didn't call for — and on current evidence the thing most likely
+to creep back in is a shortcut that saves the shopkeeper typing. That is
+exactly what was removed on purpose.
+SWAFTO · derived from the nine V1 decisions, the Retail Desk V1 sheet and the 15-07-2026 note · 8
+September 2026
+P1 only after one full day can be closed end to end
+Gap handling, corrections, day history, the withdrawal form. All of these are edges
+around a loop that has to work first.
+06
+SWAFTO · Retail Desk Build Map 	10
+
+-- 10 of 10 --
+

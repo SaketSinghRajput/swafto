@@ -18,6 +18,7 @@
  * framework nobody chose.
  */
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
+import { tokens } from '../src/theme/tokens.ts';
 
 export interface Node {
   readonly type: string;
@@ -47,10 +48,22 @@ function resolve(node: ReactNode): Node[] {
       type: String(el.type),
       props: el.props ?? {},
       children,
-      text: children.map((c) => c.text).join(''),
+      text: children.filter((c) => !isIconGlyph(c)).map((c) => c.text).join(''),
     },
   ];
 }
+
+/*
+ * AN ICON GLYPH IS NOT PART OF THE WORDS AROUND IT (v2, DESIGN-SYSTEM-V2
+ * section 2). `<Icon>` draws one Private Use character in the icon family,
+ * hidden from assistive tech, beside the word that carries the meaning. A
+ * row reading "Delete this account" with a chevron after it still SAYS
+ * "Delete this account", so the glyph is left out of its ANCESTORS' text.
+ * The glyph node keeps its own text, so a test can still find and name it.
+ */
+const ICON_FAMILY = tokens().font.icons;
+const isIconGlyph = (n: Node): boolean =>
+  n.type === 'Text' && (n.props?.style as Record<string, unknown> | undefined)?.fontFamily === ICON_FAMILY;
 
 /** The rendered tree, with a single root. */
 export function render(element: ReactElement): Node {

@@ -1,0 +1,71 @@
+
+> swafto@0.1.0 prove:verifiers
+> node tools/check-verifiers.mjs --prove
+
+  iteration (derived)    : 36
+  judgements             : 12, of which 9 STALE (older than 5 iterations)
+  !    STALE since 21: docs/governance/PROJECTION.md - the ranked cut-list, cheapest harm first
+  !    STALE since 21: docs/handover/DEFERRED.md - the cost-to-build figure on each of the four cuts
+  !    STALE since 22: docs/governance/DECISIONS-AUTONOMOUS.md - AD-019's three reversal triggers
+  !    STALE since 19: docs/benchmarks/BENCHMARKS-RESULTS.md - B1's attempts narrative - close it at G7
+  !    STALE since 25: docs/benchmarks/BENCHMARKS-RESULTS.md - B3's attempts narrative - the gap has THREE shapes, the third being bodies below early returns
+  !    STALE since 13: docs/governance/FINDINGS.md - the severity implied by each finding’s wording
+  !    STALE since 24: docs/benchmarks/BENCHMARKS-RESULTS.md - that the twelve money mutants are ALL killed - re-adjudicate whenever money.ts or its tests change
+  !    STALE since 24: tools/check-money-mutants.mjs - that the two DB-bound specs cannot observe money.ts, which is what makes excluding them safe
+  !    STALE since 20: docs/governance/REVIEW.md - the A12 audit's two 'partly' verdicts and their owed plants
+       §5.15.2: re-STATE these from current facts, do not re-read them.
+  !    §5.15.4: PROJECTION.md is due a re-statement at 30 and again at 35.
+  gate numbers re-derived: 5, 0 stale
+  verifiers inventoried  : 34
+  §5.16 response-tested  : 14 of 15 benchmark-bearing; 1 DISPROVEN (its number does not move)
+
+  BENCHMARKS INSTRUMENTED: 23 of 40
+  BENCHMARKS MET         : 6 of 7 measured (B1 B2 B5 B12 B33 B40)
+                           1 MISSED (B3), 33 never measured
+
+  overdue - subject EXISTS, nothing measures it : 2
+     B4 B6
+  blocked - subject does not exist yet          : 15
+     B7 B9 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B25 B34 B38
+  known MISSED - SCOPE   : 2 · B38 B39
+     a scope miss is a DECISION; a performance miss is a FAILURE. Never merged.
+  gates marked PASS      : 6
+
+  PROVING each verifier fails on its planted defect:
+
+  ok   governance           npm run check:governance
+  ok   benchmarks-lock      npm run check:benchmarks
+  ok   prose                npm run check:prose
+  ok   sms                  npm run check:sms
+  ok   sms-segments         npm run check:sms:segments
+  ok   tooling              npm run check:tooling
+  ok   generated            npm run check:generated
+  ok   font                 npm run check:font
+  ok   money-lint           npm run check:money
+  ok   typecheck            npm run typecheck
+  ok   vectors-node         npm run test:vectors:node
+  -    vectors-divergence   not plantable
+  ok   unit                 npx vitest run
+  -    mutation             not plantable
+  ok   crossdoc             npm run check:crossdoc
+  ok   api                  npx vitest run apps/api
+  ok   screens              npx vitest run apps/mobile
+  ok   layout               npm run check:layout
+  ok   client-logs          npm run check:client-logs
+  ok   export-naming        npm run check:naming
+  ok   push-payload         npm run check:push
+  -    design               not plantable
+  ok   tasks                npm run check:tasks
+  ok   plan                 npm run check:plan
+  -    shadow-copies        not plantable
+  -    money-mutants        not plantable
+  ok   registry             npm run check:registry
+  ok   findings             npm run check:findings
+  ok   licences             npm run check:licences
+  ok   secrets              npm run check:secrets
+  ok   traceability         npm run check:traceability
+  -    coverage             not plantable
+  -    audit                not plantable
+  -    detection-rate       not plantable
+
+verifiers: every cited command exists, every benchmark is accounted for

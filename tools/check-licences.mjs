@@ -132,7 +132,9 @@ const SEAM_ALIASES = new Set(['@swafto/ui']);
 
 const bareSpecifiers = (source) => {
   const out = new Set();
-  for (const m of source.matchAll(/(?:^|\n)\s*import[^'"]*['"]([^'"]+)['"]/g)) out.add(m[1]);
+  // `import` must be the keyword: a line that STARTS with the JSX prop
+  // `importantForAccessibility="no"` is not an import of a package called "no".
+  for (const m of source.matchAll(/(?:^|\n)\s*import(?=[\s{*'"])[^'"]*['"]([^'"]+)['"]/g)) out.add(m[1]);
   for (const m of source.matchAll(/(?:^|\n)\s*export[^'"]*from\s*['"]([^'"]+)['"]/g)) out.add(m[1]);
   return [...out].filter((s) => !s.startsWith('.') && !s.startsWith('node:'));
 };
@@ -237,7 +239,50 @@ const fontAudit = (() => {
 
   const present = readdirSync(FONT_DIR).filter((f) => statSync(join(FONT_DIR, f)).isFile());
   const binaries = present.filter((f) => /\.(ttf|otf|woff2?)$/i.test(f));
-  const licences = present.filter((f) => /licen|ofl|copying/i.test(f));
+
+  /*
+   * ONE LICENCE PER FILE, NOT ONE FOR THE DIRECTORY. Every font used to be
+   * assumed OFL and every licence text was demanded to say so, which would reject
+   * the ISC text beside the icon font and label that font OFL in the manifest -
+   * a false statement in a legal document. Each group names the binaries it
+   * covers, the licence file beside them, and what that text must say. A binary
+   * that no group covers, or a licence file that no group names, is a failure:
+   * an unmapped licence is one nobody has cleared. The OFL rules are exactly the
+   * three they always were.
+   */
+  const GROUPS = [
+    {
+      label: 'OFL 1.1 (see the file below)',
+      covers: /^AnekOdia-[A-Za-z]+\.ttf$/,
+      licenceFile: 'OFL-AnekOdia.txt',
+      rules: [
+        [/SIL OPEN FONT LICENSE/i, 'does not name the SIL Open Font Licence'],
+        [/Version 1\.1/i, 'does not state OFL version 1.1'],
+        [/Copyright/i, 'carries no copyright line'],
+      ],
+    },
+    {
+      // Lucide's LICENSE is ISC, plus the MIT text for the glyphs derived from Feather.
+      // The icon subset contains Feather-derived glyphs (check, clock, lock, info, ...),
+      // so BOTH notices must travel with it.
+      label: 'ISC; MIT for Feather-derived glyphs (see the file below)',
+      covers: /^SwaftoIcons\.ttf$/,
+      licenceFile: 'ISC-Lucide.txt',
+      rules: [
+        [/^\s*ISC License/m, 'does not carry the title "ISC License"'],
+        [
+          /Permission to use, copy, modify, and\/or distribute this software for any\s+purpose with or without fee is hereby granted/i,
+          'lacks the ISC permission notice',
+        ],
+        [/Copyright \(c\) \d{4} Lucide Icons and Contributors/i, 'carries no Lucide copyright line'],
+        [/The MIT License \(MIT\)/i, 'lacks the MIT licence for the Feather-derived glyphs'],
+        [/Copyright \(c\) 2013-present Cole Bemis/i, 'carries no Feather (Cole Bemis) copyright line'],
+        [/copies or substantial portions of the Software/i, 'lacks the MIT permission notice'],
+      ],
+    },
+  ];
+  const groupOf = (binary) => GROUPS.find((g) => g.covers.test(binary));
+  const mapped = new Set(GROUPS.map((g) => g.licenceFile));
 
   /*
    * THE FAMILIES THE THEME ACTUALLY ASKS FOR, read from the token file rather
@@ -245,38 +290,43 @@ const fontAudit = (() => {
    * system fallback, which on an Odia string is the tofu this build has a
    * whole other check about.
    */
-  const asked = [...read(TOKENS_FILE).matchAll(/'(AnekOdia-[A-Za-z]+)'/g)].map((m) => m[1]);
+  const asked = [...read(TOKENS_FILE).matchAll(/'(AnekOdia-[A-Za-z]+|SwaftoIcons)'/g)].map((m) => m[1]);
   for (const family of new Set(asked)) {
     if (!binaries.some((f) => f.startsWith(family + '.'))) {
       problems.push('the theme asks for ' + family + ' and no such file ships');
     }
   }
 
-  if (licences.length === 0) {
-    problems.push('font binaries ship with no licence file beside them');
-  }
-
-  for (const name of licences) {
-    const text = read(join(FONT_DIR, name));
+  for (const binary of binaries) {
+    const group = groupOf(binary);
+    if (!group) {
+      problems.push(binary + ' ships with no licence mapping in this tool, so nobody has cleared it');
+      continue;
+    }
+    if (!present.includes(group.licenceFile)) {
+      problems.push(binary + ' ships with no licence file beside it (expected ' + group.licenceFile + ')');
+      continue;
+    }
+    const text = read(join(FONT_DIR, group.licenceFile));
     // A11: the label is not the payload. Open it and read what it says.
-    if (!/SIL OPEN FONT LICENSE/i.test(text)) {
-      problems.push(name + ' does not name the SIL Open Font Licence');
-    }
-    if (!/Version 1\.1/i.test(text)) {
-      problems.push(name + ' does not state OFL version 1.1');
-    }
-    if (!/Copyright/i.test(text)) {
-      problems.push(name + ' carries no copyright line');
+    for (const [re, message] of group.rules) {
+      if (!re.test(text)) problems.push(group.licenceFile + ' ' + message);
     }
   }
+  for (const name of present) {
+    if (!binaries.includes(name) && !mapped.has(name)) {
+      problems.push(name + ' sits among the fonts and no licence mapping names it');
+    }
+  }
+  if (binaries.length === 0) problems.push('no font binary found to audit');
 
-  for (const name of [...binaries, ...licences].sort()) {
+  for (const name of [...binaries, ...present.filter((f) => mapped.has(f))].sort()) {
     const bytes = readFileSync(join(FONT_DIR, name));
     files.push({
       name,
       bytes: bytes.length,
       sha256: createHash('sha256').update(bytes).digest('hex'),
-      licence: /\.(ttf|otf|woff2?)$/i.test(name) ? 'OFL 1.1 (see the file below)' : 'the licence',
+      licence: binaries.includes(name) ? (groupOf(name)?.label ?? 'UNMAPPED') : 'the licence',
     });
   }
 
@@ -343,15 +393,18 @@ for (const f of fontAudit.files) {
 }
 lines.push('');
 lines.push(
-  '**What is verified here:** every family the theme asks for is present, a licence',
+  '**What is verified here:** every family the theme asks for is present, each binary',
 );
 lines.push(
-  'file accompanies it, that file names the SIL Open Font Licence 1.1 and carries a',
+  'is covered by a licence mapping in this tool, the licence file beside it carries',
 );
 lines.push(
-  'copyright line, and each binary is pinned by hash so a swapped file is visible in',
+  'the required text of each licence (OFL 1.1 for Anek Odia; ISC plus the MIT notice for',
 );
-lines.push('a diff.');
+lines.push(
+  'the Feather-derived glyphs for the Lucide icon subset), and each binary is hashed',
+);
+lines.push('so a swapped file is visible in a diff.');
 lines.push('');
 lines.push(
   '**What is NOT verified, and stays with L-19:** that these bytes are the upstream',
@@ -368,6 +421,46 @@ lines.push('L-19 that asks about IBM Plex has no subject.');
 lines.push('');
 
 writeFileSync('docs/handover/LICENCES.md', lines.join('\n'), 'utf8');
+
+/*
+ * HT-15: THE SAME LIST, AS THE PAGE ABOUT -> "Open-source licences" OPENS. The
+ * button did nothing. Written from the rows above so the page and the manifest
+ * cannot disagree, with the font licence text in full because OFL 1.1 requires
+ * it to travel with the fonts. Served from the API origin like the policy.
+ */
+const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const fontLicences = fontAudit.files.filter((f) => f.licence === 'the licence').map((f) => f.name);
+const html = [
+  '<!doctype html>',
+  '<!-- GENERATED by tools/check-licences.mjs. DO NOT EDIT BY HAND. -->',
+  '<html lang="en">',
+  '  <head>',
+  '    <meta charset="utf-8" />',
+  '    <meta name="viewport" content="width=device-width, initial-scale=1" />',
+  '    <title>SWAFTO open-source licences</title>',
+  '    <style>',
+  '      body { font: 16px/1.5 system-ui, sans-serif; color: #1a1a1a; background: #fff; margin: 0 auto; max-width: 720px; padding: 16px; }',
+  '      table { border-collapse: collapse; width: 100%; font-size: 14px; }',
+  '      th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #d6d6d0; overflow-wrap: anywhere; }',
+  '      pre { white-space: pre-wrap; font-size: 13px; background: #f4f4f2; padding: 12px; }',
+  '    </style>',
+  '  </head>',
+  '  <body>',
+  '    <h1>Open-source licences</h1>',
+  '    <p>SWAFTO is built with these open-source packages. Each is used under the licence shown.</p>',
+  '    <table>',
+  '      <tr><th>Package</th><th>Version</th><th>Licence</th></tr>',
+  ...thirdParty.map(
+    (p) => '      <tr><td>' + esc(p.name) + '</td><td>' + esc(p.version) + '</td><td>' + esc(p.licence) + '</td></tr>',
+  ),
+  '    </table>',
+  '    <h2>Fonts</h2>',
+  ...fontLicences.flatMap((f) => ['    <h3>' + esc(f) + '</h3>', '    <pre>' + esc(read(join(FONT_DIR, f))) + '</pre>']),
+  '  </body>',
+  '</html>',
+  '',
+].join('\n');
+writeFileSync('apps/web/legal/licences.html', html, 'utf8');
 
 console.log('  shipped workspaces  : ' + SHIPPED_WORKSPACES.length);
 console.log('  runtime packages    : ' + seen.size + ' (' + thirdParty.length + ' third-party)');

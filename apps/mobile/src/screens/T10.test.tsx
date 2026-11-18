@@ -37,7 +37,7 @@ describe('T10 renders all four states', () => {
   it('loading', () => {
     const tree = render(<FormD store={canonicalStore()} status="loading" />);
     expect(byTestId(tree, 't10-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error', () => {
@@ -110,7 +110,7 @@ describe('T10 against both fixtures and every language', () => {
     const tree = render(<FormD store={adversarialStore()} language="longest" display="focus" />);
     expect(byTestId(tree, 't10-note')).toBeTruthy();
     expect(
-      all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('t10-commit-')),
+      all(tree).filter((n) => /^t10-mode-[0-9]+$/.test(String(n.props?.testID ?? ''))),
     ).toHaveLength(2);
   });
 
@@ -152,12 +152,28 @@ describe('T10 accessibility and its keypad', () => {
 
   it('cash and UPI only - a withdrawal is not taken on credit', () => {
     const committed: string[] = [];
-    const tree = render(<FormD store={canonicalStore()} onCommit={(o) => committed.push(o.mode)} />);
-    byTestId(tree, 't10-commit-cash-withdrawal').props.onPress();
-    byTestId(tree, 't10-commit-upi-withdrawal').props.onPress();
+    for (const index of [0, 1]) {
+      const tree = render(
+        <FormD
+          store={canonicalStore()}
+          draftPaise={50000}
+          selectedCommit={index}
+          onCommit={(o) => committed.push(o.mode)}
+        />,
+      );
+      byTestId(tree, 't10-commit').props.onPress();
+    }
     expect(committed).toEqual(['cash', 'upi']);
+    /*
+     * TWO, AND THE ABSENCE IS THE POINT. D3 puts a withdrawal outside profit,
+     * and the paper sheet gives it CASH and UPI only - an owner does not take
+     * his own money out of his own till on credit. A third segment here would
+     * be a mode the engine has no equation for.
+     */
     expect(
-      all(tree).filter((n) => String(n.props?.testID ?? '').startsWith('t10-commit-')),
+      all(render(<FormD store={canonicalStore()} />)).filter((n) =>
+        /^t10-mode-[0-9]+$/.test(String(n.props?.testID ?? '')),
+      ),
     ).toHaveLength(2);
   });
 });

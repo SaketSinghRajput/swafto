@@ -249,7 +249,32 @@ const routesResolve = (cell) =>
  * on the strength of screens that do not exist, which is worse than reading 0.
  */
 const screensResolve = (cell) =>
-  [...cell.matchAll(/\b([TPRX])(\d{1,2})\b/g)].every((m) =>
+  /*
+   * `S` WAS ADDED AFTER THE SAME DEFECT RECURRED, which is the part worth
+   * recording rather than the fix itself.
+   *
+   * The paragraph above describes this exact failure being found once, for
+   * `R`: eight rows resolved vacuously because the character class did not
+   * list the prefix they used, and `.every()` over no matches is `true`. It
+   * was closed for `R` and left open for every prefix invented afterwards.
+   *
+   * The settings family uses `S` - the in-app deletion path Google Play
+   * requires, the privacy notice Apple 5.1.1(i) requires, the grievance
+   * officer the DPDP Act requires - and every one of those rows was resolving
+   * against nothing at all. B39 would have counted them complete on the
+   * strength of screens this check never looked for, which is worse than
+   * counting them incomplete.
+   *
+   * NOTE FOR WHOEVER TOUCHES THIS NEXT: the verifier harness plants its defect
+   * on the ENGINE-FUNCTION axis of this check, not this one. That is why the
+   * `R` version of this bug could be fixed and the `S` version appear - the
+   * screens axis has never had a plant. Narrowing this class again will not be
+   * caught by `prove:verifiers`.
+   */
+  // `M` added with M1 (2026-10-26), for the reason `S` was: an unlisted prefix resolves vacuously.
+  // `C` for C1 Ask (2026-10-26): a row naming it must resolve against C1.tsx, not vacuously.
+  // `I` added with PR-1's I1 (2026-10-26), the next prefix the comment above warned of.
+  [...cell.matchAll(/\b([CIMTPRSX])(\d{1,2})\b/g)].every((m) =>
     existsSync(join('apps/mobile/src/screens', m[1] + m[2] + '.tsx')),
   );
 

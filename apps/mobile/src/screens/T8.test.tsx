@@ -39,7 +39,7 @@ describe('T8 renders all four states', () => {
   it('loading', () => {
     const tree = render(<FormB store={canonicalStore()} status="loading" />);
     expect(byTestId(tree, 't8-loading')).toBeTruthy();
-    expect(byType(tree, 'ActivityIndicator')).toHaveLength(1);
+    expect(byTestId(tree, 'loading-skeleton').children).toHaveLength(3); // v2 3.12: three static skeleton rows replace the spinner
   });
 
   it('error', () => {
@@ -104,8 +104,9 @@ describe('T8 against both fixtures and every language', () => {
 
   for (const language of ['en', 'hi', 'or'] as readonly Language[]) {
     it(language + ': the title is in that language', () => {
+      // USABILITY item 4: the title is the live job - Collect is the first segment.
       const tree = render(<FormB store={canonicalStore()} language={language} />);
-      expect(text(byTestId(tree, 't8-title'))).toBe(phrase('t8.title', language));
+      expect(text(byTestId(tree, 't8-title'))).toBe(phrase('t8.title.collect', language));
     });
   }
 
@@ -153,20 +154,38 @@ describe('T8 accessibility and its keypad', () => {
 
   it('the three directions are all offered, and each reports itself', () => {
     const committed: string[] = [];
-    const tree = render(
-      <FormB store={canonicalStore()} onCommit={(o) => committed.push(o.section)} />,
-    );
-    byTestId(tree, 't8-commit-cash-udhar_collection').props.onPress();
-    byTestId(tree, 't8-commit-cash-party_payment').props.onPress();
-    byTestId(tree, 't8-commit-udhar-udhar_sales').props.onPress();
+    /*
+     * TWO OF THESE THREE SHARE A PAYMENT MODE, which is exactly why the segment
+     * is keyed by index and not by mode: a collection and a payment are both
+     * cash and differ only by section. A mode-keyed control would collapse them
+     * into one unreachable pair, and the money would land on the wrong side of
+     * the ledger with every total on the screen still adding up.
+     */
+    for (const index of [0, 1, 2]) {
+      const tree = render(
+        <FormB
+          store={canonicalStore()}
+          draftPaise={50000}
+          selectedCommit={index}
+          onCommit={(o) => committed.push(o.section)}
+        />,
+      );
+      expect(byTestId(tree, 't8-mode-' + index).props?.accessibilityState?.selected).toBe(
+        true,
+      );
+      byTestId(tree, 't8-commit').props.onPress();
+    }
     expect(committed).toEqual(['udhar_collection', 'party_payment', 'udhar_sales']);
   });
 
   it('the screen writes nothing itself', () => {
     const store = canonicalStore();
     const before = store.state.entries.length;
-    const tree = render(<FormB store={store} />);
-    byTestId(tree, 't8-commit-cash-udhar_collection').props.onPress();
+    // A LIVE commit key, not a disabled one: the point is that pressing the
+    // thing that looks like it writes still does not write. Writing is the
+    // caller's, through the parsers.
+    const tree = render(<FormB store={store} draftPaise={50000} />);
+    byTestId(tree, 't8-commit').props.onPress();
     expect(store.state.entries.length).toBe(before);
   });
 });

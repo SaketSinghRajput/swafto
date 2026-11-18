@@ -15,7 +15,7 @@
  * The throwaway container is started by `tools/pg-up.mjs`.
  */
 import { describe, it, expect, afterAll } from 'vitest';
-import { migrationUp, migrationDown } from '../src/spec.ts';
+import { allMigrationsUp, allMigrationsDown } from '../src/spec.ts';
 
 /**
  * Defaulted, not required.
@@ -86,8 +86,8 @@ describe('G4 · Postgres migrations and append-only', () => {
   });
 
   maybe()('runs up -> down -> up with no residue', async () => {
-    for (const s of migrationDown('postgres')) await client.query(s); // clean slate
-    for (const s of migrationUp('postgres')) await client.query(s);
+    for (const s of allMigrationsDown('postgres')) await client.query(s); // clean slate
+    for (const s of allMigrationsUp('postgres')) await client.query(s);
 
     const t1 = await client.query(
       `SELECT table_name FROM information_schema.tables
@@ -97,25 +97,39 @@ describe('G4 · Postgres migrations and append-only', () => {
     // NOTE: outbox is device-local and must NOT exist on the server (architecture D4).
     // rate_events is its mirror image: server-only, and must NOT exist on the device.
     expect(names).toEqual([
+      // Decisions 2 and 3 (2026-10): the two append-only day facts.
+      'adjustments',
       'consents',
       'days',
       'devices',
       'entries',
+      // PR-1 (Premium, R5): the shop's item list and the item lines of a sale.
+      'item_lines',
+      'items',
+      // C-02 (migration 0002): the sign-in code store, server-only like rate_events.
+      'otp_pending',
       'parties',
+      // R5 FR-6 (2026-10-26): the append-only party fact.
+      'party_credit_limits',
+      // PR-7: the billing facts, server-only like rate_events.
+      'plan_previews',
+      'plan_purchase_states',
+      'plan_purchases',
       'rate_events',
       'section_skips',
       'shops',
+      'upi_confirmations',
       'users',
     ]);
     expect(names).not.toContain('outbox');
 
-    for (const s of migrationDown('postgres')) await client.query(s);
+    for (const s of allMigrationsDown('postgres')) await client.query(s);
     const t2 = await client.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'`,
     );
     expect(t2.rows[0].n).toBe(0);
 
-    for (const s of migrationUp('postgres')) await client.query(s); // up again
+    for (const s of allMigrationsUp('postgres')) await client.query(s); // up again
   }, 30_000);
 
   maybe()('REJECTS UPDATE and DELETE on entries', async () => {
@@ -168,12 +182,13 @@ describe('G4 · Postgres migrations and append-only', () => {
          FROM pg_class c
          JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public'
-          AND c.relname IN ('entries','days','parties','section_skips','devices','users','consents')
+          AND c.relname IN ('entries','days','parties','section_skips','devices','users','consents','party_credit_limits')
         ORDER BY c.relname`,
     );
     // Seven since iteration 39: consents joined the tenant-scoped set, scoped
     // through its user rather than by a shop_id column it does not have.
-    expect(res.rows.length).toBe(7);
+    // Eight since R5 FR-6: the credit limits are a party's, so the shop's.
+    expect(res.rows.length).toBe(8);
     for (const r of res.rows) {
       expect(r.relrowsecurity, `${r.relname} RLS`).toBe(true);
       expect(r.relforcerowsecurity, `${r.relname} FORCE RLS`).toBe(true);
@@ -190,4 +205,53 @@ describe('G4 · Postgres migrations and append-only', () => {
       .filter((c: string) => /total|balance|outstanding|sum_/i.test(c));
     expect(banned).toEqual([]);
   }, 20_000);
+});
+
+/*
+ * ARCH-09 / MIGRATION 0003 · an insert into a day and the close of that day serialise.
+ * UNVERIFIED-LOCAL: needs Postgres, runs in CI. Without `FOR SHARE` in the trigger, B's UPDATE
+ * does not wait and A's entry can land in a day that is then closed (the memo's D7 premise).
+ */
+describe('ARCH-09 · closed-day triggers lock the day', () => {
+  const LOCK_SHOP = '00000000-0000-7000-8000-0000000000a9';
+  const LOCK_DAY = '2026-07-20';
+
+  maybe()('a close waits for an in-flight insert into the day, and the insert is not lost to it', async () => {
+    const Second = client.constructor as new (cfg: unknown) => any;
+    const other = new Second({ connectionString: URL, connectionTimeoutMillis: 4000 });
+    await other.connect();
+    try {
+      await client.query(`INSERT INTO shops (id, name, type, language, created_at)
+        VALUES ('${LOCK_SHOP}', 'Lock Store', 'kirana', 'en', '${NOW}') ON CONFLICT DO NOTHING`);
+      await client.query(`DELETE FROM days WHERE shop_id = '${LOCK_SHOP}'`).catch(() => undefined);
+      await client.query(`INSERT INTO days (shop_id, date, state, opening_cash, created_at)
+        VALUES ('${LOCK_SHOP}', '${LOCK_DAY}', 'open', 0, '${NOW}') ON CONFLICT DO NOTHING`);
+
+      await client.query('BEGIN');
+      await client.query(`INSERT INTO entries (id, shop_id, day_id, section, amount, mode, created_at, source)
+        VALUES ('01890000-0000-7000-8000-0000000000a9', '${LOCK_SHOP}', '${LOCK_DAY}', 'cash_sales', 1, 'cash', '${NOW}', 'manual')`);
+
+      let closed = false;
+      const closing = other
+        .query(`UPDATE days SET state = 'closed', counted_cash = 0, closed_at = '${NOW}'
+                WHERE shop_id = '${LOCK_SHOP}' AND date = '${LOCK_DAY}'`)
+        .then(() => (closed = true));
+      await new Promise((r) => setTimeout(r, 400));
+      expect(closed, 'the close must wait for the insert that read the day as open').toBe(false);
+
+      await client.query('COMMIT');
+      await closing;
+      expect(closed).toBe(true);
+
+      const stored = await client.query(`SELECT count(*)::int AS n FROM entries WHERE shop_id = '${LOCK_SHOP}' AND day_id = '${LOCK_DAY}'`);
+      expect(stored.rows[0].n).toBe(1);
+      await expect(
+        client.query(`INSERT INTO entries (id, shop_id, day_id, section, amount, mode, created_at, source)
+          VALUES ('01890000-0000-7000-8000-0000000000aa', '${LOCK_SHOP}', '${LOCK_DAY}', 'cash_sales', 1, 'cash', '${NOW}', 'manual')`),
+      ).rejects.toThrow(/closed/);
+    } finally {
+      await client.query('ROLLBACK').catch(() => undefined);
+      await other.end().catch(() => undefined);
+    }
+  }, 30_000);
 });

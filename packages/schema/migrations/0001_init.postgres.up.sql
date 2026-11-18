@@ -57,13 +57,15 @@ CREATE TABLE days (
   difference_reason  TEXT,
   closed_at          TIMESTAMPTZ,
   created_at         TIMESTAMPTZ NOT NULL,
+  starts_at          TEXT NOT NULL DEFAULT '00:00',
   PRIMARY KEY (shop_id, date),
   CONSTRAINT days_state_ck   CHECK (state IN ('not_started', 'open', 'ready', 'closed', 'not_closed')),
   CONSTRAINT days_opening_ck CHECK (opening_cash IS NULL OR (opening_cash >= 0)),
   CONSTRAINT days_counted_ck CHECK (counted_cash IS NULL OR (counted_cash >= 0)),
   CONSTRAINT days_closed_ck  CHECK (
     state <> 'closed' OR (counted_cash IS NOT NULL AND closed_at IS NOT NULL)
-  )
+  ),
+  CONSTRAINT days_starts_at_ck CHECK ((starts_at ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'))
 );
 
 CREATE TABLE entries (
@@ -77,10 +79,11 @@ CREATE TABLE entries (
   due_date        DATE,
   label           TEXT,
   corrects_day_id DATE,
+  refers_to_entry_id UUID,
   created_at      TIMESTAMPTZ NOT NULL,
   source          TEXT NOT NULL DEFAULT 'manual',
   device_id       UUID,
-  CONSTRAINT entries_section_ck CHECK (section IN ('cash_sales', 'upi_sales', 'udhar_sales', 'expense', 'purchase', 'udhar_collection', 'party_payment', 'withdrawal')),
+  CONSTRAINT entries_section_ck CHECK (section IN ('cash_sales', 'upi_sales', 'udhar_sales', 'expense', 'purchase', 'udhar_collection', 'party_payment', 'withdrawal', 'sales_return', 'exchange_out', 'exchange_receipt', 'refund_paid')),
   CONSTRAINT entries_source_ck  CHECK (source IN ('manual', 'imported')),
   CONSTRAINT entries_amount_ck  CHECK ((amount >= 0)),
   CONSTRAINT entries_mode_ck CHECK (
@@ -92,6 +95,10 @@ CREATE TABLE entries (
       OR (section = 'udhar_collection' AND mode IN ('cash', 'upi', 'other'))
       OR (section = 'party_payment' AND mode IN ('cash', 'upi', 'other'))
       OR (section = 'withdrawal' AND mode IN ('cash', 'upi'))
+      OR (section = 'sales_return' AND mode IN ('other'))
+      OR (section = 'exchange_out' AND mode IN ('other'))
+      OR (section = 'exchange_receipt' AND mode IN ('cash', 'upi', 'udhar'))
+      OR (section = 'refund_paid' AND mode IN ('cash', 'upi', 'udhar'))
   ),
   CONSTRAINT entries_due_ck CHECK (
     due_date IS NULL OR (section = 'purchase' AND mode = 'udhar')
@@ -100,7 +107,17 @@ CREATE TABLE entries (
     (section IN ('udhar_sales', 'udhar_collection', 'party_payment') AND party_id IS NOT NULL)
     OR (section = 'purchase')
     OR (section IN ('cash_sales', 'upi_sales', 'expense', 'withdrawal') AND party_id IS NULL)
+    OR (section IN ('sales_return', 'exchange_out'))
+    OR (section IN ('exchange_receipt', 'refund_paid') AND (mode <> 'udhar' OR party_id IS NOT NULL))
   ),
+  -- EX-3: an event leg always points at its row; a closing-section row only as a correction.
+  CONSTRAINT entries_refers_ck CHECK (
+    (section IN ('sales_return', 'exchange_out', 'exchange_receipt', 'refund_paid') AND refers_to_entry_id IS NOT NULL)
+    OR (section IN ('cash_sales', 'upi_sales', 'udhar_sales', 'expense', 'purchase', 'udhar_collection', 'party_payment', 'withdrawal') AND (refers_to_entry_id IS NULL OR corrects_day_id IS NOT NULL))
+  ),
+  CONSTRAINT entries_shop_id_uq UNIQUE (shop_id, id),
+  -- Same shop, by construction: a link can never reach another shop's ledger (S-11).
+  CONSTRAINT entries_refers_fk FOREIGN KEY (shop_id, refers_to_entry_id) REFERENCES entries(shop_id, id),
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
@@ -126,10 +143,99 @@ CREATE TABLE section_skips (
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
+CREATE TABLE upi_confirmations (
+  id            UUID PRIMARY KEY,
+  shop_id       UUID NOT NULL REFERENCES shops(id),
+  day_id        DATE NOT NULL,
+  entry_id      UUID NOT NULL REFERENCES entries(id),
+  batch_id      UUID,
+  confirmed_at  TIMESTAMPTZ NOT NULL,
+  CONSTRAINT upi_confirmations_once UNIQUE (shop_id, entry_id),
+  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+);
+
+CREATE TABLE adjustments (
+  id          UUID PRIMARY KEY,
+  shop_id     UUID NOT NULL REFERENCES shops(id),
+  day_id      DATE NOT NULL,
+  type        TEXT NOT NULL,
+  amount      BIGINT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL,
+  device_id   UUID,
+  CONSTRAINT adjustments_type_ck   CHECK (type IN ('counterfeit_note', 'rounding_given', 'rounding_kept', 'home_use', 'stock_written_off')),
+  CONSTRAINT adjustments_amount_ck CHECK ((amount >= 0) AND amount > 0),
+  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+);
+
+CREATE TABLE items (
+  id          UUID PRIMARY KEY,
+  shop_id     UUID NOT NULL REFERENCES shops(id),
+  name        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL,
+  CONSTRAINT items_name_ck CHECK (length(name) BETWEEN 1 AND 60),
+  CONSTRAINT items_shop_id_uq UNIQUE (shop_id, id)
+);
+
+CREATE TABLE item_lines (
+  id          UUID PRIMARY KEY,
+  shop_id     UUID NOT NULL REFERENCES shops(id),
+  day_id      DATE NOT NULL,
+  entry_id    UUID NOT NULL,
+  item_id     UUID,
+  quantity    INTEGER NOT NULL,
+  amount      BIGINT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL,
+  device_id   UUID,
+  CONSTRAINT item_lines_quantity_ck CHECK (quantity BETWEEN 1 AND 99999),
+  CONSTRAINT item_lines_amount_ck CHECK ((amount >= 0) AND amount > 0),
+  -- Same shop, by construction (S-11): a line can never reach another shop's sale or list.
+  FOREIGN KEY (shop_id, entry_id) REFERENCES entries(shop_id, id),
+  FOREIGN KEY (shop_id, item_id) REFERENCES items(shop_id, id),
+  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+);
+
+CREATE TABLE party_credit_limits (
+  id           UUID PRIMARY KEY,
+  shop_id      UUID NOT NULL REFERENCES shops(id),
+  party_id     UUID NOT NULL REFERENCES parties(id),
+  limit_paise  BIGINT,
+  set_at       TIMESTAMPTZ NOT NULL,
+  CONSTRAINT party_credit_limits_ck CHECK (limit_paise IS NULL OR ((limit_paise >= 0) AND limit_paise > 0))
+);
+
 CREATE TABLE rate_events (
   id      BIGSERIAL PRIMARY KEY,
   bucket  TEXT NOT NULL,
   at      TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE plan_purchases (
+  purchase_token  TEXT PRIMARY KEY,
+  shop_id         UUID NOT NULL REFERENCES shops(id),
+  account_id      TEXT NOT NULL,
+  product_id      TEXT NOT NULL,
+  bound_at        TIMESTAMPTZ NOT NULL,
+  CONSTRAINT plan_purchases_token_ck CHECK (length(purchase_token) BETWEEN 1 AND 512)
+);
+
+CREATE TABLE plan_purchase_states (
+  id              BIGSERIAL PRIMARY KEY,
+  purchase_token  TEXT NOT NULL REFERENCES plan_purchases(purchase_token),
+  google_state    TEXT NOT NULL,
+  expires_at      TIMESTAMPTZ,
+  auto_renewing   BOOLEAN NOT NULL,
+  base_plan_id    TEXT,
+  acknowledged    BOOLEAN NOT NULL,
+  snapshot        TEXT NOT NULL,
+  fetched_at      TIMESTAMPTZ NOT NULL,
+  CONSTRAINT plan_purchase_states_state_ck CHECK (google_state IN ('SUBSCRIPTION_STATE_UNSPECIFIED', 'SUBSCRIPTION_STATE_PENDING', 'SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_PAUSED', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_ON_HOLD', 'SUBSCRIPTION_STATE_CANCELED', 'SUBSCRIPTION_STATE_EXPIRED', 'SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED'))
+);
+
+CREATE TABLE plan_previews (
+  shop_id     UUID PRIMARY KEY REFERENCES shops(id),
+  started_at  TIMESTAMPTZ NOT NULL,
+  ends_at     TIMESTAMPTZ NOT NULL,
+  CONSTRAINT plan_previews_span_ck CHECK (ends_at > started_at)
 );
 
 CREATE INDEX entries_day_idx ON entries (shop_id, day_id);
@@ -140,11 +246,27 @@ CREATE INDEX entries_due_idx ON entries (shop_id, due_date);
 
 CREATE INDEX entries_corrects_idx ON entries (shop_id, corrects_day_id);
 
+CREATE INDEX entries_refers_idx ON entries (shop_id, refers_to_entry_id);
+
 CREATE INDEX days_state_idx ON days (shop_id, state, date);
 
 CREATE INDEX parties_kind_idx ON parties (shop_id, kind);
 
+CREATE INDEX upi_confirmations_day_idx ON upi_confirmations (shop_id, day_id);
+
+CREATE INDEX adjustments_day_idx ON adjustments (shop_id, day_id);
+
+CREATE INDEX item_lines_day_idx ON item_lines (shop_id, day_id);
+
+CREATE INDEX item_lines_entry_idx ON item_lines (shop_id, entry_id);
+
+CREATE INDEX party_credit_limits_party_idx ON party_credit_limits (shop_id, party_id);
+
 CREATE INDEX rate_events_bucket_idx ON rate_events (bucket, at);
+
+CREATE INDEX plan_purchases_shop_idx ON plan_purchases (shop_id);
+
+CREATE INDEX plan_purchase_states_token_idx ON plan_purchase_states (purchase_token, fetched_at);
 
 CREATE OR REPLACE FUNCTION entries_append_only() RETURNS TRIGGER AS $$
 BEGIN
@@ -163,6 +285,10 @@ CREATE OR REPLACE FUNCTION days_closed_immutable() RETURNS TRIGGER AS $$
 BEGIN
   IF OLD.state = 'closed' THEN
     RAISE EXCEPTION 'a closed day is immutable: post a correction on the open day (decision D7)';
+  END IF;
+  -- Decision 1: a day keeps the boundary it was created under.
+  IF NEW.starts_at IS DISTINCT FROM OLD.starts_at THEN
+    RAISE EXCEPTION 'a day keeps the start time it was created under (decision 1)';
   END IF;
   RETURN NEW;
 END;
@@ -187,6 +313,94 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER entries_no_insert_into_closed_day
 BEFORE INSERT ON entries
 FOR EACH ROW EXECUTE FUNCTION entries_reject_closed_day();
+
+CREATE OR REPLACE FUNCTION day_facts_append_only() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'DELETE' AND current_setting('swafto.erasure', true) = 'on' THEN
+    RETURN OLD;
+  END IF;
+  RAISE EXCEPTION '% is append-only: add another, never % (D1)', TG_TABLE_NAME, TG_OP;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION day_facts_reject_closed_day() RETURNS TRIGGER AS $$
+DECLARE day_state TEXT;
+BEGIN
+  SELECT state INTO day_state FROM days
+    WHERE shop_id = NEW.shop_id AND date = NEW.day_id;
+  IF day_state = 'closed' THEN
+    RAISE EXCEPTION 'that day is closed: a closed day is frozen (decision D7)';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER upi_confirmations_no_update_or_delete
+BEFORE UPDATE OR DELETE ON upi_confirmations
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER upi_confirmations_no_insert_into_closed_day
+BEFORE INSERT ON upi_confirmations
+FOR EACH ROW EXECUTE FUNCTION day_facts_reject_closed_day();
+
+CREATE TRIGGER adjustments_no_update_or_delete
+BEFORE UPDATE OR DELETE ON adjustments
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER adjustments_no_insert_into_closed_day
+BEFORE INSERT ON adjustments
+FOR EACH ROW EXECUTE FUNCTION day_facts_reject_closed_day();
+
+CREATE TRIGGER item_lines_no_update_or_delete
+BEFORE UPDATE OR DELETE ON item_lines
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER item_lines_no_insert_into_closed_day
+BEFORE INSERT ON item_lines
+FOR EACH ROW EXECUTE FUNCTION day_facts_reject_closed_day();
+
+CREATE TRIGGER plan_purchases_no_update_or_delete
+BEFORE UPDATE OR DELETE ON plan_purchases
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER plan_purchase_states_no_update_or_delete
+BEFORE UPDATE OR DELETE ON plan_purchase_states
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER plan_previews_no_update_or_delete
+BEFORE UPDATE OR DELETE ON plan_previews
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER party_credit_limits_no_update_or_delete
+BEFORE UPDATE OR DELETE ON party_credit_limits
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE TRIGGER items_no_update_or_delete
+BEFORE UPDATE OR DELETE ON items
+FOR EACH ROW EXECUTE FUNCTION day_facts_append_only();
+
+CREATE OR REPLACE FUNCTION item_lines_fit_sale() RETURNS TRIGGER AS $$
+DECLARE sale_amount BIGINT; already BIGINT;
+BEGIN
+  SELECT amount INTO sale_amount FROM entries
+    WHERE shop_id = NEW.shop_id AND id = NEW.entry_id AND day_id = NEW.day_id
+      AND section IN ('cash_sales', 'upi_sales', 'udhar_sales')
+    FOR UPDATE;
+  IF sale_amount IS NULL THEN
+    RAISE EXCEPTION 'an item line belongs to a sale of its own day (PR-1)';
+  END IF;
+  SELECT COALESCE(SUM(amount), 0) INTO already FROM item_lines
+    WHERE shop_id = NEW.shop_id AND entry_id = NEW.entry_id;
+  IF already + NEW.amount > sale_amount THEN
+    RAISE EXCEPTION 'the item lines would come to more than the sale (PR-1)';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER item_lines_fit_sale
+BEFORE INSERT ON item_lines
+FOR EACH ROW EXECUTE FUNCTION item_lines_fit_sale();
 
 ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
 
@@ -216,6 +430,41 @@ ALTER TABLE section_skips FORCE ROW LEVEL SECURITY;
 CREATE POLICY section_skips_tenant_isolation ON section_skips
   USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
 
+ALTER TABLE upi_confirmations ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE upi_confirmations FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY upi_confirmations_tenant_isolation ON upi_confirmations
+  USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
+
+ALTER TABLE adjustments ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE adjustments FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY adjustments_tenant_isolation ON adjustments
+  USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
+
+ALTER TABLE items ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE items FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY items_tenant_isolation ON items
+  USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
+
+ALTER TABLE item_lines ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE item_lines FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY item_lines_tenant_isolation ON item_lines
+  USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
+
+ALTER TABLE party_credit_limits ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE party_credit_limits FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY party_credit_limits_tenant_isolation ON party_credit_limits
+  USING (shop_id = current_setting('swafto.shop_id', true)::uuid);
+
 ALTER TABLE devices ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE devices FORCE ROW LEVEL SECURITY;
@@ -240,3 +489,19 @@ CREATE POLICY consents_tenant_isolation ON consents
 REVOKE UPDATE, DELETE ON entries FROM PUBLIC;
 
 REVOKE UPDATE, DELETE ON consents FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON plan_purchases FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON plan_purchase_states FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON plan_previews FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON items FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON upi_confirmations FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON adjustments FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON item_lines FROM PUBLIC;
+
+REVOKE UPDATE, DELETE ON party_credit_limits FROM PUBLIC;

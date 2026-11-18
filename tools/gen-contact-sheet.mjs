@@ -44,6 +44,8 @@ const FONTS = [
   ['AnekOdia-Regular', 'AnekOdia-Regular.ttf'],
   ['AnekOdia-Medium', 'AnekOdia-Medium.ttf'],
   ['AnekOdia-Bold', 'AnekOdia-Bold.ttf'],
+  // The icon font (M3): without it every Icon renders as an empty box in the sheet.
+  ['SwaftoIcons', 'SwaftoIcons.ttf'],
 ];
 
 /**

@@ -61,7 +61,27 @@ const screensBuilt = (() => {
     for (const e of readdirSync(d)) {
       const p = join(d, e);
       if (statSync(p).isDirectory()) n += walk(p);
-      else if (/^[TPRX]\d{1,2}\.tsx$/.test(e)) n += 1;
+      /*
+       * `S` IS HERE BECAUSE EIGHT SCREEN FILES WERE COUNTED BY NOTHING.
+       *
+       * The settings family - S1 through S8, among them the in-app deletion
+       * path Google Play requires and the grievance officer the DPDP Act
+       * requires - sat on disk invisible to this walk, so `screensBuilt`
+       * reported 19 while 27 screen files existed. A cross-document check whose
+       * idea of "the repository" silently excludes a third of the screens is
+       * agreeing about the wrong thing.
+       *
+       * The identical omission existed in `check-traceability`'s
+       * `screensResolve` and was fixed in the same pass. Both regexes list
+       * prefixes by hand, so both go stale the moment anyone invents another.
+       */
+      // `M` (2026-10-26): M1, the Premium dashboard - a prefix the build map does not use.
+      /*
+       * `C` (C1 Ask, 2026-10-26) is the next prefix this comment predicted:
+       * without it the walk counted one screen fewer than DESIGN.md did.
+       */
+      // `I` (PR-1 items, 2026-10-26) went stale exactly as the paragraph above predicts.
+      else if (/^[CIMTPRSX]\d{1,2}\.tsx$/.test(e)) n += 1;
     }
     return n;
   };

@@ -1,3 +1,16 @@
+# Catch-all FIRST: later lines override earlier ones, so the specific
+# binary and injection rules below must come after it.
+#
+# The index is LF and every generator in tools/ writes LF. A Windows checkout
+# with core.autocrlf=true otherwise turns generated docs CRLF, and
+# check:generated fails on files whose content never changed (F-35, hit by
+# three agents in fresh worktrees).
+* text=auto eol=lf
+*.png binary
+*.jar binary
+*.keystore binary
+*.mp4 binary
+
 # core.autocrlf is true here, so the working tree is CRLF and the index is LF.
 # Two things in this repo are hashed, and both must survive that round trip.
 #

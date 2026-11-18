@@ -15,20 +15,16 @@
  * caller creates the entry through the IN1 parser, which is the only path that
  * refuses a credit sale naming nobody.
  */
-import { EntryForm, type CommitOption } from '../components/EntryForm.tsx';
+import { EntryForm } from '../components/EntryForm.tsx';
+import { FORM_A_COMMITS as COMMITS } from './entryRoutes.ts';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
 import type { RenderLanguage } from '../i18n/strings.ts';
 import type { KeypadKey } from '../components/Keypad.tsx';
 import type { Mode as PaymentMode, Paise } from '@swafto/formula-engine';
 import type { Store } from '../store/index.ts';
-
-/** Cash, UPI, credit. The mode decides the section, which is IN1's rule. */
-const COMMITS: readonly CommitOption[] = [
-  { labelKey: 'formA.mode.cash', section: 'cash_sales', mode: 'cash' },
-  { labelKey: 'formA.mode.upi', section: 'upi_sales', mode: 'upi' },
-  { labelKey: 'formA.mode.udhar', section: 'udhar_sales', mode: 'udhar' },
-];
+import type { NewPartyControls } from '../components/PartyPicker.tsx';
+import { allows, type Plan } from '../app/plan.ts';
 
 export interface FormAProps {
   readonly store: Store;
@@ -38,7 +34,40 @@ export interface FormAProps {
   readonly draftPaise?: Paise | null;
   readonly onKey?: (key: KeypadKey) => void;
   readonly onCommit?: (mode: PaymentMode) => void;
+  /**
+   * WHICH COMMIT IS LIVE, AND THE BACK DESTINATION.
+   *
+   * The payment mode stopped being a button that also writes the entry and
+   * became a segment that only chooses, so the choice now needs somewhere to
+   * live. It lives in the Session like every other piece of state - this screen
+   * holds nothing - and arrives here as a controlled value.
+   *
+   * It defaults to 0 rather than null on purpose: acceptance criterion 1 says
+   * the entry is committed in TWO taps from a cold start, and an unselected
+   * segment would cost a third on every entry.
+   */
+  readonly entryPartyId?: string | null;
+  /** USABILITY item 6: the entry this form just saved - said, and shown first. */
+  readonly savedId?: string | null;
+  readonly pickingParty?: boolean;
+  readonly onOpenPartyPicker?: () => void;
+  readonly onChooseParty?: (partyId: string) => void;
+  readonly onCancelPartyPicker?: () => void;
+  /** F-10: add a party from inside the picker. */
+  readonly newParty?: NewPartyControls | undefined;
+  readonly selectedCommit?: number;
+  readonly onSelectCommit?: (index: number) => void;
+  /** Explicit `| undefined`: the project runs `exactOptionalPropertyTypes`. */
+  readonly onBack?: (() => void) | undefined;
   readonly onRetry?: () => void;
+  /** T18: "Return or exchange a sale", one ghost action under the lines (EX-7). */
+  readonly onOpenReturns?: (() => void) | undefined;
+  /**
+   * PR-1 (Premium): "Add items to a sale", to I1. ABSENT on a free plan - the
+   * gate is `allows(plan, 'items')` and nothing else.
+   */
+  readonly plan?: Plan;
+  readonly onOpenItems?: (() => void) | undefined;
 }
 
 export function FormA({
@@ -49,7 +78,20 @@ export function FormA({
   draftPaise = null,
   onKey = () => {},
   onCommit = () => {},
+  entryPartyId = null,
+  savedId = null,
+  pickingParty = false,
+  onOpenPartyPicker = () => {},
+  onChooseParty = () => {},
+  onCancelPartyPicker = () => {},
+  newParty,
+  selectedCommit = 0,
+  onSelectCommit = () => {},
+  onBack,
   onRetry = () => {},
+  onOpenReturns,
+  plan = 'free',
+  onOpenItems,
 }: FormAProps) {
   return (
     <EntryForm
@@ -67,7 +109,23 @@ export function FormA({
       draftPaise={draftPaise}
       onKey={onKey}
       onCommit={(option) => onCommit(option.mode)}
+      entryPartyId={entryPartyId}
+      savedId={savedId}
+      pickingParty={pickingParty}
+      onOpenPartyPicker={onOpenPartyPicker}
+      onChooseParty={onChooseParty}
+      onCancelPartyPicker={onCancelPartyPicker}
+      newParty={newParty}
+      selectedCommit={selectedCommit}
+      onSelectCommit={onSelectCommit}
+      onBack={onBack}
       onRetry={onRetry}
+      secondaryAction={
+        onOpenReturns === undefined ? undefined : { labelKey: 't18.open', onPress: onOpenReturns }
+      }
+      itemsAction={
+        onOpenItems === undefined || !allows(plan, 'items') ? undefined : { labelKey: 't7.items', onPress: onOpenItems }
+      }
     />
   );
 }

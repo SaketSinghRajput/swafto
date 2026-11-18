@@ -6,13 +6,23 @@
   "main": "./src/index.tsx",
   "description": "The Retail Desk app. Offline-first; the local store is authoritative (ADR-018).",
   "dependencies": {
+    "@op-engineering/op-sqlite": "18.2.5",
+    "@swafto/fixtures": "*",
     "@swafto/formula-engine": "*",
     "@swafto/values": "*",
-    "@swafto/fixtures": "*",
-    "react": "^19.1.0",
-    "react-native": "^0.81.4"
+    "react": "19.1.0",
+    "react-native": "^0.81.4",
+    "react-native-get-random-values": "2.0.0",
+    "react-native-mmkv": "4.3.2",
+    "react-native-nitro-modules": "0.35.9"
   },
   "scripts": {
     "test": "vitest run"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "20.0.0",
+    "@react-native-community/cli-platform-android": "20.0.0",
+    "@react-native/babel-preset": "0.81.4",
+    "@react-native/metro-config": "0.81.4"
   }
 }

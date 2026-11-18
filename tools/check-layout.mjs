@@ -49,7 +49,32 @@ const FONT_DIR = resolve('apps/mobile/assets/fonts');
  */
 const SCALES = [1, CHROME_FONT_SCALE_CAP, 2];
 
-const FONTS = ['AnekOdia-Regular', 'AnekOdia-Medium', 'AnekOdia-Bold'];
+// SwaftoIcons: the icon font (M3). Unloaded, every icon would measure as an empty box.
+const FONTS = ['AnekOdia-Regular', 'AnekOdia-Medium', 'AnekOdia-Bold', 'SwaftoIcons'];
+
+/**
+ * HT-51: controls that must be in view without scrolling, wherever a case
+ * renders them. Measured at EVERY scale, 2 included: the device defect was at
+ * font 2.0, so a check that stopped at the cap would have passed it.
+ */
+const IN_VIEW = ['t7-items', 't7-secondary'];
+
+/**
+ * HT-60: the running total of every entry form. Moving the links up hid the
+ * Sales total at font 2.0 - a fix for one element that hid the next - so the
+ * figure is measured too: in EVERY case at scale 1, and at every scale in
+ * Comfort mode, which is where the device found it.
+ *
+ * WHY NOT FOCUS AT 1.5 AND 2, SAID RATHER THAN HIDDEN. Focus has larger type
+ * tokens, and at the cap its fixed footer (draft, mode, keypad) leaves the
+ * body 0-105px here - too little for the links and a line of uncapped money
+ * together, whatever the order. The T7 total was out of view in those cases
+ * before HT-60 too (measured 2026-10-26). The links keep priority because
+ * their check above is unscoped. That is an open defect, not a pass.
+ */
+const IN_VIEW_TOTALS = ['t7-headline', 't8-headline', 't9-headline', 't10-headline'];
+const inViewFor = (panel, scale) =>
+  panel.display === 'comfort' || scale === 1 ? [...IN_VIEW, ...IN_VIEW_TOTALS] : IN_VIEW;
 
 function fontFaces() {
   return FONTS.map((family) => {
@@ -132,19 +157,29 @@ const page = (css, body) =>
  * a failure that cannot happen on a device, because chrome never reaches scale 2.
  * One known-false row is all it takes to teach somebody to skip the output, so the
  * rule is applied here instead: money scales without limit, everything else stops
- * at the cap.
+ * at the cap. Body copy is the second exception (USABILITY item 9): a Text that
+ * spreads `t.bodyText` has no ceiling on the device, and carries
+ * data-font-scale="body" here so it is scaled the whole way too.
  *
  * Money is identified by the rupee sign, which is exactly what `Money` renders and
  * nothing else does. Only LEAF elements are touched - an ancestor carries the text
  * of its children, and scaling both would compound.
  */
-function measureInPage([scale, viewportWidth, cap]) {
+function measureInPage([scale, viewportWidth, cap, inView]) {
   const nodes = [...document.querySelectorAll('*')];
   if (scale !== 1) {
     for (const el of nodes) {
       if (el.children.length > 0) continue;
       const isMoney = (el.textContent || '').includes('\u20B9');
-      const effective = isMoney ? scale : Math.min(scale, cap);
+      /*
+       * BODY COPY GROWS LIKE MONEY (USABILITY item 9). A body Text carries
+       * `t.bodyText`, whose `dataSet` renders as data-font-scale="body" and whose
+       * `maxFontSizeMultiplier: 0` lifts the cap on the device. Scaling it only to
+       * the cap here would measure a layout the phone never draws - this makes
+       * the instrument stricter, never looser.
+       */
+      const isBody = el.closest('[data-font-scale="body"]') !== null;
+      const effective = isMoney || isBody ? scale : Math.min(scale, cap);
       if (effective === 1) continue;
       const cs = getComputedStyle(el);
       const size = parseFloat(cs.fontSize);
@@ -173,8 +208,29 @@ function measureInPage([scale, viewportWidth, cap]) {
     }
   }
 
+  /*
+   * HT-51: A LINK THE SCREEN OFFERS, BELOW ITS OWN SCROLLING BODY. A device at
+   * font 2.0 found "Add items to a sale" under the Sales form's 603px body,
+   * reachable only by scrolling a strip. Measured against the body's visible
+   * bottom (the body, clipped to the screen), at every scale including 2.
+   */
+  const linksOutOfView = [];
+  const measured = [];
+  for (const id of inView) {
+    const el = document.querySelector('[data-testid="' + id + '"]');
+    const body = el?.closest('[data-testid$="-body"]');
+    if (!el || !body) continue;
+    measured.push(id);
+    const by = Math.round(
+      el.getBoundingClientRect().bottom - Math.min(body.getBoundingClientRect().bottom, window.innerHeight),
+    );
+    if (by > 0) linksOutOfView.push({ node: id, by });
+  }
+
   const keypad = document.querySelector('[data-testid="keypad"]');
   return {
+    linksOutOfView,
+    measured,
     scrollWidth: document.documentElement.scrollWidth,
     horizontalOverflowPx: Math.max(0, document.documentElement.scrollWidth - viewportWidth),
     chromeBelowFoldPx: keypad
@@ -197,7 +253,7 @@ for (const scale of SCALES) {
     const p = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 1 });
     await p.setContent(page(panel.css, panel.html), { waitUntil: 'load' });
     await p.evaluate(() => document.fonts.ready);
-    const m = await p.evaluate(measureInPage, [scale, VIEWPORT.width, CHROME_FONT_SCALE_CAP]);
+    const m = await p.evaluate(measureInPage, [scale, VIEWPORT.width, CHROME_FONT_SCALE_CAP, inViewFor(panel, scale)]);
     await p.close();
 
     results.push({ id: panel.id, scale, ...m });
@@ -206,6 +262,12 @@ for (const scale of SCALES) {
       failures.push(
         panel.id + ' at font scale ' + scale + ' is ' + m.horizontalOverflowPx +
           'px wider than the screen',
+      );
+    }
+    for (const o of m.linksOutOfView) {
+      failures.push(
+        panel.id + ' at font scale ' + scale + ': ' + o.node + ' ends ' + o.by +
+          'px below the scrolling body - he has to scroll to find it',
       );
     }
     for (const o of m.overflowing) {
@@ -224,6 +286,17 @@ for (const scale of SCALES) {
 }
 
 await browser.close();
+
+/*
+ * A control in IN_VIEW that no case ever rendered is a check that has quietly
+ * stopped checking - a renamed testID or a dropped registry case would pass
+ * every scale above while measuring nothing.
+ */
+for (const id of [...IN_VIEW, ...IN_VIEW_TOTALS]) {
+  if (!results.some((r) => r.measured?.includes(id))) {
+    failures.push(id + ' was never rendered inside a scrolling body by any case, so its in-view check measured nothing');
+  }
+}
 writeFileSync(join(OUT, 'layout.json'), JSON.stringify({ VIEWPORT, SCALES, results }, null, 2));
 
 console.log('  cases measured     : ' + panels.length + ' x ' + SCALES.length + ' font scales');

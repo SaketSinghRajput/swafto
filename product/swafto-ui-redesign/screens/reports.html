@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="or"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAFTO Retail Desk - Mitra - reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Anek Odia';font-weight:400;src:local('Anek Odia Regular'),url('../../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:500;src:local('Anek Odia Medium'),url('../../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf')}
+@font-face{font-family:'Anek Odia';font-weight:700;src:local('Anek Odia Bold'),url('../../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf')}
+/* Mitra screen kit: palette from concepts/C-mitra.html. CSS variable names are placeholders until DESIGN-SYSTEM-V2.md tokens land (see FLOWS.md "Token map"). */
+:root{--ff:'Anek Odia','Noto Sans Oriya',system-ui,sans-serif;--z:1;--zc:1;
+--bg:#FFF6EA;--surface:#FFFFFF;--raised:#F6EADA;--ink:#2B2118;--muted:#5E4E41;--edge:#8A7560;--rule:#E6D5BF;
+--brand:#0A6B66;--act:#0A6B66;--onact:#FFFFFF;--sel:#0A6B66;--onsel:#FFFFFF;--pos:#1E6B2E;--neg:#A3410C;
+--waitbg:#FFE9B8;--waitfg:#6B4400;--hbg:#0A6B66;--hfg:#FFFFFF;--nbg:#FFFFFF;--nfg:#2B2118;--nselbg:#0A6B66;--nselfg:#FFFFFF;--sbg:#0A6B66;--sfg:#FFFFFF;
+--t1bg:#DDF3EF;--t1ic:#0A6B66;--t2bg:#EDE4F7;--t2ic:#5B2E91;--t3bg:#E3F2D6;--t3ic:#2F6B1B;--t4bg:#FDE6D3;--t4ic:#8F4408;--t5bg:#EFE7DC;--t5ic:#5E4E41;--scrim:rgba(43,33,24,.55)}
+body[data-theme="focus"]{--bg:#1A1410;--surface:#261E18;--raised:#30261E;--ink:#F6EDE2;--muted:#BFAF9E;--edge:#9C8A78;--rule:#3E3126;--brand:#4FC3BA;--act:#4FC3BA;--onact:#10201F;--sel:#4FC3BA;--onsel:#10201F;--pos:#6FD48A;--neg:#F2A06A;--waitbg:#3A2E12;--waitfg:#F2CF7A;--hbg:#261E18;--hfg:#F6EDE2;--nbg:#261E18;--nfg:#F6EDE2;--nselbg:#4FC3BA;--nselfg:#10201F;--sbg:#261E18;--sfg:#F6EDE2;--t1bg:#12302D;--t1ic:#7EE0D8;--t2bg:#2A1F3D;--t2ic:#CDB2F0;--t3bg:#1F3018;--t3ic:#A5DB86;--t4bg:#3A2412;--t4ic:#FFB27A;--t5bg:#30261E;--t5ic:#BFAF9E;--scrim:rgba(0,0,0,.65)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DADADA;color:#222;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px}
+.page-head{max-width:1500px;margin:0 auto;padding:20px 24px 4px}
+.page-head h1{font-size:26px;line-height:1.3}.page-head p{margin-top:6px;line-height:1.5;max-width:960px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;align-items:center}
+.ctl .grp{display:flex;border:2px solid #222;border-radius:8px;overflow:hidden}
+.ctl .grp button{padding:9px 14px;font:600 14px system-ui;background:#fff;color:#222;border:0;cursor:pointer}
+.ctl .grp button[aria-pressed="true"]{background:#222;color:#fff}
+.toc{max-width:1500px;margin:8px auto 0;padding:0 24px;font-size:14px;line-height:1.9}
+.toc a{display:inline-block;margin:0 6px 4px 0;padding:2px 10px;border:1px solid #888;border-radius:14px;color:#222;text-decoration:none;background:#fff}
+.toc a.new{border-color:#b00;border-style:dashed}
+.stage{max-width:1500px;margin:0 auto;padding:12px 24px 40px;display:flex;flex-direction:column;gap:30px}
+.card{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;background:#EDEDED;border-radius:16px;padding:18px;scroll-margin-top:12px}
+.card.hl{outline:4px solid #0A6B66}
+.fwrap h3{font-size:15px;margin:0 0 8px 6px;color:#333}
+.bezel{background:#15171a;border-radius:44px;padding:12px;width:384px}
+.screen{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:calc(17px*var(--z));line-height:1.8;font-weight:500;font-synthesis:none}
+.status{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font:600 13px system-ui;background:var(--sbg);color:var(--sfg)}
+.gesture{height:20px;flex:none;display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.gesture i{width:110px;height:4px;border-radius:2px;background:var(--ink);opacity:.55}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.note{flex:1;min-width:320px;max-width:700px;background:#fff;border-radius:12px;padding:14px 18px;line-height:1.5;font-size:14px}
+.note h3{font-size:18px;margin-bottom:6px}.note dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px}
+.note dt{font-weight:700;color:#444}.note dd{margin:0}.note code{background:#eee;padding:0 4px;font-size:13px}
+.note .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;margin-right:6px;background:#0A6B66;color:#fff}
+.note .tag.new{background:#b00}.note .tag.chg{background:#8F4408}
+.note .keys{margin-top:6px;font-size:12px;color:#555;word-break:break-word}
+button{font:inherit;color:inherit;background:none;border:0;text-align:inherit;cursor:pointer;line-height:inherit}
+b{font-weight:700}small{font-size:1em;font-weight:400}.grow{flex:1}ul{list-style:none}
+.m{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1;font-weight:700;white-space:nowrap;line-height:1.4}
+.m .sg{margin-right:1px}.pos{color:var(--pos)}.neg{color:var(--neg)}.ico{flex:none;display:block}
+.newc{border-bottom:2px dashed #c00}
+body[data-lang="od"] .newc::after,body[data-lang="hi"] .newc::after{content:" [NEW en]";font:700 10px system-ui;color:#c00;white-space:nowrap}
+/* chrome */
+.top{min-height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--hbg);color:var(--hfg);border-radius:0 0 24px 24px;padding-bottom:6px;font-size:calc(17px*var(--zc))}
+.top h1{font-size:1.235em;font-weight:700;line-height:1.5}.top .sn{font-size:1.235em;font-weight:700;line-height:1.5}.top .dt{line-height:1.5}
+.back{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;margin-left:-8px}
+.chip{min-height:56px;min-width:56px;display:flex;align-items:center;gap:6px;padding:0 12px;max-width:196px;line-height:1.4;font-weight:500;border-radius:28px}
+.chip.ok{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}.chip.wait{background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:8px}
+.tabs{flex:none;display:flex;background:var(--nbg);color:var(--nfg);border-radius:24px 24px 0 0;border-top:2px solid var(--rule);padding:4px 6px 0;font-size:calc(17px*var(--zc))}
+.tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.4;border-radius:20px;margin:2px}
+.tab.on{background:var(--nselbg);color:var(--nselfg);font-weight:700}
+/* today */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.tile{min-height:76px;min-width:56px;display:flex;flex-direction:row;align-items:center;gap:10px;padding:0 12px;line-height:1.4;border-radius:20px;font-size:1.12em;background:var(--t5bg);color:var(--ink);text-align:left;font-weight:700}
+.ti{width:48px;height:48px;flex:none;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.t-sale{background:var(--act);color:var(--onact)}.t-sale .ti{color:var(--act)}
+.t-udhar{background:var(--t2bg)}.t-udhar .ti{color:var(--t2ic)}.t-collect{background:var(--t3bg)}.t-collect .ti{color:var(--t3ic)}.t-expense{background:var(--t4bg)}.t-expense .ti{color:var(--t4ic)}
+.t-more{grid-column:1/-1;min-height:56px;justify-content:center}.t-more .ti{width:36px;height:36px;color:var(--t5ic)}
+.tile.off{opacity:1;background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}.tile.off .ti{color:var(--muted)}
+.hero{margin:0 12px;padding:12px;background:var(--surface);border:2px solid var(--rule);border-radius:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.12em}
+.hero .hi{width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none}
+.hero .fig{padding:2px 0 6px}.hero-fig{font-size:2.1em}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;line-height:1.4}.ln .k{display:flex;align-items:center;gap:6px}
+.hero .ln{border-top:2px dashed var(--rule)}
+.dirico{border-radius:50%;padding:2px;width:28px;height:28px}.ln.in .dirico{background:var(--t3bg);color:var(--t3ic)}.ln.out .dirico{background:var(--t4bg);color:var(--t4ic)}
+.facts{margin:8px 12px 0}.facts .ln{min-height:52px;border-bottom:2px solid var(--rule)}.link{width:100%;text-align:left;min-height:56px}
+.closecard{margin:12px;width:calc(100% - 24px);display:grid;grid-template-columns:1fr auto;grid-template-areas:"main chev" "bar bar";align-items:center;gap:4px 8px;padding:6px 12px 12px;min-height:72px;text-align:left;background:var(--raised);border:2px solid var(--edge);border-radius:24px}
+.closecard.quiet2{background:var(--surface);border-color:var(--rule)}
+.cc-main{grid-area:main;display:flex;flex-direction:column;line-height:1.4}.cc-t{font-weight:700;font-size:1.06em}.cc-c{grid-area:chev;display:flex}.closecard .bar{grid-area:bar}
+.bar{display:flex;gap:3px}.bar i{flex:1;height:10px;background:var(--rule);border-radius:5px}.bar i.on{background:var(--brand)}
+/* controls */
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--edge);background:var(--raised);min-height:56px;border-radius:28px;overflow:hidden}
+.seg.two,.seg.three{margin:4px 12px 0}
+.sg-b{flex:1;min-height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;line-height:1.4;border-radius:28px;padding:0 6px;text-align:center}
+.sg-b.on{background:var(--sel);color:var(--onsel);font-weight:700}
+.addbar{flex:none;min-height:64px;margin:8px 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;border-radius:32px}
+.addbar.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.addbar .m{font-size:1.15em}
+.primary{width:100%;min-height:72px;background:var(--act);color:var(--onact);font-size:1.235em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:32px;text-align:center;line-height:1.4;padding:4px 12px}
+.primary.tonal{background:var(--t1bg);color:var(--ink);border:2px solid var(--act)}
+.primary.outline{background:var(--surface);color:var(--ink);border:2px solid var(--edge)}
+.primary.warn{background:var(--surface);color:var(--neg);border:2px solid var(--neg)}
+.primary.dis{background:var(--raised);color:var(--muted);border:2px dashed var(--edge)}
+.btn2{min-height:56px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--act);border-radius:28px;font-weight:700;background:var(--surface);line-height:1.4;text-align:center}
+.quiet{min-height:56px;min-width:56px;padding:0 6px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;font-weight:500;max-width:140px;text-align:center;line-height:1.4}
+.sticky{flex:none;padding:8px 12px 10px;background:var(--bg);border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.stack{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
+/* keypad / entry */
+.kp{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 12px 10px}
+.key{height:56px;min-width:56px;background:var(--surface);border:1.5px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;border-radius:16px}
+.key.aux{font-size:17px;font-weight:500;background:var(--raised);line-height:1.4}
+.kp.hidden{display:none}
+.entry{flex:none;padding:4px 12px 0}
+.total{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.total.toast{gap:8px;justify-content:flex-start;font-weight:700;color:var(--pos)}
+.recent li{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:2px solid var(--rule)}.recent li.fresh{background:var(--raised)}
+.rk{display:flex;align-items:center;gap:8px}.rk small{color:var(--muted)}
+.cust{min-height:96px;padding:6px 0;border-bottom:2px solid var(--rule)}.cust .cl{color:var(--muted)}
+.cust .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}.cust .cn{font-size:1.235em;font-weight:700}.cust em{font-style:normal;color:var(--muted)}
+.amt{display:flex;justify-content:space-between;align-items:center;min-height:64px}.amt .al{color:var(--muted)}.amt-fig{font-size:2em}
+.refuse{display:flex;gap:8px;align-items:flex-start;margin:6px 0;padding:8px 12px;border:2px solid var(--neg);border-radius:16px;background:var(--surface);color:var(--ink);line-height:1.4}
+.refuse b{color:var(--neg)}
+/* rows */
+.prog{padding:8px 12px 4px}.pt{display:flex;flex-direction:column;line-height:1.4;margin-bottom:6px}.pt small{color:var(--muted)}
+.rows{padding:0 0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:64px;line-height:1.4;margin:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.mk{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:50%;background:var(--raised);border:2px solid var(--edge)}
+.row.done .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row.next{background:var(--t1bg);border-color:var(--act)}.row.next .mk{background:var(--act);color:var(--onact);border-color:var(--act)}
+.row .nm{flex:1;text-align:left;min-height:56px;display:flex;flex-direction:column;justify-content:center;font-weight:500}.row .nm small{color:var(--muted)}
+.row .rv{display:flex;flex-direction:column;align-items:flex-end}.row .rv small{color:var(--muted)}
+.row.lock{color:var(--muted);border-style:dashed}
+.row.tap{width:calc(100% - 24px);text-align:left}
+.row.warnr{border-color:var(--neg)}
+.sec{padding:10px 16px 0;font-weight:700;color:var(--muted)}
+/* ledger */
+.lhero{padding:12px;background:var(--t1bg);margin:12px;border-radius:24px}.lhero .h1,.lhero .h2{display:flex;flex-direction:column;line-height:1.4}.lhero .big{font-size:2.1em;color:var(--t1ic)}.lhero .mid{font-size:1.4em}.lhero .h2{margin-top:6px}
+.addp{margin:8px 12px 0;min-height:56px;display:flex;align-items:center;gap:8px;font-weight:700;border:2px solid var(--act);border-radius:28px;padding:0 16px}
+.plist li{margin:6px 12px}.prow{width:100%;min-height:76px;display:flex;align-items:center;gap:10px;padding:6px 12px;text-align:left;line-height:1.4;background:var(--surface);border:2px solid var(--rule);border-radius:20px}
+.pn{flex:1;display:flex;flex-direction:column}.pn b{font-size:1.18em}.pn small{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.pa{display:flex;flex-direction:column;align-items:flex-end}.pa .m{font-size:1.3em}.pa em{font-style:normal;color:var(--muted)}
+.av{display:flex;width:44px;height:44px;flex:none;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.12em}
+.av0{background:var(--t1bg);color:var(--t1ic)}.av1{background:var(--t2bg);color:var(--t2ic)}.av2{background:var(--t3bg);color:var(--t3ic)}.av3{background:var(--t4bg);color:var(--t4ic)}.av4{background:var(--t5bg);color:var(--t5ic)}
+/* settings rows, forms, switches */
+.lrow{display:flex;align-items:center;gap:12px;min-height:64px;margin:6px 12px;padding:4px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.lrow .li{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--t5bg);color:var(--t5ic)}
+.lrow .lt{flex:1;display:flex;flex-direction:column}.lrow .lt small{color:var(--muted)}
+.lrow.danger .li{background:var(--t4bg);color:var(--t4ic)}.lrow.danger{border-color:var(--neg)}
+.field{margin:8px 12px}.field label{display:block;color:var(--muted);line-height:1.4}
+.field .in{min-height:56px;display:flex;align-items:center;padding:0 14px;background:var(--surface);border:2px solid var(--edge);border-radius:16px;line-height:1.4}
+.field .in.focus{border-color:var(--act);border-width:3px}.field .in.err{border-color:var(--neg)}.field .in .ph{color:var(--muted)}
+.field .help{color:var(--muted);line-height:1.4;margin-top:2px}.field .help.err{color:var(--neg)}
+.caret{display:inline-block;width:2px;height:1.2em;background:var(--ink);margin-left:2px;vertical-align:text-bottom}
+.sw{display:flex;align-items:center;gap:12px;min-height:72px;margin:6px 12px;padding:6px 12px;background:var(--surface);border:2px solid var(--rule);border-radius:20px;line-height:1.4;width:calc(100% - 24px);text-align:left}
+.sw .tx{flex:1;display:flex;flex-direction:column}.sw .tx small{color:var(--muted)}
+.sw .knob{min-width:84px;min-height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;padding:0 10px;border:2px solid var(--edge);background:var(--raised)}
+.sw.on .knob{background:var(--sel);color:var(--onsel);border-color:var(--sel)}
+.banner{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:64px;line-height:1.4;background:var(--waitbg);color:var(--waitfg);border:2px solid var(--waitfg);border-radius:20px;margin:8px 12px 0}
+.banner span{flex:1}.banner.err{background:var(--surface);color:var(--ink);border-color:var(--neg)}.banner.info{background:var(--surface);color:var(--ink);border-color:var(--edge)}
+.empty{text-align:center;padding:24px 16px}.empty .ei{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center}
+.empty p{margin-bottom:10px;line-height:1.5}.empty .primary{max-width:280px;margin:0 auto}
+.skel{display:flex;flex-direction:column;gap:8px;padding:12px}.skel i{display:block;height:64px;background:var(--rule);border-radius:20px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px;gap:12px}
+.bigmsg{font-size:1.5em;font-weight:700;line-height:1.4}.lead{color:var(--muted);line-height:1.5}
+.otp{display:flex;gap:8px;padding:0 12px;justify-content:center}.otp i{width:46px;height:60px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:1.5em}.otp i.cur{border-color:var(--act);border-width:3px}
+.dots{display:flex;gap:6px;justify-content:center;padding:6px}.dots i{width:10px;height:10px;border-radius:5px;background:var(--rule)}.dots i.on{background:var(--brand);width:26px}
+/* overlays */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-radius:28px 28px 0 0;padding:12px 0 16px;max-height:84%;display:flex;flex-direction:column;border-top:2px solid var(--edge)}
+.sheet h2{font-size:1.235em;padding:0 16px 6px;line-height:1.4}.sheet .grab{width:48px;height:5px;border-radius:3px;background:var(--edge);margin:0 auto 8px}
+.dialog{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:6;background:var(--bg);border:2px solid var(--edge);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:10px;line-height:1.5}
+.dialog h2{font-size:1.235em;line-height:1.4}
+.toast{position:absolute;left:12px;right:12px;bottom:12px;z-index:7;background:var(--ink);color:var(--bg);border-radius:20px;padding:10px 14px;display:flex;gap:8px;align-items:center;line-height:1.4}
+.refbanner{position:absolute;left:76px;right:12px;top:12px;z-index:7;padding:10px 12px;background:var(--surface);border:2px solid var(--neg);border-radius:16px;line-height:1.4}
+.refbanner b{color:var(--neg)}.refbanner.nn{border-color:var(--edge)}.refbanner.nn b{color:var(--ink)}
+.gray{filter:grayscale(1);opacity:.55}
+.spin{width:22px;height:22px;border:3px solid var(--rule);border-top-color:var(--act);border-radius:50%;display:inline-block}
+.size-prev{font-size:calc(17px*var(--z))}
+.legend{max-width:1500px;margin:0 auto;padding:6px 24px 0;font-size:13px;color:#444}
+
+</style></head>
+<body data-theme="comfort" data-lang="od">
+<div class="page-head"><h1 id="area-title"></h1><p id="area-intro"></p>
+<div class="ctl"><div class="grp"><button data-lang-btn="od" aria-pressed="true">ଓଡ଼ିଆ</button><button data-lang-btn="en" aria-pressed="false">English</button><button data-lang-btn="hi" aria-pressed="false">हिन्दी</button></div>
+<div class="grp"><button data-theme-btn="comfort" aria-pressed="true">Comfort (light)</button><button data-theme-btn="focus" aria-pressed="false">Focus (dark)</button></div>
+<div class="grp"><button data-size-btn="1" aria-pressed="true">Text 1.0x</button><button data-size-btn="1.3" aria-pressed="false">1.3x</button><button data-size-btn="2" aria-pressed="false">2.0x</button></div></div></div>
+<div class="legend">Odia and Hindi are the app's unreviewed DRAFT strings (H13), taken verbatim from strings.ts. A dashed red underline means the string does not exist yet (English only). Text sizes above 1.5x leave the header and tab bar at 1.5x (the app's chrome cap); body text and figures keep growing. Browser render with Anek Odia, not the phone.</div>
+<nav class="toc" id="toc"></nav>
+<main class="stage" id="stage"></main>
+<script>window.STRINGS={"sync.waiting":{"en":"{n} waiting · safe on phone","hi":"{n} बाकी · फ़ोन में सुरक्षित","or":"{n} ବାକି · ଫୋନରେ ସୁରକ୍ଷିତ"},"sync.saved":{"en":"Saved","hi":"सहेजा गया","or":"ସାଇତା ହେଲା"},"common.back":{"en":"Back","hi":"पीछे","or":"ପଛକୁ ଯାଆନ୍ତୁ"},"nav.today":{"en":"Today","hi":"आज","or":"ଆଜି"},"nav.parties":{"en":"Ledger","hi":"खाता","or":"ଖାତା"},"nav.reports":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"act.sale":{"en":"Sale","hi":"बिक्री","or":"ବିକ୍ରି"},"act.credit":{"en":"Udhar sale","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"act.collect":{"en":"Collect","hi":"वसूली","or":"ଆଦାୟ"},"act.expense":{"en":"Expense","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"t1.more":{"en":"More","hi":"और","or":"ଅଧିକ"},"box.title":{"en":"In the box now","hi":"अभी बॉक्स में","or":"ଏବେ ବାକ୍ସରେ"},"box.opening":{"en":"Opening","hi":"शुरुआत","or":"ଆରମ୍ଭ"},"box.in":{"en":"cash in","hi":"नकद आया","or":"ନଗଦ ଆସିଲା"},"box.out":{"en":"cash out","hi":"नकद गया","or":"ନଗଦ ଗଲା"},"box.sales":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"t1.toCollect":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ ବାକି ଉଧାର"},"t1.continueClose":{"en":"Continue day close","hi":"दिन बंद करना जारी रखें","or":"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ"},"t1.progress":{"en":"{done} of {total}","hi":"{total} में से {done}","or":"{total} ରୁ {done}"},"keypad.clear":{"en":"Clear","hi":"मिटाएँ","or":"ଖାଲି କରନ୍ତୁ"},"keypad.delete":{"en":"Delete last digit","hi":"आखिरी अंक मिटाएँ","or":"ଶେଷ ଅଙ୍କ ଲିଭାନ୍ତୁ"},"t1.day.4":{"en":"Thursday","hi":"गुरुवार","or":"ଗୁରୁବାର"},"t1.month.11":{"en":"November","hi":"नवंबर","or":"ନଭେମ୍ବର"},"r1.title":{"en":"Reports","hi":"रिपोर्ट","or":"ରିପୋର୍ଟ"},"r1.gate":{"en":"After {need} closed days, {have} so far","hi":"{need} बंद दिनों के बाद, अभी {have}","or":"{need}ଟି ବନ୍ଦ ଦିନ ପରେ, ଏପର୍ଯ୍ୟନ୍ତ {have}"},"c1.open":{"en":"Ask a question","hi":"सवाल पूछें","or":"ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ"},"t1.day.3":{"en":"Wednesday","hi":"बुधवार","or":"ବୁଧବାର"},"t1.day.2":{"en":"Tuesday","hi":"मंगलवार","or":"ମଙ୍ଗଳବାର"},"t1.day.1":{"en":"Monday","hi":"सोमवार","or":"ସୋମବାର"},"t1.day.0":{"en":"Sunday","hi":"रविवार","or":"ରବିବାର"},"t1.day.6":{"en":"Saturday","hi":"शनिवार","or":"ଶନିବାର"},"t1.day.5":{"en":"Friday","hi":"शुक्रवार","or":"ଶୁକ୍ରବାର"},"r1.daysClosed":{"en":"Days closed","hi":"बंद दिन","or":"ବନ୍ଦ ଦିନ"},"r1.totalSales":{"en":"Sales so far","hi":"अब तक बिक्री","or":"ଏପର୍ଯ୍ୟନ୍ତ ବିକ୍ରି"},"r1.totalExpenses":{"en":"Expenses so far","hi":"अब तक खर्च","or":"ଏପର୍ଯ୍ୟନ୍ତ ଖର୍ଚ୍ଚ"},"r1.creditOutstanding":{"en":"Owed to you","hi":"आपको मिलना है","or":"ଆପଣଙ୍କୁ ମିଳିବାକୁ ଅଛି"},"r1.note":{"en":"Figures are recomputed from your entries every time you open this.","hi":"हर बार खोलने पर आंकड़े आपकी प्रविष्टियों से फिर से गिने जाते हैं।","or":"ପ୍ରତିଥର ଖୋଲିଲା ବେଳେ ଆପଣଙ୍କ ଲେଖରୁ ସଂଖ୍ୟା ପୁଣି ଗଣା ହୁଏ।"},"rep.dashboard":{"en":"Premium dashboard","hi":"प्रीमियम डैशबोर्ड","or":"ପ୍ରିମିୟମ ଡ୍ୟାସବୋର୍ଡ"},"rep.dashboard.detail":{"en":"Sales estimate and comparisons","hi":"बिक्री का अनुमान और तुलना","or":"ବିକ୍ରିର ଆକଳନ ଓ ତୁଳନା"},"rep.party.age":{"en":"{name} · {n|since today|# day|# days}","hi":"{name} · {n|आज से|# दिन|# दिन}","or":"{name} · {n|ଆଜିଠାରୁ|# ଦିନ|# ଦିନ}"},"rep.bucket.0":{"en":"0 to 30 days","hi":"0 से 30 दिन","or":"0 ରୁ 30 ଦିନ"},"rep.bucket.1":{"en":"31 to 60 days","hi":"31 से 60 दिन","or":"31 ରୁ 60 ଦିନ"},"rep.bucket.2":{"en":"61 to 90 days","hi":"61 से 90 दिन","or":"61 ରୁ 90 ଦିନ"},"rep.bucket.3":{"en":"Over 90 days","hi":"90 दिन से ज़्यादा","or":"90 ଦିନରୁ ଅଧିକ"},"rep.dues.note":{"en":"Named parties only; the oldest udhar counts as paid first. Only as complete as what was entered.","hi":"केवल नाम वाले लोग; पहले पुराना उधार चुका माना गया। जितना लिखा गया, उतना ही पूरा।","or":"କେବଳ ନାମ ଥିବା ଲୋକ; ପୁରୁଣା ଉଧାର ଆଗ ସୁଝା ଧରାଯାଇଛି। ଯେତିକି ଲେଖାଯାଇଛି, ସେତିକି ପୂରା।"},"rep.dues.title":{"en":"Who owes you, oldest first","hi":"किससे लेना है, सबसे पुराना पहले","or":"କାହାଠାରୁ ମିଳିବ, ପୁରୁଣା ଆଗରେ"},"rep.owe.title":{"en":"What you owe suppliers, oldest first","hi":"आपूर्तिकर्ताओं को देना है, सबसे पुराना पहले","or":"ଯୋଗାଣକାରୀଙ୍କୁ ଦେବାକୁ ଅଛି, ପୁରୁଣା ଆଗରେ"},"rep.month.netSales":{"en":"Net sales","hi":"शुद्ध बिक्री","or":"ନିଟ୍ ବିକ୍ରି"},"rep.month.cash":{"en":"Cash sales","hi":"नकद बिक्री","or":"ନଗଦ ବିକ୍ରି"},"rep.month.upi":{"en":"UPI sales","hi":"UPI बिक्री","or":"UPI ବିକ୍ରି"},"rep.month.udhar":{"en":"Udhar sales","hi":"उधार बिक्री","or":"ଉଧାର ବିକ୍ରି"},"rep.month.expenses":{"en":"Expenses","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"rep.month.purchases":{"en":"Purchases","hi":"खरीद","or":"କିଣା"},"rep.month.profit":{"en":"Estimated profit","hi":"अनुमानित लाभ","or":"ଆନୁମାନିକ ଲାଭ"},"rep.month.takenHome":{"en":"Taken home","hi":"घर ले गए","or":"ଘରକୁ ନେଲେ"},"rep.month.left":{"en":"Profit left in the shop","hi":"दुकान में बचा लाभ","or":"ଦୋକାନରେ ରହିଥିବା ଲାଭ"},"rep.month.note":{"en":"What you took home is not taken off profit. It is shown beside it.","hi":"घर ले गई रकम लाभ से नहीं घटाई जाती। वह उसके साथ दिखाई जाती है।","or":"ଘରକୁ ନେଇଥିବା ଟଙ୍କା ଲାଭରୁ କଟାଯାଏ ନାହିଁ। ତାହା ପାଖରେ ଦେଖାଯାଏ।"},"rep.cash.balanced":{"en":"Matched","hi":"मिला","or":"ମେଳ ଖାଇଲା"},"r1.ofDays":{"en":"{n} of {w} days","hi":"{w} में से {n} दिन","or":"{w} ରୁ {n} ଦିନ"},"rep.cash.short":{"en":"Less than expected","hi":"उम्मीद से कम","or":"ଆଶାରୁ କମ୍"},"rep.cash.extra":{"en":"More than expected","hi":"उम्मीद से ज़्यादा","or":"ଆଶାରୁ ଅଧିକ"},"rep.cash.title":{"en":"Cash checks","hi":"नकद जाँच","or":"ନଗଦ ଯାଞ୍ଚ"},"rep.upi.title":{"en":"UPI you confirmed","hi":"आपने पक्का किया UPI","or":"ଆପଣ ନିଶ୍ଚିତ କରିଥିବା UPI"},"rep.month.this":{"en":"This month so far","hi":"इस महीने अब तक","or":"ଏହି ମାସ ଏପର୍ଯ୍ୟନ୍ତ"},"rep.upi.receipts":{"en":"{n} of {w} receipts confirmed","hi":"{w} में से {n} रसीदें पक्की","or":"{w} ରୁ {n}ଟି ରସିଦ ନିଶ୍ଚିତ"},"rep.month.last":{"en":"Last month","hi":"पिछला महीना","or":"ଗତ ମାସ"},"r1.changing":{"en":"What is changing","hi":"क्या बदल रहा है","or":"କଣ ବଦଳୁଛି"},"r1.bi1":{"en":"Profit trend","hi":"लाभ का रुख","or":"ଲାଭର ଧାରା"},"r1.bi1.up":{"en":"Rising","hi":"बढ़ रहा है","or":"ବଢୁଛି"},"r1.bi1.earlier":{"en":"Average daily profit, earlier half","hi":"रोज़ का औसत लाभ, पहला आधा","or":"ହାରାହାରି ଦୈନିକ ଲାଭ, ପ୍ରଥମ ଅଧା"},"r1.bi1.later":{"en":"Average daily profit, later half","hi":"रोज़ का औसत लाभ, बाद का आधा","or":"ହାରାହାରି ଦୈନିକ ଲାଭ, ଶେଷ ଅଧା"},"r1.bi2":{"en":"Day-to-day sales variation","hi":"रोज़ की बिक्री में उतार-चढ़ाव","or":"ଦୈନିକ ବିକ୍ରିରେ ଉଠାଣି-ପଡ଼ାଣି"},"r1.pressure":{"en":"Where pressure is building","hi":"दबाव कहाँ बन रहा है","or":"ଚାପ କେଉଁଠି ବଢୁଛି"},"r1.bi3":{"en":"Closing cash variation","hi":"बंद के समय नकद में उतार-चढ़ाव","or":"ବନ୍ଦ ବେଳର ନଗଦରେ ଉଠାଣି-ପଡ଼ାଣି"},"r1.bi3.short":{"en":"Days the box came up short","hi":"जिन दिनों बॉक्स में कम निकला","or":"ଯେଉଁ ଦିନ ବାକ୍ସରେ କମ୍ ବାହାରିଲା"},"r1.bi4":{"en":"Owed to you and by you, against cash","hi":"लेना और देना, नकद के मुकाबले","or":"ପାଇବା ଓ ଦେବା, ନଗଦ ତୁଳନାରେ"},"r1.bi6":{"en":"Credit held by your 3 largest customers","hi":"3 सबसे बड़े ग्राहकों के पास उधार","or":"3 ଜଣ ବଡ଼ ଗ୍ରାହକଙ୍କ ପାଖରେ ଉଧାର"},"r1.bi6.compared":{"en":"Compared with recent closes","hi":"हाल के बंद दिनों की तुलना में","or":"ଗତ ବନ୍ଦ ଦିନ ତୁଳନାରେ"},"r1.bi6.no_baseline":{"en":"Nothing earlier to compare","hi":"तुलना के लिए पहले का कुछ नहीं","or":"ତୁଳନା ପାଇଁ ପୂର୍ବର କିଛି ନାହିଁ"},"r1.bi6.worsening":{"en":"More concentrated","hi":"ज़्यादा केंद्रित","or":"ଅଧିକ କେନ୍ଦ୍ରିତ"},"r1.cc.title":{"en":"Cash confidence","hi":"नकद भरोसा","or":"ନଗଦ ଭରସା"},"r1.cc.match":{"en":"Cash matched exactly","hi":"नकद ठीक-ठीक मिला","or":"ନଗଦ ଠିକ୍ ମେଳ ଖାଇଲା"},"r1.cc.gap":{"en":"Typical cash gap, as a share of a day's sales","hi":"आम नकद अंतर, एक दिन की बिक्री के हिस्से के रूप में","or":"ସାଧାରଣ ନଗଦ ଫରକ, ଦିନର ବିକ୍ରିର ଅଂଶ ଭାବେ"},"r1.cc.notYet":{"en":"UPI matching and the reasons for gaps are not counted yet.","hi":"UPI मिलान और अंतर के कारण अभी नहीं गिने जाते।","or":"UPI ମେଳ ଓ ଫରକର କାରଣ ଏବେ ଗଣାଯାଉନାହିଁ।"},"r1.oc.title":{"en":"Operational consistency","hi":"कामकाज की नियमितता","or":"କାମର ନିୟମିତତା"},"r1.oc.closing":{"en":"Days closed, of days opened","hi":"खुले दिनों में से बंद दिन","or":"ଖୋଲା ଦିନ ମଧ୍ୟରୁ ବନ୍ଦ ଦିନ"},"r1.oc.recording":{"en":"Sections filled in or marked empty","hi":"भरे गए या खाली बताए गए हिस्से","or":"ଭରାଯାଇଥିବା କିମ୍ବା ଖାଲି କୁହାଯାଇଥିବା ଭାଗ"},"r1.oc.corrections":{"en":"Entries that are corrections","hi":"सुधार वाली प्रविष्टियाँ","or":"ସଂଶୋଧନ ଏଣ୍ଟ୍ରି"},"r1.bh":{"en":"Business health is not shown as one number. How to weigh these readings against each other has not been measured, so each one stands on its own.","hi":"व्यापार की सेहत एक अंक में नहीं दिखाई जाती। इन पढ़ाइयों को आपस में कैसे तौलें, यह मापा नहीं गया है, इसलिए हर एक अपने आप में है।","or":"ବ୍ୟବସାୟର ସ୍ୱାସ୍ଥ୍ୟ ଗୋଟିଏ ସଂଖ୍ୟାରେ ଦେଖାଯାଏ ନାହିଁ। ଏହି ପଢ଼ାଗୁଡ଼ିକୁ ପରସ୍ପର ସହ କିପରି ତଉଲିବେ, ତାହା ମପାଯାଇନାହିଁ, ତେଣୁ ପ୍ରତ୍ୟେକଟି ନିଜେ ଅଲଗା।"},"m1.forecast.seasonal_naive":{"en":"Method: the same as the last same weekday you closed.","hi":"तरीका: पिछली बार उसी वार जितनी बिक्री हुई।","or":"ପଦ୍ଧତି: ଗତଥର ସେହି ବାରରେ ଯେତିକି ବିକ୍ରି ହୋଇଥିଲା।"},"m1.forecast.window":{"en":"From {n|# closed day|# closed days}, {from} to {to}.","hi":"{n} बंद दिनों से, {from} से {to} तक।","or":"{n}ଟି ବନ୍ଦ ଦିନରୁ, {from} ରୁ {to} ପର୍ଯ୍ୟନ୍ତ।"},"m1.forecast.range":{"en":"Likely range","hi":"संभावित दायरा","or":"ସମ୍ଭାବ୍ୟ ପରିସର"},"m1.forecast.miss":{"en":"Typical miss on past days","hi":"पिछले दिनों पर आम चूक","or":"ପୁରୁଣା ଦିନରେ ସାଧାରଣ ଭୁଲ"},"m1.forecast.hwGate":{"en":"Weekday-and-trend method: after {need} closed days, {have} so far","hi":"वार-और-रुख वाला तरीका: {need} बंद दिनों के बाद, अभी {have}","or":"ବାର-ଓ-ଗତି ପଦ୍ଧତି: {need}ଟି ବନ୍ଦ ଦିନ ପରେ, ଏପର୍ଯ୍ୟନ୍ତ {have}"},"m1.forecast.estimate":{"en":"An estimate from your own past sales, never a promise. The range holds 8 in 10 of its past misses. Only as complete as what was entered.","hi":"आपकी अपनी पिछली बिक्री से अनुमान, वादा नहीं। दायरे में इसकी पिछली 10 में से 8 चूकें आती हैं। जितना लिखा गया, उतना ही पूरा।","or":"ଆପଣଙ୍କ ନିଜ ପୁରୁଣା ବିକ୍ରିରୁ ଆକଳନ, ପ୍ରତିଶ୍ରୁତି ନୁହେଁ। ପରିସରରେ ଏହାର ପୁରୁଣା 10ରୁ 8ଟି ଭୁଲ ଆସେ। ଯେତିକି ଲେଖାଯାଇଛି, ସେତିକି ପୂରା।"},"m1.forecast.title":{"en":"Sales estimate, next 7 days","hi":"बिक्री का अनुमान, अगले 7 दिन","or":"ବିକ୍ରି ଆକଳନ, ଆସନ୍ତା 7 ଦିନ"},"m1.lastYear.title":{"en":"This month against last year","hi":"यह महीना पिछले साल से","or":"ଏହି ମାସ ଗତ ବର୍ଷ ସହ"},"m1.lastYear.this":{"en":"This month so far ({n|# closed day|# closed days})","hi":"इस महीने अब तक ({n} बंद दिन)","or":"ଏହି ମାସ ଏପର୍ଯ୍ୟନ୍ତ ({n}ଟି ବନ୍ଦ ଦିନ)"},"m1.lastYear.none":{"en":"No closed day on these dates last year yet.","hi":"पिछले साल इन तारीखों में अभी कोई बंद दिन नहीं।","or":"ଗତ ବର୍ଷ ଏହି ତାରିଖରେ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ବନ୍ଦ ଦିନ ନାହିଁ।"},"m1.lastYear.last":{"en":"Same dates last year ({n|# closed day|# closed days})","hi":"पिछले साल इन्हीं तारीखों में ({n} बंद दिन)","or":"ଗତ ବର୍ଷ ଏହି ତାରିଖରେ ({n}ଟି ବନ୍ଦ ଦିନ)"},"m1.festival.title":{"en":"Festival weeks","hi":"त्योहार के हफ़्ते","or":"ପର୍ବ ସପ୍ତାହ"},"m1.festival.none":{"en":"No festival week among your closed days yet.","hi":"आपके बंद दिनों में अभी कोई त्योहार का हफ़्ता नहीं।","or":"ଆପଣଙ୍କ ବନ୍ଦ ଦିନରେ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ପର୍ବ ସପ୍ତାହ ନାହିଁ।"},"m1.festival.week":{"en":"{name} week ({n|# closed day|# closed days})","hi":"{name} का हफ़्ता ({n} बंद दिन)","or":"{name} ସପ୍ତାହ ({n}ଟି ବନ୍ଦ ଦିନ)"},"festival.diwali":{"en":"Diwali","hi":"दिवाली","or":"ଦୀପାବଳି"},"m1.festival.before":{"en":"Week before ({n|# closed day|# closed days})","hi":"उससे पहले का हफ़्ता ({n} बंद दिन)","or":"ତା ଆଗ ସପ୍ତାହ ({n}ଟି ବନ୍ଦ ଦିନ)"},"m1.festival.source":{"en":"Festival dates: the central government's holiday list for 2025 and 2026.","hi":"त्योहार की तारीखें: 2025 और 2026 की केंद्र सरकार की छुट्टी सूची।","or":"ପର୍ବ ତାରିଖ: 2025 ଓ 2026ର କେନ୍ଦ୍ର ସରକାରଙ୍କ ଛୁଟି ତାଲିକା।"},"m1.pay.title":{"en":"How long customers take to pay","hi":"ग्राहक चुकाने में कितने दिन लेते हैं","or":"ଗ୍ରାହକ ସୁଝିବାକୁ କେତେ ଦିନ ନିଅନ୍ତି"},"m1.pay.none":{"en":"No udhar has been paid off in full yet.","hi":"अभी कोई उधार पूरा नहीं चुकाया गया।","or":"ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଉଧାର ପୂରା ସୁଝା ହୋଇନାହିଁ।"},"m1.pay.value":{"en":"usually {n} days","hi":"आमतौर पर {n} दिन","or":"ସାଧାରଣତଃ {n} ଦିନ"},"m1.pay.note":{"en":"From udhar paid off in full. Something to look at, not a judgement of the customer.","hi":"पूरे चुकाए गए उधार से। देखने की बात है, ग्राहक पर फ़ैसला नहीं।","or":"ପୂରା ସୁଝାଯାଇଥିବା ଉଧାରରୁ। ଦେଖିବା କଥା, ଗ୍ରାହକଙ୍କ ଉପରେ ବିଚାର ନୁହେଁ।"},"m1.returns.title":{"en":"Returns and adjustments, week by week","hi":"वापसी और समायोजन, हफ़्ते दर हफ़्ते","or":"ଫେରସ୍ତ ଓ ସମନ୍ୱୟ, ସପ୍ତାହ ପରେ ସପ୍ତାହ"},"m1.returns.returns":{"en":"Week to {date}: returns ({n})","hi":"{date} तक का हफ़्ता: वापसी ({n})","or":"{date} ପର୍ଯ୍ୟନ୍ତ ସପ୍ତାହ: ଫେରସ୍ତ ({n})"},"m1.returns.adjustments":{"en":"Adjustments ({n})","hi":"समायोजन ({n})","or":"ସମନ୍ୱୟ ({n})"},"c1.heard":{"en":"Understood as: {what}","hi":"समझा गया: {what}","or":"ବୁଝାଗଲା: {what}"},"c1.covers":{"en":"This covers only what was entered on this phone.","hi":"यह सिर्फ इस फ़ोन में दर्ज बातों पर है।","or":"ଏହା କେବଳ ଏହି ଫୋନରେ ଲେଖାଯାଇଥିବା କଥା ଉପରେ।"},"c1.placeholder":{"en":"Type your question","hi":"अपना सवाल लिखें","or":"ଆପଣଙ୍କ ପ୍ରଶ୍ନ ଲେଖନ୍ତୁ"},"c1.ask":{"en":"Ask","hi":"पूछें","or":"ପଚାରନ୍ତୁ"},"c1.title":{"en":"Ask","hi":"पूछें","or":"ପଚାରନ୍ତୁ"},"s10.free.title":{"en":"Free, for ever","hi":"मुफ़्त, हमेशा के लिए","or":"ମାଗଣା, ସବୁଦିନ ପାଇଁ"},"s10.free.promise":{"en":"No ads and no time limit. All of this stays free, also after Premium ends.","hi":"कोई विज्ञापन नहीं, कोई समय-सीमा नहीं। यह सब मुफ़्त रहता है, प्रीमियम खत्म होने के बाद भी।","or":"କୌଣସି ବିଜ୍ଞାପନ ନାହିଁ, କୌଣସି ସମୟ ସୀମା ନାହିଁ। ଏସବୁ ମାଗଣା ରହେ, ପ୍ରିମିୟମ ଶେଷ ହେବା ପରେ ବି।"},"s10.free.close":{"en":"Closing the day and the cash check","hi":"दिन बंद करना और नकद जाँच","or":"ଦିନ ବନ୍ଦ କରିବା ଓ ନଗଦ ଯାଞ୍ଚ"},"s10.free.entries":{"en":"Every entry, and every correction","hi":"हर एंट्री, और हर सुधार","or":"ପ୍ରତ୍ୟେକ ଏଣ୍ଟ୍ରି, ଓ ପ୍ରତ୍ୟେକ ସଂଶୋଧନ"},"s10.free.parties":{"en":"Parties and udhar","hi":"खाते और उधार","or":"ଖାତା ଓ ଉଧାର"},"s10.free.history":{"en":"Reading every past day, with no limit","hi":"हर पिछला दिन पढ़ना, बिना किसी सीमा के","or":"ପ୍ରତ୍ୟେକ ପୁରୁଣା ଦିନ ପଢ଼ିବା, କୌଣସି ସୀମା ବିନା"},"s10.free.data":{"en":"Exporting and deleting your data","hi":"अपना डेटा निर्यात करना और मिटाना","or":"ଆପଣଙ୍କ ଡାଟା ରପ୍ତାନି ଓ ମିଟାଇବା"},"s10.free.rights":{"en":"Your consents, and the grievance officer","hi":"आपकी सहमतियाँ, और शिकायत अधिकारी","or":"ଆପଣଙ୍କ ସହମତି, ଓ ଅଭିଯୋଗ ଅଧିକାରୀ"},"s10.premium.title":{"en":"Premium adds","hi":"प्रीमियम में और","or":"ପ୍ରିମିୟମରେ ଅଧିକ"},"s10.premium.items":{"en":"Items on each sale, from your own short list","hi":"हर बिक्री में सामान, आपकी अपनी छोटी सूची से","or":"ପ୍ରତ୍ୟେକ ବିକ୍ରିରେ ଜିନିଷ, ଆପଣଙ୍କ ନିଜ ଛୋଟ ତାଲିକାରୁ"},"s10.premium.itemReports":{"en":"Item reports: what sells most, what sells slowly, what a customer usually buys","hi":"सामान की रिपोर्ट: क्या सबसे ज़्यादा बिकता है, क्या धीरे बिकता है, ग्राहक आमतौर पर क्या लेता है","or":"ଜିନିଷ ରିପୋର୍ଟ: କଣ ବେଶି ବିକେ, କଣ ଧୀରେ ବିକେ, ଗ୍ରାହକ ସାଧାରଣତଃ କଣ କିଣନ୍ତି"},"s10.premium.forecast":{"en":"A sales estimate for the coming days. It is an estimate, never a promise.","hi":"आने वाले दिनों की बिक्री का अनुमान। यह अनुमान है, वादा नहीं।","or":"ଆଗାମୀ ଦିନର ବିକ୍ରି ଅନୁମାନ। ଏହା ଅନୁମାନ, ପ୍ରତିଶ୍ରୁତି ନୁହେଁ।"},"s10.premium.comparisons":{"en":"Comparisons: the same time last year, festival weeks, how long each customer takes to pay","hi":"तुलना: पिछले साल का यही समय, त्योहार के हफ़्ते, हर ग्राहक भुगतान में कितना समय लेता है","or":"ତୁଳନା: ଗତ ବର୍ଷର ଏହି ସମୟ, ପର୍ବ ସପ୍ତାହ, ପ୍ରତ୍ୟେକ ଗ୍ରାହକ ଦେୟ ଦେବାକୁ କେତେ ସମୟ ନିଅନ୍ତି"},"s10.premium.chat":{"en":"Questions answered from your own shop figures","hi":"आपकी दुकान के अपने आँकड़ों से सवालों के जवाब","or":"ଆପଣଙ୍କ ଦୋକାନର ନିଜ ହିସାବରୁ ପ୍ରଶ୍ନର ଉତ୍ତର"},"s10.premium.dashboard":{"en":"One screen that brings these together","hi":"एक स्क्रीन जिसमें ये सब साथ हों","or":"ଗୋଟିଏ ସ୍କ୍ରୀନ ଯେଉଁଥିରେ ଏସବୁ ଏକାଠି"},"s10.price.title":{"en":"Price of Premium","hi":"प्रीमियम का दाम","or":"ପ୍ରିମିୟମର ଦାମ"},"s10.cancelTerms":{"en":"Cancel any time in Google Play. Premium stays on to the end of the period already paid.","hi":"Google Play में कभी भी रद्द करें। जितने समय का भुगतान हो चुका है, उसके अंत तक प्रीमियम चालू रहता है।","or":"Google Play ରେ ଯେକୌଣସି ସମୟରେ ବାତିଲ କରନ୍ତୁ। ଦେୟ ହୋଇସାରିଥିବା ସମୟର ଶେଷ ପର୍ଯ୍ୟନ୍ତ ପ୍ରିମିୟମ ଚାଲୁ ରହେ।"},"s10.notOpen":{"en":"Buying Premium is not open yet.","hi":"प्रीमियम खरीदना अभी शुरू नहीं हुआ है।","or":"ପ୍ରିମିୟମ କିଣିବା ଏପର୍ଯ୍ୟନ୍ତ ଖୋଲିନାହିଁ।"},"s10.price.monthly":{"en":"Monthly","hi":"मासिक","or":"ମାସିକ"},"s10.price.perMonth":{"en":"a month, GST included","hi":"प्रति माह, GST सहित","or":"ପ୍ରତି ମାସ, GST ସହିତ"},"s10.renew.monthly":{"en":"Renews automatically every month until you cancel.","hi":"रद्द करने तक हर महीने अपने-आप रिन्यू होता है।","or":"ବାତିଲ ନକରିବା ପର୍ଯ୍ୟନ୍ତ ପ୍ରତି ମାସ ନିଜେ ନବୀକରଣ ହୁଏ।"},"s10.buy.monthly":{"en":"Buy monthly","hi":"मासिक खरीदें","or":"ମାସିକ କିଣନ୍ତୁ"},"s10.price.yearly":{"en":"Yearly","hi":"सालाना","or":"ବାର୍ଷିକ"},"s10.price.perYear":{"en":"a year, GST included","hi":"प्रति वर्ष, GST सहित","or":"ପ୍ରତି ବର୍ଷ, GST ସହିତ"},"s10.renew.yearly":{"en":"Renews automatically every year until you cancel.","hi":"रद्द करने तक हर साल अपने-आप रिन्यू होता है।","or":"ବାତିଲ ନକରିବା ପର୍ଯ୍ୟନ୍ତ ପ୍ରତି ବର୍ଷ ନିଜେ ନବୀକରଣ ହୁଏ।"},"s10.buy.yearly":{"en":"Buy yearly","hi":"सालाना खरीदें","or":"ବାର୍ଷିକ କିଣନ୍ତୁ"},"s10.preview":{"en":"Try Premium free for 14 days, no payment details","hi":"प्रीमियम 14 दिन मुफ़्त आज़माएँ, कोई भुगतान विवरण नहीं","or":"ପ୍ରିମିୟମ 14 ଦିନ ମାଗଣା ଦେଖନ୍ତୁ, କୌଣସି ଦେୟ ବିବରଣୀ ନାହିଁ"},"s10.preview.note":{"en":"It simply ends after 14 days. Nothing is charged, and nothing renews.","hi":"यह 14 दिन बाद अपने-आप खत्म हो जाता है। कोई पैसा नहीं कटता, और कुछ रिन्यू नहीं होता।","or":"ଏହା 14 ଦିନ ପରେ ନିଜେ ଶେଷ ହୋଇଯାଏ। କିଛି ଟଙ୍କା କଟେ ନାହିଁ, କିଛି ନବୀକରଣ ହୁଏ ନାହିଁ।"},"s10.cancel":{"en":"Cancel Premium","hi":"प्रीमियम रद्द करें","or":"ପ୍ରିମିୟମ ବାତିଲ କରନ୍ତୁ"},"s10.cancel.note":{"en":"Opens your subscription in Google Play.","hi":"Google Play में आपकी सदस्यता खोलता है।","or":"Google Play ରେ ଆପଣଙ୍କ ସଦସ୍ୟତା ଖୋଲେ।"},"t1.month.12":{"en":"December","hi":"दिसंबर","or":"ଡିସେମ୍ବର"},"r1.empty":{"en":"Reports open after you close your first day.","hi":"पहला दिन बंद करने पर रिपोर्ट खुलेगी।","or":"ପ୍ରଥମ ଦିନ ବନ୍ଦ କଲେ ରିପୋର୍ଟ ଖୁଲିବ।"},"common.loading":{"en":"Opening","hi":"खुल रहा है","or":"ଖୋଲୁଛି"},"common.error":{"en":"Could not open this. Nothing you entered is lost.","hi":"यह नहीं खुल सका। आपका दर्ज किया कुछ भी नहीं गया।","or":"ଏହା ଖୋଲିପାରିଲା ନାହିଁ। ଆପଣ ଲେଖିଥିବା କିଛି ହଜିନାହିଁ।"},"common.retry":{"en":"Try again","hi":"फिर कोशिश करें","or":"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"},"sync.waitingLong":{"en":"{n} waiting to send. Safe on this phone; it goes when the network is back.","hi":"{n} भेजना बाकी। इस फ़ोन में सुरक्षित है; नेटवर्क आने पर चला जाएगा।","or":"{n} ପଠାଇବା ବାକି। ଏହି ଫୋନରେ ସୁରକ୍ଷିତ; ନେଟୱର୍କ ଆସିଲେ ଚାଲିଯିବ।"},"m1.title":{"en":"Dashboard","hi":"डैशबोर्ड","or":"ଡ୍ୟାସବୋର୍ଡ"},"m1.empty":{"en":"The dashboard fills in once you have closed days.","hi":"दिन बंद करने के बाद डैशबोर्ड भरेगा।","or":"ଦିନ ବନ୍ଦ କଲା ପରେ ଡ୍ୟାସବୋର୍ଡ ଭରିବ।"},"m1.locked.title":{"en":"This is part of Premium","hi":"यह प्रीमियम का हिस्सा है","or":"ଏହା ପ୍ରିମିୟମର ଅଂଶ"},"m1.locked.body":{"en":"Premium adds a sales estimate for the coming week, and comparisons with last year and with festival weeks. Everything you have recorded stays yours and readable in every plan.","hi":"प्रीमियम में आने वाले हफ़्ते की बिक्री का अनुमान, और पिछले साल व त्योहार के हफ़्तों से तुलना मिलती है। आपने जो भी लिखा है वह हर प्लान में आपका है और पढ़ा जा सकता है।","or":"ପ୍ରିମିୟମରେ ଆସନ୍ତା ସପ୍ତାହର ବିକ୍ରି ଆକଳନ, ଏବଂ ଗତ ବର୍ଷ ଓ ପର୍ବ ସପ୍ତାହ ସହ ତୁଳନା ମିଳେ। ଆପଣ ଯାହା ଲେଖିଛନ୍ତି ତାହା ସବୁ ପ୍ଲାନରେ ଆପଣଙ୍କର ଓ ପଢ଼ିହେବ।"},"m1.upgrade":{"en":"See Premium","hi":"प्रीमियम देखें","or":"ପ୍ରିମିୟମ ଦେଖନ୍ତୁ"},"c1.suggested":{"en":"You could ask","hi":"आप पूछ सकते हैं","or":"ଆପଣ ପଚାରିପାରିବେ"},"c1.i.sales":{"en":"Sales","hi":"बिक्री","or":"ବିକ୍ରି"},"c1.i.expected":{"en":"Expected cash","hi":"अपेक्षित नकद","or":"ଆଶା କରାଯାଇଥିବା ନଗଦ"},"c1.i.owed":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ କରିବାକୁ ଉଧାର"},"c1.i.howClose":{"en":"How to close the day","hi":"दिन कैसे बंद करें","or":"ଦିନ କେମିତି ବନ୍ଦ କରିବେ"},"c1.i.termUdhar":{"en":"What udhar means","hi":"उधार का मतलब","or":"ଉଧାରର ଅର୍ଥ"},"c1.p.thisWeek":{"en":"this week","hi":"इस हफ्ते","or":"ଏହି ସପ୍ତାହ"},"c1.i.bestDay":{"en":"Best day","hi":"सबसे अच्छा दिन","or":"ସବୁଠୁ ଭଲ ଦିନ"},"c1.p.thisMonth":{"en":"this month","hi":"इस महीने","or":"ଏହି ମାସ"},"c1.i.olderUdhar":{"en":"Old udhar","hi":"पुराना उधार","or":"ପୁରୁଣା ଉଧାର"},"c1.days":{"en":"over {n} days","hi":"{n} दिन से ज़्यादा","or":"{n} ଦିନରୁ ଅଧିକ"},"c1.empty":{"en":"Ask how to do something, what a word means, or about your figures. Answers come only from what has been entered.","hi":"कुछ कैसे करें, किसी शब्द का मतलब, या अपने आंकड़ों के बारे में पूछें। जवाब सिर्फ दर्ज की गई बातों से आते हैं।","or":"କିଛି କେମିତି କରିବେ, କୌଣସି ଶବ୍ଦର ଅର୍ଥ, କିମ୍ବା ଆପଣଙ୍କ ହିସାବ ବିଷୟରେ ପଚାରନ୍ତୁ। ଉତ୍ତର କେବଳ ଲେଖାଯାଇଥିବା କଥାରୁ ଆସେ।"},"c1.f.expected":{"en":"Expected cash in the box now","hi":"अभी गल्ले में अपेक्षित नकद","or":"ଏବେ ବାକ୍ସରେ ଆଶା କରାଯାଇଥିବା ନଗଦ"},"c1.f.owed":{"en":"Udhar to collect","hi":"वसूलने को उधार","or":"ଆଦାୟ କରିବାକୁ ଉଧାର"},"c1.note.thisPhone":{"en":"From the entries on this phone. Anything owed from before them is not included.","hi":"इस फ़ोन की एंट्री से। उनसे पहले का बाकी इसमें नहीं है।","or":"ଏହି ଫୋନର ଏଣ୍ଟ୍ରିରୁ। ସେଗୁଡ଼ିକ ଆଗର ବାକି ଏଥିରେ ନାହିଁ।"},"c1.range":{"en":"From {from} to {to}.","hi":"{from} से {to} तक।","or":"{from} ରୁ {to} ପର୍ଯ୍ୟନ୍ତ।"},"c1.f.sales":{"en":"Sales, {period}","hi":"बिक्री, {period}","or":"ବିକ୍ରି, {period}"},"c1.a.howClose":{"en":"Tap Continue day close on Today. Go down the list: enter each section, or tap Nothing to enter. Then count the cash in the box and type it. If it is not what was expected, choose a reason. Then close the day.","hi":"आज पर \"दिन बंद करना जारी रखें\" दबाएँ। सूची में हर हिस्सा भरें, या \"दर्ज करने को कुछ नहीं\" दबाएँ। फिर गल्ले का नकद गिनकर लिखें। अगर अपेक्षित से अलग हो, तो कारण चुनें। फिर दिन बंद करें।","or":"ଆଜିରେ \"ଦିନ ବନ୍ଦ ଜାରି ରଖନ୍ତୁ\" ଦବାନ୍ତୁ। ତାଲିକାରେ ପ୍ରତି ଭାଗ ଲେଖନ୍ତୁ, କିମ୍ବା \"ଲେଖିବାକୁ କିଛି ନାହିଁ\" ଦବାନ୍ତୁ। ତାପରେ ବାକ୍ସର ନଗଦ ଗଣି ଲେଖନ୍ତୁ। ଆଶାଠୁ ଅଲଗା ହେଲେ କାରଣ ବାଛନ୍ତୁ। ତାପରେ ଦିନ ବନ୍ଦ କରନ୍ତୁ।"},"c1.didYouMean":{"en":"I am not sure what you mean. Is it one of these?","hi":"मैं ठीक से नहीं समझा। क्या इनमें से कोई है?","or":"ମୁଁ ଠିକ ବୁଝିଲି ନାହିଁ। ଏଥିରୁ କୌଣସିଟି କି?"},"c1.i.expenses":{"en":"Expenses","hi":"खर्च","or":"ଖର୍ଚ୍ଚ"},"c1.premium":{"en":"That answer needs Premium. The free plan can show this:","hi":"इस जवाब के लिए प्रीमियम चाहिए। फ्री प्लान यह दिखा सकता है:","or":"ଏହି ଉତ୍ତର ପାଇଁ ପ୍ରିମିୟମ ଦରକାର। ମାଗଣା ପ୍ଲାନ ଏହା ଦେଖାଇପାରେ:"},"c1.f.salesToday":{"en":"Sales today","hi":"आज की बिक्री","or":"ଆଜିର ବିକ୍ରି"},"s12.title":{"en":"Entries for your accountant","hi":"अकाउंटेंट के लिए एंट्री","or":"ହିସାବରକ୍ଷକଙ୍କ ପାଇଁ ଏଣ୍ଟ୍ରି"},"s5.notTax":{"en":"This is a record of entries made in your shop book. It is not a tax document.","hi":"यह आपकी दुकान की बही का रिकॉर्ड है। यह कर दस्तावेज़ नहीं है।","or":"ଏହା ଆପଣଙ୍କ ଦୋକାନ ଖାତାର ଲେଖା। ଏହା ଟ୍ୟାକ୍ସ ଦଲିଲ ନୁହେଁ।"},"s12.months":{"en":"Months","hi":"महीने","or":"ମାସ"},"t1.month.10":{"en":"October","hi":"अक्टूबर","or":"ଅକ୍ଟୋବର"},"s12.chooser":{"en":"Share entries","hi":"एंट्री भेजें","or":"ଏଣ୍ଟ୍ରି ପଠାନ୍ତୁ"},"s12.empty":{"en":"No entries yet, so there is nothing to share.","hi":"अभी कोई एंट्री नहीं, इसलिए भेजने को कुछ नहीं।","or":"ଏପର୍ଯ୍ୟନ୍ତ ଏଣ୍ଟ୍ରି ନାହିଁ, ତେଣୁ ପଠାଇବାକୁ କିଛି ନାହିଁ।"},"s10.title":{"en":"Your plan","hi":"आपका प्लान","or":"ଆପଣଙ୍କ ପ୍ଲାନ"},"s10.status.free":{"en":"You are on Free.","hi":"आप मुफ़्त प्लान पर हैं।","or":"ଆପଣ ମାଗଣା ପ୍ଲାନରେ ଅଛନ୍ତି।"},"s10.notice.previewStarted":{"en":"Premium preview has started. It ends by itself after 14 days, and nothing is charged.","hi":"मुफ़्त प्रीमियम शुरू हो गया। यह 14 दिन बाद अपने-आप खत्म होगा, और कोई पैसा नहीं कटेगा।","or":"ମାଗଣା ପ୍ରିମିୟମ ଆରମ୍ଭ ହେଲା। ଏହା 14 ଦିନ ପରେ ନିଜେ ଶେଷ ହେବ, କିଛି ଟଙ୍କା କଟିବ ନାହିଁ।"},"s10.status.preview":{"en":"Premium preview ends on {date}.","hi":"मुफ़्त प्रीमियम {date} को खत्म होगा।","or":"ମାଗଣା ପ୍ରିମିୟମ {date} ରେ ଶେଷ ହେବ।"},"s10.status.renews":{"en":"Premium renews on {date}.","hi":"प्रीमियम {date} को अपने-आप रिन्यू होगा।","or":"ପ୍ରିମିୟମ {date} ରେ ନିଜେ ନବୀକରଣ ହେବ।"},"s10.notice.pending":{"en":"Google Play is still processing the payment. Premium starts when it is done.","hi":"Google Play अभी भुगतान पूरा कर रहा है। पूरा होने पर प्रीमियम शुरू होगा।","or":"Google Play ଏବେ ବି ଦେୟ ପ୍ରକ୍ରିୟା କରୁଛି। ଶେଷ ହେଲେ ପ୍ରିମିୟମ ଆରମ୍ଭ ହେବ।"},"s10.notice.offline":{"en":"No connection. Nothing changed. Try again when the phone is online.","hi":"कनेक्शन नहीं है। कुछ नहीं बदला। फ़ोन ऑनलाइन होने पर फिर कोशिश करें।","or":"ସଂଯୋଗ ନାହିଁ। କିଛି ବଦଳିନାହିଁ। ଫୋନ ଅନଲାଇନ ହେଲେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"},"s10.status.onHold":{"en":"Google Play could not take the payment. Premium is paused until it does.","hi":"Google Play भुगतान नहीं ले पाया। भुगतान होने तक प्रीमियम रुका है।","or":"Google Play ଦେୟ ନେଇପାରିଲା ନାହିଁ। ଦେୟ ନହେବା ପର୍ଯ୍ୟନ୍ତ ପ୍ରିମିୟମ ବନ୍ଦ ରହିବ।"}};</script>
+<script>/* Mitra screen kit. Copy comes from window.STRINGS (extracted from apps/mobile/src/i18n/strings.ts by build.mjs, verbatim). Keys that do not exist yet are written K.N('English text') and are listed as NEW. Money is integer paise; the browser formatting mirrors formatPaise (Indian grouping, 2 decimals, sign always printed). */
+(function () {
+  'use strict';
+  var K = (window.K = {});
+  var SPEC = (window.SPEC = window.SPEC || {});
+  var LANGS = { en: 'en', od: 'or', hi: 'hi' };
+  var S = { lang: 'od', theme: 'comfort', size: 1 };
+  var USED = {}; var NEWC = {}; var curFrame = '';
+  K.state = S;
+
+  /* ---- copy ---- */
+  K.t = function (key, vars) {
+    var p = window.STRINGS[key];
+    if (!p) { return '<span class="newc" title="MISSING KEY ' + key + '">' + key + '</span>'; }
+    (USED[curFrame] = USED[curFrame] || {})[key] = 1;
+    var s = p[LANGS[S.lang]];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : '{' + k + '}'; });
+    return s;
+  };
+  K.N = function (en, hint) {
+    (NEWC[curFrame] = NEWC[curFrame] || {})[en] = hint || '';
+    return '<span class="newc" title="NEW string: no od/hi yet (H13)">' + en + '</span>';
+  };
+  K.plain = function (key, vars) { return K.t(key, vars); };
+  K.pick = function (en, od, hi) { return S.lang === 'en' ? en : (S.lang === 'od' ? od : hi); }; /* proper names only */
+
+  /* ---- money ---- */
+  K.rupee = function (p) {
+    var a = Math.abs(p), r = Math.floor(a / 100), ps = a % 100, s = String(r);
+    if (s.length > 3) { var l3 = s.slice(-3), rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + l3; }
+    return '₹' + s + '.' + (ps < 10 ? '0' : '') + ps;
+  };
+  /* o.sign: print + on positives; o.out: an out-line (always -); o.tone:'dir' colours by direction (sign is always printed too) */
+  K.M = function (p, o) {
+    o = o || {}; var neg = o.out || p < 0, sg = neg ? '-' : (o.sign ? '+' : '');
+    var tone = o.tone === 'dir' ? (neg ? ' neg' : ' pos') : '';
+    return '<span class="m' + tone + (o.cls ? ' ' + o.cls : '') + '">' + (sg ? '<b class="sg">' + sg + '</b>' : '') + K.rupee(p) + '</span>';
+  };
+
+  /* ---- icons (stroke, 24 grid) ---- */
+  var ICO = {
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M8.5 8h7M8.5 11.5h7M9 8c3.6 0 5.2 1.3 5.2 3.2S12.6 14.4 9 14.4L15 19"/>',
+    book: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    tray: '<path d="M12 3v9m0 0l-3.5-3.5M12 12l3.5-3.5"/><path d="M4 14v5h16v-5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    dots: '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    box: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M10 13v3h4v-3M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    bars: '<path d="M5 20V11M12 20V4M19 20v-6"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', dash: '<path d="M6 12h12"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 5l-7 7 7 7"/>', bksp: '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', note: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>', up: '<path d="M12 5v14M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 5a3.5 3.5 0 0 1 0 7M19 20c0-2.500-1.500-4-3-4.700"/>',
+    warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    cloudoff: '<path d="M7 18h10a4 4 0 0 0 .8-7.900A6 6 0 0 0 6.500 9.500 4 4 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+    share: '<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 11l7.400-4M8.300 13l7.400 4"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    textsize: '<path d="M3 19L8 6l5 13M5 15h6M15 19l3.500-8 3.500 8M16.200 16.500h4.600"/>', shield: '<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', edit: '<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>', logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+    sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>', swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    wa: '<path d="M4 20l1.500-4.500A8 8 0 1 1 8.500 18.500z"/><path d="M9 9c0 3 3 6 6 6l1.500-1.500-2-1-1 1c-1-.5-2-1.500-2.500-2.500l1-1-1-2z"/>',
+    star: '<path d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/>', pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+    bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+  K.ico = function (n, size, cls) {
+    size = size || 24;
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICO[n] || ICO.dots) + '</svg>';
+  };
+
+  /* ---- components: each returns an HTML string ---- */
+  K.chip = function (kind, n) {
+    if (kind === 'wait') { var s = K.t('sync.waiting', { n: n || 3 }); return '<button class="chip wait" aria-label="' + s + '">' + K.ico('clock', 22) + '<span>' + s + '</span></button>'; }
+    if (kind === 'off') { return '<button class="chip wait">' + K.ico('cloudoff', 22) + '<span>' + K.N('Offline') + '</span></button>'; }
+    return '<button class="chip ok">' + K.ico('check', 22) + '<span>' + K.t('sync.saved') + '</span></button>';
+  };
+  K.top = function (o) { /* {title, back, right, shop, date} */
+    var l = o.back ? '<button class="back" aria-label="' + K.t('common.back') + '">' + K.ico('back', 28) + '</button>' : '';
+    var mid = o.shop ? '<div class="shop"><div class="sn">' + o.shop + '</div><div class="dt">' + (o.date || '') + '</div></div>' : '<h1>' + (o.title || '') + '</h1>';
+    return '<header class="top">' + l + mid + '<div class="grow"></div>' + (o.right || '') + '</header>';
+  };
+  K.tabs = function (active) {
+    var d = [['today', 'box', K.t('nav.today')], ['parties', 'book', K.t('nav.parties')], ['reports', 'bars', K.t('nav.reports')]];
+    return '<nav class="tabs">' + d.map(function (x) { return '<button class="tab' + (x[0] === active ? ' on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + K.ico(x[1], 26) + '<span>' + x[2] + '</span></button>'; }).join('') + '</nav>';
+  };
+  K.tile = function (kind, icon, label, off) { return '<button class="tile t-' + kind + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : '') + '><span class="ti">' + K.ico(icon, 30) + '</span><span>' + label + '</span></button>'; };
+  K.tiles = function (off) {
+    return '<section class="tiles">' + K.tile('sale', 'coin', K.t('act.sale'), off) + K.tile('udhar', 'book', K.t('act.credit'), off) + K.tile('collect', 'tray', K.t('act.collect'), off) + K.tile('expense', 'receipt', K.t('act.expense'), off) + K.tile('more', 'dots', K.t('t1.more'), off) + '</section>';
+  };
+  K.hero = function (o) { /* {box, opening, cashIn, cashOut} paise */
+    return '<section class="hero"><div class="lbl"><span class="hi">' + K.ico('box', 28) + '</span><span>' + K.t('box.title') + '</span></div><div class="fig">' + K.M(o.box, { cls: 'hero-fig' }) + '</div>' +
+      '<div class="ln"><span class="k">' + K.t('box.opening') + '</span>' + K.M(o.opening) + '</div>' +
+      '<div class="ln in"><span class="k">' + K.ico('down', 20, 'dirico') + K.t('box.in') + '</span>' + K.M(o.cashIn, { sign: true, tone: 'dir' }) + '</div>' +
+      '<div class="ln out"><span class="k">' + K.ico('up', 20, 'dirico') + K.t('box.out') + '</span>' + K.M(o.cashOut, { out: true, tone: 'dir' }) + '</div></section>';
+  };
+  K.facts = function (sales, collect) {
+    return '<section class="facts"><div class="ln"><span class="k">' + K.t('box.sales') + '</span>' + K.M(sales) + '</div><button class="ln link"><span class="k">' + K.t('t1.toCollect') + '</span>' + K.M(collect) + '</button></section>';
+  };
+  K.bar = function (done, total) { var h = '<div class="bar" role="img" aria-label="' + done + '/' + total + '">'; for (var i = 0; i < total; i++) h += '<i class="' + (i < done ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.closecard = function (done, total, quiet, label) {
+    return '<button class="closecard' + (quiet ? ' quiet2' : '') + '"><span class="cc-main"><span class="cc-t">' + (label || K.t('t1.continueClose')) + '</span><span>' + K.t('t1.progress', { done: done, total: total }) + '</span></span>' + K.bar(done, total) + '<span class="cc-c">' + K.ico('chev', 26) + '</span></button>';
+  };
+  K.seg = function (items, on, icons) { /* items: label html[]; on: index */
+    return '<div class="seg" role="radiogroup">' + items.map(function (l, i) { return '<button class="sg-b' + (i === on ? ' on' : '') + '" role="radio" aria-checked="' + (i === on) + '">' + (i === on ? K.ico('tick', 22) : (icons && icons[i] ? K.ico(icons[i], 22) : '')) + '<span>' + l + '</span></button>'; }).join('') + '</div>';
+  };
+  K.keypad = function (hidden) {
+    var k = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (x) { return '<button class="key">' + x + '</button>'; });
+    k.push('<button class="key aux">' + K.t('keypad.clear') + '</button>'); k.push('<button class="key">0</button>'); k.push('<button class="key aux" aria-label="' + K.t('keypad.delete') + '">' + K.ico('bksp', 30) + '</button>');
+    return '<div class="kp' + (hidden ? ' hidden' : '') + '">' + k.join('') + '</div>';
+  };
+  K.addbar = function (label, paise, dis) { return '<button class="addbar' + (dis ? ' dis' : '') + '"' + (dis ? ' aria-disabled="true"' : '') + '><span>' + label + '</span>' + (paise ? K.M(paise) : '') + '</button>'; };
+  K.primary = function (label, kind, icon) { return '<button class="primary' + (kind ? ' ' + kind : '') + '"' + (kind === 'dis' ? ' aria-disabled="true"' : '') + '>' + (icon ? K.ico(icon, 26) : '') + '<span>' + label + '</span></button>'; };
+  K.btn2 = function (label, icon) { return '<button class="btn2">' + (icon ? K.ico(icon, 24) : '') + '<span>' + label + '</span></button>'; };
+  K.quiet = function (label) { return '<button class="quiet">' + label + '</button>'; };
+  K.sticky = function () { return '<div class="sticky">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.scroll = function () { return '<div class="scroll">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.stack = function () { return '<div class="stack">' + [].slice.call(arguments).join('') + '</div>'; };
+  K.row = function (o) { /* {state:'done'|'next'|'open'|'skip'|'lock', n, name, sub, paise, entries, quiet} */
+    var mk = o.state === 'done' ? K.ico('tick', 22) : o.state === 'skip' ? K.ico('dash', 22) : o.state === 'lock' ? K.ico('lock', 22) : '<b>' + (o.n || '') + '</b>';
+    var rv = o.paise !== undefined ? '<span class="rv">' + K.M(o.paise) + (o.entries ? '<small>' + o.entries + '</small>' : '') + '</span>' : '';
+    return '<li class="row ' + o.state + (o.cls ? ' ' + o.cls : '') + '"><span class="mk">' + mk + '</span><span class="nm">' + o.name + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' + rv + (o.quiet ? K.quiet(o.quiet) : '') + '</li>';
+  };
+  K.lrow = function (icon, title, sub, o) { o = o || {}; return '<button class="lrow' + (o.danger ? ' danger' : '') + '"><span class="li">' + K.ico(icon, 24) + '</span><span class="lt"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (o.right || '') + (o.noChev ? '' : K.ico('chev', 24)) + '</button>'; };
+  K.sw = function (on, title, sub) { return '<button class="sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"><span class="tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="knob">' + (on ? K.ico('tick', 20) : K.ico('dash', 20)) + '<span>' + K.N(on ? 'On' : 'Off', 'switch state words (DS-V2 3.14); consent screens may use their existing allow/withdraw wording') + '</span></span></button>'; };
+  K.field = function (label, value, o) { o = o || {}; return '<div class="field"><label>' + label + '</label><div class="in' + (o.focus ? ' focus' : '') + (o.err ? ' err' : '') + '">' + (value ? '<span>' + value + '</span>' : '<span class="ph">' + (o.ph || '') + '</span>') + (o.focus ? '<i class="caret"></i>' : '') + '</div>' + (o.help ? '<div class="help' + (o.err ? ' err' : '') + '">' + o.help + '</div>' : '') + '</div>'; };
+  K.avatar = function (name, i) { return '<span class="av av' + ((i || 0) % 5) + '">' + Array.from(name)[0] + '</span>'; };
+  K.prow = function (name, i, sub, paise, state) { return '<li><button class="prow">' + K.avatar(name, i) + '<span class="pn"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="pa">' + K.M(paise) + '<em>' + state + '</em></span></button></li>'; };
+  K.banner = function (kind, icon, text, action) { return '<div class="banner ' + (kind || '') + '" role="status">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span>' + (action ? K.quiet(action) : '') + '</div>'; };
+  K.refuse = function (title, body) { return '<div class="refuse" role="alert">' + K.ico('warn', 24) + '<div><b>' + title + '</b><br>' + body + '</div></div>'; };
+  K.refbanner = function (title, body, nn) { return '<div class="refbanner' + (nn ? ' nn' : '') + '" role="alert"><b>' + title + '</b><br>' + body + '</div>'; };
+  K.empty = function (icon, text, ctaLabel, ctaIcon) { return '<div class="empty"><div class="ei">' + K.ico(icon, 44) + '</div><p>' + text + '</p>' + (ctaLabel ? K.primary(ctaLabel, '', ctaIcon) : '') + '</div>'; };
+  K.skel = function (n) { var h = '<div class="skel" aria-busy="true">'; for (var i = 0; i < (n || 4); i++) h += '<i></i>'; return h + '</div>'; };
+  K.sheet = function (title, inner) { return '<div class="scrim"></div><div class="sheet" role="dialog"><h2>' + title + '</h2><div class="scroll">' + inner + '</div></div>'; };
+  K.dialog = function (title, inner) { return '<div class="scrim"></div><div class="dialog" role="alertdialog"><h2>' + title + '</h2>' + inner + '</div>'; };
+  K.toast = function (icon, text) { return '<div class="toast" role="status">' + K.ico(icon || 'check', 24) + '<span>' + text + '</span></div>'; };
+  K.center = function (inner) { return '<div class="center">' + inner + '</div>'; };
+  K.dots = function (i, n) { var h = '<div class="dots">'; for (var k = 0; k < n; k++) h += '<i class="' + (k === i ? 'on' : '') + '"></i>'; return h + '</div>'; };
+  K.otp = function (digits, cur) { var h = '<div class="otp">'; for (var i = 0; i < 6; i++) h += '<i class="' + (i === cur ? 'cur' : '') + '">' + (digits[i] || '') + '</i>'; return h + '</div>'; };
+  K.sec = function (t) { return '<div class="sec">' + t + '</div>'; };
+  K.list = function (rows) { return '<ul class="rows">' + rows.join('') + '</ul>'; };
+  K.names = { ramesh: ['Ramesh', 'ରମେଶ'], sunita: ['Sunita', 'ସୁନିତା'], bijay: ['Bijay', 'ବିଜୟ'], lakshmi: ['Lakshmi', 'ଲକ୍ଷ୍ମୀ'], pradeep: ['Pradeep', 'ପ୍ରଦୀପ'] };
+  K.nm = function (id) { return K.names[id][S.lang === 'en' ? 0 : 1]; }; /* demo names only; real names are user data, shown as typed */
+  K.shop = 'Subhadra Kirana';
+  K.date = function () { return K.t('t1.day.4') + ' 19 ' + K.t('t1.month.11'); };
+  K.screen = function (inner) { return inner; };
+
+  /* build.mjs runs the specs in Node (lang en) to write FLOWS.md from the very same mockup bodies */
+  K.frame = function (id) { curFrame = id; };
+  K.used = function (id) { return Object.keys(USED[id] || {}); };
+  K.newc = function (id) { return Object.keys(NEWC[id] || {}); };
+
+  /* ---- page ---- */
+  function frameHtml(sc) {
+    return '<div class="fwrap"><h3>' + sc.route + '</h3><div class="bezel"><div class="screen" id="fr-' + sc.id + '"><div class="status"><span>11:42</span><span>100%</span></div><div class="app"></div><div class="gesture"><i></i></div></div></div></div>';
+  }
+  function noteHtml(sc) {
+    var used = Object.keys(USED[sc.id] || {}), nw = Object.keys(NEWC[sc.id] || {});
+    var flag = sc.flag === 'NEW' ? '<span class="tag new">NEW screen</span>' : sc.flag === 'CHG' ? '<span class="tag chg">Changed</span>' : '<span class="tag">Exists today</span>';
+    var dl = function (k, v) { return v ? '<dt>' + k + '</dt><dd>' + v + '</dd>' : ''; };
+    return '<div class="note"><h3>' + flag + sc.title + '</h3><dl>' + dl('Route', '<code>' + sc.route + '</code>') + dl('Purpose', sc.purpose) + dl('Primary action', sc.primary) + dl('Taps / target', sc.taps) + dl('Rules held', sc.rules) + dl('States / notes', sc.notes) + dl('For Saket to review', sc.review) + dl('Copy gaps (en only)', nw.length ? nw.map(function (x) { return '"' + x + '"'; }).join(' · ') + ' (od/hi DRAFT needed, H13)' : '') + '</dl><div class="keys"><b>Keys used:</b> ' + (used.length ? used.join(', ') : 'none') + '</div></div>';
+  }
+  function renderBodies(scr) { scr.forEach(function (sc) { curFrame = sc.id; var el = document.getElementById('fr-' + sc.id); var app = el.querySelector('.app'); var prev = app.querySelector('.scroll'); var top = prev ? prev.scrollTop : 0; app.innerHTML = sc.body(); var s2 = app.querySelector('.scroll'); if (s2) s2.scrollTop = top; }); }
+  function renderNotes(scr) { scr.forEach(function (sc) { document.getElementById('note-' + sc.id).innerHTML = noteHtml(sc); }); }
+  K.boot = function () {
+    var area = SPEC.area, scr = area.screens;
+    document.title = 'SWAFTO Retail Desk - Mitra - ' + area.title;
+    var q = function (id) { return document.getElementById(id); };
+    q('area-title').textContent = area.title + ' (' + scr.length + ' screen states)'; q('area-intro').innerHTML = area.intro;
+    q('toc').innerHTML = scr.map(function (s) { return '<a href="#c-' + s.id + '"' + (s.flag === 'NEW' ? ' class="new"' : '') + '>' + s.title + '</a>'; }).join('');
+    q('stage').innerHTML = scr.map(function (sc) { return '<section class="card" id="c-' + sc.id + '">' + frameHtml(sc) + '<div class="note" id="note-' + sc.id + '"></div></section>'; }).join('');
+    function all() { document.documentElement.lang = S.lang === 'od' ? 'or' : S.lang; document.body.setAttribute('data-lang', S.lang); document.body.setAttribute('data-theme', S.theme); document.body.style.setProperty('--z', S.size); document.body.style.setProperty('--zc', Math.min(S.size, 1.5)); USED = {}; NEWC = {}; renderBodies(scr); renderNotes(scr); }
+    [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { S.lang = b.getAttribute('data-lang-btn'); [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) { b.addEventListener('click', function () { S.theme = b.getAttribute('data-theme-btn'); [].forEach.call(document.querySelectorAll('[data-theme-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (b) { b.addEventListener('click', function () { S.size = parseFloat(b.getAttribute('data-size-btn')); [].forEach.call(document.querySelectorAll('[data-size-btn]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); all(); }); });
+    all();
+  };
+})();
+</script>
+<script>/* AREA: Reports (R1 and the basic report cards, M1 premium dashboard, C1 Ask, S12 entries for the accountant, S10 your plan).
+   Copy by literal key K.t(KEY); a string that does not exist is K.N(the English text). Money is integer paise through K.M.
+   Every figure in these frames is a demo figure; the cross-checks are in the comments next to each block. Status is never colour alone. */
+(function () {
+  var t = K.t, M = K.M;
+
+  /* ---------- local helpers (the kit has no report card, plural or percent helper) ---------- */
+  /* plural strings look like '{n|# day|# days}' (2 parts: one, other) or '{n|none|# day|# days}' (3 parts: zero, one, other); K.t leaves them alone */
+  function pf(s, v) {
+    return s.replace(/\{(\w+)\|([^}]*)\}/g, function (_, k, body) {
+      var p = body.split('|'), n = v[k], r;
+      if (p.length === 3) r = n === 0 ? p[0] : (n === 1 ? p[1] : p[2]); else r = n === 1 ? p[0] : p[1];
+      return r.replace('#', n);
+    });
+  }
+  function isum(a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s; }
+  function pct(bp) { var tn = Math.round(bp / 10); return Math.floor(tn / 10) + '.' + (tn % 10) + '%'; } /* same one-decimal form as formatBasisPoints */
+  function tabTop(chip) { return K.top({ title: t('r1.title'), right: chip || K.chip('ok') }); }
+  function sub(title, chip) { return K.top({ title: title, back: true, right: chip || K.chip('ok') }); }
+  function card(icon, title, inner) {
+    return '<section class="hero" style="margin-top:12px"><div class="lbl"><span class="hi">' + K.ico(icon, 28) + '</span><span>' + title + '</span></div>' + inner + '</section>';
+  }
+  function mrow(label, paise, o) { return '<div class="ln" style="min-height:56px"><span class="k">' + label + '</span>' + M(paise, o) + '</div>'; }
+  function rd(label, value, ico) { return '<div class="ln" style="min-height:56px"><span class="k">' + label + '</span><b style="display:flex;align-items:center;gap:6px">' + (ico ? K.ico(ico, 20) : '') + value + '</b></div>'; }
+  function note(text) { return '<div style="color:var(--muted);padding:8px 0 2px;line-height:1.45;border-top:2px dashed var(--rule)">' + text + '</div>'; }
+  function gateRow(label, have, need) { /* r1.gate sentence + a words-and-bar progress, never a zero and never an empty chart */
+    return '<div class="ln" style="flex-direction:column;align-items:stretch;gap:4px;padding:8px 0;min-height:56px"><span class="k">' + label + '</span><span style="color:var(--muted);line-height:1.4">' + t('r1.gate', { need: need, have: have }) + '</span>' + K.bar(have, need) + '</div>';
+  }
+  function askBtn() { return K.stack(K.primary(t('c1.open'), 'tonal', 'chat')); }
+  var D = {
+    d18: function () { return t('t1.day.3') + ' 18 ' + t('t1.month.11'); },
+    d17: function () { return t('t1.day.2') + ' 17 ' + t('t1.month.11'); },
+    d16: function () { return t('t1.day.1') + ' 16 ' + t('t1.month.11'); },
+    d15: function () { return t('t1.day.0') + ' 15 ' + t('t1.month.11'); },
+    d14: function () { return t('t1.day.6') + ' 14 ' + t('t1.month.11'); },
+    d13: function () { return t('t1.day.5') + ' 13 ' + t('t1.month.11'); },
+    d12: function () { return t('t1.day.4') + ' 12 ' + t('t1.month.11'); }
+  };
+
+  /* ---------- demo book (derived in the comments, nothing typed that is not the sum of its parts) ---------- */
+  var THIS = { closed: 18, cash: 1200000, upi: 450000, udhar: 300000, expenses: 310000, purchases: 800000, withdrawals: 200000 };
+  THIS.net = isum([THIS.cash, THIS.upi, THIS.udhar]);                     /* 1,950,000 */
+  THIS.profit = THIS.net - THIS.purchases - THIS.expenses;                  /* 840,000 */
+  THIS.left = THIS.profit - THIS.withdrawals;                               /* 640,000: taken home sits BESIDE profit (D3), only 'left' is derived from it */
+  var LAST = { closed: 12, cash: 700000, upi: 250000, udhar: 200000, expenses: 190000, purchases: 450000, withdrawals: 150000 };
+  LAST.net = isum([LAST.cash, LAST.upi, LAST.udhar]);                       /* 1,150,000 */
+  LAST.profit = LAST.net - LAST.purchases - LAST.expenses;                  /* 510,000 */
+  LAST.left = LAST.profit - LAST.withdrawals;                               /* 360,000 */
+  var ALL = { closed: THIS.closed + LAST.closed, sales: THIS.net + LAST.net, expenses: THIS.expenses + LAST.expenses, owed: 2150000 }; /* 30 days, 3,100,000, 500,000, owed = Today's 'Udhar to collect' */
+  var BOXNOW = 1200000 + 935000 - 290000;                                   /* same box as Today's frames: 1,845,000 */
+
+  function figuresCard(all) {
+    return card('bars', t('r1.title'),
+      rd(t('r1.daysClosed'), String(all.closed)) +
+      mrow(t('r1.totalSales'), all.sales) +
+      mrow(t('r1.totalExpenses'), all.expenses, { out: true }) +
+      mrow(t('r1.creditOutstanding'), all.owed) +
+      note(t('r1.note')));
+  }
+  function dashRow() { return '<div style="margin:12px 12px 0">' + K.lrow('star', t('rep.dashboard'), t('rep.dashboard.detail')) + '</div>'; }
+  /* rep.party.age is '{name} · {n|since today|# day|# days}' */
+  function partyAge(name, n) { return pf(t('rep.party.age', { name: name }), { n: n }); }
+  function duesCard(title, buckets, parties) {
+    var h = mrow(t('rep.bucket.0'), buckets[0]) + mrow(t('rep.bucket.1'), buckets[1]) + mrow(t('rep.bucket.2'), buckets[2]) + mrow(t('rep.bucket.3'), buckets[3]);
+    parties.forEach(function (p) { h += mrow(partyAge(p[0], p[1]), p[2]); });
+    return card('users', title, h + note(t('rep.dues.note')));
+  }
+  function custDues() {
+    /* 1,400,000 + 450,000 + 200,000 + 100,000 = 2,150,000 = the five names below, oldest first */
+    return duesCard(t('rep.dues.title'), [1400000, 450000, 200000, 100000],
+      [[K.nm('pradeep'), 95, 100000], [K.nm('lakshmi'), 70, 200000], [K.nm('sunita'), 40, 450000], [K.nm('bijay'), 18, 500000], [K.nm('ramesh'), 5, 900000]]);
+  }
+  function suppDues() {
+    return duesCard(t('rep.owe.title'), [800000, 0, 0, 0], [['Maa Tarini Stores', 20, 500000], ['Kedar Wholesale', 9, 300000]]);
+  }
+  function monthCard(titleHtml, m) {
+    return card('calendar', titleHtml,
+      rd(t('r1.daysClosed'), String(m.closed)) +
+      mrow(t('rep.month.netSales'), m.net) + mrow(t('rep.month.cash'), m.cash) + mrow(t('rep.month.upi'), m.upi) + mrow(t('rep.month.udhar'), m.udhar) +
+      mrow(t('rep.month.expenses'), m.expenses, { out: true }) + mrow(t('rep.month.purchases'), m.purchases, { out: true }) +
+      mrow(t('rep.month.profit'), m.profit, { sign: true, tone: 'dir' }) +
+      mrow(t('rep.month.takenHome'), m.withdrawals, { out: true }) +
+      mrow(t('rep.month.left'), m.left, { sign: true, tone: 'dir' }) +
+      note(t('rep.month.note')));
+  }
+  function cashCard() {
+    /* 22 + 5 + 3 = 30 closed days */
+    var rows = [[D.d18(), 0], [D.d17(), -5000], [D.d16(), 0], [D.d15(), 2000], [D.d14(), 0], [D.d13(), -10000], [D.d12(), 0]];
+    var h = rd(t('rep.cash.balanced'), pf(t('r1.ofDays', { n: 22, w: 30 }), {}), 'check') +
+      rd(t('rep.cash.short'), pf(t('r1.ofDays', { n: 5, w: 30 }), {}), 'down') +
+      rd(t('rep.cash.extra'), pf(t('r1.ofDays', { n: 3, w: 30 }), {}), 'up');
+    rows.forEach(function (r) { h += mrow(r[0], r[1], r[1] === 0 ? {} : { sign: true, tone: 'dir' }); });
+    return card('note', t('rep.cash.title'), h);
+  }
+  function upiCard() {
+    return card('phone', t('rep.upi.title'),
+      mrow(t('rep.month.this'), 430000) + rd(t('rep.upi.title'), t('rep.upi.receipts', { n: 41, w: 44 })) +
+      mrow(t('rep.month.last'), 250000) + rd(t('rep.upi.title'), t('rep.upi.receipts', { n: 23, w: 23 })));
+  }
+  function changingCard() {
+    return card('bars', t('r1.changing'),
+      rd(t('r1.bi1'), t('r1.bi1.up'), 'up') +
+      mrow(t('r1.bi1.earlier'), 38000, { sign: true, tone: 'dir' }) + mrow(t('r1.bi1.later'), 46000, { sign: true, tone: 'dir' }) +
+      rd(t('r1.bi2'), pct(1840)));
+  }
+  function pressureCard(noBaseline) {
+    return card('warn', t('r1.pressure'),
+      rd(t('r1.bi3'), pct(2260)) + rd(t('r1.bi3.short'), t('r1.ofDays', { n: 5, w: 28 })) +
+      rd(t('r1.bi4'), pct(3120)) +
+      rd(t('r1.bi6'), pct(7840)) +
+      (noBaseline ? rd(t('r1.bi6.compared'), t('r1.bi6.no_baseline'), 'dash') : rd(t('r1.bi6.compared'), t('r1.bi6.worsening'), 'up')));
+  }
+  function ccCard() {
+    return card('check', t('r1.cc.title'), rd(t('r1.cc.match'), t('r1.ofDays', { n: 22, w: 30 })) + rd(t('r1.cc.gap'), pct(120)) + note(t('r1.cc.notYet')));
+  }
+  function ocCard() {
+    return card('tick', t('r1.oc.title'), rd(t('r1.oc.closing'), t('r1.ofDays', { n: 30, w: 31 })) + rd(t('r1.oc.recording'), pct(9450)) + rd(t('r1.oc.corrections'), pct(310)));
+  }
+  function bhNote() { return '<section class="hero" style="margin-top:12px;margin-bottom:12px"><div style="display:flex;gap:10px;line-height:1.45;align-items:flex-start"><span class="hi" style="width:44px;height:44px;border-radius:50%;background:var(--t1bg);color:var(--t1ic);display:flex;align-items:center;justify-content:center;flex:none">' + K.ico('info', 26) + '</span><span style="color:var(--muted)">' + t('r1.bh') + '</span></div></section>'; }
+
+  /* ---------- M1 ---------- */
+  var FC = [['Fri', 5, 20, 105000], ['Sat', 6, 21, 125000], ['Sun', 0, 22, 132000], ['Mon', 1, 23, 90000], ['Tue', 2, 24, 92000], ['Wed', 3, 25, 98000], ['Thu', 4, 26, 108000]];
+  function fcDate(r) {
+    var m = t('t1.month.11');
+    return (r[1] === 5 ? t('t1.day.5') : r[1] === 6 ? t('t1.day.6') : r[1] === 0 ? t('t1.day.0') : r[1] === 1 ? t('t1.day.1') : r[1] === 2 ? t('t1.day.2') : r[1] === 3 ? t('t1.day.3') : t('t1.day.4')) + ' ' + r[2] + ' ' + m;
+  }
+  function forecastCard() {
+    var h = note(t('m1.forecast.seasonal_naive')).replace('border-top:2px dashed var(--rule)', 'border-top:0') +
+      note(pf(t('m1.forecast.window', { from: t('t1.day.0') + ' 1 ' + t('t1.month.11'), to: t('t1.day.3') + ' 18 ' + t('t1.month.11') }), { n: 18 }));
+    FC.forEach(function (r) {
+      var low = Math.round(r[3] * 0.85 / 1000) * 1000, high = Math.round(r[3] * 1.15 / 1000) * 1000; /* demo bounds, not an engine output */
+      h += mrow(fcDate(r), r[3]) + '<div class="ln" style="min-height:56px;color:var(--muted)"><span class="k">' + t('m1.forecast.range') + '</span><span>' + M(low) + ' - ' + M(high) + '</span></div>';
+    });
+    h += mrow(t('m1.forecast.miss'), 18000) + note(pf(t('m1.forecast.hwGate', { need: 56, have: 18 }), {})) + note(t('m1.forecast.estimate'));
+    return card('bars', t('m1.forecast.title'), h);
+  }
+  function forecastGated(have) {
+    return card('bars', t('m1.forecast.title'), gateRow(t('m1.forecast.title'), have, 14) + note(t('m1.forecast.estimate')));
+  }
+  function lastYearCard() { /* too few days: this year's figure, and the sentence for a year with no closed day */
+    return card('calendar', t('m1.lastYear.title'), mrow(pf(t('m1.lastYear.this', {}), { n: 5 }), 640000) + note(t('m1.lastYear.none')));
+  }
+  function lastYearFull() {
+    return card('calendar', t('m1.lastYear.title'),
+      mrow(pf(t('m1.lastYear.this', {}), { n: 18 }), THIS.net) + mrow(pf(t('m1.lastYear.last', {}), { n: 17 }), 1720000));
+  }
+  function festivalCard(none) {
+    return card('star', t('m1.festival.title'),
+      (none ? rd(t('m1.festival.none'), '') : mrow(pf(t('m1.festival.week', { name: t('festival.diwali') }), { n: 7 }), 790000) + mrow(pf(t('m1.festival.before', {}), { n: 6 }), 610000)) +
+      note(t('m1.festival.source')));
+  }
+  function payCard(none) {
+    return card('clock', t('m1.pay.title'),
+      (none ? note(t('m1.pay.none')).replace('border-top:2px dashed var(--rule)', 'border-top:0') :
+        rd(K.nm('ramesh'), t('m1.pay.value', { n: 6 })) + rd(K.nm('sunita'), t('m1.pay.value', { n: 21 })) + rd(K.nm('bijay'), t('m1.pay.value', { n: 9 })) + note(t('m1.pay.note'))));
+  }
+  function returnsCard(zero) {
+    return card('swap', t('m1.returns.title'),
+      mrow(pf(t('m1.returns.returns', { date: D.d18() }), { n: zero ? 0 : 2 }), zero ? 0 : 45000, { out: true }) + mrow(pf(t('m1.returns.adjustments', {}), { n: zero ? 0 : 1 }), zero ? 0 : 2000, zero ? {} : { sign: true, tone: 'dir' }) +
+      mrow(pf(t('m1.returns.returns', { date: D.d12() }), { n: 0 }), 0) + mrow(pf(t('m1.returns.adjustments', {}), { n: 0 }), 0));
+  }
+  function itemsSlot() { /* PR-2 item cards arrive through a slot owned by the items area; drawn here only as a labelled hole */
+    return '<div style="margin:12px;padding:12px;border:2px dashed var(--rule);border-radius:20px;color:var(--muted);line-height:1.4">' + K.N('Item cards appear here (drawn in the items area).') + '</div>';
+  }
+
+  /* ---------- C1 ---------- */
+  function chipQ(label) { return '<button class="primary tonal" style="margin:0"><span>' + label + '</span></button>'; }
+  function ask(q) { return '<div style="display:block;width:fit-content;max-width:85%;margin:12px 12px 4px auto;background:var(--raised);border-radius:16px;padding:10px 14px;font-weight:600;line-height:1.4">' + q + '</div>'; }
+  function heardCard(heard, inner) {
+    return '<section class="hero" style="margin-top:6px"><div style="color:var(--muted);line-height:1.4;padding-bottom:4px">' + t('c1.heard', { what: heard }) + '</div>' + inner + '</section>';
+  }
+  function coversLine() { return note(t('c1.covers')).replace('border-top:2px dashed var(--rule)', 'border-top:0'); }
+  function inputBar(draft) {
+    return K.sticky(K.field('', draft, { ph: t('c1.placeholder') }), K.primary(t('c1.ask'), draft ? '' : 'dis'));
+  }
+  function chatTop() { return sub(t('c1.title')); }
+
+  /* ---------- S10 ---------- */
+  function listBlock(keys) { return keys.map(function (k) { return '<div class="ln" style="min-height:56px;line-height:1.4;border-top:2px solid var(--rule)"><span class="k">' + k + '</span></div>'; }).join(''); }
+  function freeGroup() {
+    return card('check', t('s10.free.title'),
+      '<div style="line-height:1.45;padding-bottom:6px">' + t('s10.free.promise') + '</div>' +
+      listBlock([t('s10.free.close'), t('s10.free.entries'), t('s10.free.parties'), t('s10.free.history'), t('s10.free.data'), t('s10.free.rights')]));
+  }
+  function premiumGroup() {
+    return card('star', t('s10.premium.title'),
+      listBlock([t('s10.premium.items'), t('s10.premium.itemReports'), t('s10.premium.forecast'), t('s10.premium.comparisons'), t('s10.premium.chat'), t('s10.premium.dashboard')]));
+  }
+  function tile(name, perKey, renewKey, buyLabel, price, dis) {
+    return '<div style="border:2px solid var(--rule);border-radius:20px;padding:10px 12px;margin-top:8px"><b>' + name + '</b><div style="font-size:1.5em;font-weight:700;padding:2px 0">' + M(price) + '</div><div style="color:var(--muted);line-height:1.4">' + perKey + '</div><div style="color:var(--muted);line-height:1.4;padding-bottom:8px">' + renewKey + '</div>' + K.primary(buyLabel, dis ? 'dis' : 'outline') + '</div>';
+  }
+  function priceCard(closed, busy) {
+    return card('coin', t('s10.price.title'),
+      '<div style="color:var(--muted);line-height:1.45">' + t('s10.cancelTerms') + '</div>' +
+      (closed ? '<div style="line-height:1.45;padding-top:8px;display:flex;gap:8px;align-items:flex-start">' + K.ico('lock', 22) + '<span>' + t('s10.notOpen') + '</span></div>' : '') +
+      tile(t('s10.price.monthly'), t('s10.price.perMonth'), t('s10.renew.monthly'), t('s10.buy.monthly'), 9900, closed || busy) +
+      tile(t('s10.price.yearly'), t('s10.price.perYear'), t('s10.renew.yearly'), t('s10.buy.yearly'), 79900, closed || busy));
+  }
+  function statusCard(text, inner) {
+    return '<section class="hero" style="margin-top:12px"><div style="font-weight:700;line-height:1.45;padding-bottom:6px">' + text + '</div>' + (inner || '') + '</section>';
+  }
+  function noticeBox(text, icon) { return '<div class="banner info" role="alert">' + K.ico(icon || 'info', 24) + '<span>' + text + '</span></div>'; }
+  function previewBtn(dis) { return K.primary(t('s10.preview'), dis ? 'dis' : 'outline', 'star') + '<div style="color:var(--muted);line-height:1.45;padding:6px 4px 2px">' + t('s10.preview.note') + '</div>'; }
+  function cancelBtn() { return K.primary(t('s10.cancel'), 'outline', 'logout') + '<div style="color:var(--muted);line-height:1.45;padding:6px 4px 2px">' + t('s10.cancel.note') + '</div>'; }
+
+  var D3DEC = function () { return t('t1.day.4') + ' 3 ' + t('t1.month.12') + ' 2026'; };
+  var D19DEC = function () { return t('t1.day.6') + ' 19 ' + t('t1.month.12') + ' 2026'; };
+
+  SPEC.area = {
+    title: 'Reports',
+    intro: 'The Reports tab and what hangs off it: R1 with its gates, Behaviour Engine readings and the three scores (Business Health is said, not scored, BE-07), the Premium dashboard M1, Ask C1, entries for the accountant S12 and Your plan S10. Beta note: plan.ts has BETA.allFree = true, so today every beta user sees the Premium state of M1 and C1 and the Premium cards are open; the free-plan frames show what returns when the beta flag is switched off. Every figure is derived on read from the entries; no figure is predicted or suggested.',
+    screens: [
+      {
+        id: 'reports-empty', route: 'R1', title: 'Reports: before the first close', flag: 'CHG',
+        purpose: 'A new shop has no closed day, so there is nothing true to report. Say so, and say what opens it.',
+        primary: 'Continue day close (goes to Today and its close list). Secondary: Ask a question.',
+        taps: 'Ask a question = 1 tap. Reaching the close list = 2 taps (Today tab, close card).',
+        rules: 'Emptiness is derived from the count of closed days, never from a flag. No headline figure and no zero chart above the sentence. No inference.',
+        notes: 'As built, the empty state is the sentence r1.empty plus the Ask button; the Continue day close button is NEW here so the empty state has a next action, not a dead end (brief: never "nothing here yet" alone). Ask stays in the body header so a shop can ask how to close a day.',
+        review: 'Adds a Continue day close button to the empty Reports state; R1.tsx today shows only the sentence and Ask.',
+        body: function () {
+          return tabTop() + K.scroll(askBtn(), K.empty('bars', t('r1.empty'), t('t1.continueClose'), 'check')) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-gate', route: 'R1', title: 'Reports: first week, too few closed days', flag: 'CHG',
+        purpose: 'Three days are closed. Level 1 figures are true and shown; every trend and score is held back with its own gate sentence, never a zero or an empty chart.',
+        primary: 'Continue day close (tonal). Each held-back reading shows how many closed days it needs and how many exist.',
+        taps: 'Read the gates = 0 taps. Continue closing = 1 tap from here.',
+        rules: 'Gate sentence r1.gate comes from the engine\'s own two numbers (need, have). Needs: profit trend 14, sales variation 14, closing-cash variation 21, working-capital 14, credit concentration 14, Cash Confidence 14, Operational Consistency 14 (BI_GATES, SCORE_GATES in the engine). Nothing says what to do with a figure.',
+        notes: 'A small progress bar is drawn under each gate sentence (NEW, a drawing of the same two numbers, with the sentence beside it so it is not a picture alone). The info line above the cards says what moves the gates; r1.gate alone states the count but not the way forward. Demo: sales 3,40,000, expenses 52,000, owed 80,000 after three closes.',
+        review: 'Two additions beyond R1.tsx: a progress bar under each gate sentence and one "what moves this" line; both need Saket\'s yes.',
+        body: function () {
+          var have = 3;
+          return tabTop() + K.scroll(
+            askBtn(),
+            card('bars', t('r1.title'), rd(t('r1.daysClosed'), String(have)) + mrow(t('r1.totalSales'), 340000) + mrow(t('r1.totalExpenses'), 52000, { out: true }) + mrow(t('r1.creditOutstanding'), 80000) + note(t('r1.note'))),
+            K.banner('info', 'info', K.N('Each day you close brings these readings closer.')),
+            card('bars', t('r1.changing'), gateRow(t('r1.bi1'), have, 14) + gateRow(t('r1.bi2'), have, 14)),
+            card('warn', t('r1.pressure'), gateRow(t('r1.bi3'), have, 21) + gateRow(t('r1.bi4'), have, 14) + gateRow(t('r1.bi6'), have, 14)),
+            card('check', t('r1.cc.title'), gateRow(t('r1.cc.match'), have, 14) + note(t('r1.cc.notYet'))),
+            card('tick', t('r1.oc.title'), gateRow(t('r1.oc.closing'), have, 14)),
+            bhNote(),
+            K.stack(K.primary(t('t1.continueClose'), 'tonal', 'check'))
+          ) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-month', route: 'R1', title: 'Reports: a normal month (what happened)', flag: 'CHG',
+        purpose: 'Level 1, what happened: days closed, sales, expenses, owed to you, who owes you and what you owe, then this month at a glance.',
+        primary: 'Premium dashboard row (opens M1) and Ask a question. Reading only; nothing is typed here.',
+        taps: 'Owes-lookup: Reports tab, scroll to Who owes you = 1 tap plus a scroll (target under 10 s). Dashboard = 1 tap.',
+        rules: 'Derived on read (r1.note says so). D3: Taken home is shown beside profit; only "Profit left in the shop" is derived from both. Count of days is plain text, never a rupee component. Bucketed udhar: oldest first.',
+        notes: 'Demo book: this month sales = cash 12,00,000 + UPI 4,50,000 + udhar 3,00,000; profit = sales - purchases - expenses. Out-flows (expenses, purchases, taken home) are drawn with a printed minus here; R1.tsx draws them unsigned, so this is a change for review. The five udhar names are 1,00,000 + 2,00,000 + 4,50,000 + 5,00,000 + 9,00,000 = 21,50,000 = the buckets = Owed to you.',
+        review: 'Prints a minus on out-flow rows (expenses, purchases, taken home) in the report cards; the app draws them unsigned today.',
+        body: function () {
+          return tabTop() + K.scroll(
+            askBtn(), figuresCard(ALL), dashRow(), custDues(), suppDues(), monthCard(t('rep.month.this'), THIS)
+          ) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-more', route: 'R1', title: 'Reports: further down (last month, cash checks, UPI)', flag: 'EXISTS',
+        purpose: 'The rest of the free basic reports, scrolled to: last month, the cash-check history and the UPI the shopkeeper confirmed.',
+        primary: 'None; reading.',
+        taps: 'n/a',
+        rules: 'Decision 3: the UPI figure is the sum of receipts he confirmed, not a bank balance; the count of confirmed receipts sits beside it. Last month is absent when the book starts this month (HT-46). Differences carry + or - and words (Matched, Less than expected, More than expected), not colour alone.',
+        notes: 'Demo: matched 22 + less 5 + more 3 = 30 closed days. Last seven checks are listed, newest first; a day with a difference shows the sign. Reasons for a gap (T12) would append after the date; none drawn. This frame is the lower part of the same scroll as the one above.',
+        body: function () {
+          return tabTop() + K.scroll(monthCard(t('rep.month.last'), LAST), cashCard(), upiCard()) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-behaviour', route: 'R1', title: 'Reports: what is changing, where pressure is building', flag: 'EXISTS',
+        purpose: 'Behaviour Engine levels 2 and 3 with enough closed days: profit trend, sales variation, cash variation, short days, working capital, credit concentration.',
+        primary: 'None; reading. Each line states a fact about the book and none says what to do.',
+        taps: 'n/a',
+        rules: 'These are derived observations, not instructions: Rising/Falling/Steady and More/Less concentrated are things to look at. A direction always carries a word and an arrow icon. BI5 has no card by D5.',
+        notes: 'Demo values (30 closed days): profit trend Rising, average daily profit 380.00 earlier half against 460.00 later; sales variation 18.4%; closing cash variation 22.6% with 5 of 28 days short; owed to you and by you against cash 31.2%; top 3 customers hold 78.4%, more concentrated than recent closes. Percentages use the engine\'s one-decimal form. The wording is "worth a look" by being plain facts; no card says "you should".',
+        body: function () {
+          return tabTop() + K.scroll(changingCard(), pressureCard(false)) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-scores', route: 'R1', title: 'Reports: the three scores (Cash Confidence, Operational Consistency, Business Health)', flag: 'EXISTS',
+        purpose: 'Each score is shown as its separate published ratios, never blended. Business Health has no number (BE-07) and says so in a sentence.',
+        primary: 'None; reading.',
+        taps: 'n/a',
+        rules: 'Business Health is said, not shown: r1.bh. Cash Confidence shows cash matched exactly (n of days) and the typical gap as a share of a day\'s sales; r1.cc.notYet says UPI matching and reasons are not counted yet. Operational Consistency shows days closed of days opened, sections filled or marked empty, and entries that are corrections. SCORES.md must validate the mathematics before any production use (decision 4).',
+        notes: 'Demo: matched exactly 22 of 30 days, typical gap 1.2%; closed 30 of 31 days, recording 94.5%, corrections 3.1%. No score is a coloured badge, a grade or a traffic light.',
+        body: function () {
+          return tabTop() + K.scroll(ccCard(), ocCard(), bhNote()) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-nobaseline', route: 'R1', title: 'Reports: enough days to read, nothing earlier to compare', flag: 'EXISTS',
+        purpose: 'The no_baseline states: a reading exists but has no earlier period to be set against. The screen says "Nothing earlier to compare", never "No change".',
+        primary: 'None; reading.',
+        taps: 'n/a',
+        rules: 'The engine keeps no_baseline apart from flat: "we do not know yet" is not "stable". The direction row carries a dash icon and words. Credit concentration is the one Behaviour card with this state in R1.tsx (r1.bi6.no_baseline). Today\'s sales against the median (BusinessMovement) also has no_baseline in the engine but R1.tsx has no card for it.',
+        notes: 'Demo: 21 closed days, so closing-cash variation (needs 21) has just opened and Cash Confidence reads 15 of 21; Operational Consistency is still gated (9 of 14 here, as its own closed-day count) and shows the r1.gate sentence.',
+        body: function () {
+          return tabTop() + K.scroll(
+            card('warn', t('r1.pressure'),
+              rd(t('r1.bi3'), pct(2260)) + rd(t('r1.bi3.short'), t('r1.ofDays', { n: 4, w: 21 })) +
+              rd(t('r1.bi4'), pct(2940)) + rd(t('r1.bi6'), pct(8120)) + rd(t('r1.bi6.compared'), t('r1.bi6.no_baseline'), 'dash')),
+            card('check', t('r1.cc.title'), rd(t('r1.cc.match'), t('r1.ofDays', { n: 15, w: 21 })) + rd(t('r1.cc.gap'), pct(150)) + note(t('r1.cc.notYet'))),
+            card('tick', t('r1.oc.title'), gateRow(t('r1.oc.closing'), 9, 14)),
+            bhNote()
+          ) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-loading', route: 'R1', title: 'Reports: loading', flag: 'EXISTS',
+        purpose: 'The engine is reading the phone\'s own database. Shapes only, no spinner.',
+        primary: 'None; waits. Shown briefly.',
+        taps: 'n/a',
+        rules: 'Skeleton, accessible name common.loading. Tabs stay so he can leave.',
+        notes: 'Shapes match the figures card and the first reading card so nothing jumps when they arrive.',
+        body: function () {
+          return tabTop() + '<div class="scroll" aria-busy="true" aria-label="' + t('common.loading') + '">' + K.skel(5) + '</div>' + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-error', route: 'R1', title: 'Reports: could not open', flag: 'EXISTS',
+        purpose: 'The reading failed. Nothing is lost; one next step.',
+        primary: 'Try again (common.retry).',
+        taps: '1 tap.',
+        rules: 'common.error says nothing entered is lost. Icon plus words, one button, equal weight everywhere.',
+        notes: 'Shown by Shell for status error. Tabs remain.',
+        body: function () {
+          return tabTop() + K.scroll(K.banner('err', 'warn', t('common.error')), K.empty('refresh', t('common.error'), t('common.retry'), 'refresh')) + K.tabs('reports');
+        }
+      },
+      {
+        id: 'reports-offline', route: 'R1', title: 'Reports: offline, entries waiting', flag: 'EXISTS',
+        purpose: 'Reports are computed on the phone, so they work with no network. The chip says the entries are safe and waiting.',
+        primary: 'None; the figures are complete for what this phone holds.',
+        taps: 'n/a',
+        rules: 'Chip amber with a clock, never red. Figures include entries still waiting to send (derived from the phone\'s own entries).',
+        notes: 'There is no offline-specific Reports state in R1.tsx; this frame is the normal screen with the sync chip and the line sync.waitingLong from the header pattern.',
+        body: function () {
+          return tabTop(K.chip('wait', 3)) + K.scroll(K.banner('info', 'cloudoff', t('sync.waitingLong', { n: 3 })), askBtn(), figuresCard(ALL), dashRow(), custDues()) + K.tabs('reports');
+        }
+      },
+
+      /* ----- M1 ----- */
+      {
+        id: 'm1-premium', route: 'M1', title: 'Dashboard: Premium state (what a beta user sees)', flag: 'EXISTS',
+        purpose: 'One screen for the Premium readings: the 7-day sales estimate, this month against last year, festival weeks.',
+        primary: 'None; reading. Back returns to Reports.',
+        taps: 'From Reports: Premium dashboard row = 1 tap.',
+        rules: 'Every estimate says "estimate", how it was made and how often it was wrong. Nothing here is a number the user enters; nothing is stored. Comparisons are things to look at.',
+        notes: 'BETA: plan.ts has BETA.allFree = true, so allows() is true for every plan and M1 draws these cards for a beta user, free or not. Method shown is "same as the last same weekday", because the weekday-and-trend method needs 56 closed days (18 here) and says so. Likely ranges are demo bounds, not engine output.',
+        body: function () {
+          return sub(t('m1.title')) + K.scroll(forecastCard(), lastYearFull(), festivalCard(false));
+        }
+      },
+      {
+        id: 'm1-premium2', route: 'M1', title: 'Dashboard: Premium state, further down (pay time, returns, items)', flag: 'EXISTS',
+        purpose: 'How long customers take to pay, returns and adjustments week by week, and the slot for the item cards.',
+        primary: 'None; reading.',
+        taps: 'n/a',
+        rules: 'The pay line is "something to look at, not a judgement of the customer" (m1.pay.note). No stock, no reorder, ever.',
+        notes: 'Item cards come from the items area (PR-2) through a slot, drawn here only as a dashed hole. In the free plan after beta they stay readable and read-only.',
+        body: function () {
+          return sub(t('m1.title')) + K.scroll(payCard(false), returnsCard(false), itemsSlot());
+        }
+      },
+      {
+        id: 'm1-gated', route: 'M1', title: 'Dashboard: Premium, too few closed days', flag: 'EXISTS',
+        purpose: 'Premium is open but the book is young: the estimate says how many closed days it needs, the rest show their honest empty sentences.',
+        primary: 'None; reading.',
+        taps: 'n/a',
+        rules: 'Gate sentence from the engine, a bar under it (same drawing as R1\'s gate), and the word "estimate" still present. Nothing is ever a zero chart.',
+        notes: 'Demo: 5 closed days against the forecast gate of 14. When there is also no closed day and no item recorded, Shell replaces the cards with m1.empty (next frame).',
+        body: function () {
+          return sub(t('m1.title')) + K.scroll(forecastGated(5), lastYearCard(), festivalCard(true), payCard(true), returnsCard(true));
+        }
+      },
+      {
+        id: 'm1-empty', route: 'M1', title: 'Dashboard: nothing closed yet', flag: 'CHG',
+        purpose: 'No closed day and no item recorded: the dashboard has nothing to draw.',
+        primary: 'Continue day close (NEW here; the app shows only the sentence).',
+        taps: '1 tap to Today\'s close card.',
+        rules: 'A next action beside the empty sentence, never "nothing here yet" alone.',
+        notes: 'M1 is reached from Reports, which is itself empty in this state, so a shop would rarely land here. Kept for completeness.',
+        review: 'Adds a Continue day close button to the M1 empty state.',
+        body: function () {
+          return sub(t('m1.title')) + K.scroll(K.empty('bars', t('m1.empty'), t('t1.continueClose'), 'check'));
+        }
+      },
+      {
+        id: 'm1-free', route: 'M1', title: 'Dashboard: free plan (returns after beta)', flag: 'EXISTS',
+        purpose: 'On the free plan the screen says plainly what Premium adds and draws no Premium figure. Not seen in beta, because BETA.allFree is on.',
+        primary: 'See Premium (opens S10, Your plan). Shown only when the caller passes onUpgrade.',
+        taps: '1 tap to S10.',
+        rules: 'No dark patterns: one plain paragraph, one button, no countdown, no price pressure here. History recorded under Premium stays readable and is marked read-only; nothing is hidden or deleted.',
+        notes: 'This is what the Free/Premium split looks like once the beta flag in plan.ts is switched off. Today the beta user never sees this card.',
+        body: function () {
+          return sub(t('m1.title')) + K.scroll(
+            card('lock', t('m1.locked.title'), '<div style="line-height:1.5;padding:4px 0 8px">' + t('m1.locked.body') + '</div>' + K.primary(t('m1.upgrade'), 'outline', 'star')),
+            itemsSlot()
+          );
+        }
+      },
+
+      /* ----- C1 ----- */
+      {
+        id: 'c1-empty', route: 'C1', title: 'Ask: empty, with questions to tap', flag: 'CHG',
+        purpose: 'Before any question: what can be asked. Chips are questions, never amounts.',
+        primary: 'Tap a question chip, or type a question and tap Ask.',
+        taps: 'Chip answer = 1 tap. Typed question = type, then Ask.',
+        rules: 'A QUESTION, NEVER AN ENTRY: nothing typed here reaches the ledger and no answer fills a figure into an entry. No keypad, no tabs. Answers come only from what was entered (c1.empty says so). Ask is disabled until there is text.',
+        notes: 'Chips are the free set (Sales, Expected cash, Udhar to collect, How to close the day, What udhar means) plus, in beta, three more (Sales this week, Best day this month, Old udhar). The app lists them as one long set; here only the first five fit above the field, the rest scroll. c1.empty is also the empty sentence; it sits under the chips. The text field has autocorrect, spell-check and autocomplete off.',
+        body: function () {
+          return chatTop() + K.scroll(
+            card('chat', t('c1.suggested'),
+              '<div style="display:flex;flex-direction:column;gap:8px;padding-top:6px">' +
+              chipQ(t('c1.i.sales')) + chipQ(t('c1.i.expected')) + chipQ(t('c1.i.owed')) + chipQ(t('c1.i.howClose')) + chipQ(t('c1.i.termUdhar')) +
+              chipQ(t('c1.i.sales') + ' · ' + t('c1.p.thisWeek')) + chipQ(t('c1.i.bestDay') + ' · ' + t('c1.p.thisMonth')) + chipQ(t('c1.i.olderUdhar') + ' · ' + t('c1.days', { n: 30 })) + '</div>'),
+            '<div style="padding:12px 16px;color:var(--muted);line-height:1.5">' + t('c1.empty') + '</div>'
+          ) + inputBar('');
+        }
+      },
+      {
+        id: 'c1-answered', route: 'C1', title: 'Ask: answered from recorded data', flag: 'EXISTS',
+        purpose: 'A question was asked and answered from this phone\'s entries, with what it was understood as shown first.',
+        primary: 'Ask next (a further chip) or type another question.',
+        taps: 'Owes-lookup by Ask: chip Udhar to collect = 1 tap (target under 10 s).',
+        rules: 'No generated figure: every rupee figure is the engine\'s, worked out on each render, never stored. "This covers only what was entered on this phone." Expected cash counts cash only; UPI never goes into the box (D2). No stock claims.',
+        notes: 'Demo: Expected cash = opening 12,00,000 + in 9,35,000 - out 2,90,000 = 18,45,000, the same as the Today hero. The asked line shows the chip label when a chip was tapped; a typed question shows the typed words. The real "Ask next" chips for the free figures are none; Premium answers add chips (not drawn).',
+        body: function () {
+          return chatTop() + K.scroll(
+            ask(t('c1.i.expected')),
+            heardCard(t('c1.i.expected'), mrow(t('c1.f.expected'), BOXNOW) + coversLine()),
+            ask(t('c1.i.owed')),
+            heardCard(t('c1.i.owed'), mrow(t('c1.f.owed'), ALL.owed) + note(t('c1.note.thisPhone')).replace('border-top:2px dashed var(--rule)', 'border-top:0') + coversLine()),
+            ask(t('c1.i.sales') + ' · ' + t('c1.p.thisWeek')),
+            heardCard(t('c1.i.sales') + ' · ' + t('c1.p.thisWeek'),
+              '<div style="line-height:1.45;padding-bottom:4px">' + t('c1.range', { from: D.d16(), to: D.d18() }) + '</div>' + mrow(t('c1.f.sales', { period: t('c1.p.thisWeek') }), isum([98000, 121000, 105000])) + coversLine())
+          ) + inputBar('');
+        }
+      },
+      {
+        id: 'c1-howto', route: 'C1', title: 'Ask: a how-to answer', flag: 'EXISTS',
+        purpose: 'A question about the app (how to close the day) is answered from fixed copy, with no figure.',
+        primary: 'Type another question or tap Back.',
+        taps: '1 tap on the chip.',
+        rules: 'Fixed copy, nothing generated; no "covers only" line because no figure is given. The answer says what to tap on Today; it never types or fills anything for him.',
+        notes: 'The card shows what it was understood as, so a misunderstanding is visible before the answer is believed.',
+        body: function () {
+          return chatTop() + K.scroll(
+            ask(t('c1.i.howClose')),
+            heardCard(t('c1.i.howClose'), '<div style="line-height:1.5;padding:4px 0">' + t('c1.a.howClose') + '</div>')
+          ) + inputBar('');
+        }
+      },
+      {
+        id: 'c1-nomatch', route: 'C1', title: 'Ask: no match, asks back instead of guessing', flag: 'EXISTS',
+        purpose: 'The typed words did not match a question with enough confidence. Offer three real questions as chips rather than guess.',
+        primary: 'Tap the question that was meant.',
+        taps: '1 tap.',
+        rules: 'Below the matcher\'s confidence floor the screen asks back (c1.didYouMean); it never returns a figure for a guess. The chips are questions, not amounts.',
+        notes: 'The typed words are the user\'s own (shown as typed; demo text only). The three options are the matcher\'s top three; the demo shows Sales, Expenses and Udhar to collect.',
+        body: function () {
+          return chatTop() + K.scroll(
+            ask(K.pick('bill', 'bill', 'bill')),
+            card('info', t('c1.didYouMean'), '<div style="display:flex;flex-direction:column;gap:8px;padding-top:6px">' + chipQ(t('c1.i.sales')) + chipQ(t('c1.i.expenses')) + chipQ(t('c1.i.owed')) + '</div>')
+          ) + inputBar(K.pick('bill', 'bill', 'bill'));
+        }
+      },
+      {
+        id: 'c1-premium', route: 'C1', title: 'Ask: a Premium question on the free plan (returns after beta)', flag: 'EXISTS',
+        purpose: 'A figure that needs Premium gets one plain line and the nearest free figure, never a bare refusal. Not seen in beta because BETA.allFree is on.',
+        primary: 'None; the free figure is shown. Optional: Your plan from Settings.',
+        taps: 'n/a',
+        rules: 'c1.premium states it; no price, no upsell button inside the chat, no countdown. The figure shown is today\'s own sales, derived.',
+        notes: 'After beta, the free set is the how-tos and meanings plus three figures for today only: sales, expected cash, udhar to collect.',
+        body: function () {
+          return chatTop() + K.scroll(
+            ask(t('c1.i.sales') + ' · ' + t('c1.p.thisWeek')),
+            heardCard(t('c1.i.sales') + ' · ' + t('c1.p.thisWeek'), '<div style="line-height:1.45;padding-bottom:4px">' + t('c1.premium') + '</div>' + mrow(t('c1.f.salesToday'), 108000) + coversLine())
+          ) + inputBar('');
+        }
+      },
+
+      /* ----- S12 ----- */
+      {
+        id: 's12-months', route: 'S12', title: 'Entries for your accountant: pick a month', flag: 'CHG',
+        purpose: 'Make a file of one month\'s entries and every party\'s balance, and hand it to any app via the share sheet. Free in every plan.',
+        primary: 'Tap a month (opens the share sheet).',
+        taps: '2 taps from Settings (Entries for your accountant, month) plus choosing the app.',
+        rules: 'The file is made on the phone and nothing is sent to our server. The line "not a tax document" (s5.notTax) is on this screen. Only months with at least one entry are listed. Named "entries", never a return or invoice.',
+        notes: 'As built, s12.body says "spreadsheet file (CSV)"; the frame replaces that sentence with a plain-words version so no one meets the word CSV (proposal; native review needed). Months are listed newest first with a share icon; no entry is edited or deleted.',
+        review: 'Replaces the word "CSV" in the explanation with plain words; od/hi for the new sentence are for the native reviewer.',
+        body: function () {
+          return sub(t('s12.title')) + K.scroll(
+            '<div style="padding:12px 16px;line-height:1.5">' + K.N('Choose a month. The phone makes a file of that month\'s entries and every party\'s balance, one you can open in a spreadsheet, and opens the share sheet. Nothing is sent to our server.') + '</div>',
+            '<div style="padding:0 16px 8px;color:var(--muted);line-height:1.45">' + t('s5.notTax') + '</div>',
+            K.sec(t('s12.months')),
+            '<div style="margin:6px 12px">' + K.lrow('share', t('t1.month.11') + ' 2026') + K.lrow('share', t('t1.month.10') + ' 2026') + '</div>'
+          );
+        }
+      },
+      {
+        id: 's12-share', route: 'S12', title: 'Entries for your accountant: the share sheet', flag: 'EXISTS',
+        purpose: 'After a month is tapped the phone hands the file to the system share sheet, titled "Share entries".',
+        primary: 'Choose an app, or tap outside to cancel.',
+        taps: '1 tap on the app.',
+        rules: 'Sharing is his decision; nothing goes to our server. Cancelling leaves nothing changed.',
+        notes: 'The share sheet is drawn by Android, not by the app: only its title (s12.chooser) is ours; the app names here are examples, not a list we control.',
+        body: function () {
+          return sub(t('s12.title')) + K.scroll(K.sec(t('s12.months')), '<div style="margin:6px 12px">' + K.lrow('share', t('t1.month.11') + ' 2026') + K.lrow('share', t('t1.month.10') + ' 2026') + '</div>') +
+            K.sheet(t('s12.chooser'), K.lrow('wa', 'WhatsApp', '', { noChev: true }) + K.lrow('chat', 'Gmail', '', { noChev: true }) + K.lrow('download', 'Drive', '', { noChev: true }));
+        }
+      },
+      {
+        id: 's12-empty', route: 'S12', title: 'Entries for your accountant: no entries yet', flag: 'CHG',
+        purpose: 'Nothing recorded, nothing to share.',
+        primary: 'Go to Today to record a sale (NEW here; the app shows only the sentence).',
+        taps: '2 taps back to Today.',
+        rules: 'A next action beside the empty sentence.',
+        notes: 'Back is visible in the header. The month list is absent.',
+        review: 'Adds a button to the empty state; the app shows s12.empty only.',
+        body: function () {
+          return sub(t('s12.title')) + K.scroll(K.empty('receipt', t('s12.empty'), t('nav.today'), 'box'));
+        }
+      },
+      {
+        id: 's12-loading', route: 'S12', title: 'Entries for your accountant: loading', flag: 'EXISTS',
+        purpose: 'The month list is being read from the phone.',
+        primary: 'None.',
+        taps: 'n/a',
+        rules: 'Skeleton shapes, accessible name common.loading.',
+        notes: 'Error for this screen is the same Shell error as Reports (common.error, Try again).',
+        body: function () {
+          return sub(t('s12.title')) + '<div class="scroll" aria-busy="true" aria-label="' + t('common.loading') + '">' + K.skel(3) + '</div>';
+        }
+      },
+
+      /* ----- S10 ----- */
+      {
+        id: 's10-free', route: 'S10', title: 'Your plan: Free, preview offered, buying not open', flag: 'EXISTS',
+        purpose: 'What plan he is on, what stays free, what Premium adds and costs, and the way out, on one screen.',
+        primary: 'Try Premium free for 14 days (outlined; the two Buy buttons are disabled with the reason in words).',
+        taps: 'Start preview = 1 tap.',
+        rules: 'No dark patterns: the final GST-included price is printed beside its button with the period and "renews until you cancel" in the same tile; monthly and yearly are identical, neither pre-selected, no "best value" badge. Disabled buy buttons have the reason in words above them (s10.notOpen), not a silent grey. Nothing is time-pressured.',
+        notes: 'Prices are R5\'s 99 a month and 799 a year (PREMIUM_PRICES) until Play\'s own price arrives. BETA: while BETA.allFree is on, every beta user sees this screen with buying closed, and Premium features open without a plan; there is no string on this screen telling them the app is free during testing (see review).',
+        review: 'Beta users see Premium cards open while S10 says "You are on Free" and buying is closed; consider one plain line saying everything is free during beta.',
+        body: function () {
+          return sub(t('s10.title')) + K.scroll(statusCard(t('s10.status.free'), previewBtn(false)), priceCard(true, false), freeGroup(), premiumGroup());
+        }
+      },
+      {
+        id: 's10-preview', route: 'S10', title: 'Your plan: preview running', flag: 'EXISTS',
+        purpose: 'A Premium preview is on; say plainly when it ends.',
+        primary: 'None needed; buying remains a free choice below.',
+        taps: 'n/a',
+        rules: 'The status is one fact with a date, no countdown, no "only N days left", no guilt line. The preview simply ends; nothing is charged.',
+        notes: 'Notice at top is s10.notice.previewStarted, shown once right after starting. Buy tiles stay because no purchase exists to cancel.',
+        body: function () {
+          return sub(t('s10.title')) + K.scroll(
+            noticeBox(t('s10.notice.previewStarted'), 'check'),
+            statusCard(t('s10.status.preview', { date: D3DEC() })), priceCard(false, false), freeGroup(), premiumGroup());
+        }
+      },
+      {
+        id: 's10-premium', route: 'S10', title: 'Your plan: Premium bought, with Cancel', flag: 'EXISTS',
+        purpose: 'A purchase is running. The way out is as easy to find as the way in.',
+        primary: 'Cancel Premium (opens Google Play\'s subscription page). Never disabled, never greyed.',
+        taps: 'Cancel = 1 tap here (2 from Settings: the row, then the button).',
+        rules: 'Cancel sits right under the status fact, same weight as any button, with a note on where it goes. Everything recorded stays readable if Premium ends.',
+        notes: 'Buy tiles are hidden while a subscription exists on Play. Status says renews on a date (s10.status.renews), or ends on a date when it will not renew.',
+        body: function () {
+          return sub(t('s10.title')) + K.scroll(statusCard(t('s10.status.renews', { date: D19DEC() }), cancelBtn()), freeGroup(), premiumGroup());
+        }
+      },
+      {
+        id: 's10-busy', route: 'S10', title: 'Your plan: payment still processing', flag: 'EXISTS',
+        purpose: 'Buying was started; Google Play is still processing the payment. Buttons wait; nothing is promised.',
+        primary: 'None; wait. Buttons are disabled while busy.',
+        taps: 'n/a',
+        rules: 'Says Premium starts when Play is done, not before. No fake success.',
+        notes: 'Notice is s10.notice.pending. The same screen carries s10.notice.verifyLater, notOpen, failed and purchased as one-line notices in the same box.',
+        body: function () {
+          return sub(t('s10.title')) + K.scroll(noticeBox(t('s10.notice.pending'), 'clock'), statusCard(t('s10.status.free'), previewBtn(true)), priceCard(false, true), freeGroup(), premiumGroup());
+        }
+      },
+      {
+        id: 's10-offline', route: 'S10', title: 'Your plan: offline notice', flag: 'EXISTS',
+        purpose: 'A plan action needs the network. Say nothing changed and what to do.',
+        primary: 'Try again when online (tap the same button).',
+        taps: '1 tap to retry.',
+        rules: 'Calm sentence, nothing changed, nothing lost; the sync chip is amber with a clock, never red. A cached premium answer ends at its own date, so a lapse is free, not hidden (history stays readable).',
+        notes: 'Notice is s10.notice.offline.',
+        body: function () {
+          return sub(t('s10.title'), K.chip('wait', 3)) + K.scroll(noticeBox(t('s10.notice.offline'), 'cloudoff'), statusCard(t('s10.status.free'), previewBtn(false)), priceCard(true, false), freeGroup(), premiumGroup());
+        }
+      },
+      {
+        id: 's10-onhold', route: 'S10', title: 'Your plan: payment on hold at Google Play', flag: 'EXISTS',
+        purpose: 'Play could not take the payment; Premium is paused. The fix and the exit are the same page.',
+        primary: 'Cancel Premium (opens Play, where the payment can be fixed or the subscription cancelled).',
+        taps: '1 tap.',
+        rules: 'Plain statement of fact (s10.status.onHold); no alarm styling; nothing is deleted.',
+        notes: 'Premium is off while on hold, so S10 shows free state with Cancel (a subscription still exists on Play).',
+        body: function () {
+          return sub(t('s10.title')) + K.scroll(statusCard(t('s10.status.onHold'), cancelBtn()), freeGroup(), premiumGroup());
+        }
+      }
+    ]
+  };
+})();
+
+K.boot();</script>
+</body></html>

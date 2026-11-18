@@ -77,7 +77,21 @@ const screenSet = [
   ...MANDATED_SCREENS.ids.map((id) => ({ id, mandated: true })),
 ];
 for (const [i, { id: sid, mandated }] of screenSet.entries()) {
-  const name = mandated ? MANDATED_SCREENS.names[sid] : screenNames.get(sid);
+  /*
+   * A COMMITTED SCREEN DECIDED AFTER THE BUILD MAP names itself in
+   * `COMMITTED_SCREENS.after`, exactly as a mandated one does - and, like a
+   * mandated one, may not ALSO be a build-map id, or one id would mean two
+   * screens and the newer would tick off the older.
+   */
+  const after = mandated ? undefined : COMMITTED_SCREENS.after?.[sid];
+  if (after && screenNames.has(sid)) {
+    failures.push(
+      `${sid} is named in COMMITTED_SCREENS.after and ALSO in the build map, as ` +
+        `"${screenNames.get(sid)}". One id cannot mean two screens; take a free id.`,
+    );
+    continue;
+  }
+  const name = mandated ? MANDATED_SCREENS.names[sid] : (screenNames.get(sid) ?? after);
   if (!name) {
     failures.push(
       `the committed set names ${sid} and the build map has no such screen. The set ` +

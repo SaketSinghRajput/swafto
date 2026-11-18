@@ -10,6 +10,7 @@
     "@swafto/schema": "*"
   },
   "scripts": {
-    "start": "node src/server.ts"
+    "start": "node src/server.ts",
+    "purge-due": "node src/jobs/purge-due.ts"
   }
 }

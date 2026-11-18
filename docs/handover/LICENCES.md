@@ -56,6 +56,7 @@ licence that would condition a Play Store release (L-22).
 | `@jridgewell/source-map` | 0.3.11 | MIT |
 | `@jridgewell/sourcemap-codec` | 1.6.0 | MIT |
 | `@jridgewell/trace-mapping` | 0.3.31 | MIT |
+| `@op-engineering/op-sqlite` | 18.2.5 | MIT |
 | `@react-native/assets-registry` | 0.81.4 | MIT |
 | `@react-native/codegen` | 0.81.4 | MIT |
 | `@react-native/community-cli-plugin` | 0.81.4 | MIT |
@@ -101,14 +102,14 @@ licence that would condition a Play Store release (L-22).
 | `babel-preset-jest` | 29.6.3 | MIT |
 | `balanced-match` | 4.0.4 | MIT |
 | `base64-js` | 1.5.1 | MIT |
-| `baseline-browser-mapping` | 2.11.25 | Apache-2.0 |
+| `baseline-browser-mapping` | 2.11.30 | Apache-2.0 |
 | `brace-expansion` | 5.0.12 | MIT |
 | `braces` | 3.0.3 | MIT |
-| `browserslist` | 4.29.0 | MIT |
+| `browserslist` | 4.29.4 | MIT |
 | `bser` | 2.1.1 | Apache-2.0 |
 | `buffer-from` | 1.1.2 | MIT |
 | `camelcase` | 5.3.1 | MIT |
-| `caniuse-lite` | 1.0.30001810 | CC-BY-4.0 |
+| `caniuse-lite` | 1.0.30001819 | CC-BY-4.0 |
 | `chalk` | 4.1.2 | MIT |
 | `chrome-launcher` | 0.15.2 | Apache-2.0 |
 | `chromium-edge-launcher` | 0.2.0 | Apache-2.0 |
@@ -124,7 +125,7 @@ licence that would condition a Play Store release (L-22).
 | `depd` | 2.0.0 | MIT |
 | `destroy` | 1.2.0 | MIT |
 | `ee-first` | 1.1.1 | MIT |
-| `electron-to-chromium` | 1.5.433 | ISC |
+| `electron-to-chromium` | 1.5.463 | ISC |
 | `emoji-regex` | 10.6.0 | MIT |
 | `empathic` | 2.1.0 | MIT |
 | `encodeurl` | 1.0.2 | MIT |
@@ -135,6 +136,7 @@ licence that would condition a Play Store release (L-22).
 | `etag` | 1.8.1 | MIT |
 | `event-target-shim` | 5.0.1 | MIT |
 | `exponential-backoff` | 3.1.3 | Apache-2.0 |
+| `fast-base64-decode` | 1.0.0 | MIT |
 | `fast-json-stable-stringify` | 2.1.0 | MIT |
 | `fb-watchman` | 2.0.2 | Apache-2.0 |
 | `fill-range` | 7.1.1 | MIT |
@@ -211,7 +213,7 @@ licence that would condition a Play Store release (L-22).
 | `ms` | 2.1.3 | MIT |
 | `negotiator` | 1.1.0 | MIT |
 | `node-int64` | 0.4.0 | MIT |
-| `node-releases` | 2.0.56 | MIT |
+| `node-releases` | 2.0.60 | MIT |
 | `normalize-path` | 3.0.0 | MIT |
 | `nullthrows` | 1.1.1 | MIT |
 | `ob1` | 0.83.8 | MIT |
@@ -230,10 +232,13 @@ licence that would condition a Play Store release (L-22).
 | `pretty-format` | 29.7.0 | MIT |
 | `promise` | 8.3.0 | MIT |
 | `range-parser` | 1.2.1 | MIT |
-| `react` | 19.3.0 | MIT |
+| `react` | 19.1.0 | MIT |
 | `react-devtools-core` | 6.1.5 | MIT |
 | `react-is` | 18.3.1 | MIT |
 | `react-native` | 0.81.4 | MIT |
+| `react-native-get-random-values` | 2.0.0 | MIT |
+| `react-native-mmkv` | 4.3.2 | MIT |
+| `react-native-nitro-modules` | 0.35.9 | MIT |
 | `react-refresh` | 0.14.2 | MIT |
 | `regenerator-runtime` | 0.13.11 | MIT |
 | `require-directory` | 2.1.1 | MIT |
@@ -245,7 +250,7 @@ licence that would condition a Play Store release (L-22).
 | `serialize-error` | 2.1.0 | MIT |
 | `serve-static` | 1.16.3 | MIT |
 | `setprototypeof` | 1.2.0 | ISC |
-| `shell-quote` | 1.10.0 | MIT |
+| `shell-quote` | 1.12.0 | MIT |
 | `signal-exit` | 4.1.0 | ISC |
 | `slash` | 3.0.0 | MIT |
 | `source-map` | 0.7.6 | BSD-3-Clause |
@@ -267,7 +272,7 @@ licence that would condition a Play Store release (L-22).
 | `type-fest` | 0.7.1 | (MIT OR CC0-1.0) |
 | `undici-types` | 8.9.0 | MIT |
 | `unpipe` | 1.0.0 | MIT |
-| `update-browserslist-db` | 1.3.3 | MIT |
+| `update-browserslist-db` | 1.3.4 | MIT |
 | `utils-merge` | 1.0.1 | MIT |
 | `verkit` | 0.3.2 | MIT |
 | `vlq` | 1.0.1 | MIT |
@@ -302,12 +307,15 @@ product. A12: that was this tool's scoping gap, closed at iteration 35.
 | `AnekOdia-Bold.ttf` | 163620 | `4787b60dd0b162e4…` | OFL 1.1 (see the file below) |
 | `AnekOdia-Medium.ttf` | 162948 | `0a8190cd288d9cae…` | OFL 1.1 (see the file below) |
 | `AnekOdia-Regular.ttf` | 163252 | `8f3149a5fe2621ba…` | OFL 1.1 (see the file below) |
+| `ISC-Lucide.txt` | 3208 | `b495047bd93a9b06…` | the licence |
 | `OFL-AnekOdia.txt` | 4379 | `de62be758bba267e…` | the licence |
+| `SwaftoIcons.ttf` | 10816 | `1e1c27df845d1305…` | ISC; MIT for Feather-derived glyphs (see the file below) |
 
-**What is verified here:** every family the theme asks for is present, a licence
-file accompanies it, that file names the SIL Open Font Licence 1.1 and carries a
-copyright line, and each binary is pinned by hash so a swapped file is visible in
-a diff.
+**What is verified here:** every family the theme asks for is present, each binary
+is covered by a licence mapping in this tool, the licence file beside it carries
+the required text of each licence (OFL 1.1 for Anek Odia; ISC plus the MIT notice for
+the Feather-derived glyphs for the Lucide icon subset), and each binary is hashed
+so a swapped file is visible in a diff.
 
 **What is NOT verified, and stays with L-19:** that these bytes are the upstream
 release they claim to be. Nothing here can know that. The human step is now one

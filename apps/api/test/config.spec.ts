@@ -11,7 +11,7 @@
  * pasted into two fields because both were labelled "key".
  */
 import { describe, it, expect } from 'vitest';
-import { loadConfig } from '../src/config.ts';
+import { assertSmsPort, loadConfig } from '../src/config.ts';
 
 /** Long enough to pass the floors, and obviously not a real secret. */
 const SIGNING = 'test-signing-key-at-least-32-chars!!';
@@ -94,5 +94,102 @@ describe('the configuration is validated before anything listens', () => {
       /* expected */
     }
     expect(process.env.SESSION_SIGNING_KEY).toBe(before);
+  });
+});
+
+describe('4.4 · every variable is validated at boot, with a message that names it', () => {
+  it('LOG_LEVEL defaults to info, takes any pino level, and refuses anything else', () => {
+    expect(loadConfig(good).logLevel).toBe('info');
+    for (const level of ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']) {
+      expect(loadConfig({ ...good, LOG_LEVEL: level }).logLevel).toBe(level);
+    }
+    for (const bad of ['INFO', 'verbose', 'warning', '5']) {
+      expect(() => loadConfig({ ...good, LOG_LEVEL: bad }), bad).toThrow(/LOG_LEVEL/);
+    }
+  });
+
+  it('the shutdown windows have their defaults, take numbers, and refuse nonsense', () => {
+    const c = loadConfig(good);
+    expect([c.shutdownReadyGraceMs, c.shutdownTimeoutMs]).toEqual([5_000, 25_000]);
+    const set = loadConfig({ ...good, SHUTDOWN_READY_GRACE_MS: '0', SHUTDOWN_TIMEOUT_MS: '20000' });
+    expect([set.shutdownReadyGraceMs, set.shutdownTimeoutMs]).toEqual([0, 20_000]);
+    for (const bad of ['5s', '-1', '1.5', '', ' ', 'NaN']) {
+      expect(() => loadConfig({ ...good, SHUTDOWN_READY_GRACE_MS: bad }), bad).toThrow(/SHUTDOWN_READY_GRACE_MS/);
+      expect(() => loadConfig({ ...good, SHUTDOWN_TIMEOUT_MS: bad }), bad).toThrow(/SHUTDOWN_TIMEOUT_MS/);
+    }
+    // A drain deadline that is not after the ready grace could never drain anything.
+    expect(() => loadConfig({ ...good, SHUTDOWN_READY_GRACE_MS: '30000', SHUTDOWN_TIMEOUT_MS: '25000' })).toThrow(/greater than/);
+  });
+
+  it('DB_STATEMENT_TIMEOUT_MS is a whole number between 100 and 600000', () => {
+    expect(loadConfig(good).statementTimeoutMs).toBe(5000);
+    for (const bad of ['99', '600001', 'ten', '', '1e3']) {
+      expect(() => loadConfig({ ...good, DB_STATEMENT_TIMEOUT_MS: bad }), bad).toThrow(/DB_STATEMENT_TIMEOUT_MS/);
+    }
+  });
+
+  it('a blank PORT is refused rather than read as zero or silently defaulted', () => {
+    expect(() => loadConfig({ ...good, PORT: '' })).toThrow(/PORT/);
+  });
+
+  it('a NODE_ENV that looks like production but is not the word is refused (its checks would be off)', () => {
+    for (const bad of ['Production', 'prod', 'PRODUCTION', ' prod ']) {
+      expect(() => loadConfig({ ...good, NODE_ENV: bad }), bad).toThrow(/NODE_ENV/);
+    }
+    for (const fine of ['development', 'test', '']) {
+      expect(loadConfig({ ...good, NODE_ENV: fine }).production).toBe(false);
+    }
+  });
+
+  it('a blank HOST is refused; an unset one is 0.0.0.0', () => {
+    expect(() => loadConfig({ ...good, HOST: '  ' })).toThrow(/HOST/);
+    expect(loadConfig(good).host).toBe('0.0.0.0');
+  });
+
+  it('refuses a message that carries the rejected value', () => {
+    try {
+      loadConfig({ ...good, SHUTDOWN_TIMEOUT_MS: 'sekrit-value' });
+      throw new Error('it should have refused');
+    } catch (e) {
+      expect((e as Error).message).not.toContain('sekrit-value');
+    }
+  });
+});
+
+describe('RT-W4 · production refuses settings that switch a protection off', () => {
+  const prod = { ...good, NODE_ENV: 'production', SYSTEM_DATABASE_URL: 'postgres://s:p@localhost:5432/db' } as NodeJS.ProcessEnv;
+
+  it('RT-W4-3 · a TRUST_PROXY that disables or breaks the per-IP SMS cap fails boot in production, naming the variable', () => {
+    for (const bad of ['0', 'false', 'true', '', '2', '5', '0.0.0.0/0', '::/0', '10.0.0.0/7', '127.0.0.1,0.0.0.0/0']) {
+      expect(() => loadConfig({ ...prod, TRUST_PROXY: bad }), 'TRUST_PROXY=' + bad).toThrow(/TRUST_PROXY/);
+    }
+    for (const fine of [undefined, '1', '127.0.0.1', '10.0.0.0/8', '127.0.0.1, 10.1.0.0/16']) {
+      const env = { ...prod };
+      if (fine !== undefined) env.TRUST_PROXY = fine;
+      expect(() => loadConfig(env), 'TRUST_PROXY=' + String(fine)).not.toThrow();
+    }
+  });
+
+  it('RT-W4-3 · outside production the same values are still accepted (tests and a laptop run behind nothing)', () => {
+    for (const v of ['0', 'false', 'true']) expect(() => loadConfig({ ...good, TRUST_PROXY: v })).not.toThrow();
+  });
+
+  it('RT-W4-4 · LOG_LEVEL above error is refused in production, so level-50 events always exist', () => {
+    for (const bad of ['fatal', 'silent']) {
+      expect(() => loadConfig({ ...prod, LOG_LEVEL: bad }), bad).toThrow(/LOG_LEVEL/);
+      expect(loadConfig({ ...good, LOG_LEVEL: bad }).logLevel).toBe(bad);
+    }
+    expect(loadConfig({ ...prod, LOG_LEVEL: 'error' }).logLevel).toBe('error');
+  });
+
+  it('RT-W4-4 · an unset NODE_ENV is not allowed to run the stub SMS quietly', () => {
+    expect(loadConfig(good).nodeEnvUnset).toBe(true);
+    expect(loadConfig({ ...good, NODE_ENV: 'development' }).nodeEnvUnset).toBe(false);
+    const warned: string[] = [];
+    expect(() => assertSmsPort(loadConfig(good), true, (l) => warned.push(l))).toThrow(/refusing to start/);
+    expect(() => assertSmsPort(loadConfig({ ...good, NODE_ENV: 'development' }), true, (l) => warned.push(l))).not.toThrow();
+    expect(warned).toHaveLength(0);
+    assertSmsPort(loadConfig({ ...good, ALLOW_STUB_SMS: '1' }), true, (l) => warned.push(l));
+    expect(warned.join('')).toMatch(/NO SMS IS SENT/);
   });
 });

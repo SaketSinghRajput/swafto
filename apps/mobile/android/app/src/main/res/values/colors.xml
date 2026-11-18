@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The window colour shown between the launcher tap and the first JS frame.
+      It is `brand` from tokens.css (line 14, copied here because Android
+      resources cannot read a CSS file) - the same fill A1 draws, so the cold
+      start goes launcher -> navy -> navy with the wordmark, never through white.
+    -->
+    <color name="brand">#13294B</color>
+</resources>

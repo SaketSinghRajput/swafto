@@ -1,0 +1,21 @@
+# gitleaks configuration for the history scan in ci.yml.
+#
+# Everything the default ruleset finds is a failure. The one allowlist below
+# exists because a first scan of all 157 commits found six hits and every one
+# was the same false positive: an i18n message key assigned to a property named
+# `labelKey` (for example `labelKey: 'p2.recordCollection'`), which the
+# `generic-api-key` rule reads as a key because of the word "key" beside a
+# high-entropy-looking dotted string. They sit in apps/mobile/src/screens/P2.tsx,
+# X1.tsx and the generated bundle reports/.layout-entry.mjs. None is a secret.
+#
+# The allowlist is scoped to ONE rule and ONE line shape, not to those files, so
+# a real credential committed into the same files is still caught.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "i18n message keys named labelKey (false positive of generic-api-key)"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = ['''labelKey: ['"][a-z0-9]+\.[A-Za-z0-9]+['"]''']

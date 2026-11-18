@@ -1,47 +1,81 @@
 /**
  * T1 - TODAY. The front door: what he sees when he opens the app.
  *
- * THE PRODUCT REVIEW ADDED THIS SCREEN AT ITERATION 33, and the reason is worth
- * keeping: the committed set had ten screens and none of them was the one that
- * renders when the app is opened. Every other screen is somewhere you arrive from
- * here.
+ * REBUILT FROM THE DEVICE USABILITY PASS (`qa/swafto-retail-desk/USABILITY.md`
+ * §4 items 1-3 and 8). The reference-picture layout this replaces put the day
+ * close first and the only marigold on it, six figure tiles of equal weight
+ * next, and "Sale" more than a screen down - so the job done forty times a day
+ * began with a swipe, and the swipe was repeated after every sale because the
+ * scroll position reset on return (U-00, U-01, U-10). Top to bottom now:
  *
- * ONE FIGURE IS THE POINT OF THE SCREEN - what should be in the cash box right
- * now. Everything else is context for that number, which is why it is the
- * headline and the rest are rows.
+ *   brand bar      shop name, "Today", the date, the day pill, and the sync
+ *                  chip - "Saved" or "N waiting · safe on phone" (item 8)
+ *   pinned         the four everyday tiles - Sale, Udhar sale, Collect,
+ *                  Expense - large, and OUTSIDE the scrolling body, so they
+ *                  are under the thumb every time the screen comes back
+ *                  (items 1 and 2: sticky rather than a remembered offset)
+ *   in the box     one hero, P3, "In the box now", with its working on one
+ *                  line and the day's sales under it; zeros are not drawn
+ *                  (item 3)
+ *   party totals   udhar to collect | you owe suppliers, zero halves hidden
+ *   observation    only when it is true, and phrased as something to look at
+ *   today's book   the ring, and "Continue day close" - SECONDARY until the
+ *                  shop's closing time, then the one marigold button (item 1)
+ *   more           Purchase and Pay, the weekly jobs
+ *   nav            Today - Ledger - Reports (C-5)
  *
- * EVERY FIGURE IS ASKED FOR ON RENDER. `store.primary()` and
- * `store.expectedCash()`, both recomputed, neither stored. A Today screen holding
- * a cached total is the exact failure derive-on-read exists to prevent: it is the
- * screen he looks at most, so it is where a stale figure does the most damage.
+ * WHAT IS DELIBERATELY NOT COPIED, AND WHY. "Good morning, Rajanikanta": the
+ * owner's name is not stored and a greeting by hour would need a clock, so the
+ * title is "Today" and the shop name is the eyebrow. The notification bell: Y4
+ * does not exist in this build, and a bell that opens nothing is a control that
+ * lies, so it is omitted.
  *
- * NO KEYPAD. Today is not an entry screen - it is where he decides which entry
- * screen to open. And therefore no bottom nav either, since that pair is what the
- * §B.6 keypad assertion is about.
+ * EVERY FIGURE IS ASKED FOR ON RENDER - `store.primary()`, `dayProgress`,
+ * `store.pendingOutbox`, `store.closingDue()`. A Today screen holding a cached
+ * total is the exact failure derive-on-read exists to prevent.
+ *
+ * NO KEYPAD, so the bottom nav is allowed (§B.6 bars only the pair).
  */
-import { View, Text, Pressable } from '@swafto/ui';
-import { Shell, Row, type LoadStatus } from '../components/Shell.tsx';
+import { View } from '@swafto/ui';
+import {
+  Shell,
+  ActionGrid,
+  ActionTile,
+  BottomNav,
+  Card,
+  LinkRow,
+  PrimaryButton,
+  type TabKey,
+  type LoadStatus,
+} from '../components/Shell.tsx';
+import { Banner } from '../components/Banner.tsx';
+import { ExitSheet, type ExitPrompt } from '../components/Sheet.tsx';
+import {
+  ProgressCard,
+  Quiet,
+  CashInBox,
+  PartyTotals,
+  Observation,
+  CollectToday,
+  EmptyNote,
+  SectionLabel,
+  dateLine,
+  fill,
+  progressOf,
+  syncOf,
+} from '../components/DayParts.tsx';
+import { cashCheckUnlocked } from '@swafto/formula-engine';
 import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
 import { strings, type RenderLanguage, type StringKey } from '../i18n/strings.ts';
-import type { Store } from '../store/index.ts';
-
-/** The sections Today summarises, in the order the paper sheet has them. */
-const SUMMARY_SECTIONS = [
-  'cash_sales',
-  'upi_sales',
-  'udhar_sales',
-  'purchase',
-  'expense',
-  'udhar_collection',
-  'party_payment',
-  'withdrawal',
-] as const;
+import { DEFAULT_CLOSES_AT, type Store } from '../store/index.ts';
+import { ACT_SECTIONS } from './actSections.ts';
 
 export interface TodayProps {
   readonly store: Store;
   readonly status?: LoadStatus;
   readonly language?: RenderLanguage;
   readonly display?: DisplayMode;
+  /** "Continue day close" - secondary until closing time, then the primary action. */
   readonly onCloseDay?: () => void;
   readonly onOpenSection?: (section: string) => void;
   /**
@@ -53,7 +87,32 @@ export interface TodayProps {
    * by omission rather than by refusal.
    */
   readonly onOpenPrivacy?: () => void;
+  /** C-5: three tabs, Today - Ledger - Reports. Also where the party totals go. */
+  readonly onSelectTab?: (key: TabKey) => void;
+  /** Settings, for which C-5 leaves no tab - a quiet link at the foot of the page. */
+  readonly onOpenSettings?: () => void;
+  /** C1, Ask: a question about the shop, one tap from here (FR-8). */
+  readonly onOpenChat?: () => void;
+  /** R5 FR-5: a customer in "Udhar to collect" was tapped. */
+  readonly onOpenParty?: (partyId: string) => void;
   readonly onRetry?: () => void;
+  /**
+   * When the shop closes, 'HH:MM'. The store holds no closing time (only the
+   * day's start), so this defaults to `DEFAULT_CLOSES_AT` - a reversible CTO
+   * default, logged where it is defined.
+   */
+  readonly closesAt?: string;
+  /**
+   * M3: the phone's Date and time settings, for a book dated ahead of the
+   * phone (C-19). Absent - an older binary, a test - and the banner says where
+   * to go in words instead of drawing a button that would do nothing.
+   */
+  readonly onOpenDateSettings?: (() => void) | undefined;
+  /**
+   * M3 (M2-approved): "Exit the app?" after a hardware Back on Today. Present
+   * only while the question is up; the session decides when, Root does the exit.
+   */
+  readonly exitPrompt?: ExitPrompt | undefined;
 }
 
 export function Today({
@@ -64,24 +123,46 @@ export function Today({
   onCloseDay = () => {},
   onOpenSection = () => {},
   onOpenPrivacy = () => {},
+  onSelectTab = () => {},
+  onOpenSettings = () => {},
+  onOpenChat = () => {},
+  onOpenParty = () => {},
   onRetry = () => {},
+  closesAt = DEFAULT_CLOSES_AT,
+  onOpenDateSettings,
+  exitPrompt,
 }: TodayProps) {
   const t = tokens(display);
   const s = strings(language);
 
   const entries = store.state.entries;
-  const primary = store.primary();
+  const progress = progressOf(store);
+  const unlocked = cashCheckUnlocked(store.input);
+  // C-17 / C-19: derived on read from the clock, like every other figure here.
+  const dayStatus = store.dayStatus();
+  // QA-06: no tiles while the book is not today's - a sale cannot be filed under last week by habit.
+  const current = dayStatus.kind === 'current';
+  // Item 1: the close is the primary action only from the shop's closing time on.
+  const closing = store.closingDue(closesAt);
 
-  /*
-   * Section totals come from the store, which uses the audited `sum`. Adding
-   * these up here with `+` would be a second implementation of a total the
-   * day-close sheet also computes - two answers, one of them eventually wrong.
-   */
-  const totals = SUMMARY_SECTIONS.map((section) => ({
-    section,
-    amount: store.sectionTotal(section),
-    count: entries.filter((e) => e.section === section).length,
-  }));
+  const tile = (a: (typeof ACT_SECTIONS)[number], large: boolean) => (
+    <ActionTile
+      key={a.section}
+      testID={'t1-act-' + a.section}
+      label={s(a.labelKey)}
+      /*
+       * WCAG 2.5.3: the accessible name CONTAINS the face - "Sale, Cash sales"
+       * - so a voice user saying the word he can see reaches the tile, and a
+       * screen reader still hears which ledger row it opens.
+       */
+      accessibleLabel={s(('section.' + a.section) as StringKey)}
+      kind={a.kind}
+      icon={a.icon}
+      display={display}
+      large={large}
+      onPress={() => onOpenSection(a.section)}
+    />
+  );
 
   return (
     <Shell
@@ -90,101 +171,175 @@ export function Today({
       display={display}
       status={status}
       titleKey="t1.title"
-      headline={{ labelKey: 't1.cashInHand', amount: store.expectedCash().value }}
-      empty={entries.length === 0}
-      emptyKey="t1.empty"
+      eyebrow={store.state.shopName}
+      subtitle={dateLine(store.state.day.date, s)}
+      pill={s(unlocked ? 't1.pill.ready' : 't1.pill.open')}
+      sync={syncOf(store)}
       onRetry={onRetry}
-      footer={
-        <View style={{ padding: t.space.sm }}>
-          <Pressable
-            testID="t1-close-day"
-            accessibilityRole="button"
-            accessibilityLabel={s('t1.closeDay')}
-            onPress={onCloseDay}
-            style={{
-              minHeight: t.touchTarget,
-              minWidth: t.touchTarget,
-              borderRadius: t.radius.md,
-              backgroundColor: t.color.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              maxFontSizeMultiplier={t.maxFontScale}
-              style={{
-                fontFamily: t.font.medium,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.onAccent,
-              }}
-            >
-              {s('t1.closeDay')}
-            </Text>
-          </Pressable>
-
-          {/*
-            Quiet, and present. It is not competing with closing the day - that
-            is the one action this screen is for - but it is one tap away, on
-            the screen he opens every morning.
-          */}
-          <Pressable
-            testID="t1-privacy"
-            accessibilityRole="button"
-            accessibilityLabel={s('t1.privacy')}
-            onPress={onOpenPrivacy}
-            style={{
-              minHeight: t.touchTarget,
-              minWidth: t.touchTarget,
-              marginTop: t.space.xs,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              maxFontSizeMultiplier={t.maxFontScale}
-              style={{
-                fontFamily: t.font.regular,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.inkMuted,
-              }}
-            >
-              {s('t1.privacy')}
-            </Text>
-          </Pressable>
-        </View>
+      /*
+       * THE FOUR EVERYDAY TILES, PINNED (items 1 and 2). Two across in both
+       * displays: four large words read at arm's length, and two-up is the
+       * width every label has been measured to fit at the chrome cap.
+       */
+      pinned={
+        current ? (
+          <View style={{ paddingHorizontal: t.space.sm }}>
+            <ActionGrid testID="t1-act" display={display}>
+              {ACT_SECTIONS.filter((a) => a.tier === 'main').map((a) => tile(a, true))}
+            </ActionGrid>
+          </View>
+        ) : undefined
       }
+      nav={<BottomNav active="today" onSelect={onSelectTab} s={s} display={display} />}
+      // M3: "Exit the app?" after a hardware Back (Sheet.tsx says why it asks).
+      overlay={exitPrompt === undefined ? undefined : <ExitSheet id="t1" s={s} prompt={exitPrompt} display={display} />}
     >
-      {totals
-        /*
-         * A section with nothing in it is not shown. Eight rows of zero on the
-         * first morning is a screen that says nothing; this says what happened.
-         */
-        .filter((row) => row.count > 0)
-        .map((row) => (
-          <Row
-            key={row.section}
-            testID={'t1-section-' + row.section}
-            label={s(('section.' + row.section) as StringKey)}
-            amount={row.amount}
-            display={display}
-            onPress={() => onOpenSection(row.section)}
-          />
-        ))}
+      {/*
+        C-17: THE BOOK IS STILL OPEN FOR A DAY THAT HAS ENDED. A calm card, not
+        an alarm and not a dialog he can swipe away by accident - it is part of
+        the page and stays until he closes the book. Nothing rolls the day over
+        or closes it for him (the cash count is his), and the tiles are
+        withheld so a sale cannot be filed under last week by habit.
+        C-19: a book dated ahead of the phone's clock is explained, not hidden.
+      */}
+      {/*
+        v2: THE THREE DATE NOTICES ARE BANNERS (DESIGN-SYSTEM-V2 3.11), a fill,
+        a rim, an icon and words - calm, never red. The stale one keeps its one
+        action; nothing closes the book for him, because the cash count is his.
+      */}
+      {dayStatus.kind === 'stale' ? (
+        <Banner
+          testID="t1-stale"
+          textTestID="t1-stale-body"
+          kind="warning"
+          icon="stale"
+          text={fill(s('t1.stale.body'), { date: dateLine(dayStatus.date, s) })}
+          display={display}
+          action={{ testID: 't1-stale-close', label: s('t1.stale.action'), onPress: onCloseDay }}
+        />
+      ) : dayStatus.kind === 'future' ? (
+        <Banner
+          testID="t1-future"
+          textTestID="t1-future-body"
+          kind="warning"
+          icon="clock"
+          text={fill(s('t1.future.body'), { date: dateLine(dayStatus.date, s) })}
+          display={display}
+          {...(onOpenDateSettings === undefined
+            ? { detail: s('t1.future.howTo') }
+            : {
+                action: {
+                  testID: 't1-future-settings',
+                  label: s('t1.future.openSettings'),
+                  onPress: onOpenDateSettings,
+                },
+              })}
+        />
+      ) : store.misdatedDate !== null ? (
+        <Banner
+          testID="t1-misdated"
+          textTestID="t1-misdated-body"
+          kind="info"
+          text={fill(s('t1.misdated.body'), { date: dateLine(store.misdatedDate, s) })}
+          display={display}
+        />
+      ) : null}
 
-      <Row
-        testID="t1-profit"
-        label={s('t1.profit')}
-        amount={primary.estimatedProfit.value}
+      {/* Item 3: the one figure, with its working. */}
+      <CashInBox id="t1" store={store} s={s} display={display} />
+      {/*
+        BEFORE THE FIRST ENTRY, A NOTE THAT SAYS WHERE TO START. Drawn here
+        rather than by `Shell`, which would replace the whole body - and the
+        first morning is exactly when the rest of the page is needed.
+      */}
+      {entries.length === 0 ? <EmptyNote testID="t1-empty" text={s('t1.empty')} display={display} /> : null}
+      <PartyTotals
+        id="t1"
+        store={store}
+        s={s}
         display={display}
-        /*
-         * Directional: profit is the one figure here that can be negative. The
-         * sign is always rendered and colour is additive, never the only signal -
-         * red and green are the hardest pair for the eye this is built for.
-         */
-        directional
+        hideZero
+        onPress={() => onSelectTab('parties')}
       />
+      <Observation id="t1" store={store} s={s} display={display} />
+      <CollectToday id="t1" store={store} s={s} display={display} onOpenParty={onOpenParty} />
+
+      <ProgressCard
+        testID="t1-book"
+        store={store}
+        s={s}
+        display={display}
+        heading={fill(s('t1.progress'), { done: progress.done, total: progress.steps })}
+        caption={
+          <Quiet
+            testID="t1-book-caption"
+            text={s(unlocked ? 't1.checkReady' : 't1.checkPending')}
+            display={display}
+          />
+        }
+      >
+        {/*
+          ITEM 1: TONAL UNTIL CLOSING TIME, MARIGOLD FROM IT. All day the job is
+          recording sales, and the one marigold thing on Today was the close -
+          done once, at night. Before closing time it is a plain secondary
+          button, always there; from closing time (or once the day has ended)
+          it becomes the screen's one primary action.
+        */}
+        <PrimaryButton
+          testID="t1-close-day"
+          label={s('t1.continueClose')}
+          display={display}
+          variant={closing ? 'primary' : 'tonal'}
+          size="lg"
+          onPress={onCloseDay}
+        />
+      </ProgressCard>
+
+      {/* Item 1: the weekly jobs, under "More" and below the day. */}
+      {!current ? null : (
+        <>
+          <View style={{ paddingHorizontal: t.space.md, paddingTop: t.space.lg }}>
+            <SectionLabel testID="t1-more" text={s('t1.more')} display={display} />
+          </View>
+          <View style={{ paddingHorizontal: t.space.sm }}>
+            <ActionGrid testID="t1-more-act" display={display}>
+              {ACT_SECTIONS.filter((a) => a.tier === 'more').map((a) => tile(a, false))}
+            </ActionGrid>
+          </View>
+        </>
+      )}
+
+      {/*
+        THE QUIET LINKS. The reference has no settings or privacy route on
+        Today; this build has nowhere else to put them (C-5 leaves no fourth
+        tab) and DPDP needs the privacy one reachable. Stacked, because
+        "Privacy and what you agreed to" side by side ran 75px off a 360dp
+        screen at the chrome cap.
+      */}
+      {/*
+        M2 (Saket): ASK, SETTINGS AND PRIVACY ARE ROWS AT THE FOOT OF TODAY -
+        an icon, the words and a chevron, in one card - not three loose links.
+        C-5 leaves no fourth tab, and DPDP needs the privacy route reachable.
+      */}
+      <Card testID="t1-foot" display={display}>
+        {/* C1 - a question, not an entry: it opens the Ask screen and writes nothing. */}
+        <LinkRow testID="t1-ask" label={s('c1.open')} icon="info" display={display} onPress={onOpenChat} />
+        <LinkRow
+          testID="t1-privacy"
+          label={s('t1.privacy')}
+          icon="lock"
+          display={display}
+          onPress={onOpenPrivacy}
+        />
+        <LinkRow
+          testID="t1-settings"
+          label={s('nav.settings')}
+          icon="more"
+          display={display}
+          onPress={onOpenSettings}
+        />
+      </Card>
+      <View style={{ height: t.space.md }} />
     </Shell>
   );
 }
