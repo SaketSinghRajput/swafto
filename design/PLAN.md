@@ -14,6 +14,9 @@ Mandate: Saket's /hq brief of 2026-11-20 (autonomous; test/staging only; never p
 7. **No third-party component kit** (LIBRARY.md §2): components stay in-house so `check:design` keeps seeing every token.
 8. **Touch target floor: the registry value** (LIBRARY.md §5); no target below it.
 
+9. **Saket, 2026-11-21: no AWS test environment.** The "test server" is local (dev API + local Postgres + emulator); the APK goes to S3 by the CTO from the local CLI (profile `saftwo`), not from CI. `infra/terraform/test/` stays written and unapplied. This supersedes "never local" in the original brief for the test server only; production stays untouched.
+10. **Public snapshots are redacted:** AWS account ID, instance ID and Elastic IP are replaced with placeholders in the pushed copy of `docs/infra/HOSTING.md`, `docs/runbooks/deploy.md` and `tools/swafto-invite.mjs`. Local files are unchanged.
+
 ## Phases and gates
 | # | Phase | Owner | Gate |
 |---|---|---|---|

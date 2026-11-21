@@ -58,7 +58,8 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+      # v3.2.2 failed in run 44861740841 (a Node 20 action forced onto Node 24); v4 runs on node24.
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
