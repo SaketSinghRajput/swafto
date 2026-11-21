@@ -15,7 +15,7 @@
  * caller creates the entry through the IN1 parser, which is the only path that
  * refuses a credit sale naming nobody.
  */
-import { EntryForm } from '../components/EntryForm.tsx';
+import { EntryForm, type CancelControls } from '../components/EntryForm.tsx';
 import { FORM_A_COMMITS as COMMITS } from './entryRoutes.ts';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
@@ -59,6 +59,8 @@ export interface FormAProps {
   readonly onSelectCommit?: (index: number) => void;
   /** Explicit `| undefined`: the project runs `exactOptionalPropertyTypes`. */
   readonly onBack?: (() => void) | undefined;
+  /** Cancel this entry: the session's half (EntryForm's CancelControls). */
+  readonly cancel?: CancelControls | undefined;
   readonly onRetry?: () => void;
   /** T18: "Return or exchange a sale", one ghost action under the lines (EX-7). */
   readonly onOpenReturns?: (() => void) | undefined;
@@ -88,6 +90,7 @@ export function FormA({
   selectedCommit = 0,
   onSelectCommit = () => {},
   onBack,
+  cancel,
   onRetry = () => {},
   onOpenReturns,
   plan = 'free',
@@ -119,6 +122,7 @@ export function FormA({
       selectedCommit={selectedCommit}
       onSelectCommit={onSelectCommit}
       onBack={onBack}
+      cancel={cancel}
       onRetry={onRetry}
       secondaryAction={
         onOpenReturns === undefined ? undefined : { labelKey: 't18.open', onPress: onOpenReturns }

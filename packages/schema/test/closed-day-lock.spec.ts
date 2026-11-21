@@ -4,7 +4,7 @@
  * The behaviour (a close waits for an in-flight insert) is the Postgres case in postgres.spec.ts.
  */
 import { describe, it, expect } from 'vitest';
-import { allMigrationsDown, allMigrationsUp, migration3Down, migration3Up, migration4Down, migration4Up, migrationUp } from '../src/spec.ts';
+import { allMigrationsDown, allMigrationsUp, migration3Down, migration3Up, migration4Down, migration4Up, migration5Down, migration5Up, migration6Down, migration6Up, migrationUp } from '../src/spec.ts';
 
 describe('migration 0003 · the closed-day triggers lock the day they read', () => {
   it('replaces exactly the two closed-day functions, each reading days.state FOR SHARE', () => {
@@ -33,8 +33,10 @@ describe('migration 0003 · the closed-day triggers lock the day they read', () 
     expect(migration3Up('sqlite')).toEqual([]);
     expect(migration3Down('sqlite')).toEqual([]);
     // 0004 (RT-10) is now the last thing up and the first thing down; 0003 is right behind it.
-    const tail = migration4Up('postgres').length;
-    expect(allMigrationsUp('postgres').slice(-2 - tail, -tail)).toEqual(migration3Up('postgres'));
-    expect(allMigrationsDown('postgres').slice(tail, tail + 2)).toEqual(migration3Down('postgres'));
+    // 0005 (invite codes) is later still: 0003 sits behind 0004 and 0005 going up, and after them going down.
+    const tailUp = migration4Up('postgres').length + migration5Up('postgres').length + migration6Up('postgres').length;
+    expect(allMigrationsUp('postgres').slice(-2 - tailUp, -tailUp)).toEqual(migration3Up('postgres'));
+    const tailDown = migration6Down('postgres').length + migration5Down('postgres').length + migration4Down('postgres').length;
+    expect(allMigrationsDown('postgres').slice(tailDown, tailDown + 2)).toEqual(migration3Down('postgres'));
   });
 });

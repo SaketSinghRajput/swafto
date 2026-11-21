@@ -10,7 +10,7 @@
  * The note under the rows is not decoration. A form with two buttons and no
  * explanation is a form where the distinction lives only in the developer's head.
  */
-import { EntryForm, type CommitOption } from '../components/EntryForm.tsx';
+import { EntryForm, type CancelControls, type CommitOption } from '../components/EntryForm.tsx';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
 import type { RenderLanguage } from '../i18n/strings.ts';
@@ -51,6 +51,8 @@ export interface FormDProps {
   readonly onSelectCommit?: (index: number) => void;
   /** Explicit `| undefined`: the project runs `exactOptionalPropertyTypes`. */
   readonly onBack?: (() => void) | undefined;
+  /** Cancel this entry: the session's half (EntryForm's CancelControls). */
+  readonly cancel?: CancelControls | undefined;
   readonly onRetry?: () => void;
 }
 
@@ -71,6 +73,7 @@ export function FormD({
   selectedCommit = 0,
   onSelectCommit = () => {},
   onBack,
+  cancel,
   onRetry = () => {},
 }: FormDProps) {
   return (
@@ -99,6 +102,7 @@ export function FormD({
       selectedCommit={selectedCommit}
       onSelectCommit={onSelectCommit}
       onBack={onBack}
+      cancel={cancel}
       onRetry={onRetry}
     />
   );

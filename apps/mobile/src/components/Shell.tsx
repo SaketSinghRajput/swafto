@@ -813,6 +813,10 @@ export interface RowProps {
    * reaches it; absent, the label is used.
    */
   readonly accessibleLabel?: string;
+  /** Cancel this entry: the original, struck through and kept - never hidden (D1). */
+  readonly struck?: boolean;
+  /** A word after the label that is NOT struck - "cancelled" - so the reason reads cleanly. */
+  readonly note?: string;
 }
 
 /**
@@ -835,6 +839,8 @@ export function Row({
   out = false,
   onPress,
   accessibleLabel,
+  struck = false,
+  note,
 }: RowProps) {
   const t = tokens(display);
 
@@ -851,9 +857,24 @@ export function Row({
           fontSize: t.type.body,
           lineHeight: t.leadingUncapped(t.type.body),
           color: t.color.ink,
+          ...(struck ? { textDecorationLine: 'line-through' as const } : {}),
         }}
       >
         {label}
+        {note === undefined ? null : (
+          <Text
+            {...t.bodyText}
+            style={{
+              fontFamily: t.font.medium,
+              fontSize: t.type.body,
+              lineHeight: t.leadingUncapped(t.type.body),
+              color: t.color.ink,
+              textDecorationLine: 'none',
+            }}
+          >
+            {' · ' + note}
+          </Text>
+        )}
       </Text>
       <Money
         amount={amount}
@@ -862,6 +883,7 @@ export function Row({
         withSign={directional}
         tone={directional ? 'directional' : 'neutral'}
         out={out}
+        struck={struck}
       />
       {onPress ? (
         <View style={{ marginLeft: t.space.xs }}>
@@ -1021,6 +1043,16 @@ export interface SegmentedProps<T extends string> {
   readonly value: T | null;
   readonly onChange: (key: T) => void;
   readonly display?: DisplayMode;
+  /**
+   * HOW MANY OPTIONS SHARE A ROW. Three by default, which is what an entry
+   * form's footer can afford. Two where the options are PHRASES rather than
+   * words: "ନଗଦ ଫେରାଇଲେ" and "UPIରେ ଫେରାଇଲେ" each hold one word wider than a
+   * third of the tray at the chrome cap, and a word cannot wrap - it ran 2px
+   * out of its segment on CI (T18, Linux run 44348374411) and 7px with the
+   * shipped face loaded. Half the tray gives the phrase a line break to use.
+   * Only for segments in a scrolling body, where a second row costs nothing.
+   */
+  readonly columns?: 2 | 3;
 }
 
 /**
@@ -1047,6 +1079,7 @@ export function Segmented<T extends string>({
   value,
   onChange,
   display = 'comfort',
+  columns = 3,
 }: SegmentedProps<T>) {
   const t = tokens(display);
   return (
@@ -1067,7 +1100,17 @@ export function Segmented<T extends string>({
          * it is about two pixels wider than a third of a 360dp screen - every
          * pixel has to come from the chrome.
          */
-        borderRadius: t.radius.pill,
+        /*
+         * LIVE DEMO S4-1: HALF A CHIP'S FLOOR, NOT `pill`. A pill radius is
+         * clamped to half the tray's height, so a tray that wraps to two rows
+         * (five expense modes, five return settlements, three Odia words at the
+         * cap) curved in further than a one-row chip, and the chosen chip in a
+         * corner stuck out through the edge (A36: j2-18, j2-26). A chip is at
+         * least `touchTarget` tall and a pill itself, so a tray radius of half
+         * that holds any chip in any corner - and on one row it is the same
+         * rounded end as before.
+         */
+        borderRadius: t.touchTarget / 2,
         backgroundColor: t.color.surfaceRaised,
         borderWidth: t.edgeWidth,
         borderColor: t.color.edge,
@@ -1085,9 +1128,17 @@ export function Segmented<T extends string>({
             onPress={() => onChange(o.key)}
             android_ripple={{ color: t.color.border }}
             style={{
-              flexBasis: '30%',
+              flexBasis: columns === 2 ? '45%' : '30%',
               flexGrow: 1,
-              minHeight: t.control.lg,
+              /*
+               * The touch-target floor, not `control.lg`. The segment sits in
+               * every entry form's footer, which is measured against the fold;
+               * its eight pixels went to the Sales body, where the running
+               * total has to stay in view under two Odia links at font 2.0
+               * (CI, Linux run 44348374411). 56dp is the same floor the keypad
+               * keys stand on.
+               */
+              minHeight: t.touchTarget,
               minWidth: t.touchTarget,
               paddingHorizontal: t.space.xs,
               borderRadius: t.radius.pill,
@@ -1223,6 +1274,16 @@ export function ActionTile({
         flexBasis: '45%',
         flexGrow: 1,
         flexDirection: 'row',
+        /*
+         * THE WORD MAY DROP BELOW THE DISC. With the shipped face actually
+         * loaded (check:layout, 2026-11-20) "Expense" at `lead` and "Purchase"
+         * at body, both at the chrome cap in the longest-string case, are 7-9px
+         * wider than the room beside a 40dp disc in a half-width tile, and an
+         * English word has no break opportunity. Wrapping lets the word take
+         * its own line under the pictogram, at the full width of the tile, only
+         * when it does not fit beside it - at ordinary sizes nothing moves.
+         */
+        flexWrap: 'wrap',
         alignItems: 'center',
         minHeight: large ? t.control.xl : t.control.md,
         minWidth: t.touchTarget,
@@ -1270,8 +1331,11 @@ export function ActionTile({
       <Text
         maxFontSizeMultiplier={t.maxFontScale}
         style={{
-          flex: 1,
+          // `auto`, not 0: the word's own width decides whether it fits beside
+          // the disc or wraps beneath it (see `flexWrap` on the tile).
+          flexGrow: 1,
           flexShrink: 1,
+          flexBasis: 'auto',
           fontFamily: t.font.bold,
           fontSize: size,
           lineHeight: t.leading(size),
@@ -1384,7 +1448,10 @@ export function BottomNav({
               flex: 1,
               minHeight: t.control.lg,
               minWidth: t.touchTarget,
-              margin: t.space.xs,
+              // Vertical only: the bar's own `xs` padding holds the outer pills
+              // off the screen edge, and the 16px the side margins took is the
+              // slack "Reports" needs at the cap (see the label below).
+              marginVertical: t.space.xs,
               borderRadius: t.radius.lg,
               backgroundColor: on ? t.color.selected : undefined,
               alignItems: 'center',
@@ -1395,7 +1462,13 @@ export function BottomNav({
             <Text
               maxFontSizeMultiplier={t.maxFontScale}
               style={{
-                paddingHorizontal: t.space.xs,
+                /*
+                 * No horizontal padding of its own: the tab's `xs` margin and
+                 * pill already hold it off its neighbour. With the shipped face
+                 * actually loaded (check:layout, 2026-11-20), the live "Reports"
+                 * in bold at the chrome cap was 113px of text-plus-padding in a
+                 * 109px tab - a single English word cannot wrap.
+                 */
                 fontFamily: on ? t.font.bold : t.font.regular,
                 fontSize: t.type.body,
                 lineHeight: t.leading(t.type.body),

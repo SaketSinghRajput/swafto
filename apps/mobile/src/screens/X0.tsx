@@ -29,7 +29,7 @@
  * `reviewState` and why this screen is on the contact sheet.
  */
 import { View, Text } from '@swafto/ui';
-import { Shell, PrimaryButton, type LoadStatus } from '../components/Shell.tsx';
+import { Shell, PrimaryButton, LinkRow, type LoadStatus } from '../components/Shell.tsx';
 import { Switch } from '../components/Switch.tsx';
 import { Banner } from '../components/Banner.tsx';
 import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
@@ -58,6 +58,8 @@ export interface ConsentNoticeProps {
   readonly justWithdrawn?: ConsentPurpose | null;
   /** Manage mode's visible way out (there is no Save button to leave by). */
   readonly onBack?: (() => void) | undefined;
+  /** LIVE DEMO S4-3: the full privacy policy, opened in the phone's browser by the host. */
+  readonly onOpenPrivacyPolicy?: () => void;
 }
 
 export function ConsentNotice({
@@ -71,6 +73,7 @@ export function ConsentNotice({
   onRetry = () => {},
   justWithdrawn = null,
   onBack,
+  onOpenPrivacyPolicy = () => {},
 }: ConsentNoticeProps) {
   const manage = mode === 'manage';
   const t = tokens(display);
@@ -200,6 +203,19 @@ export function ConsentNotice({
       >
         {s('consent.rights')}
       </Text>
+      {/*
+        LIVE DEMO S4-3: THE WHOLE POLICY, ONE TAP FROM THE NOTICE. The notice is
+        the itemised summary; the policy it summarises is the page the API
+        serves (`apps/web/legal/privacy.html` at /privacy), the same link About
+        carries. In both modes: withdrawing is when he most needs to read it.
+      */}
+      <LinkRow
+        testID="x0-privacy"
+        label={s('s5.privacy')}
+        detail={s('settings.open')}
+        display={display}
+        onPress={onOpenPrivacyPolicy}
+      />
     </Shell>
   );
 }

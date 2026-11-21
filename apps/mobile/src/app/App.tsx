@@ -37,6 +37,7 @@ import { TodayFirstRun } from '../screens/T2.tsx';
 import { TodayClosed } from '../screens/T3.tsx';
 import { CashBalanced } from '../screens/T13.tsx';
 import { Onboarding } from '../screens/X1.tsx';
+import { LockOffer } from '../screens/X4.tsx';
 import { PartiesList } from '../screens/P1.tsx';
 import { Settings } from '../screens/S1.tsx';
 import { ShopProfile } from '../screens/S2.tsx';
@@ -125,6 +126,8 @@ export interface AppProps {
   readonly onExportMyData?: () => void;
   readonly onLoadDevices?: () => void;
   readonly onSignOutDevice?: (deviceId: string) => void;
+  /** RTI-7: "It was me" on Today's new-phone notice. `Host.dismissNewPhone`; absent, it does nothing. */
+  readonly onDismissNewPhone?: (deviceId: string) => void;
   /**
    * PR-7: the plan's network half - the server's answer, the preview, Play's
    * purchase sheet. `Host` implements it; absent, S10 still renders and its
@@ -137,6 +140,8 @@ export interface AppProps {
    */
   readonly onUnlock?: () => void;
   readonly onToggleAppLock?: () => void;
+  /** X4 "Turn on": the host's enable flow (the phone's lock first). Absent, as in a test, it does nothing. */
+  readonly onTurnOnAppLock?: () => void;
   /**
    * R5 FR-1, FR-2, FR-4: HANDING TEXT TO ANOTHER APP, which the host owns.
    * `onOpenWhatsApp` tries the app link and then the web one; `onShareText`
@@ -163,6 +168,8 @@ export interface AuthActions {
   logOut(): unknown;
   /** F-22: S8's "Delete everything". `Host.deleteAccount`. */
   deleteAccount?(): unknown;
+  /** F-1: A4's "Paste code". `Host.pasteCode`. */
+  pasteCode?(): unknown;
 }
 
 /**
@@ -204,8 +211,10 @@ function Screen({
   onExportMyData,
   onLoadDevices = () => {},
   onSignOutDevice = () => {},
+  onDismissNewPhone = () => {},
   plan,
   onToggleAppLock = () => {},
+  onTurnOnAppLock = () => {},
   onOpenWhatsApp = () => {},
   onShareText = () => {},
   onShareFile = () => {},
@@ -260,6 +269,8 @@ function Screen({
    */
   const todayFace = () => {
     const day = store.state.day;
+    // RTI-7: set by the host on launch and foreground; drawn on the open day's Today.
+    const newPhone = session.state.newPhone ?? null;
     // M3: "Exit the app?" - the same question on every face of Today.
     const exitPrompt =
       session.state.exitPrompt === true
@@ -319,6 +330,16 @@ function Screen({
         onOpenSection={(s) => session.openSection(s as Section)}
         onOpenParty={(id) => session.openParty(id)}
         onOpenDateSettings={onOpenDateSettings}
+        {...(newPhone
+          ? {
+              newPhone: { id: newPhone.id, date: session.localDate(newPhone.createdAt) },
+              onOpenDevices: () => {
+                session.openDevices();
+                onLoadDevices();
+              },
+              onDismissNewPhone: () => onDismissNewPhone(newPhone.id),
+            }
+          : {})}
         exitPrompt={exitPrompt}
       />
     );
@@ -338,6 +359,17 @@ function Screen({
      * the half-typed amount survives being interrupted to choose a customer.
      */
     entryPartyId: session.state.entryPartyId,
+    /* Cancel this entry: the confirm sheet, the cancel, and "Enter it again correctly". */
+    cancel: {
+      asking: session.state.cancelAsk ?? null,
+      justCancelled: session.state.cancelledId ?? null,
+      onAsk: (entryId: string) => session.askCancel(entryId),
+      onConfirm: () => {
+        session.confirmCancel();
+      },
+      onDismiss: () => session.dismissCancel(),
+      onEnterAgain: () => session.enterAgain(),
+    },
     /* USABILITY item 6: the entry just saved, so the form can say so and show it first. */
     savedId: session.state.lastSavedId ?? null,
     pickingParty: session.state.pickingParty,
@@ -419,6 +451,7 @@ function Screen({
           }}
           justWithdrawn={session.state.consentWithdrawn ?? null}
           onBack={() => session.back()}
+          onOpenPrivacyPolicy={() => onOpenUrl(WEB_PAGE_URLS.privacy)}
         />
       );
 
@@ -674,6 +707,16 @@ function Screen({
         />
       );
 
+    case 'X4':
+      return (
+        <LockOffer
+          {...common}
+          noScreenLock={session.state.lockNote === 'noScreenLock'}
+          onTurnOn={onTurnOnAppLock}
+          onNotNow={() => session.finishLockOffer()}
+        />
+      );
+
     case 'P1':
       return (
         <PartiesList
@@ -764,6 +807,8 @@ function Screen({
           phone={session.state.auth.phone}
           busy={session.state.auth.busy}
           problem={session.state.auth.problem}
+          mode={session.state.auth.codeModeKnown ? session.state.auth.codeMode : null}
+          digits={session.state.auth.codeDigits}
           onKey={(k) => session.pressPhone(k)}
           onSend={() => void auth?.sendCode()}
           onChangedNumber={() => session.openNumberChange()}
@@ -780,6 +825,9 @@ function Screen({
           busy={session.state.auth.busy}
           problem={session.state.auth.problem}
           resends={session.state.auth.resends}
+          mode={session.state.auth.codeMode}
+          digits={session.state.auth.codeDigits}
+          onPaste={auth?.pasteCode ? () => void auth.pasteCode?.() : undefined}
           onKey={(k) => {
             if (session.pressCode(k)) void auth?.verifyCode();
           }}
@@ -798,8 +846,11 @@ function Screen({
           {...common}
           problem={session.state.auth.problem}
           retryAfterSeconds={session.state.auth.retryAfterSeconds}
+          mode={session.state.auth.codeMode}
+          digits={session.state.auth.codeDigits}
           busy={session.state.auth.busy}
           onSendNew={() => void auth?.sendCode()}
+          onTryAgain={() => session.retryCode()}
           onBack={() => session.back()}
         />
       );
@@ -1189,6 +1240,20 @@ const REFUSAL_HINT: Readonly<Record<string, StringKey>> = {
   // QA-04 / QA-06 (CTO decisions, 2026-11-18): a Rs 0 entry; the phone's date is behind the book.
   amountZero: 'refusal.amountZero',
   dayFuture: 'refusal.dayFuture',
+  /*
+   * CANCEL THIS ENTRY: the engine's and the server's refusal codes, each in
+   * words. None reaches the screen as a code.
+   */
+  has_linked_entries: 'cancel.linkedFirst',
+  already_cancelled: 'cancel.refusal.already',
+  cancel_of_cancel: 'cancel.refusal.already',
+  target_cancelled: 'cancel.refusal.already',
+  cancel_event_leg: 'cancel.refusal.cannot',
+  cancel_mismatch: 'cancel.refusal.cannot',
+  cancel_target_missing: 'cancel.refusal.cannot',
+  cancel_other_day: 't3.banner',
+  entries_closed_day: 't3.banner',
+  party_kind_mismatch: 'refusal.partyKind',
 };
 
 /**

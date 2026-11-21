@@ -103,6 +103,8 @@ describe('G4 · Postgres migrations and append-only', () => {
       'days',
       'devices',
       'entries',
+      // Beta invite codes (migration 0005): the operator's append-only audit.
+      'invite_audit',
       // PR-1 (Premium, R5): the shop's item list and the item lines of a sale.
       'item_lines',
       'items',

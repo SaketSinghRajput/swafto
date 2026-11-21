@@ -2019,6 +2019,10 @@
                           "type": "string",
                           "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
                         },
+                        "cancelsEntryId": {
+                          "type": "string",
+                          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                        },
                         "source": {
                           "type": "string",
                           "enum": [

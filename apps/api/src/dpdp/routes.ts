@@ -405,6 +405,14 @@ export function registerDpdpRoutes(
       const phone = normaliseIndianMobile(body.phone);
       if (!phone) return reply.code(400).send(INVALID_PHONE);
 
+      /*
+       * INVITE MODE: WEB DELETION IS PAUSED (founder decision D3). No message channel exists to deliver
+       * a deletion code, and the throwing SMS port must never be reached (that would be a 500). The reply
+       * is constant for every number and does nothing: no lookup, no limiter write. The page reads
+       * `paused` and tells the person to delete in the app (POST /v1/me/erase is unaffected).
+       */
+      if (deps.authMode === 'invite') return reply.code(202).send({ sent: false, mode: 'invite', paused: true });
+
       const user = await deps.repo.findUserByPhone(phone);
       const out = await requestOtp(deps, {
         key: deletionKey(phone),
@@ -456,6 +464,15 @@ export function registerDpdpRoutes(
       const body = req.body as { phone: string; code: string; confirm: 'DELETE' };
       const phone = normaliseIndianMobile(body.phone);
       if (!phone) return reply.code(400).send(INVALID_PHONE);
+
+      /*
+       * INVITE MODE: THE CONFIRM SIDE IS PAUSED TOO (RTI-4). A deletion code minted in sms mode seconds
+       * before the flip must not be able to schedule an erase while the request side is paused. The same
+       * bare 401 as a wrong code, before any ticket is taken.
+       */
+      if (deps.authMode === 'invite') return reply.code(401).send({ error: 'code_invalid' });
+      // F-1: digits only; a malformed code costs no attempt.
+      if (!/^[0-9]+$/.test(body.code)) return reply.code(400).send({ error: 'invalid_input', message: 'the request is not valid' });
 
       const checked = await verifyOtp(deps, { key: deletionKey(phone), code: body.code, ip: req.ip });
       if (!checked.ok) {

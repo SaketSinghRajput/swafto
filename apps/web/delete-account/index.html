@@ -348,6 +348,21 @@
             return;
           }
           /*
+           * PAUSED (invite mode, founder decision D3). While sign-in is by invite code no message can be
+           * sent, so no deletion code can reach anyone. The API answers `sent: false` for every number
+           * alike, so this says nothing about whether an account exists. Deletion is done in the app,
+           * which is unaffected and needs no code.
+           */
+          if (res.body && res.body.sent === false) {
+            say(
+              'Deleting an account on the web is paused for now. Open the SWAFTO app and delete your ' +
+                'data from inside it; no code is needed there. If you no longer have the app, write to grievance@swafto.com ' +
+                'and we will help within 30 days.',
+              'bad',
+            );
+            return;
+          }
+          /*
            * The same words whether or not the number has an account. A page
            * that said "no such account" would let anyone test a phone list
            * against our user base, from a browser, with no account of their own.

@@ -171,3 +171,38 @@ describe('the page is readable by the people who need it', () => {
     expect(PAGE).toContain('H13');
   });
 });
+
+describe('invite mode pauses web deletion, and the page says so', () => {
+  const inviteApp = buildApp({
+    repo: memoryRepo(),
+    sms: new StubSmsPort(),
+    otp: memoryOtpStore(),
+    now: () => '2026-09-21T08:00:00.000Z',
+    signingKey: KEY,
+    rate: new RateLimiter(memorySql(), { secret: KEY }),
+    authMode: 'invite',
+  });
+
+  it('the API answers sent:false, paused:true, whatever the number, and nothing is stored', async () => {
+    const reply = async (phone: string) =>
+      (
+        await inviteApp.inject({
+          method: 'POST',
+          url: '/v1/deletion/request',
+          headers: { 'content-type': 'application/json' },
+          payload: JSON.stringify({ phone, language: 'en' }),
+        })
+      ).body;
+    const a = await reply('+919876500001');
+    expect(a).toBe(await reply('+919876500002'));
+    expect(JSON.parse(a)).toEqual({ sent: false, mode: 'invite', paused: true });
+  });
+
+  it('the page reads sent:false as the pause, tells the person to delete in the app, and never opens the code step', () => {
+    expect(CODE).toContain('res.body.sent === false');
+    expect(CODE).toContain('is paused for now');
+    expect(CODE).toContain('delete your');
+    const handler = CODE.slice(CODE.indexOf('res.body.sent === false'));
+    expect(handler.indexOf('return;')).toBeLessThan(handler.indexOf("getElementById('step2').hidden = false"));
+  });
+});

@@ -28,6 +28,7 @@ import { DayCloseList } from './T5.tsx';
 import { OpeningCash } from './T6.tsx';
 import { FormB } from './T8.tsx';
 import { FormC } from './T9.tsx';
+import { LockOffer } from './X4.tsx';
 import { FormD } from './T10.tsx';
 import { CashCheck } from './T11.tsx';
 import { CashDifference } from './T12.tsx';
@@ -89,6 +90,7 @@ import {
   CANONICAL_DATE,
 } from '@swafto/fixtures';
 import {
+  add,
   addDays,
   buildReturnEvent,
   divideMoney,
@@ -256,6 +258,50 @@ export const returnsStore = (store: Store): Store => {
   };
   record(cash, RETURN_IDS.partial, big ? 12345600 : 120000, 'cash');
   if (udhar !== undefined) record(udhar, RETURN_IDS.pending, udhar.amount, 'pending');
+  return store;
+};
+
+/**
+ * CANCEL THIS ENTRY: the canonical shop with its first cash sale cancelled
+ * through `store.cancel` - the same path the phone takes - so the panel shows
+ * the original struck through and the pair gone from the total.
+ */
+const CANCEL_ROW_ID = '01890000-0000-7000-8000-c0000000ca01';
+const firstCashOf = (store: Store): string => store.state.entries.find((e) => e.section === 'cash_sales')?.id ?? '';
+const cancelledStore = (): Store => {
+  const store = canonicalStore();
+  store.cancel({ targetId: firstCashOf(store), id: CANCEL_ROW_ID, createdAt: store.state.day.date + 'T13:05:00.000+05:30' });
+  return store;
+};
+const cancelControls = (asking: string | null, justCancelled: string | null) => ({
+  asking,
+  justCancelled,
+  onAsk: () => {},
+  onConfirm: () => {},
+  onDismiss: () => {},
+  onEnterAgain: () => {},
+});
+const linkedSaleOf = (store: Store): string => store.findEntry(RETURN_IDS.partial)?.refersToEntryId ?? '';
+
+/**
+ * LIVE DEMO S3-6: the canonical shop after paying a supplier ₹300 more than the
+ * shop owed all its suppliers together, so the shop total is an advance. Paid
+ * through `append` like any payment; the figure is the engine's own total plus
+ * a typed constant, so the panel reads -₹300 whatever the fixture holds.
+ */
+const supplierAdvanceStore = (): Store => {
+  const store = canonicalStore();
+  const owed = store.primary().p8SupplierOutstanding.value;
+  store.append({
+    id: '01890000-0000-7000-8000-c0000000a036',
+    dayId: store.state.day.date,
+    section: 'party_payment',
+    amount: add(owed > 0 ? owed : 0, 30000),
+    mode: 'cash',
+    partyId: 'p-wholesale',
+    source: 'manual',
+    createdAt: store.state.day.date + 'T12:17:00.000+05:30',
+  } as Entry);
   return store;
 };
 
@@ -475,6 +521,32 @@ const authCase = (screen: string, id: string, caption: string, el: ReactElement)
   sheet: true,
   element: () => cloneElement(el, { language: 'en', display: 'comfort' } as never),
 });
+
+/**
+ * INVITE GATE: ONE INVITE-MODE STATE IN EVERY LANGUAGE. `authCase` lays a state
+ * out in English only, and the invite copy is new in all three - so each state
+ * is laid out in Hindi, Odia and the longest pseudo-locale as well, where a
+ * line that fits in English is most likely to clip.
+ */
+const LANGUAGE_PASS: readonly { readonly language: RenderLanguage; readonly display: DisplayMode; readonly sheet: boolean }[] = [
+  { language: 'en', display: 'comfort', sheet: true },
+  { language: 'hi', display: 'comfort', sheet: false },
+  { language: 'or', display: 'comfort', sheet: true },
+  { language: 'longest', display: 'focus', sheet: false },
+];
+const everyLanguage = (screen: string, id: string, caption: string, el: ReactElement): ScreenCase[] =>
+  LANGUAGE_PASS.map(({ language, display, sheet }) => ({
+    id: id + '-' + language,
+    screen,
+    caption: caption + ' - ' + language + ', ' + display,
+    language,
+    display,
+    sheet,
+    element: () => cloneElement(el, { language, display } as never),
+  }));
+
+/** RTI-7: a phone that signed in the day before the canonical day, as the host hands it to Today. Synthetic. */
+const CASE_NEW_PHONE = { id: 'dev-new', date: '2026-07-14' } as const;
 
 export const SCREEN_CASES: readonly ScreenCase[] = [
   ...standardCases('T2', 'T2 Today - the first run', (_store, language, display) => (
@@ -1498,6 +1570,23 @@ export const SCREEN_CASES: readonly ScreenCase[] = [
     sheet: false,
     element: () => <Today store={adversarialStore()} language="longest" display="focus" />,
   },
+  ...everyLanguage(
+    'T1',
+    'T1-new-phone',
+    'T1 Today - RTI-7: a new phone signed in to the shop',
+    <Today store={canonicalStore()} newPhone={CASE_NEW_PHONE} />,
+  ),
+  {
+    id: 'T1-new-phone-adversarial',
+    screen: 'T1',
+    caption: 'T1 Today - RTI-7 notice over the adversarial shop, longest strings',
+    language: 'longest',
+    display: 'focus',
+    sheet: false,
+    element: () => (
+      <Today store={adversarialStore()} language="longest" display="focus" newPhone={CASE_NEW_PHONE} />
+    ),
+  },
   {
     id: 'T1-error',
     screen: 'T1',
@@ -1767,6 +1856,19 @@ export const SCREEN_CASES: readonly ScreenCase[] = [
     'A3 Phone number - no signal when sending',
     <PhoneNumber phone={CASE_PHONE} problem="offline" onBack={() => {}} />,
   ),
+  ...everyLanguage(
+    'A3',
+    'A3-invite',
+    'A3 Phone number - invite mode: no SMS, "Next"',
+    <PhoneNumber phone={CASE_PHONE} mode="invite" digits={8} onBack={() => {}} />,
+  ),
+  // LIVE DEMO S3-4: a first run, before any reply - no digit count, no promise of an SMS.
+  ...everyLanguage(
+    'A3',
+    'A3-neutral',
+    'A3 Phone number - first run, no reply yet: no digit count',
+    <PhoneNumber phone={CASE_PHONE} mode={null} onBack={() => {}} />,
+  ),
   ...standardCases('A4', 'A4 Enter the code - three digits in', (_store, language, display) => (
     <CodeEntry
       language={language}
@@ -1788,6 +1890,18 @@ export const SCREEN_CASES: readonly ScreenCase[] = [
     'A4 Enter the code - no signal when checking, after two resends',
     <CodeEntry phone={CASE_PHONE} code="987654" problem="offline" resends={2} onBack={() => {}} />,
   ),
+  ...everyLanguage(
+    'A4',
+    'A4-invite',
+    'A4 Enter the code - invite mode, eight boxes in two fours, five in',
+    <CodeEntry phone={CASE_PHONE} code="48210" mode="invite" digits={8} onPaste={() => {}} onBack={() => {}} />,
+  ),
+  ...everyLanguage(
+    'A4',
+    'A4-invite-full',
+    'A4 Enter the code - invite mode, all eight in, checking',
+    <CodeEntry phone={CASE_PHONE} code="48210937" mode="invite" digits={8} busy onBack={() => {}} />,
+  ),
   ...standardCases('A5', 'A5 Code problem - it does not match', (_store, language, display) => (
     <CodeProblem language={language} display={display} problem="mismatch" onBack={() => {}} />
   )),
@@ -1799,6 +1913,91 @@ export const SCREEN_CASES: readonly ScreenCase[] = [
     <CodeProblem problem="locked" retryAfterSeconds={598} onBack={() => {}} />,
   ),
   authCase('A5', 'A5-no-code', 'A5 Code problem - still no code', <CodeProblem problem="noCode" onBack={() => {}} />),
+  ...everyLanguage(
+    'A5',
+    'A5-invite-expired',
+    'A5 Code problem - invite mode, dead: ask SWAFTO, no send button',
+    <CodeProblem problem="expired" mode="invite" digits={8} onBack={() => {}} />,
+  ),
+  ...everyLanguage(
+    'A5',
+    'A5-invite-locked',
+    'A5 Code problem - invite mode, too many tries, plus the ask line',
+    <CodeProblem problem="locked" retryAfterSeconds={598} mode="invite" digits={8} onBack={() => {}} />,
+  ),
+  ...everyLanguage(
+    'A5',
+    'A5-invite-mismatch',
+    'A5 Code problem - invite mode, does not match (eight digits)',
+    <CodeProblem problem="mismatch" mode="invite" digits={8} onBack={() => {}} />,
+  ),
+  /*
+   * LIVE DEMO: THE FOUR DEFECTS THAT ARE A MATTER OF LAYOUT, IN EVERY LANGUAGE.
+   * S4-1: five expense modes wrap to two rows, the chosen one (Udhar) in the
+   * second row's corner. S3-6: the Ledger with suppliers paid in advance. S3-1:
+   * the Sales list with one sale returned in full and one in part.
+   */
+  /* X4 (Saket, 2026-11-20): the app-lock offer at the end of setup, and its no-screen-lock note. */
+  ...standardCases('X4', 'X4 App lock offer - Turn on or Not now', (_store, language, display) => (
+    <LockOffer language={language} display={display} />
+  )),
+  ...everyLanguage(
+    'X4',
+    'X4-no-screen-lock',
+    'X4 App lock offer - this phone has no screen lock: the note and Continue',
+    <LockOffer noScreenLock />,
+  ),
+  /*
+   * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md section 4), every language:
+   * the confirm naming the entry; the line struck through with "Enter it again
+   * correctly" above it; and a returned sale, whose sheet says to cancel the
+   * return first and offers no cancel.
+   */
+  ...(() => {
+    const store = canonicalStore();
+    return everyLanguage(
+      'T7',
+      'T7-cancel-confirm',
+      'T7 Sales - "Cancel this entry?" naming the line and its figure',
+      <FormA store={store} cancel={cancelControls(firstCashOf(store), null)} />,
+    );
+  })(),
+  ...(() => {
+    const store = cancelledStore();
+    return everyLanguage(
+      'T7',
+      'T7-cancelled',
+      'T7 Sales - a sale cancelled: struck through, "cancelled", and "Enter it again correctly"',
+      <FormA store={store} cancel={cancelControls(null, firstCashOf(store))} />,
+    );
+  })(),
+  ...(() => {
+    const store = returnsStore(canonicalStore());
+    return everyLanguage(
+      'T7',
+      'T7-cancel-linked',
+      'T7 Sales - a returned sale: "Cancel the return first", no cancel button',
+      <FormA store={store} cancel={cancelControls(linkedSaleOf(store), null)} />,
+    );
+  })(),
+  ...everyLanguage(
+    'T9',
+    'T9-five-modes',
+    'T9 Expense - five modes on two rows, Udhar chosen',
+    <FormC store={canonicalStore()} draftPaise={12500} selectedCommit={3} />,
+  ),
+  ...everyLanguage(
+    'P1',
+    'P1-supplier-advance',
+    'P1 Ledger - suppliers paid in advance: "Advance to suppliers", no minus',
+    <PartiesList store={supplierAdvanceStore()} />,
+  ),
+  ...everyLanguage(
+    'T7',
+    'T7-returned',
+    'T7 Sales - a sale returned in full and one in part, each line says so',
+    <FormA store={returnsStore(canonicalStore())} />,
+  ),
   ...standardCases('A6', 'A6 Session expired', (store, language, display) => (
     <SessionExpired
       language={language}

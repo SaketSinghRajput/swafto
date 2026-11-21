@@ -15479,6 +15479,29 @@ function partyRule(section, mode) {
       return "refused";
   }
 }
+function partyKindFor(section) {
+  switch (section) {
+    case "purchase":
+    case "party_payment":
+      return "supplier";
+    case "udhar_sales":
+    case "udhar_collection":
+    case "sales_return":
+    case "exchange_out":
+    case "exchange_receipt":
+    case "refund_paid":
+      return "customer";
+    default:
+      return null;
+  }
+}
+function assertPartyKind(entry, party) {
+  if (entry.partyId === void 0 || party === void 0) return;
+  const need = partyKindFor(entry.section);
+  if (need !== null && party.kind !== need) {
+    throw new EntryInputError("party_kind_mismatch", "this entry needs a " + need + ", and that party is a " + party.kind + ".");
+  }
+}
 function requireParty(draft, why) {
   if (!draft.partyId) throw new EntryInputError("partyId", why);
 }
@@ -16934,6 +16957,58 @@ function creditLimitObservation(balance, sale, limit) {
   return would > limit ? { would, limit } : null;
 }
 
+// packages/formula-engine/src/cancel.ts
+var refuse = (code, message) => {
+  throw new EntryInputError(code, message);
+};
+function liveEntries(entries) {
+  let any = false;
+  for (const e3 of entries) {
+    if (e3.cancelsEntryId !== void 0) {
+      any = true;
+      break;
+    }
+  }
+  if (!any) return entries;
+  const cancelled = /* @__PURE__ */ new Set();
+  for (const e3 of entries) if (e3.cancelsEntryId !== void 0) cancelled.add(e3.cancelsEntryId);
+  return entries.filter((e3) => e3.cancelsEntryId === void 0 && !cancelled.has(e3.id));
+}
+function assertCancelFits(cancel, target, referrers, priorCancel) {
+  if (cancel.cancelsEntryId !== target.id) refuse("cancel_mismatch", "a cancel names the entry it cancels.");
+  if (target.cancelsEntryId !== void 0) refuse("cancel_of_cancel", "a cancellation cannot itself be cancelled; enter the entry again instead.");
+  if (isEventSection(target.section)) refuse("cancel_event_leg", "a return and its settlement are not cancelled one leg at a time.");
+  if (referrers.some((r) => r.id !== cancel.id)) {
+    refuse("has_linked_entries", "this entry has a return or a correction linked to it; cancel that first.");
+  }
+  if (priorCancel !== null && priorCancel.id !== cancel.id) refuse("already_cancelled", "this entry is already cancelled.");
+  if (cancel.dayId !== target.dayId) refuse("cancel_other_day", "an entry is cancelled on its own day; a closed day takes a correction instead.");
+  if (cancel.section !== target.section || cancel.mode !== target.mode || cancel.amount !== target.amount || (cancel.partyId ?? null) !== (target.partyId ?? null)) {
+    refuse("cancel_mismatch", "a cancel repeats the entry it cancels exactly.");
+  }
+}
+function buildCancel(d) {
+  const t = d.target;
+  if (t.cancelsEntryId !== void 0) refuse("cancel_of_cancel", "a cancellation cannot itself be cancelled; enter the entry again instead.");
+  if (isEventSection(t.section)) refuse("cancel_event_leg", "a return and its settlement are not cancelled one leg at a time.");
+  const base2 = ENTRY_PARSERS[t.section]({
+    id: d.id,
+    dayId: t.dayId,
+    createdAt: d.createdAt,
+    amount: t.amount,
+    mode: t.mode,
+    ...t.partyId ? { partyId: t.partyId } : {}
+  });
+  const cancel = { ...base2, cancelsEntryId: t.id };
+  assertCancelFits(
+    cancel,
+    t,
+    d.ledger.filter((e3) => e3.refersToEntryId === t.id),
+    d.ledger.find((e3) => e3.cancelsEntryId === t.id) ?? null
+  );
+  return cancel;
+}
+
 // packages/formula-engine/src/index.ts
 function sectionStates(input) {
   const out = {};
@@ -17028,6 +17103,7 @@ var CONSENT_PURPOSES = [
 var external = (v) => v;
 var OTP_TTL_SECONDS = 600;
 var OTP_DIGITS = 6;
+var INVITE_CODE_DIGITS = 8;
 var MAX_ENTRY_PAISE = 1e9;
 var PRIVACY_NOTICE_VERSION = "2026-09-1";
 var REQUIRED_PURPOSES = ["account_and_ledger"];
@@ -17411,7 +17487,8 @@ function Money({
   onFill,
   out = false,
   testID,
-  textSize
+  textSize,
+  struck = false
 }) {
   const t = tokens(mode, textSize);
   const shown = out ? subtract3(0, amount) : amount;
@@ -17430,7 +17507,8 @@ function Money({
         lineHeight: t.leadingUncapped(t.type[size]),
         color,
         // DC-005. Without this the column does not line up, in any language.
-        fontVariant: ["tabular-nums"]
+        fontVariant: ["tabular-nums"],
+        ...struck ? { textDecorationLine: "line-through" } : {}
       },
       children: zeroOut ? `-${formatPaise(shown)}` : formatPaise(shown, { withSign })
     }
@@ -17657,7 +17735,7 @@ function Keypad({ onKey, s, mode = "comfort", testID = "keypad" }) {
     {
       testID,
       accessibilityRole: "keyboardkey",
-      style: { backgroundColor: t.color.surfaceRaised, padding: t.space.xs },
+      style: { backgroundColor: t.color.surfaceRaised, paddingHorizontal: t.space.xs },
       children: ROWS.map((row) => /* @__PURE__ */ jsx3(View_default, { style: { flexDirection: "row" }, children: row.map((k2) => {
         const label2 = k2 === "back" ? s("keypad.delete") : k2 === "clear" ? s("keypad.clear") : k2;
         return /* @__PURE__ */ jsx3(
@@ -19371,11 +19449,13 @@ function Row({
   directional = false,
   out = false,
   onPress,
-  accessibleLabel
+  accessibleLabel,
+  struck = false,
+  note
 }) {
   const t = tokens(display);
   const body = /* @__PURE__ */ jsxs4(Fragment3, { children: [
-    /* @__PURE__ */ jsx8(
+    /* @__PURE__ */ jsxs4(
       Text_default,
       {
         ...t.bodyText,
@@ -19386,9 +19466,26 @@ function Row({
           fontFamily: t.font.regular,
           fontSize: t.type.body,
           lineHeight: t.leadingUncapped(t.type.body),
-          color: t.color.ink
+          color: t.color.ink,
+          ...struck ? { textDecorationLine: "line-through" } : {}
         },
-        children: label2
+        children: [
+          label2,
+          note === void 0 ? null : /* @__PURE__ */ jsx8(
+            Text_default,
+            {
+              ...t.bodyText,
+              style: {
+                fontFamily: t.font.medium,
+                fontSize: t.type.body,
+                lineHeight: t.leadingUncapped(t.type.body),
+                color: t.color.ink,
+                textDecorationLine: "none"
+              },
+              children: " \xB7 " + note
+            }
+          )
+        ]
       }
     ),
     /* @__PURE__ */ jsx8(
@@ -19399,7 +19496,8 @@ function Row({
         size: "body",
         withSign: directional,
         tone: directional ? "directional" : "neutral",
-        out
+        out,
+        struck
       }
     ),
     onPress ? /* @__PURE__ */ jsx8(View_default, { style: { marginLeft: t.space.xs }, children: /* @__PURE__ */ jsx8(Icon, { name: "chevron", size: "md", color: "inkMuted", display }) }) : null
@@ -19511,7 +19609,8 @@ function Segmented({
   options,
   value,
   onChange,
-  display = "comfort"
+  display = "comfort",
+  columns = 3
 }) {
   const t = tokens(display);
   return /* @__PURE__ */ jsx8(
@@ -19533,7 +19632,17 @@ function Segmented({
          * it is about two pixels wider than a third of a 360dp screen - every
          * pixel has to come from the chrome.
          */
-        borderRadius: t.radius.pill,
+        /*
+         * LIVE DEMO S4-1: HALF A CHIP'S FLOOR, NOT `pill`. A pill radius is
+         * clamped to half the tray's height, so a tray that wraps to two rows
+         * (five expense modes, five return settlements, three Odia words at the
+         * cap) curved in further than a one-row chip, and the chosen chip in a
+         * corner stuck out through the edge (A36: j2-18, j2-26). A chip is at
+         * least `touchTarget` tall and a pill itself, so a tray radius of half
+         * that holds any chip in any corner - and on one row it is the same
+         * rounded end as before.
+         */
+        borderRadius: t.touchTarget / 2,
         backgroundColor: t.color.surfaceRaised,
         borderWidth: t.edgeWidth,
         borderColor: t.color.edge
@@ -19550,9 +19659,17 @@ function Segmented({
             onPress: () => onChange(o.key),
             android_ripple: { color: t.color.border },
             style: {
-              flexBasis: "30%",
+              flexBasis: columns === 2 ? "45%" : "30%",
               flexGrow: 1,
-              minHeight: t.control.lg,
+              /*
+               * The touch-target floor, not `control.lg`. The segment sits in
+               * every entry form's footer, which is measured against the fold;
+               * its eight pixels went to the Sales body, where the running
+               * total has to stay in view under two Odia links at font 2.0
+               * (CI, Linux run 44348374411). 56dp is the same floor the keypad
+               * keys stand on.
+               */
+              minHeight: t.touchTarget,
               minWidth: t.touchTarget,
               paddingHorizontal: t.space.xs,
               borderRadius: t.radius.pill,
@@ -19624,6 +19741,16 @@ function ActionTile({
         flexBasis: "45%",
         flexGrow: 1,
         flexDirection: "row",
+        /*
+         * THE WORD MAY DROP BELOW THE DISC. With the shipped face actually
+         * loaded (check:layout, 2026-11-20) "Expense" at `lead` and "Purchase"
+         * at body, both at the chrome cap in the longest-string case, are 7-9px
+         * wider than the room beside a 40dp disc in a half-width tile, and an
+         * English word has no break opportunity. Wrapping lets the word take
+         * its own line under the pictogram, at the full width of the tile, only
+         * when it does not fit beside it - at ordinary sizes nothing moves.
+         */
+        flexWrap: "wrap",
         alignItems: "center",
         minHeight: large ? t.control.xl : t.control.md,
         minWidth: t.touchTarget,
@@ -19668,8 +19795,11 @@ function ActionTile({
           {
             maxFontSizeMultiplier: t.maxFontScale,
             style: {
-              flex: 1,
+              // `auto`, not 0: the word's own width decides whether it fits beside
+              // the disc or wraps beneath it (see `flexWrap` on the tile).
+              flexGrow: 1,
               flexShrink: 1,
+              flexBasis: "auto",
               fontFamily: t.font.bold,
               fontSize: size,
               lineHeight: t.leading(size),
@@ -19741,7 +19871,10 @@ function BottomNav({
               flex: 1,
               minHeight: t.control.lg,
               minWidth: t.touchTarget,
-              margin: t.space.xs,
+              // Vertical only: the bar's own `xs` padding holds the outer pills
+              // off the screen edge, and the 16px the side margins took is the
+              // slack "Reports" needs at the cap (see the label below).
+              marginVertical: t.space.xs,
               borderRadius: t.radius.lg,
               backgroundColor: on ? t.color.selected : void 0,
               alignItems: "center",
@@ -19754,7 +19887,13 @@ function BottomNav({
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
                   style: {
-                    paddingHorizontal: t.space.xs,
+                    /*
+                     * No horizontal padding of its own: the tab's `xs` margin and
+                     * pill already hold it off its neighbour. With the shipped face
+                     * actually loaded (check:layout, 2026-11-20), the live "Reports"
+                     * in bold at the chrome cap was 113px of text-plus-padding in a
+                     * 109px tab - a single English word cannot wrap.
+                     */
                     fontFamily: on ? t.font.bold : t.font.regular,
                     fontSize: t.type.body,
                     lineHeight: t.leading(t.type.body),
@@ -20296,6 +20435,57 @@ var STRINGS = {
   "advance.no": { en: "No, go back", hi: "\u0928\u0939\u0940\u0902, \u092A\u0940\u091B\u0947 \u091C\u093E\u090F\u0901", or: "\u0B28\u0B3E, \u0B2A\u0B1B\u0B15\u0B41 \u0B2F\u0B3E\u0B06\u0B28\u0B4D\u0B24\u0B41" },
   "advance.label": { en: "Advance", hi: "\u0905\u0917\u094D\u0930\u093F\u092E", or: "\u0B05\u0B17\u0B4D\u0B30\u0B40\u0B2E" },
   /*
+   * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md section 4). An entry on
+   * an open day, undone by a new row; the original stays, struck through. hi /
+   * or are a DRAFT (H13) - not reviewed by a native reader.
+   */
+  "cancel.action": { en: "Cancel this entry", hi: "\u092F\u0939 \u090F\u0902\u091F\u094D\u0930\u0940 \u0930\u0926\u094D\u0926 \u0915\u0930\u0947\u0902", or: "\u0B0F\u0B39\u0B3F \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
+  "cancel.title": { en: "Cancel this entry?", hi: "\u092F\u0939 \u090F\u0902\u091F\u094D\u0930\u0940 \u0930\u0926\u094D\u0926 \u0915\u0930\u0947\u0902?", or: "\u0B0F\u0B39\u0B3F \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B15\u0B30\u0B3F\u0B2C\u0B47?" },
+  "cancel.body": {
+    en: "It stays in the book, struck through, and no longer counts in any total.",
+    hi: "\u092F\u0939 \u092C\u0939\u0940 \u092E\u0947\u0902 \u0915\u091F\u0940 \u0939\u0941\u0908 \u0926\u093F\u0916\u0947\u0917\u0940 \u0914\u0930 \u0915\u093F\u0938\u0940 \u091C\u094B\u0921\u093C \u092E\u0947\u0902 \u0928\u0939\u0940\u0902 \u0917\u093F\u0928\u0940 \u091C\u093E\u090F\u0917\u0940\u0964",
+    or: "\u0B0F\u0B39\u0B3E \u0B16\u0B3E\u0B24\u0B3E\u0B30\u0B47 \u0B15\u0B1F\u0B3E \u0B39\u0B4B\u0B07 \u0B30\u0B39\u0B3F\u0B2C, \u0B0F\u0B2C\u0B02 \u0B15\u0B4C\u0B23\u0B38\u0B3F \u0B2E\u0B4B\u0B1F\u0B30\u0B47 \u0B17\u0B23\u0B3E\u0B2F\u0B3F\u0B2C \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964"
+  },
+  "cancel.keep": { en: "Keep it", hi: "\u0930\u0939\u0928\u0947 \u0926\u0947\u0902", or: "\u0B30\u0B39\u0B3F\u0B2C\u0B3E\u0B15\u0B41 \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41" },
+  "cancel.cancelled": { en: "cancelled", hi: "\u0930\u0926\u094D\u0926", or: "\u0B2C\u0B3E\u0B24\u0B3F\u0B32" },
+  "cancel.done": {
+    en: "Cancelled {amount}. It no longer counts.",
+    hi: "{amount} \u0930\u0926\u094D\u0926 \u0939\u0941\u0906\u0964 \u0905\u092C \u092F\u0939 \u0928\u0939\u0940\u0902 \u0917\u093F\u0928\u093E \u091C\u093E\u090F\u0917\u093E\u0964",
+    or: "{amount} \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B39\u0B47\u0B32\u0B3E\u0964 \u0B0F\u0B39\u0B3E \u0B06\u0B09 \u0B17\u0B23\u0B3E\u0B2F\u0B3F\u0B2C \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964"
+  },
+  "cancel.enterAgain": {
+    en: "Enter it again correctly",
+    hi: "\u092B\u093F\u0930 \u0938\u0947 \u0938\u0939\u0940 \u0921\u093E\u0932\u0947\u0902",
+    or: "\u0B2A\u0B41\u0B23\u0B3F \u0B20\u0B3F\u0B15\u0B4D \u0B2D\u0B3E\u0B2C\u0B30\u0B47 \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41"
+  },
+  "cancel.linkedTitle": {
+    en: "Cancel the return first",
+    hi: "\u092A\u0939\u0932\u0947 \u0935\u093E\u092A\u0938\u0940 \u0930\u0926\u094D\u0926 \u0915\u0930\u0947\u0902",
+    or: "\u0B2A\u0B4D\u0B30\u0B25\u0B2E\u0B47 \u0B2B\u0B47\u0B30\u0B38\u0B4D\u0B24 \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41"
+  },
+  "cancel.linkedFirst": {
+    en: "A return or a correction is linked to this entry, so it cannot be cancelled. Cancel the return first.",
+    hi: "\u0907\u0938 \u090F\u0902\u091F\u094D\u0930\u0940 \u0938\u0947 \u090F\u0915 \u0935\u093E\u092A\u0938\u0940 \u092F\u093E \u0938\u0941\u0927\u093E\u0930 \u091C\u0941\u0921\u093C\u093E \u0939\u0948, \u0907\u0938\u0932\u093F\u090F \u092F\u0939 \u0930\u0926\u094D\u0926 \u0928\u0939\u0940\u0902 \u0939\u094B \u0938\u0915\u0924\u0940\u0964 \u092A\u0939\u0932\u0947 \u0935\u093E\u092A\u0938\u0940 \u0930\u0926\u094D\u0926 \u0915\u0930\u0947\u0902\u0964",
+    or: "\u0B0F\u0B39\u0B3F \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F \u0B38\u0B39 \u0B2B\u0B47\u0B30\u0B38\u0B4D\u0B24 \u0B15\u0B3F\u0B2E\u0B4D\u0B2C\u0B3E \u0B38\u0B02\u0B36\u0B4B\u0B27\u0B28 \u0B2F\u0B4B\u0B21\u0B3C\u0B3E \u0B05\u0B1B\u0B3F, \u0B24\u0B47\u0B23\u0B41 \u0B0F\u0B39\u0B3E \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B39\u0B4B\u0B07\u0B2A\u0B3E\u0B30\u0B3F\u0B2C \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B2A\u0B4D\u0B30\u0B25\u0B2E\u0B47 \u0B2B\u0B47\u0B30\u0B38\u0B4D\u0B24 \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  "cancel.refusal.already": {
+    en: "This entry is already cancelled.",
+    hi: "\u092F\u0939 \u090F\u0902\u091F\u094D\u0930\u0940 \u092A\u0939\u0932\u0947 \u0939\u0940 \u0930\u0926\u094D\u0926 \u0939\u0948\u0964",
+    or: "\u0B0F\u0B39\u0B3F \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F \u0B06\u0B17\u0B30\u0B41 \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B05\u0B1B\u0B3F\u0964"
+  },
+  "cancel.refusal.cannot": {
+    en: "This entry cannot be cancelled. Enter the right figure as a new entry instead.",
+    hi: "\u092F\u0939 \u090F\u0902\u091F\u094D\u0930\u0940 \u0930\u0926\u094D\u0926 \u0928\u0939\u0940\u0902 \u0939\u094B \u0938\u0915\u0924\u0940\u0964 \u0907\u0938\u0915\u0947 \u092C\u0926\u0932\u0947 \u0938\u0939\u0940 \u0930\u0915\u092E \u0928\u0908 \u090F\u0902\u091F\u094D\u0930\u0940 \u092E\u0947\u0902 \u0921\u093E\u0932\u0947\u0902\u0964",
+    or: "\u0B0F\u0B39\u0B3F \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F \u0B2C\u0B3E\u0B24\u0B3F\u0B32 \u0B39\u0B4B\u0B07\u0B2A\u0B3E\u0B30\u0B3F\u0B2C \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B0F\u0B39\u0B3E \u0B2C\u0B26\u0B33\u0B30\u0B47 \u0B20\u0B3F\u0B15\u0B4D \u0B30\u0B3E\u0B36\u0B3F \u0B28\u0B42\u0B06 \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F\u0B30\u0B47 \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  "refusal.partyKind": {
+    en: "That person is the wrong kind for this entry. Choose again.",
+    hi: "\u092F\u0939 \u0935\u094D\u092F\u0915\u094D\u0924\u093F \u0907\u0938 \u090F\u0902\u091F\u094D\u0930\u0940 \u0915\u0947 \u0932\u093F\u090F \u0938\u0939\u0940 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 \u092B\u093F\u0930 \u0938\u0947 \u091A\u0941\u0928\u0947\u0902\u0964",
+    or: "\u0B0F\u0B39\u0B3F \u0B2C\u0B4D\u0B5F\u0B15\u0B4D\u0B24\u0B3F \u0B0F\u0B39\u0B3F \u0B0F\u0B23\u0B4D\u0B1F\u0B4D\u0B30\u0B3F \u0B2A\u0B3E\u0B07\u0B01 \u0B20\u0B3F\u0B15\u0B4D \u0B28\u0B41\u0B39\u0B47\u0B01\u0964 \u0B2A\u0B41\u0B23\u0B3F \u0B2C\u0B3E\u0B1B\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  /* LIVE DEMO S3-1: a sale that came back in full. Its line stays (D1). hi / or DRAFT (H13). */
+  "entry.returned": { en: "returned", hi: "\u0932\u094C\u091F\u093E", or: "\u0B2B\u0B47\u0B30\u0B3F\u0B1B\u0B3F" },
+  /*
    * C-09: THE PER-ENTRY CEILING (Rs 1 crore). The figure is in the words rather
    * than filled in, so the string cannot disagree with ENTRY_MAX_PAISE by
    * formatting. hi / or are a DRAFT (H13) - not reviewed by a native reader.
@@ -20328,6 +20518,17 @@ var STRINGS = {
     or: "\u0B0F\u0B39\u0B3F \u0B2B\u0B4B\u0B28\u0B30 \u0B24\u0B3E\u0B30\u0B3F\u0B16 \u0B2D\u0B41\u0B32 \u0B32\u0B3E\u0B17\u0B41\u0B1B\u0B3F\u0964 \u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B16\u0B3E\u0B24\u0B3E {date} \u0B30\u0B47 \u0B05\u0B1B\u0B3F, \u0B2F\u0B3E\u0B39\u0B3E \u0B06\u0B1C\u0B3F\u0B20\u0B3E\u0B30\u0B41 \u0B06\u0B17\u0B30\u0B47\u0964 \u0B15\u0B3F\u0B1B\u0B3F \u0B39\u0B1C\u0B3F\u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B2B\u0B4B\u0B28\u0B30 \u0B24\u0B3E\u0B30\u0B3F\u0B16 \u0B13 \u0B38\u0B2E\u0B5F \u0B2F\u0B3E\u0B1E\u0B4D\u0B1A \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41\u0964"
   },
   // C-19: a closed day saved under a wrong phone date. hi / or DRAFT, H13.
+  /*
+   * RTI-7: another phone signed in to this shop in the last 72 hours. Said as a
+   * fact to check, never an alarm; the action is the existing screen's own name
+   * (s14.title). hi / or are a DRAFT (H13).
+   */
+  "t1.newPhone.body": {
+    en: "A new phone signed in to your shop on {date}. If this wasn't you, open Signed-in phones and sign it out.",
+    hi: "{date} \u0915\u094B \u0906\u092A\u0915\u0940 \u0926\u0941\u0915\u093E\u0928 \u092E\u0947\u0902 \u090F\u0915 \u0928\u092F\u093E \u092B\u093C\u094B\u0928 \u0938\u093E\u0907\u0928 \u0907\u0928 \u0939\u0941\u0906\u0964 \u0905\u0917\u0930 \u092F\u0939 \u0906\u092A \u0928\u0939\u0940\u0902 \u0925\u0947, \u0924\u094B \u0938\u093E\u0907\u0928-\u0907\u0928 \u092B\u093C\u094B\u0928 \u0916\u094B\u0932\u0947\u0902 \u0914\u0930 \u0909\u0938\u0947 \u0938\u093E\u0907\u0928 \u0906\u0909\u091F \u0915\u0930\u0947\u0902\u0964",
+    or: "{date} \u0B30\u0B47 \u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B26\u0B4B\u0B15\u0B3E\u0B28\u0B30\u0B47 \u0B0F\u0B15 \u0B28\u0B42\u0B06 \u0B2B\u0B4B\u0B28\u0B4D \u0B38\u0B3E\u0B07\u0B28\u0B4D \u0B07\u0B28\u0B4D \u0B15\u0B32\u0B3E\u0964 \u0B0F\u0B39\u0B3E \u0B06\u0B2A\u0B23 \u0B28 \u0B25\u0B3F\u0B32\u0B47, \u0B38\u0B3E\u0B07\u0B28\u0B4D-\u0B07\u0B28\u0B4D \u0B2B\u0B4B\u0B28 \u0B16\u0B4B\u0B32\u0B3F \u0B24\u0B3E\u0B15\u0B41 \u0B38\u0B3E\u0B07\u0B28\u0B4D \u0B06\u0B09\u0B1F\u0B4D \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  "t1.newPhone.dismiss": { en: "It was me", hi: "\u092F\u0939 \u092E\u0948\u0902 \u0939\u0940 \u0925\u093E", or: "\u0B0F\u0B39\u0B3E \u0B2E\u0B41\u0B01 \u0B39\u0B3F\u0B01 \u0B25\u0B3F\u0B32\u0B3F" },
   "t1.misdated.body": {
     en: "One day was saved under a wrong phone date ({date}). It is kept as recorded.",
     hi: "\u090F\u0915 \u0926\u093F\u0928 \u092B\u093C\u094B\u0928 \u0915\u0940 \u0917\u0932\u0924 \u0924\u093E\u0930\u0940\u0916\u093C ({date}) \u0915\u0947 \u0938\u093E\u0925 \u0938\u0939\u0947\u091C\u093E \u0917\u092F\u093E \u0925\u093E\u0964 \u0935\u0939 \u091C\u0948\u0938\u093E \u0926\u0930\u094D\u091C \u0939\u0941\u0906 \u0935\u0948\u0938\u093E \u0939\u0940 \u0930\u0916\u093E \u0917\u092F\u093E \u0939\u0948\u0964",
@@ -20739,6 +20940,30 @@ var STRINGS = {
     or: '\u0B2C\u0B3E\u0B27\u0B4D\u0B5F\u0B24\u0B3E\u0B2E\u0B42\u0B33\u0B15 \u0B28\u0B41\u0B39\u0B47\u0B01\u0964 \u0B1B\u0B3E\u0B21\u0B3C\u0B3F\u0B26\u0B47\u0B32\u0B47 "\u0B06\u0B1C\u0B3F" \u0B2A\u0B4D\u0B30\u0B25\u0B2E \u0B2C\u0B3F\u0B15\u0B4D\u0B30\u0B3F \u0B2A\u0B42\u0B30\u0B4D\u0B2C\u0B30\u0B41 \u0B2A\u0B1A\u0B3E\u0B30\u0B3F\u0B2C\u0964'
   },
   "x1.start": { en: "Start the day", hi: "\u0926\u093F\u0928 \u0936\u0941\u0930\u0942 \u0915\u0930\u0947\u0902", or: "\u0B26\u0B3F\u0B28 \u0B06\u0B30\u0B2E\u0B4D\u0B2D \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
+  /*
+   * X4 - THE APP-LOCK OFFER at the end of setup (Saket, 2026-11-20). The lock is
+   * the phone's own screen lock, so nothing here says PIN. hi / or are a DRAFT
+   * (H13), built from the S1 lock strings already in use.
+   */
+  "x4.title": { en: "App lock", hi: "\u0910\u092A \u0932\u0949\u0915", or: "\u0B06\u0B2A\u0B4D \u0B32\u0B15\u0B4D" },
+  "x4.question": {
+    en: "Lock SWAFTO with your phone's screen lock?",
+    hi: "SWAFTO \u0915\u094B \u092B\u093C\u094B\u0928 \u0915\u0947 \u0938\u094D\u0915\u094D\u0930\u0940\u0928 \u0932\u0949\u0915 \u0938\u0947 \u0932\u0949\u0915 \u0915\u0930\u0947\u0902?",
+    or: "SWAFTO \u0B15\u0B41 \u0B2B\u0B4B\u0B28\u0B30 \u0B38\u0B4D\u0B15\u0B4D\u0B30\u0B40\u0B28\u0B4D \u0B32\u0B15\u0B4D \u0B26\u0B47\u0B07 \u0B32\u0B15\u0B4D \u0B15\u0B30\u0B3F\u0B2C\u0B47?"
+  },
+  "x4.why": {
+    en: "Then nobody else can open your book on this phone. You can change this later in Settings.",
+    hi: "\u0924\u092C \u0907\u0938 \u092B\u093C\u094B\u0928 \u092A\u0930 \u0915\u094B\u0908 \u0914\u0930 \u0906\u092A\u0915\u093E \u0916\u093E\u0924\u093E \u0928\u0939\u0940\u0902 \u0916\u094B\u0932 \u092A\u093E\u090F\u0917\u093E\u0964 \u0907\u0938\u0947 \u092C\u093E\u0926 \u092E\u0947\u0902 \u0938\u0947\u091F\u093F\u0902\u0917 \u092E\u0947\u0902 \u092C\u0926\u0932 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902\u0964",
+    or: "\u0B24\u0B3E\u0B39\u0B3E\u0B39\u0B47\u0B32\u0B47 \u0B0F\u0B39\u0B3F \u0B2B\u0B4B\u0B28\u0B30\u0B47 \u0B06\u0B09 \u0B15\u0B47\u0B39\u0B3F \u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B16\u0B3E\u0B24\u0B3E \u0B16\u0B4B\u0B32\u0B3F\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47 \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B0F\u0B39\u0B3E\u0B15\u0B41 \u0B2A\u0B30\u0B47 \u0B38\u0B47\u0B1F\u0B3F\u0B02\u0B30\u0B47 \u0B2C\u0B26\u0B33\u0B3E\u0B07\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47\u0964"
+  },
+  "x4.turnOn": { en: "Turn on", hi: "\u091A\u093E\u0932\u0942 \u0915\u0930\u0947\u0902", or: "\u0B1A\u0B3E\u0B32\u0B41 \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
+  "x4.notNow": { en: "Not now", hi: "\u0905\u092D\u0940 \u0928\u0939\u0940\u0902", or: "\u0B0F\u0B2C\u0B47 \u0B28\u0B41\u0B39\u0B47\u0B01" },
+  "x4.noScreenLock": {
+    en: "This phone has no screen lock. You can set one in the phone settings later, then turn on the app lock in Settings.",
+    hi: "\u0907\u0938 \u092B\u093C\u094B\u0928 \u092E\u0947\u0902 \u0938\u094D\u0915\u094D\u0930\u0940\u0928 \u0932\u0949\u0915 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 \u092C\u093E\u0926 \u092E\u0947\u0902 \u092B\u093C\u094B\u0928 \u0915\u0940 \u0938\u0947\u091F\u093F\u0902\u0917 \u092E\u0947\u0902 \u0932\u0917\u093E \u0938\u0915\u0924\u0947 \u0939\u0948\u0902, \u092B\u093F\u0930 \u0938\u0947\u091F\u093F\u0902\u0917 \u092E\u0947\u0902 \u0910\u092A \u0932\u0949\u0915 \u091A\u093E\u0932\u0942 \u0915\u0930\u0947\u0902\u0964",
+    or: "\u0B0F\u0B39\u0B3F \u0B2B\u0B4B\u0B28\u0B30\u0B47 \u0B38\u0B4D\u0B15\u0B4D\u0B30\u0B40\u0B28\u0B4D \u0B32\u0B15\u0B4D \u0B28\u0B3E\u0B39\u0B3F\u0B01\u0964 \u0B2A\u0B30\u0B47 \u0B2B\u0B4B\u0B28\u0B4D \u0B38\u0B47\u0B1F\u0B3F\u0B02\u0B30\u0B47 \u0B32\u0B17\u0B3E\u0B07\u0B2A\u0B3E\u0B30\u0B3F\u0B2C\u0B47, \u0B24\u0B3E\u2019\u0B2A\u0B30\u0B47 \u0B38\u0B47\u0B1F\u0B3F\u0B02\u0B30\u0B47 \u0B06\u0B2A\u0B4D \u0B32\u0B15\u0B4D \u0B1A\u0B3E\u0B32\u0B41 \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  "x4.continue": { en: "Continue", hi: "\u0906\u0917\u0947 \u092C\u0922\u093C\u0947\u0902", or: "\u0B06\u0B17\u0B15\u0B41 \u0B2C\u0B22\u0B3C\u0B28\u0B4D\u0B24\u0B41" },
   "x1.refusal.shopName": {
     en: "Type the shop name first.",
     hi: "\u092A\u0939\u0932\u0947 \u0926\u0941\u0915\u093E\u0928 \u0915\u093E \u0928\u093E\u092E \u0932\u093F\u0916\u0947\u0902\u0964",
@@ -20748,6 +20973,21 @@ var STRINGS = {
   "p1.title": { en: "Ledger", hi: "\u0916\u093E\u0924\u093E", or: "\u0B16\u0B3E\u0B24\u0B3E" },
   "p1.toCollect": { en: "Udhar to collect", hi: "\u0935\u0938\u0942\u0932\u0940 \u092C\u093E\u0915\u0940", or: "\u0B06\u0B26\u0B3E\u0B5F \u0B2C\u0B3E\u0B15\u0B3F" },
   "p1.youOwe": { en: "You owe suppliers", hi: "\u0906\u092A\u0915\u094B \u0926\u0947\u0928\u093E \u0939\u0948", or: "\u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15\u0B41 \u0B26\u0B47\u0B2C\u0B3E\u0B30" },
+  /*
+   * LIVE DEMO S3-6: the same two totals below zero - money paid ahead, said as
+   * an advance rather than a minus sign. hi / or are a DRAFT (H13), built from
+   * `advance.label` and the party words already in use.
+   */
+  "p1.advanceToSuppliers": {
+    en: "Advance to suppliers",
+    hi: "\u0906\u092A\u0942\u0930\u094D\u0924\u093F\u0915\u0930\u094D\u0924\u093E\u0913\u0902 \u0915\u094B \u0905\u0917\u094D\u0930\u093F\u092E",
+    or: "\u0B2F\u0B4B\u0B17\u0B3E\u0B23\u0B15\u0B3E\u0B30\u0B40\u0B19\u0B4D\u0B15\u0B41 \u0B05\u0B17\u0B4D\u0B30\u0B40\u0B2E"
+  },
+  "p1.advanceFromCustomers": {
+    en: "Advance from customers",
+    hi: "\u0917\u094D\u0930\u093E\u0939\u0915\u094B\u0902 \u0938\u0947 \u0905\u0917\u094D\u0930\u093F\u092E",
+    or: "\u0B17\u0B4D\u0B30\u0B3E\u0B39\u0B15\u0B19\u0B4D\u0B15\u0B20\u0B3E\u0B30\u0B41 \u0B05\u0B17\u0B4D\u0B30\u0B40\u0B2E"
+  },
   "p1.customers": { en: "Customers", hi: "\u0917\u094D\u0930\u093E\u0939\u0915", or: "\u0B17\u0B4D\u0B30\u0B3E\u0B39\u0B15" },
   "p1.suppliers": { en: "Suppliers", hi: "\u0906\u092A\u0942\u0930\u094D\u0924\u093F\u0915\u0930\u094D\u0924\u093E", or: "\u0B2F\u0B4B\u0B17\u0B3E\u0B23\u0B15\u0B3E\u0B30\u0B40" },
   "p1.changeToday": { en: "Change today", hi: "\u0906\u091C \u0915\u093E \u092C\u0926\u0932\u093E\u0935", or: "\u0B06\u0B1C\u0B3F\u0B30 \u0B2A\u0B30\u0B3F\u0B2C\u0B30\u0B4D\u0B24\u0B4D\u0B24\u0B28" },
@@ -21501,6 +21741,26 @@ var STRINGS = {
     or: "\u0B2D\u0B3E\u0B30\u0B24\u0B40\u0B5F \u0B2E\u0B4B\u0B2C\u0B3E\u0B07\u0B32\u0B4D \u0B28\u0B2E\u0B4D\u0B2C\u0B30 6, 7, 8 \u0B15\u0B3F\u0B2E\u0B4D\u0B2C\u0B3E 9 \u0B30\u0B47 \u0B06\u0B30\u0B2E\u0B4D\u0B2D \u0B39\u0B41\u0B0F\u0964 \u0B2A\u0B4D\u0B30\u0B25\u0B2E \u0B05\u0B19\u0B4D\u0B15 \u0B2F\u0B3E\u0B1E\u0B4D\u0B1A \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41\u0964"
   },
   "a3.send": { en: "Send code", hi: "\u0915\u094B\u0921 \u092D\u0947\u091C\u0947\u0902", or: "\u0B15\u0B4B\u0B21\u0B4D \u0B2A\u0B20\u0B3E\u0B28\u0B4D\u0B24\u0B41" },
+  /*
+   * LIVE DEMO S3-4: before the server has said SMS or invite, no digit count and
+   * no promise of an SMS. hi / or are a DRAFT (H13), built from the phrases the
+   * two lines above already use.
+   */
+  "a3.neutral.help": {
+    en: "Type your number. Then type the code that confirms it is you.",
+    hi: "\u0905\u092A\u0928\u093E \u0928\u0902\u092C\u0930 \u0921\u093E\u0932\u0947\u0902\u0964 \u092B\u093F\u0930 \u0935\u0939 \u0915\u094B\u0921 \u0921\u093E\u0932\u0947\u0902 \u091C\u094B \u092A\u0915\u094D\u0915\u093E \u0915\u0930\u0947 \u0915\u093F \u092F\u0939 \u0906\u092A \u0939\u0940 \u0939\u0948\u0902\u0964",
+    or: "\u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B28\u0B2E\u0B4D\u0B2C\u0B30 \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41\u0964 \u0B24\u0B3E\u2019\u0B2A\u0B30\u0B47 \u0B0F\u0B39\u0B3E \u0B06\u0B2A\u0B23 \u0B2C\u0B4B\u0B32\u0B3F \u0B28\u0B3F\u0B36\u0B4D\u0B1A\u0B3F\u0B24 \u0B15\u0B30\u0B3F\u0B2C\u0B3E\u0B15\u0B41 \u0B15\u0B4B\u0B21\u0B4D \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  /*
+   * INVITE GATE: no SMS is sent in invite mode, so nothing here says one is.
+   * The code is the one SWAFTO handed over. hi / or are a DRAFT (H13).
+   */
+  "a3.invite.help": {
+    en: "Type your number, then the {digits}-digit code SWAFTO gave you.",
+    hi: "\u0905\u092A\u0928\u093E \u0928\u0902\u092C\u0930 \u0921\u093E\u0932\u0947\u0902, \u092B\u093F\u0930 SWAFTO \u0915\u093E \u0926\u093F\u092F\u093E {digits} \u0905\u0902\u0915\u094B\u0902 \u0915\u093E \u0915\u094B\u0921 \u0921\u093E\u0932\u0947\u0902\u0964",
+    or: "\u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B28\u0B2E\u0B4D\u0B2C\u0B30 \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41, \u0B24\u0B3E\u2019\u0B2A\u0B30\u0B47 SWAFTO \u0B26\u0B47\u0B07\u0B25\u0B3F\u0B2C\u0B3E {digits} \u0B05\u0B19\u0B4D\u0B15\u0B30 \u0B15\u0B4B\u0B21\u0B4D \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
+  "a3.next": { en: "Next", hi: "\u0906\u0917\u0947", or: "\u0B06\u0B17\u0B15\u0B41" },
   "a3.sending": { en: "Sending\u2026", hi: "\u092D\u0947\u091C \u0930\u0939\u0947 \u0939\u0948\u0902\u2026", or: "\u0B2A\u0B20\u0B3E\u0B09\u0B1B\u0B41\u2026" },
   "a3.changed": {
     en: "I changed my number.",
@@ -21516,6 +21776,14 @@ var STRINGS = {
     or: "+91 {phone} \u0B15\u0B41 \u0B2A\u0B20\u0B3E\u0B17\u0B32\u0B3E"
   },
   "a4.edit": { en: "Edit", hi: "\u092C\u0926\u0932\u0947\u0902", or: "\u0B2C\u0B26\u0B33\u0B3E\u0B28\u0B4D\u0B24\u0B41" },
+  // INVITE GATE: in place of "Sent to" - nothing was sent. hi / or DRAFT (H13).
+  "a4.invite.for": {
+    en: "Type the code SWAFTO gave you for +91 {phone}",
+    hi: "+91 {phone} \u0915\u0947 \u0932\u093F\u090F SWAFTO \u0915\u093E \u0926\u093F\u092F\u093E \u0915\u094B\u0921 \u0921\u093E\u0932\u0947\u0902",
+    or: "+91 {phone} \u0B2A\u0B3E\u0B07\u0B01 SWAFTO \u0B26\u0B47\u0B07\u0B25\u0B3F\u0B2C\u0B3E \u0B15\u0B4B\u0B21\u0B4D \u0B26\u0B3F\u0B05\u0B28\u0B4D\u0B24\u0B41"
+  },
+  // F-1: the code from the clipboard, cleaned to its digits. hi / or DRAFT (H13).
+  "a4.paste": { en: "Paste code", hi: "\u0915\u094B\u0921 \u092A\u0947\u0938\u094D\u091F \u0915\u0930\u0947\u0902", or: "\u0B15\u0B4B\u0B21\u0B4D \u0B2A\u0B47\u0B37\u0B4D\u0B1F \u0B15\u0B30\u0B28\u0B4D\u0B24\u0B41" },
   "a4.checking": { en: "Checking\u2026", hi: "\u091C\u093E\u0901\u091A \u0930\u0939\u0947 \u0939\u0948\u0902\u2026", or: "\u0B2F\u0B3E\u0B1E\u0B4D\u0B1A \u0B15\u0B30\u0B41\u0B1B\u0B41\u2026" },
   "a4.resend": { en: "Resend code", hi: "\u0915\u094B\u0921 \u0926\u094B\u092C\u093E\u0930\u093E \u092D\u0947\u091C\u0947\u0902", or: "\u0B15\u0B4B\u0B21\u0B4D \u0B2A\u0B41\u0B23\u0B3F \u0B2A\u0B20\u0B3E\u0B28\u0B4D\u0B24\u0B41" },
   "a4.trouble": {
@@ -21523,7 +21791,8 @@ var STRINGS = {
     hi: "\u0926\u093F\u0915\u094D\u0915\u0924? \u092E\u0948\u0902\u0928\u0947 \u0905\u092A\u0928\u093E \u0928\u0902\u092C\u0930 \u092C\u0926\u0932 \u0932\u093F\u092F\u093E \u0939\u0948\u0964",
     or: "\u0B05\u0B38\u0B41\u0B2C\u0B3F\u0B27\u0B3E? \u0B2E\u0B41\u0B01 \u0B2E\u0B4B \u0B28\u0B2E\u0B4D\u0B2C\u0B30 \u0B2C\u0B26\u0B33\u0B3E\u0B07\u0B1B\u0B3F\u0964"
   },
-  "a5.bar": { en: "OTP problems", hi: "OTP \u092E\u0947\u0902 \u0926\u093F\u0915\u094D\u0915\u0924", or: "OTP \u0B38\u0B2E\u0B38\u0B4D\u0B5F\u0B3E" },
+  // LIVE DEMO S3-4: "OTP" is a word a shopkeeper may not know; the rest of sign-in says "code". hi / or DRAFT (H13).
+  "a5.bar": { en: "Problem with the code", hi: "\u0915\u094B\u0921 \u092E\u0947\u0902 \u0926\u093F\u0915\u094D\u0915\u0924", or: "\u0B15\u0B4B\u0B21\u0B4D \u0B38\u0B2E\u0B38\u0B4D\u0B5F\u0B3E" },
   "a5.mismatch.title": {
     en: "That code doesn't match.",
     hi: "\u092F\u0939 \u0915\u094B\u0921 \u092E\u0947\u0932 \u0928\u0939\u0940\u0902 \u0916\u093E\u0924\u093E\u0964",
@@ -21545,6 +21814,12 @@ var STRINGS = {
     or: "\u0B15\u0B4B\u0B21\u0B4D {minutes} \u0B2E\u0B3F\u0B28\u0B3F\u0B1F\u0B4D \u0B2A\u0B30\u0B4D\u0B2F\u0B4D\u0B5F\u0B28\u0B4D\u0B24 \u0B1A\u0B3E\u0B32\u0B47\u0964 \u0B06\u0B2E\u0B47 \u0B28\u0B42\u0B06 \u0B2A\u0B20\u0B3E\u0B07\u0B26\u0B47\u0B2C\u0B41\u0964"
   },
   "a5.expired.cta": { en: "Send a new code", hi: "\u0928\u092F\u093E \u0915\u094B\u0921 \u092D\u0947\u091C\u0947\u0902", or: "\u0B28\u0B42\u0B06 \u0B15\u0B4B\u0B21\u0B4D \u0B2A\u0B20\u0B3E\u0B28\u0B4D\u0B24\u0B41" },
+  // INVITE GATE: the app cannot send an invite; only SWAFTO can issue one. hi / or DRAFT (H13).
+  "a5.invite.ask": {
+    en: "Ask SWAFTO for a new code.",
+    hi: "SWAFTO \u0938\u0947 \u0928\u092F\u093E \u0915\u094B\u0921 \u092E\u093E\u0901\u0917\u0947\u0902\u0964",
+    or: "SWAFTO \u0B20\u0B3E\u0B30\u0B41 \u0B28\u0B42\u0B06 \u0B15\u0B4B\u0B21\u0B4D \u0B2E\u0B3E\u0B17\u0B28\u0B4D\u0B24\u0B41\u0964"
+  },
   "a5.locked.title": { en: "Too many tries.", hi: "\u092C\u0939\u0941\u0924 \u092C\u093E\u0930 \u0915\u094B\u0936\u093F\u0936 \u0939\u0941\u0908\u0964", or: "\u0B2C\u0B39\u0B41\u0B24 \u0B25\u0B30 \u0B1A\u0B47\u0B37\u0B4D\u0B1F\u0B3E \u0B39\u0B47\u0B32\u0B3E\u0964" },
   "a5.locked.body": {
     en: "For your safety, try again in {minutes} minutes.",
@@ -22752,8 +23027,156 @@ function phrase(key, language) {
 }
 var strings = (language) => (key) => phrase(key, language);
 
+// apps/mobile/src/components/Sheet.tsx
+import { jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
+function Sheet({
+  testID,
+  title,
+  closeLabel,
+  onClose,
+  display = "comfort",
+  body,
+  children,
+  showClose = true
+}) {
+  const t = tokens(display);
+  return /* @__PURE__ */ jsxs6(
+    View_default,
+    {
+      testID,
+      accessibilityViewIsModal: true,
+      style: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: "flex-end",
+        backgroundColor: t.color.scrim
+      },
+      children: [
+        /* @__PURE__ */ jsx10(
+          Pressable_default,
+          {
+            testID: testID + "-scrim",
+            accessibilityRole: "button",
+            accessibilityLabel: closeLabel,
+            onPress: onClose,
+            style: { flex: 1, minHeight: t.touchTarget, minWidth: t.touchTarget }
+          }
+        ),
+        /* @__PURE__ */ jsxs6(
+          View_default,
+          {
+            testID: testID + "-panel",
+            style: {
+              maxHeight: SHEET_MAX_HEIGHT,
+              paddingHorizontal: t.space.gutter,
+              paddingTop: t.space.md,
+              paddingBottom: t.space.sm,
+              borderTopLeftRadius: t.radius.xl,
+              borderTopRightRadius: t.radius.xl,
+              backgroundColor: t.color.surface,
+              elevation: t.elevation.sheet
+            },
+            children: [
+              /* @__PURE__ */ jsx10(
+                Text_default,
+                {
+                  testID: testID + "-title",
+                  accessibilityRole: "header",
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    paddingHorizontal: t.space.xs,
+                    fontFamily: t.font.bold,
+                    fontSize: t.type.heading,
+                    lineHeight: t.leading(t.type.heading),
+                    color: t.color.ink
+                  },
+                  children: title
+                }
+              ),
+              body === void 0 ? null : /* @__PURE__ */ jsx10(
+                Text_default,
+                {
+                  testID: testID + "-body",
+                  ...t.bodyText,
+                  style: {
+                    paddingHorizontal: t.space.xs,
+                    marginTop: t.space.xs,
+                    fontFamily: t.font.regular,
+                    fontSize: t.type.body,
+                    lineHeight: t.leadingUncapped(t.type.body),
+                    color: t.color.inkMuted
+                  },
+                  children: body
+                }
+              ),
+              /* @__PURE__ */ jsx10(ScrollView_default, { style: { flexGrow: 0 }, keyboardShouldPersistTaps: "handled", children }),
+              showClose ? /* @__PURE__ */ jsx10(
+                PrimaryButton,
+                {
+                  testID: testID + "-close",
+                  label: closeLabel,
+                  onPress: onClose,
+                  display,
+                  variant: "ghost",
+                  size: "md"
+                }
+              ) : null
+            ]
+          }
+        )
+      ]
+    }
+  );
+}
+function ExitSheet({
+  id: id2,
+  s,
+  prompt,
+  display = "comfort"
+}) {
+  return /* @__PURE__ */ jsxs6(
+    Sheet,
+    {
+      testID: id2 + "-exit",
+      title: s("exit.title"),
+      body: s("exit.body"),
+      closeLabel: s("exit.stay"),
+      onClose: prompt.onStay,
+      display,
+      showClose: false,
+      children: [
+        /* @__PURE__ */ jsx10(
+          PrimaryButton,
+          {
+            testID: id2 + "-exit-stay",
+            label: s("exit.stay"),
+            onPress: prompt.onStay,
+            display,
+            variant: "tonal",
+            size: "lg"
+          }
+        ),
+        /* @__PURE__ */ jsx10(
+          PrimaryButton,
+          {
+            testID: id2 + "-exit-exit",
+            label: s("exit.exit"),
+            onPress: prompt.onExit,
+            display,
+            variant: "tonal",
+            size: "lg"
+          }
+        )
+      ]
+    }
+  );
+}
+
 // apps/mobile/src/components/EntryForm.tsx
-import { Fragment as Fragment4, jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx11, jsxs as jsxs7 } from "react/jsx-runtime";
 var MODE_KEY = {
   cash: "formA.mode.cash",
   upi: "formA.mode.upi",
@@ -22762,6 +23185,12 @@ var MODE_KEY = {
   shop_stock: "t9.mode.shop_stock"
 };
 var MODE_NAMED_BY_SECTION = /* @__PURE__ */ new Set(["cash_sales", "upi_sales", "udhar_sales"]);
+var returnWord = (e3, store, s) => {
+  if (!MODE_NAMED_BY_SECTION.has(e3.section)) return "";
+  const left2 = returnableOf(e3, store.entriesReferringTo(e3.id));
+  if (left2 === e3.amount) return "";
+  return " \xB7 " + s(left2 <= 0 ? "entry.returned" : "t18.partReturned");
+};
 var timeOf = (createdAt) => {
   const m2 = /T(\d{2}:\d{2})/.exec(createdAt);
   return m2 === null ? "" : " \xB7 " + m2[1];
@@ -22806,7 +23235,8 @@ function EntryForm({
   onConfirmAdvance = () => {
   },
   onCancelAdvance = () => {
-  }
+  },
+  cancel
 }) {
   const t = tokens(display);
   const s = strings(language);
@@ -22817,10 +23247,16 @@ function EntryForm({
   const partyMissing = rule === "required" && entryPartyId === null;
   const overLimit = chosen?.section === "udhar_sales" && entryPartyId !== null && draftPaise !== null && draftPaise > 0 ? store.creditLimitObservation(entryPartyId, draftPaise) : null;
   const partyKind = chosen !== void 0 && (chosen.section === "purchase" || chosen.section === "party_payment") ? "supplier" : "customer";
-  const lines = store.state.entries.filter((e3) => sections.includes(e3.section)).slice().reverse();
+  const lines = store.state.entries.filter((e3) => sections.includes(e3.section) && e3.cancelsEntryId === void 0).slice().reverse();
+  const day = store.state.day;
+  const cancellable = (e3) => cancel !== void 0 && day.state === "open" && e3.dayId === day.date && store.cancelOf(e3.id) === void 0;
+  const asked = cancel?.asking ? lines.find((e3) => e3.id === cancel.asking) : void 0;
+  const linked = asked === void 0 ? false : store.entriesReferringTo(asked.id).length > 0;
+  const lineLabel2 = (e3) => s("section." + e3.section) + (e3.partyId ? " - " + (parties.get(e3.partyId) ?? e3.partyId) : "") + (MODE_NAMED_BY_SECTION.has(e3.section) ? "" : " - " + s(MODE_KEY[e3.mode])) + (e3.label ? " - " + e3.label : "") + timeOf(e3.createdAt);
+  const justCancelled = cancel?.justCancelled ? lines.find((e3) => e3.id === cancel.justCancelled) : void 0;
   const saved = savedId === null ? void 0 : lines.find((e3) => e3.id === savedId);
   const partyBalance = entryPartyId === null || partyName2 === null ? null : store.partyBalance(entryPartyId);
-  const link = (testID, labelKey, onPress) => /* @__PURE__ */ jsx10(
+  const link = (testID, labelKey, onPress) => /* @__PURE__ */ jsx11(
     Pressable_default,
     {
       testID,
@@ -22832,13 +23268,12 @@ function EntryForm({
         flex: 1,
         minHeight: t.touchTarget,
         minWidth: t.touchTarget,
-        marginHorizontal: t.space.xs,
         paddingHorizontal: t.space.sm,
         borderRadius: t.radius.md,
         alignItems: "center",
         justifyContent: "center"
       },
-      children: /* @__PURE__ */ jsx10(
+      children: /* @__PURE__ */ jsx11(
         Text_default,
         {
           maxFontSizeMultiplier: t.maxFontScale,
@@ -22855,7 +23290,7 @@ function EntryForm({
     }
   );
   const showItems = itemsAction !== void 0 && lines.length > 0;
-  return /* @__PURE__ */ jsxs6(
+  return /* @__PURE__ */ jsxs7(
     Shell,
     {
       id: id2,
@@ -22863,8 +23298,8 @@ function EntryForm({
       display,
       status,
       titleKey,
-      bodyHeader: /* @__PURE__ */ jsxs6(Fragment4, { children: [
-        saved === void 0 ? null : /* @__PURE__ */ jsxs6(
+      bodyHeader: /* @__PURE__ */ jsxs7(Fragment4, { children: [
+        saved === void 0 ? null : /* @__PURE__ */ jsxs7(
           View_default,
           {
             testID: id2 + "-saved",
@@ -22888,7 +23323,7 @@ function EntryForm({
               borderColor: t.color.borderStrong
             },
             children: [
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 View_default,
                 {
                   style: {
@@ -22903,7 +23338,7 @@ function EntryForm({
                   }
                 }
               ),
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 Text_default,
                 {
                   ...t.bodyText,
@@ -22917,8 +23352,8 @@ function EntryForm({
                   children: s("entry.saved")
                 }
               ),
-              /* @__PURE__ */ jsx10(Money, { testID: id2 + "-saved-amount", amount: saved.amount, mode: display, size: "body" }),
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(Money, { testID: id2 + "-saved-amount", amount: saved.amount, mode: display, size: "body" }),
+              /* @__PURE__ */ jsx11(
                 Text_default,
                 {
                   testID: id2 + "-saved-mode",
@@ -22936,24 +23371,24 @@ function EntryForm({
             ]
           }
         ),
-        !showItems && secondaryAction === void 0 ? null : /* @__PURE__ */ jsxs6(
+        !showItems && secondaryAction === void 0 ? null : /* @__PURE__ */ jsxs7(
           View_default,
           {
             testID: id2 + "-links",
-            style: { flexDirection: "row", marginHorizontal: t.space.xs },
+            style: { flexDirection: "row" },
             children: [
               showItems ? link(id2 + "-items", itemsAction.labelKey, itemsAction.onPress) : null,
               secondaryAction === void 0 ? null : link(id2 + "-secondary", secondaryAction.labelKey, secondaryAction.onPress)
             ]
           }
         ),
-        /* @__PURE__ */ jsxs6(
+        /* @__PURE__ */ jsxs7(
           View_default,
           {
             testID: id2 + "-total",
             style: {
               flexDirection: "row",
-              alignItems: "center",
+              alignItems: "baseline",
               justifyContent: "space-between",
               flexWrap: "wrap",
               marginHorizontal: t.space.sm,
@@ -22963,12 +23398,15 @@ function EntryForm({
               elevation: t.elevation.card
             },
             children: [
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
                   style: {
+                    flexGrow: 1,
                     flexShrink: 1,
+                    flexBasis: 0,
+                    minWidth: "33%",
                     marginRight: t.space.sm,
                     fontFamily: t.font.regular,
                     fontSize: t.type.label,
@@ -22978,7 +23416,7 @@ function EntryForm({
                   children: runningTotal < 0 ? s("advance.label") : s(runningTotalKey)
                 }
               ),
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 Money,
                 {
                   testID: id2 + "-headline",
@@ -22990,7 +23428,51 @@ function EntryForm({
             ]
           }
         ),
-        advanceConfirm === null ? null : /* @__PURE__ */ jsxs6(
+        justCancelled === void 0 || cancel === void 0 ? null : /* @__PURE__ */ jsxs7(
+          View_default,
+          {
+            testID: id2 + "-cancelled",
+            accessibilityLiveRegion: "polite",
+            style: {
+              marginHorizontal: t.space.sm,
+              marginBottom: t.space.xs,
+              paddingHorizontal: t.space.md,
+              borderRadius: t.radius.md,
+              backgroundColor: t.color.surfaceRaised,
+              borderWidth: t.hairline,
+              borderColor: t.color.borderStrong
+            },
+            children: [
+              /* @__PURE__ */ jsx11(
+                Text_default,
+                {
+                  testID: id2 + "-cancelled-text",
+                  ...t.bodyText,
+                  style: {
+                    paddingTop: t.space.xs,
+                    fontFamily: t.font.medium,
+                    fontSize: t.type.body,
+                    lineHeight: t.leadingUncapped(t.type.body),
+                    color: t.color.ink
+                  },
+                  children: fill(s("cancel.done"), { amount: formatPaise(justCancelled.amount) })
+                }
+              ),
+              /* @__PURE__ */ jsx11(
+                PrimaryButton,
+                {
+                  testID: id2 + "-enter-again",
+                  label: s("cancel.enterAgain"),
+                  display,
+                  variant: "ghost",
+                  size: "md",
+                  onPress: cancel.onEnterAgain
+                }
+              )
+            ]
+          }
+        ),
+        advanceConfirm === null ? null : /* @__PURE__ */ jsxs7(
           View_default,
           {
             testID: id2 + "-advance",
@@ -23005,7 +23487,7 @@ function EntryForm({
               backgroundColor: t.color.surfaceRaised
             },
             children: [
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 Text_default,
                 {
                   testID: id2 + "-advance-text",
@@ -23019,7 +23501,7 @@ function EntryForm({
                   children: fill(s("advance.confirm"), { extra: formatPaise(advanceConfirm.extra) })
                 }
               ),
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 PrimaryButton,
                 {
                   testID: id2 + "-advance-yes",
@@ -23032,7 +23514,7 @@ function EntryForm({
                   }
                 }
               ),
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 PrimaryButton,
                 {
                   testID: id2 + "-advance-no",
@@ -23046,7 +23528,7 @@ function EntryForm({
             ]
           }
         ),
-        rule === "refused" ? null : /* @__PURE__ */ jsxs6(
+        rule === "refused" ? null : /* @__PURE__ */ jsxs7(
           Pressable_default,
           {
             testID: id2 + "-party",
@@ -23070,7 +23552,7 @@ function EntryForm({
               borderColor: t.color.inkMuted
             },
             children: [
-              /* @__PURE__ */ jsxs6(
+              /* @__PURE__ */ jsxs7(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -23087,7 +23569,7 @@ function EntryForm({
                   ]
                 }
               ),
-              /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(
                 Text_default,
                 {
                   testID: id2 + "-party-value",
@@ -23103,7 +23585,7 @@ function EntryForm({
                   children: partyName2 ?? s(partyKind === "customer" ? "party.chooseCustomer" : "party.chooseSupplier")
                 }
               ),
-              partyBalance === null ? null : /* @__PURE__ */ jsxs6(
+              partyBalance === null ? null : /* @__PURE__ */ jsxs7(
                 View_default,
                 {
                   testID: id2 + "-party-balance",
@@ -23115,7 +23597,7 @@ function EntryForm({
                     justifyContent: "flex-end"
                   },
                   children: [
-                    /* @__PURE__ */ jsx10(
+                    /* @__PURE__ */ jsx11(
                       Text_default,
                       {
                         ...t.bodyText,
@@ -23129,7 +23611,7 @@ function EntryForm({
                         children: s(balanceWord(partyKind, partyBalance))
                       }
                     ),
-                    /* @__PURE__ */ jsx10(
+                    /* @__PURE__ */ jsx11(
                       Money,
                       {
                         testID: id2 + "-party-balance-amount",
@@ -23144,7 +23626,7 @@ function EntryForm({
             ]
           }
         ),
-        partyMissing && draftPaise !== null ? /* @__PURE__ */ jsx10(
+        partyMissing && draftPaise !== null ? /* @__PURE__ */ jsx11(
           Text_default,
           {
             testID: id2 + "-party-required",
@@ -23164,7 +23646,7 @@ function EntryForm({
             children: s("party.required")
           }
         ) : null,
-        overLimit === null ? null : /* @__PURE__ */ jsx10(
+        overLimit === null ? null : /* @__PURE__ */ jsx11(
           Text_default,
           {
             testID: id2 + "-limit-observation",
@@ -23195,7 +23677,7 @@ function EntryForm({
       emptyKey,
       onRetry,
       onBack,
-      overlay: pickingParty ? /* @__PURE__ */ jsx10(
+      overlay: pickingParty ? /* @__PURE__ */ jsx11(
         PartyPicker,
         {
           testID: id2 + "-picker",
@@ -23207,9 +23689,53 @@ function EntryForm({
           onCancel: onCancelPartyPicker,
           newParty
         }
+      ) : asked !== void 0 && cancel !== void 0 ? (
+        /*
+          THE CONFIRM SHOWS WHAT IS BEING CANCELLED - the line as it reads in
+          the list, and its figure - so the tap he confirms is the entry he
+          meant. With a return or correction on it there is no cancel button,
+          only the reason.
+        */
+        /* @__PURE__ */ jsxs7(
+          Sheet,
+          {
+            testID: id2 + "-cancel-sheet",
+            title: s(linked ? "cancel.linkedTitle" : "cancel.title"),
+            body: s(linked ? "cancel.linkedFirst" : "cancel.body"),
+            closeLabel: s("cancel.keep"),
+            onClose: cancel.onDismiss,
+            display,
+            showClose: linked,
+            children: [
+              /* @__PURE__ */ jsx11(Row, { testID: id2 + "-cancel-target", label: lineLabel2(asked), amount: asked.amount, display }),
+              linked ? null : /* @__PURE__ */ jsxs7(Fragment4, { children: [
+                /* @__PURE__ */ jsx11(
+                  PrimaryButton,
+                  {
+                    testID: id2 + "-cancel-keep",
+                    label: s("cancel.keep"),
+                    onPress: cancel.onDismiss,
+                    display
+                  }
+                ),
+                /* @__PURE__ */ jsx11(
+                  PrimaryButton,
+                  {
+                    testID: id2 + "-cancel-yes",
+                    label: s("cancel.action"),
+                    onPress: cancel.onConfirm,
+                    display,
+                    variant: "tonal",
+                    size: "lg"
+                  }
+                )
+              ] })
+            ]
+          }
+        )
       ) : null,
-      footer: /* @__PURE__ */ jsxs6(Fragment4, { children: [
-        /* @__PURE__ */ jsx10(
+      footer: /* @__PURE__ */ jsxs7(Fragment4, { children: [
+        /* @__PURE__ */ jsx11(
           Segmented,
           {
             testID: id2 + "-mode",
@@ -23225,7 +23751,7 @@ function EntryForm({
             display
           }
         ),
-        /* @__PURE__ */ jsxs6(
+        /* @__PURE__ */ jsxs7(
           View_default,
           {
             testID: id2 + "-draft",
@@ -23263,17 +23789,27 @@ function EntryForm({
               // than running off the side - the same decision as the header, for
               // the same reason: money is content and content is never capped.
               flexWrap: "wrap",
-              paddingHorizontal: t.space.md,
-              // HT-60: xs, not sm. The eight pixels went to the body, where the
-              // running total now has to fit under the links at font 2.0.
-              paddingVertical: t.space.xs,
+              /*
+               * sm, not md: the same 8dp edge as the mode segment above and the
+               * keypad below. The sixteen pixels let Add sit beside a typed
+               * ₹5,000 at the chrome cap in Focus instead of taking a row of
+               * its own - that row was the 13px that put T10's keypad below
+               * the fold on CI (Linux run 44348374411).
+               */
+              paddingHorizontal: t.space.sm,
+              /*
+               * No vertical padding. HT-60 took it from sm to xs; the last
+               * 8px went to the body as well, where the Sales total has to
+               * fit under the two links at font 2.0. The label's 1.8 line box
+               * is already the breathing room above it.
+               */
               backgroundColor: t.color.surface,
               borderTopWidth: t.hairline,
               borderTopColor: t.color.borderStrong
             },
             children: [
-              /* @__PURE__ */ jsxs6(View_default, { style: { flexShrink: 1, marginRight: t.space.sm }, children: [
-                /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsxs7(View_default, { style: { flexShrink: 1 }, children: [
+                /* @__PURE__ */ jsx11(
                   Text_default,
                   {
                     maxFontSizeMultiplier: t.maxFontScale,
@@ -23286,7 +23822,7 @@ function EntryForm({
                     children: s("formA.amount")
                   }
                 ),
-                /* @__PURE__ */ jsx10(
+                /* @__PURE__ */ jsx11(
                   Money,
                   {
                     testID: id2 + "-draft-amount",
@@ -23296,7 +23832,7 @@ function EntryForm({
                   }
                 )
               ] }),
-              /* @__PURE__ */ jsx10(View_default, { style: { flexGrow: 1, flexBasis: "45%" }, children: /* @__PURE__ */ jsx10(
+              /* @__PURE__ */ jsx11(View_default, { style: { flexGrow: 1, flexBasis: "auto" }, children: /* @__PURE__ */ jsx11(
                 PrimaryButton,
                 {
                   testID: id2 + "-commit",
@@ -23312,20 +23848,22 @@ function EntryForm({
             ]
           }
         ),
-        /* @__PURE__ */ jsx10(Keypad, { onKey, s, mode: display })
+        /* @__PURE__ */ jsx11(Keypad, { onKey, s, mode: display })
       ] }),
       children: [
-        /* @__PURE__ */ jsx10(Card, { testID: id2 + "-lines", display, children: lines.map((e3) => /* @__PURE__ */ jsx10(
+        /* @__PURE__ */ jsx11(Card, { testID: id2 + "-lines", display, children: lines.map((e3) => /* @__PURE__ */ jsx11(
           Row,
           {
             testID: id2 + "-line-" + e3.id,
-            label: s("section." + e3.section) + (e3.partyId ? " - " + (parties.get(e3.partyId) ?? e3.partyId) : "") + (MODE_NAMED_BY_SECTION.has(e3.section) ? "" : " - " + s(MODE_KEY[e3.mode])) + (e3.label ? " - " + e3.label : "") + timeOf(e3.createdAt),
+            label: lineLabel2(e3) + returnWord(e3, store, s),
             amount: e3.amount,
-            display
+            display,
+            ...store.cancelOf(e3.id) === void 0 ? {} : { struck: true, note: s("cancel.cancelled") },
+            ...cancellable(e3) && cancel !== void 0 ? { onPress: () => cancel.onAsk(e3.id), accessibleLabel: lineLabel2(e3) + ", " + s("cancel.action") } : {}
           },
           e3.id
         )) }),
-        noteKey ? /* @__PURE__ */ jsx10(
+        noteKey ? /* @__PURE__ */ jsx11(
           Text_default,
           {
             testID: id2 + "-note",
@@ -23408,7 +23946,7 @@ var BASE_PLANS = ["monthly", "yearly"];
 var PREMIUM_PRICES = { monthly: 9900, yearly: 79900 };
 
 // apps/mobile/src/screens/T7.tsx
-import { jsx as jsx11 } from "react/jsx-runtime";
+import { jsx as jsx12 } from "react/jsx-runtime";
 function FormA({
   store,
   status = "ready",
@@ -23433,13 +23971,14 @@ function FormA({
   onSelectCommit = () => {
   },
   onBack,
+  cancel,
   onRetry = () => {
   },
   onOpenReturns,
   plan = "free",
   onOpenItems
 }) {
-  return /* @__PURE__ */ jsx11(
+  return /* @__PURE__ */ jsx12(
     EntryForm,
     {
       id: "t7",
@@ -23466,157 +24005,10 @@ function FormA({
       selectedCommit,
       onSelectCommit,
       onBack,
+      cancel,
       onRetry,
       secondaryAction: onOpenReturns === void 0 ? void 0 : { labelKey: "t18.open", onPress: onOpenReturns },
       itemsAction: onOpenItems === void 0 || !allows(plan, "items") ? void 0 : { labelKey: "t7.items", onPress: onOpenItems }
-    }
-  );
-}
-
-// apps/mobile/src/components/Sheet.tsx
-import { jsx as jsx12, jsxs as jsxs7 } from "react/jsx-runtime";
-function Sheet({
-  testID,
-  title,
-  closeLabel,
-  onClose,
-  display = "comfort",
-  body,
-  children,
-  showClose = true
-}) {
-  const t = tokens(display);
-  return /* @__PURE__ */ jsxs7(
-    View_default,
-    {
-      testID,
-      accessibilityViewIsModal: true,
-      style: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: "flex-end",
-        backgroundColor: t.color.scrim
-      },
-      children: [
-        /* @__PURE__ */ jsx12(
-          Pressable_default,
-          {
-            testID: testID + "-scrim",
-            accessibilityRole: "button",
-            accessibilityLabel: closeLabel,
-            onPress: onClose,
-            style: { flex: 1, minHeight: t.touchTarget, minWidth: t.touchTarget }
-          }
-        ),
-        /* @__PURE__ */ jsxs7(
-          View_default,
-          {
-            testID: testID + "-panel",
-            style: {
-              maxHeight: SHEET_MAX_HEIGHT,
-              paddingHorizontal: t.space.gutter,
-              paddingTop: t.space.md,
-              paddingBottom: t.space.sm,
-              borderTopLeftRadius: t.radius.xl,
-              borderTopRightRadius: t.radius.xl,
-              backgroundColor: t.color.surface,
-              elevation: t.elevation.sheet
-            },
-            children: [
-              /* @__PURE__ */ jsx12(
-                Text_default,
-                {
-                  testID: testID + "-title",
-                  accessibilityRole: "header",
-                  maxFontSizeMultiplier: t.maxFontScale,
-                  style: {
-                    paddingHorizontal: t.space.xs,
-                    fontFamily: t.font.bold,
-                    fontSize: t.type.heading,
-                    lineHeight: t.leading(t.type.heading),
-                    color: t.color.ink
-                  },
-                  children: title
-                }
-              ),
-              body === void 0 ? null : /* @__PURE__ */ jsx12(
-                Text_default,
-                {
-                  testID: testID + "-body",
-                  ...t.bodyText,
-                  style: {
-                    paddingHorizontal: t.space.xs,
-                    marginTop: t.space.xs,
-                    fontFamily: t.font.regular,
-                    fontSize: t.type.body,
-                    lineHeight: t.leadingUncapped(t.type.body),
-                    color: t.color.inkMuted
-                  },
-                  children: body
-                }
-              ),
-              /* @__PURE__ */ jsx12(ScrollView_default, { style: { flexGrow: 0 }, keyboardShouldPersistTaps: "handled", children }),
-              showClose ? /* @__PURE__ */ jsx12(
-                PrimaryButton,
-                {
-                  testID: testID + "-close",
-                  label: closeLabel,
-                  onPress: onClose,
-                  display,
-                  variant: "ghost",
-                  size: "md"
-                }
-              ) : null
-            ]
-          }
-        )
-      ]
-    }
-  );
-}
-function ExitSheet({
-  id: id2,
-  s,
-  prompt,
-  display = "comfort"
-}) {
-  return /* @__PURE__ */ jsxs7(
-    Sheet,
-    {
-      testID: id2 + "-exit",
-      title: s("exit.title"),
-      body: s("exit.body"),
-      closeLabel: s("exit.stay"),
-      onClose: prompt.onStay,
-      display,
-      showClose: false,
-      children: [
-        /* @__PURE__ */ jsx12(
-          PrimaryButton,
-          {
-            testID: id2 + "-exit-stay",
-            label: s("exit.stay"),
-            onPress: prompt.onStay,
-            display,
-            variant: "tonal",
-            size: "lg"
-          }
-        ),
-        /* @__PURE__ */ jsx12(
-          PrimaryButton,
-          {
-            testID: id2 + "-exit-exit",
-            label: s("exit.exit"),
-            onPress: prompt.onExit,
-            display,
-            variant: "tonal",
-            size: "lg"
-          }
-        )
-      ]
     }
   );
 }
@@ -23924,13 +24316,48 @@ var Store = class {
     this.append(buildCorrection({ original, id: c.id, dayId: day.date, createdAt: this.#now(), amount: c.amount }));
     return "recorded";
   }
-  /** DV-7, shared by both append paths. */
+  /**
+   * DV-7, shared by both append paths. The rule is the engine's
+   * `assertPartyKind` (the server runs the same one, `party_kind_mismatch`);
+   * this adds only what the engine leaves to the store - a party this book does
+   * not hold is not the right kind either.
+   */
   #assertPartyKind(entry) {
     const kind = PARTY_KIND[entry.section];
-    if (kind && entry.partyId !== void 0) {
-      const party = this.#state.parties.find((p) => p.id === entry.partyId);
-      if (party?.kind !== kind) throw new PartyKindMismatch(entry.section, kind);
+    if (entry.partyId === void 0) return;
+    const party = this.#state.parties.find((p) => p.id === entry.partyId);
+    if (kind && party === void 0) throw new PartyKindMismatch(entry.section, kind);
+    try {
+      assertPartyKind(entry, party);
+    } catch (e3) {
+      if (e3 instanceof EntryInputError && e3.field === "party_kind_mismatch") {
+        throw new PartyKindMismatch(entry.section, kind ?? "different party");
+      }
+      throw e3;
     }
+  }
+  /**
+   * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md). A new row that repeats
+   * the target exactly and names it in `cancelsEntryId`; the engine's
+   * `buildCancel` refuses a cancel of a cancel, a return leg, an entry with a
+   * return or correction pointing at it, and a second cancel. OPEN DAY ONLY:
+   * a closed day takes a correction (T16), and the D7 trigger agrees. Queued
+   * like any entry, so an offline cancel waits for signal.
+   */
+  cancel(d) {
+    const target = this.#state.entries.find((e3) => e3.id === d.targetId);
+    if (target === void 0) throw new EntryInputError("cancel_target_missing", "that entry is not in the book for today");
+    if (this.#state.day.state === "closed" || target.dayId !== this.#state.day.date) {
+      throw new EntryInputError("entries_closed_day", "the day is closed; post a correction instead");
+    }
+    const cancel = buildCancel({
+      target,
+      id: d.id,
+      createdAt: d.createdAt,
+      ledger: [...this.#state.entries, ...this.#port.entriesReferringTo(target.id)]
+    });
+    this.append(cancel);
+    return cancel;
   }
   get revision() {
     return this.#revision;
@@ -24009,11 +24436,25 @@ var Store = class {
   #dayRow(day, at) {
     return { id: "ob-day-" + day.date, kind: "day", payload: day, queuedAt: at };
   }
+  /**
+   * CANCEL THIS ENTRY: today's entries that still count - every row but a
+   * cancel row and the entry it cancels (`liveEntries`). Every figure, list and
+   * count reads this; only the entry list itself (which strikes the original
+   * through) and the accountant export read the raw record.
+   */
+  get live() {
+    return liveEntries(this.#state.entries);
+  }
+  /** Today's cancel row for this entry, or undefined. */
+  cancelOf(entryId) {
+    return this.#state.entries.find((e3) => e3.cancelsEntryId === entryId);
+  }
   /** Exactly what the engine needs, assembled on demand. Never stored. */
   get input() {
     return {
       day: this.#state.day,
-      entries: this.#state.entries,
+      // Cancel this entry: the pair is excluded ONCE, here, never inside a figure function.
+      entries: this.live,
       adjustments: this.#state.adjustments ?? [],
       upiConfirmations: this.#state.upiConfirmations ?? [],
       priorCreditOutstanding: this.#state.priorCreditOutstanding,
@@ -24036,7 +24477,7 @@ var Store = class {
   reports() {
     const today = this.#state.day;
     const days = [...this.#state.pastDays ?? [], today];
-    const entries = [...this.#state.pastEntries ?? [], ...this.#state.entries];
+    const entries = liveEntries([...this.#state.pastEntries ?? [], ...this.#state.entries]);
     const window2 = closedDaySummaries(days, entries, SCORE_WINDOW_DAYS);
     const p = this.primary();
     const credit = customerCreditFold(
@@ -24065,7 +24506,7 @@ var Store = class {
     const st = this.#state;
     return {
       days: [...st.pastDays ?? [], st.day],
-      entries: [...st.pastEntries ?? [], ...st.entries],
+      entries: liveEntries([...st.pastEntries ?? [], ...st.entries]),
       adjustments: [...st.pastAdjustments ?? [], ...st.adjustments ?? []],
       upiConfirmations: [...st.pastUpiConfirmations ?? [], ...st.upiConfirmations ?? []]
     };
@@ -24121,7 +24562,7 @@ var Store = class {
    * also means a bare `+` on money would not survive check:money.
    */
   sectionTotal(section) {
-    return sum(this.#state.entries.filter((e3) => e3.section === section).map((e3) => e3.amount));
+    return sum(this.live.filter((e3) => e3.section === section).map((e3) => e3.amount));
   }
   /**
    * Every entry today that names this party, oldest first.
@@ -24131,7 +24572,7 @@ var Store = class {
    * timestamp would be a second ordering that can disagree with the first.
    */
   partyEntries(partyId) {
-    return this.#state.entries.filter((e3) => e3.partyId === partyId);
+    return this.live.filter((e3) => e3.partyId === partyId);
   }
   /**
    * WHAT TODAY CHANGED ABOUT WHAT THIS PARTY OWES. Signed: positive means they
@@ -24174,7 +24615,7 @@ var Store = class {
    * port reads earlier days by seq, then today).
    */
   partyLedger(partyId) {
-    return this.allEntries().filter((e3) => e3.partyId === partyId);
+    return liveEntries(this.allEntries()).filter((e3) => e3.partyId === partyId);
   }
   /**
    * WHAT THIS PARTY OWES NOW, OVER EVERY DAY THIS PHONE HOLDS. Derived on the
@@ -24195,7 +24636,7 @@ var Store = class {
     const customers = new Set(this.#state.parties.filter((p) => p.kind === "customer").map((p) => p.id));
     const owed = /* @__PURE__ */ new Map();
     const since = /* @__PURE__ */ new Map();
-    for (const e3 of this.allEntries()) {
+    for (const e3 of liveEntries(this.allEntries())) {
       if (e3.partyId === void 0 || !customers.has(e3.partyId)) continue;
       const before = owed.get(e3.partyId) ?? 0;
       const after = sum([before, partyEffect(e3)]);
@@ -24502,11 +24943,11 @@ var Store = class {
   }
   /** PR-2, derived now from what was typed. Never stored, never cached. */
   itemReports(period) {
-    return itemReports(this.#allEntries(), this.#state.itemLines ?? [], this.items, period);
+    return itemReports(liveEntries(this.#allEntries()), this.#state.itemLines ?? [], this.items, period);
   }
   /** PR-2: what one named customer usually buys, over a period. */
   customerItems(partyId, period) {
-    return customerItems(this.#allEntries(), this.#state.itemLines ?? [], partyId, period);
+    return customerItems(liveEntries(this.#allEntries()), this.#state.itemLines ?? [], partyId, period);
   }
   isSkipped(section) {
     return this.#state.skippedSections.includes(section);
@@ -24518,7 +24959,7 @@ var Store = class {
    * empty, whatever was said earlier.
    */
   sectionState(section) {
-    if (this.#state.entries.some((e3) => e3.section === section)) return "entered";
+    if (this.live.some((e3) => e3.section === section)) return "entered";
     return this.isSkipped(section) ? "skipped" : "untouched";
   }
   /**
@@ -24658,11 +25099,16 @@ function Today({
   },
   closesAt = DEFAULT_CLOSES_AT,
   onOpenDateSettings,
-  exitPrompt
+  exitPrompt,
+  newPhone,
+  onOpenDevices = () => {
+  },
+  onDismissNewPhone = () => {
+  }
 }) {
   const t = tokens(display);
   const s = strings(language);
-  const entries = store.state.entries;
+  const entries = store.live;
   const progress = progressOf(store);
   const unlocked = cashCheckUnlocked(store.input);
   const dayStatus = store.dayStatus();
@@ -24737,6 +25183,30 @@ function Today({
             display
           }
         ) : null,
+        newPhone === void 0 ? null : /* @__PURE__ */ jsxs8(View_default, { testID: "t1-new-phone", children: [
+          /* @__PURE__ */ jsx13(
+            Banner,
+            {
+              testID: "t1-new-phone-banner",
+              kind: "warning",
+              icon: "alert",
+              text: fill(s("t1.newPhone.body"), { date: dateLine(newPhone.date, s) }),
+              display,
+              action: { testID: "t1-new-phone-open", label: s("s14.title"), onPress: onOpenDevices }
+            }
+          ),
+          /* @__PURE__ */ jsx13(
+            PrimaryButton,
+            {
+              testID: "t1-new-phone-dismiss",
+              label: s("t1.newPhone.dismiss"),
+              onPress: onDismissNewPhone,
+              variant: "ghost",
+              size: "md",
+              display
+            }
+          )
+        ] }),
         /* @__PURE__ */ jsx13(CashInBox, { id: "t1", store, s, display }),
         entries.length === 0 ? /* @__PURE__ */ jsx13(EmptyNote, { testID: "t1-empty", text: s("t1.empty"), display }) : null,
         /* @__PURE__ */ jsx13(
@@ -25029,7 +25499,8 @@ function Mark({
   state,
   n,
   label: label2,
-  display
+  display,
+  inset = false
 }) {
   const t = tokens(display);
   const open = state === "untouched";
@@ -25042,6 +25513,7 @@ function Mark({
       style: {
         width: t.disc.sm,
         height: t.disc.sm,
+        ...inset ? { marginLeft: t.space.md } : {},
         marginRight: t.space.gutter,
         borderRadius: t.radius.pill,
         backgroundColor: done ? t.color.brand : t.color.surfaceRaised,
@@ -25106,7 +25578,7 @@ function DayCloseList({
   const subOf = (section, state) => {
     if (state === "skipped") return s("state.skipped");
     if (state === "untouched") return s("state.untouched");
-    const n = store.state.entries.filter((e3) => e3.section === section).length;
+    const n = store.live.filter((e3) => e3.section === section).length;
     return n === 1 ? s("t5.entry") : fill(s("t5.entries"), { n });
   };
   const link = (testID, label2, spoken, onPress) => /* @__PURE__ */ jsx15(
@@ -25255,7 +25727,10 @@ function DayCloseList({
           {
             testID: "t5-list",
             style: {
-              marginHorizontal: t.space.md,
+              // gutter, as every Card under it on this screen: the list and the UPI
+              // card no longer start at two different edges, and the lakh figures in
+              // the rows get the 8px.
+              marginHorizontal: t.space.gutter,
               marginVertical: t.space.md,
               borderRadius: t.radius.lg,
               backgroundColor: t.color.surface,
@@ -25338,9 +25813,15 @@ function DayCloseList({
                             flexWrap: "wrap",
                             minHeight: t.control.lg,
                             minWidth: t.touchTarget,
-                            // sm on the right, as the row had before the figure moved inside
-                            // the target: a lakh figure at 2.0x needs every pixel of it.
-                            paddingLeft: t.space.md,
+                            /*
+                             * NO LEFT PADDING: THE MARK CARRIES THE INSET. When a lakh figure
+                             * at 2.0x cannot share the line it wraps to a line of its own,
+                             * and that line began 16px in, behind padding that only the mark
+                             * needed. In Focus at 2.0 "₹2,49,300.01" ran 3px out of the row on
+                             * CI (Linux run 44348374411) and 11px with the shipped face
+                             * loaded. The mark sits exactly where it did; the figure's line
+                             * now starts at the row's edge and right-aligns as before.
+                             */
                             paddingRight: t.space.sm,
                             paddingVertical: t.space.xs
                           },
@@ -25352,7 +25833,8 @@ function DayCloseList({
                                 state,
                                 n: i + 2,
                                 label: s("state." + state),
-                                display
+                                display,
+                                inset: true
                               }
                             ),
                             /* @__PURE__ */ jsxs10(View_default, { style: { flexGrow: 1, flexShrink: 1, flexBasis: "50%", marginRight: t.space.sm }, children: [
@@ -25640,6 +26122,7 @@ function FormB({
   onSelectCommit = () => {
   },
   onBack,
+  cancel,
   onRetry = () => {
   }
 }) {
@@ -25677,6 +26160,7 @@ function FormB({
       selectedCommit,
       onSelectCommit,
       onBack,
+      cancel,
       onRetry
     }
   );
@@ -25721,6 +26205,7 @@ function FormC({
   },
   section = "expense",
   onBack,
+  cancel,
   onRetry = () => {
   }
 }) {
@@ -25753,13 +26238,99 @@ function FormC({
       selectedCommit,
       onSelectCommit,
       onBack,
+      cancel,
       onRetry
     }
   );
 }
 
+// apps/mobile/src/screens/X4.tsx
+import { jsx as jsx19, jsxs as jsxs12 } from "react/jsx-runtime";
+function LockOffer({
+  noScreenLock = false,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onTurnOn = () => {
+  },
+  onNotNow = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const body = {
+    fontFamily: t.font.regular,
+    fontSize: t.type.body,
+    lineHeight: t.leading(t.type.body),
+    color: t.color.ink
+  };
+  return /* @__PURE__ */ jsx19(
+    Shell,
+    {
+      id: "x4",
+      s,
+      display,
+      status,
+      titleKey: "x4.title",
+      onRetry,
+      footer: noScreenLock ? /* @__PURE__ */ jsx19(PrimaryButton, { testID: "x4-continue", label: s("x4.continue"), onPress: onNotNow, display }) : /* @__PURE__ */ jsxs12(View_default, { children: [
+        /* @__PURE__ */ jsx19(PrimaryButton, { testID: "x4-turn-on", label: s("x4.turnOn"), onPress: onTurnOn, display }),
+        /* @__PURE__ */ jsx19(
+          PrimaryButton,
+          {
+            testID: "x4-not-now",
+            label: s("x4.notNow"),
+            onPress: onNotNow,
+            variant: "ghost",
+            size: "md",
+            display
+          }
+        )
+      ] }),
+      children: /* @__PURE__ */ jsxs12(View_default, { style: { padding: t.space.md }, children: [
+        /* @__PURE__ */ jsx19(
+          Text_default,
+          {
+            testID: "x4-question",
+            accessibilityRole: "header",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              fontFamily: t.font.bold,
+              fontSize: t.type.heading,
+              lineHeight: t.leading(t.type.heading),
+              color: t.color.ink
+            },
+            children: s("x4.question")
+          }
+        ),
+        /* @__PURE__ */ jsx19(Text_default, { testID: "x4-why", maxFontSizeMultiplier: t.maxFontScale, style: { ...body, marginTop: t.space.sm }, children: s("x4.why") }),
+        noScreenLock ? /* @__PURE__ */ jsx19(
+          Text_default,
+          {
+            testID: "x4-no-screen-lock",
+            accessibilityLiveRegion: "polite",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              ...body,
+              marginTop: t.space.md,
+              padding: t.space.md,
+              borderRadius: t.radius.md,
+              borderWidth: t.hairline,
+              borderColor: t.color.borderStrong,
+              backgroundColor: t.color.surfaceRaised
+            },
+            children: s("x4.noScreenLock")
+          }
+        ) : null
+      ] })
+    }
+  );
+}
+
 // apps/mobile/src/screens/T10.tsx
-import { jsx as jsx19 } from "react/jsx-runtime";
+import { jsx as jsx20 } from "react/jsx-runtime";
 function FormD({
   store,
   status = "ready",
@@ -25783,10 +26354,11 @@ function FormD({
   onSelectCommit = () => {
   },
   onBack,
+  cancel,
   onRetry = () => {
   }
 }) {
-  return /* @__PURE__ */ jsx19(
+  return /* @__PURE__ */ jsx20(
     EntryForm,
     {
       id: "t10",
@@ -25813,13 +26385,14 @@ function FormD({
       selectedCommit,
       onSelectCommit,
       onBack,
+      cancel,
       onRetry
     }
   );
 }
 
 // apps/mobile/src/screens/T11.tsx
-import { Fragment as Fragment7, jsx as jsx20, jsxs as jsxs12 } from "react/jsx-runtime";
+import { Fragment as Fragment7, jsx as jsx21, jsxs as jsxs13 } from "react/jsx-runtime";
 function CashCheck({
   store,
   status = "ready",
@@ -25840,7 +26413,7 @@ function CashCheck({
   const t = tokens(display);
   const s = strings(language);
   const cash = store.expectedCash();
-  return /* @__PURE__ */ jsx20(
+  return /* @__PURE__ */ jsx21(
     Shell,
     {
       id: "t11",
@@ -25851,8 +26424,8 @@ function CashCheck({
       headline: { labelKey: "t11.expected", amount: cash.value, inline: true },
       onRetry,
       onBack,
-      footer: /* @__PURE__ */ jsxs12(Fragment7, { children: [
-        /* @__PURE__ */ jsxs12(
+      footer: /* @__PURE__ */ jsxs13(Fragment7, { children: [
+        /* @__PURE__ */ jsxs13(
           Pressable_default,
           {
             testID: "t11-counted",
@@ -25882,7 +26455,7 @@ function CashCheck({
               backgroundColor: t.color.surface
             },
             children: [
-              /* @__PURE__ */ jsx20(
+              /* @__PURE__ */ jsx21(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -25895,7 +26468,7 @@ function CashCheck({
                   children: s("t11.counted")
                 }
               ),
-              /* @__PURE__ */ jsx20(
+              /* @__PURE__ */ jsx21(
                 Money,
                 {
                   testID: "t11-counted-amount",
@@ -25907,7 +26480,7 @@ function CashCheck({
             ]
           }
         ),
-        /* @__PURE__ */ jsx20(
+        /* @__PURE__ */ jsx21(
           PrimaryButton,
           {
             testID: "t11-confirm",
@@ -25917,9 +26490,9 @@ function CashCheck({
             disabled: countedPaise === null
           }
         ),
-        keypadOpen ? /* @__PURE__ */ jsx20(Keypad, { onKey, s, mode: display }) : null
+        keypadOpen ? /* @__PURE__ */ jsx21(Keypad, { onKey, s, mode: display }) : null
       ] }),
-      children: cash.working.lines.map((line) => /* @__PURE__ */ jsx20(
+      children: cash.working.lines.map((line) => /* @__PURE__ */ jsx21(
         Row,
         {
           testID: "t11-working-" + line.key,
@@ -25936,7 +26509,7 @@ function CashCheck({
 }
 
 // apps/mobile/src/screens/T12.tsx
-import { Fragment as Fragment8, jsx as jsx21, jsxs as jsxs13 } from "react/jsx-runtime";
+import { Fragment as Fragment8, jsx as jsx22, jsxs as jsxs14 } from "react/jsx-runtime";
 var SHORT_REASON = "t12.reason.loss";
 var REASONS_OVER = [
   "t12.reason.sale",
@@ -25965,7 +26538,7 @@ function CashDifference({
   const expected = store.expectedCash().value;
   const difference = subtract3(countedPaise, expected);
   const canClose = difference === 0 || Boolean(reason && reason.trim());
-  return /* @__PURE__ */ jsxs13(
+  return /* @__PURE__ */ jsxs14(
     Shell,
     {
       id: "t12",
@@ -25976,7 +26549,7 @@ function CashDifference({
       headline: { labelKey: "t12.difference", amount: difference },
       onRetry,
       onBack,
-      footer: /* @__PURE__ */ jsx21(View_default, { style: { padding: t.space.sm }, children: /* @__PURE__ */ jsx21(
+      footer: /* @__PURE__ */ jsx22(View_default, { style: { padding: t.space.sm }, children: /* @__PURE__ */ jsx22(
         Pressable_default,
         {
           testID: "t12-close",
@@ -25996,7 +26569,7 @@ function CashDifference({
             alignItems: "center",
             justifyContent: "center"
           },
-          children: /* @__PURE__ */ jsx21(
+          children: /* @__PURE__ */ jsx22(
             Text_default,
             {
               maxFontSizeMultiplier: t.maxFontScale,
@@ -26014,7 +26587,7 @@ function CashDifference({
         }
       ) }),
       children: [
-        /* @__PURE__ */ jsx21(
+        /* @__PURE__ */ jsx22(
           Row,
           {
             testID: "t12-expected",
@@ -26023,7 +26596,7 @@ function CashDifference({
             display
           }
         ),
-        /* @__PURE__ */ jsx21(
+        /* @__PURE__ */ jsx22(
           Row,
           {
             testID: "t12-counted",
@@ -26032,15 +26605,15 @@ function CashDifference({
             display
           }
         ),
-        difference < 0 ? /* @__PURE__ */ jsxs13(View_default, { testID: "t12-check", children: [
-          /* @__PURE__ */ jsx21(Text_default, { testID: "t12-prompt", maxFontSizeMultiplier: t.maxFontScale, style: {
+        difference < 0 ? /* @__PURE__ */ jsxs14(View_default, { testID: "t12-check", children: [
+          /* @__PURE__ */ jsx22(Text_default, { testID: "t12-prompt", maxFontSizeMultiplier: t.maxFontScale, style: {
             padding: t.space.md,
             fontFamily: t.font.medium,
             fontSize: t.type.body,
             lineHeight: t.leading(t.type.body),
             color: t.color.ink
           }, children: s("t12.check.prompt") }),
-          ["t12.check.payments", "t12.check.count"].map((key) => /* @__PURE__ */ jsx21(
+          ["t12.check.payments", "t12.check.count"].map((key) => /* @__PURE__ */ jsx22(
             Text_default,
             {
               testID: "t12-" + key,
@@ -26057,7 +26630,7 @@ function CashDifference({
             },
             key
           )),
-          /* @__PURE__ */ jsx21(
+          /* @__PURE__ */ jsx22(
             PrimaryButton,
             {
               testID: "t12-recount",
@@ -26068,7 +26641,7 @@ function CashDifference({
               display
             }
           ),
-          /* @__PURE__ */ jsx21(
+          /* @__PURE__ */ jsx22(
             Pressable_default,
             {
               testID: "t12-reason-" + SHORT_REASON,
@@ -26087,7 +26660,7 @@ function CashDifference({
                 backgroundColor: t.color.bg,
                 justifyContent: "center"
               },
-              children: /* @__PURE__ */ jsx21(
+              children: /* @__PURE__ */ jsx22(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -26103,15 +26676,15 @@ function CashDifference({
             },
             SHORT_REASON
           )
-        ] }) : /* @__PURE__ */ jsxs13(Fragment8, { children: [
-          /* @__PURE__ */ jsx21(Text_default, { testID: "t12-prompt", maxFontSizeMultiplier: t.maxFontScale, style: {
+        ] }) : /* @__PURE__ */ jsxs14(Fragment8, { children: [
+          /* @__PURE__ */ jsx22(Text_default, { testID: "t12-prompt", maxFontSizeMultiplier: t.maxFontScale, style: {
             padding: t.space.md,
             fontFamily: t.font.medium,
             fontSize: t.type.body,
             lineHeight: t.leading(t.type.body),
             color: t.color.ink
           }, children: s("t12.reasonPrompt") }),
-          REASONS_OVER.map((key) => /* @__PURE__ */ jsx21(
+          REASONS_OVER.map((key) => /* @__PURE__ */ jsx22(
             Pressable_default,
             {
               testID: "t12-reason-" + key,
@@ -26130,7 +26703,7 @@ function CashDifference({
                 backgroundColor: t.color.bg,
                 justifyContent: "center"
               },
-              children: /* @__PURE__ */ jsx21(
+              children: /* @__PURE__ */ jsx22(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -26147,14 +26720,14 @@ function CashDifference({
             key
           ))
         ] }),
-        /* @__PURE__ */ jsx21(UpiCheckCard, { testID: "t12-upi", store, s, display })
+        /* @__PURE__ */ jsx22(UpiCheckCard, { testID: "t12-upi", store, s, display })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/T14.tsx
-import { jsx as jsx22, jsxs as jsxs14 } from "react/jsx-runtime";
+import { jsx as jsx23, jsxs as jsxs15 } from "react/jsx-runtime";
 function DayClosed({
   store,
   status = "ready",
@@ -26173,7 +26746,7 @@ function DayClosed({
   const counted = day.countedCash;
   const reason = counted !== null && counted !== expected ? day.differenceReason : void 0;
   const reasonText2 = reason !== void 0 && reason in STRINGS ? " \xB7 " + s(reason) : "";
-  return /* @__PURE__ */ jsxs14(
+  return /* @__PURE__ */ jsxs15(
     Shell,
     {
       id: "t14",
@@ -26184,10 +26757,10 @@ function DayClosed({
       headline: { labelKey: "t14.profit", amount: primary.estimatedProfit.value },
       onRetry,
       onBack,
-      footer: onDone === void 0 ? null : /* @__PURE__ */ jsx22(PrimaryButton, { testID: "t14-done", label: s("t14.done"), onPress: onDone, display }),
+      footer: onDone === void 0 ? null : /* @__PURE__ */ jsx23(PrimaryButton, { testID: "t14-done", label: s("t14.done"), onPress: onDone, display }),
       children: [
-        /* @__PURE__ */ jsxs14(Card, { testID: "t14-figures", display, children: [
-          /* @__PURE__ */ jsx22(
+        /* @__PURE__ */ jsxs15(Card, { testID: "t14-figures", display, children: [
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-net-sales",
@@ -26197,7 +26770,7 @@ function DayClosed({
               directional: true
             }
           ),
-          /* @__PURE__ */ jsx22(
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-purchases",
@@ -26208,7 +26781,7 @@ function DayClosed({
               directional: true
             }
           ),
-          /* @__PURE__ */ jsx22(
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-expenses",
@@ -26219,7 +26792,7 @@ function DayClosed({
               directional: true
             }
           ),
-          /* @__PURE__ */ jsx22(
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-credit-outstanding",
@@ -26229,8 +26802,8 @@ function DayClosed({
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs14(Card, { testID: "t14-withdrawal-card", display, children: [
-          /* @__PURE__ */ jsx22(
+        /* @__PURE__ */ jsxs15(Card, { testID: "t14-withdrawal-card", display, children: [
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-withdrawal",
@@ -26241,7 +26814,7 @@ function DayClosed({
               directional: true
             }
           ),
-          /* @__PURE__ */ jsx22(
+          /* @__PURE__ */ jsx23(
             Text_default,
             {
               testID: "t14-withdrawal-note",
@@ -26257,10 +26830,10 @@ function DayClosed({
             }
           )
         ] }),
-        counted === null ? null : /* @__PURE__ */ jsxs14(Card, { testID: "t14-cash-check", display, title: s("t14.cashCheck"), children: [
-          /* @__PURE__ */ jsx22(Row, { testID: "t14-expected", label: s("t14.expected"), amount: expected, display }),
-          /* @__PURE__ */ jsx22(Row, { testID: "t14-counted", label: s("t14.counted"), amount: counted, display }),
-          /* @__PURE__ */ jsx22(
+        counted === null ? null : /* @__PURE__ */ jsxs15(Card, { testID: "t14-cash-check", display, title: s("t14.cashCheck"), children: [
+          /* @__PURE__ */ jsx23(Row, { testID: "t14-expected", label: s("t14.expected"), amount: expected, display }),
+          /* @__PURE__ */ jsx23(Row, { testID: "t14-counted", label: s("t14.counted"), amount: counted, display }),
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-difference",
@@ -26270,7 +26843,7 @@ function DayClosed({
               directional: true
             }
           ),
-          /* @__PURE__ */ jsx22(
+          /* @__PURE__ */ jsx23(
             Row,
             {
               testID: "t14-profit-after-cash",
@@ -26281,15 +26854,15 @@ function DayClosed({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx22(UpiCheckCard, { testID: "t14-upi", store, s, display }),
-        /* @__PURE__ */ jsx22(AdjustmentsCard, { testID: "t14-adjust", store, s, display })
+        /* @__PURE__ */ jsx23(UpiCheckCard, { testID: "t14-upi", store, s, display }),
+        /* @__PURE__ */ jsx23(AdjustmentsCard, { testID: "t14-adjust", store, s, display })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/T19.tsx
-import { Fragment as Fragment9, jsx as jsx23, jsxs as jsxs15 } from "react/jsx-runtime";
+import { Fragment as Fragment9, jsx as jsx24, jsxs as jsxs16 } from "react/jsx-runtime";
 function Adjustment({
   store,
   status = "ready",
@@ -26311,7 +26884,7 @@ function Adjustment({
   const s = strings(language);
   const closed = store.state.day.state === "closed";
   const canSave = !closed && type2 !== null && amountPaise !== null && amountPaise > 0;
-  return /* @__PURE__ */ jsxs15(
+  return /* @__PURE__ */ jsxs16(
     Shell,
     {
       id: "t19",
@@ -26321,8 +26894,8 @@ function Adjustment({
       titleKey: "t19.title",
       onRetry,
       onBack,
-      footer: closed ? void 0 : /* @__PURE__ */ jsxs15(Fragment9, { children: [
-        /* @__PURE__ */ jsxs15(
+      footer: closed ? void 0 : /* @__PURE__ */ jsxs16(Fragment9, { children: [
+        /* @__PURE__ */ jsxs16(
           View_default,
           {
             testID: "t19-amount",
@@ -26336,7 +26909,7 @@ function Adjustment({
               borderTopColor: t.color.border
             },
             children: [
-              /* @__PURE__ */ jsx23(
+              /* @__PURE__ */ jsx24(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -26349,11 +26922,11 @@ function Adjustment({
                   children: s("t19.amount")
                 }
               ),
-              /* @__PURE__ */ jsx23(Money, { testID: "t19-amount-figure", amount: amountPaise ?? 0, mode: display, size: "figure" })
+              /* @__PURE__ */ jsx24(Money, { testID: "t19-amount-figure", amount: amountPaise ?? 0, mode: display, size: "figure" })
             ]
           }
         ),
-        /* @__PURE__ */ jsx23(
+        /* @__PURE__ */ jsx24(
           PrimaryButton,
           {
             testID: "t19-save",
@@ -26363,10 +26936,10 @@ function Adjustment({
             disabled: !canSave
           }
         ),
-        /* @__PURE__ */ jsx23(Keypad, { onKey, s, mode: display })
+        /* @__PURE__ */ jsx24(Keypad, { onKey, s, mode: display })
       ] }),
       children: [
-        /* @__PURE__ */ jsx23(
+        /* @__PURE__ */ jsx24(
           Text_default,
           {
             testID: "t19-prompt",
@@ -26381,7 +26954,7 @@ function Adjustment({
             children: s("t19.type")
           }
         ),
-        ADJUSTMENT_TYPES.map((k2) => /* @__PURE__ */ jsx23(
+        ADJUSTMENT_TYPES.map((k2) => /* @__PURE__ */ jsx24(
           Pressable_default,
           {
             testID: "t19-type-" + k2,
@@ -26402,7 +26975,7 @@ function Adjustment({
               backgroundColor: t.color.bg,
               justifyContent: "center"
             },
-            children: /* @__PURE__ */ jsx23(
+            children: /* @__PURE__ */ jsx24(
               Text_default,
               {
                 maxFontSizeMultiplier: t.maxFontScale,
@@ -26418,7 +26991,7 @@ function Adjustment({
           },
           k2
         )),
-        type2 === null ? null : /* @__PURE__ */ jsx23(
+        type2 === null ? null : /* @__PURE__ */ jsx24(
           Text_default,
           {
             testID: "t19-effect",
@@ -26439,7 +27012,7 @@ function Adjustment({
 }
 
 // apps/mobile/src/components/Switch.tsx
-import { jsx as jsx24, jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsx as jsx25, jsxs as jsxs17 } from "react/jsx-runtime";
 function Switch({
   testID,
   label: label2,
@@ -26452,7 +27025,7 @@ function Switch({
 }) {
   const t = tokens(display);
   const word = value ? onWord : offWord;
-  return /* @__PURE__ */ jsxs16(
+  return /* @__PURE__ */ jsxs17(
     Pressable_default,
     {
       testID,
@@ -26470,8 +27043,8 @@ function Switch({
         paddingVertical: t.space.sm
       },
       children: [
-        /* @__PURE__ */ jsxs16(View_default, { style: { flex: 1, minWidth: t.control.xl, marginRight: t.space.sm }, children: [
-          /* @__PURE__ */ jsx24(
+        /* @__PURE__ */ jsxs17(View_default, { style: { flex: 1, minWidth: t.control.xl, marginRight: t.space.sm }, children: [
+          /* @__PURE__ */ jsx25(
             Text_default,
             {
               ...t.bodyText,
@@ -26484,7 +27057,7 @@ function Switch({
               children: label2
             }
           ),
-          detail === void 0 ? null : /* @__PURE__ */ jsx24(
+          detail === void 0 ? null : /* @__PURE__ */ jsx25(
             Text_default,
             {
               ...t.bodyText,
@@ -26498,8 +27071,8 @@ function Switch({
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs16(View_default, { style: { flexDirection: "row", alignItems: "center" }, children: [
-          /* @__PURE__ */ jsx24(
+        /* @__PURE__ */ jsxs17(View_default, { style: { flexDirection: "row", alignItems: "center" }, children: [
+          /* @__PURE__ */ jsx25(
             View_default,
             {
               testID: testID + "-track",
@@ -26513,7 +27086,7 @@ function Switch({
                 borderColor: value ? t.color.brand : t.color.edge,
                 backgroundColor: value ? t.color.brand : t.color.surfaceRaised
               },
-              children: /* @__PURE__ */ jsx24(
+              children: /* @__PURE__ */ jsx25(
                 View_default,
                 {
                   testID: testID + "-thumb",
@@ -26525,7 +27098,7 @@ function Switch({
                     justifyContent: "center",
                     backgroundColor: value ? t.color.onBrand : t.color.inkMuted
                   },
-                  children: /* @__PURE__ */ jsx24(
+                  children: /* @__PURE__ */ jsx25(
                     Icon,
                     {
                       name: value ? "tick" : "dash",
@@ -26538,7 +27111,7 @@ function Switch({
               )
             }
           ),
-          /* @__PURE__ */ jsx24(
+          /* @__PURE__ */ jsx25(
             Text_default,
             {
               testID: testID + "-word",
@@ -26560,7 +27133,7 @@ function Switch({
 }
 
 // apps/mobile/src/screens/X0.tsx
-import { jsx as jsx25, jsxs as jsxs17 } from "react/jsx-runtime";
+import { jsx as jsx26, jsxs as jsxs18 } from "react/jsx-runtime";
 function ConsentNotice({
   mode = "signup",
   granted = [],
@@ -26574,12 +27147,14 @@ function ConsentNotice({
   onRetry = () => {
   },
   justWithdrawn = null,
-  onBack
+  onBack,
+  onOpenPrivacyPolicy = () => {
+  }
 }) {
   const manage = mode === "manage";
   const t = tokens(display);
   const s = strings(language);
-  return /* @__PURE__ */ jsxs17(
+  return /* @__PURE__ */ jsxs18(
     Shell,
     {
       id: "x0",
@@ -26589,7 +27164,7 @@ function ConsentNotice({
       titleKey: manage ? "consent.manage.title" : "consent.title",
       onRetry,
       onBack: manage ? onBack : void 0,
-      footer: manage ? void 0 : /* @__PURE__ */ jsx25(
+      footer: manage ? void 0 : /* @__PURE__ */ jsx26(
         PrimaryButton,
         {
           testID: "x0-agree",
@@ -26599,7 +27174,7 @@ function ConsentNotice({
         }
       ),
       children: [
-        /* @__PURE__ */ jsx25(
+        /* @__PURE__ */ jsx26(
           Text_default,
           {
             testID: "x0-intro",
@@ -26616,7 +27191,7 @@ function ConsentNotice({
         ),
         CONSENT_PURPOSES2.map(({ key, required }) => {
           const on = required || granted.includes(key);
-          return /* @__PURE__ */ jsxs17(
+          return /* @__PURE__ */ jsxs18(
             View_default,
             {
               testID: "x0-purpose-" + key,
@@ -26627,7 +27202,7 @@ function ConsentNotice({
                 borderBottomColor: t.color.border
               },
               children: [
-                /* @__PURE__ */ jsx25(
+                /* @__PURE__ */ jsx26(
                   Text_default,
                   {
                     maxFontSizeMultiplier: t.maxFontScale,
@@ -26640,7 +27215,7 @@ function ConsentNotice({
                     children: s("consent.purpose." + key)
                   }
                 ),
-                required ? /* @__PURE__ */ jsx25(
+                required ? /* @__PURE__ */ jsx26(
                   Text_default,
                   {
                     testID: "x0-required-" + key,
@@ -26661,7 +27236,7 @@ function ConsentNotice({
                    * outlined - at arm's length in shop daylight a border colour is
                    * not a state - and it is never the only signal.
                    */
-                  /* @__PURE__ */ jsx25(
+                  /* @__PURE__ */ jsx26(
                     Switch,
                     {
                       testID: "x0-toggle-" + key,
@@ -26674,7 +27249,7 @@ function ConsentNotice({
                     }
                   )
                 ),
-                manage && justWithdrawn === key && !on ? /* @__PURE__ */ jsx25(
+                manage && justWithdrawn === key && !on ? /* @__PURE__ */ jsx26(
                   Banner,
                   {
                     testID: "x0-withdrawn-" + key,
@@ -26689,7 +27264,7 @@ function ConsentNotice({
             key
           );
         }),
-        /* @__PURE__ */ jsx25(
+        /* @__PURE__ */ jsx26(
           Text_default,
           {
             testID: "x0-rights",
@@ -26703,6 +27278,16 @@ function ConsentNotice({
             },
             children: s("consent.rights")
           }
+        ),
+        /* @__PURE__ */ jsx26(
+          LinkRow,
+          {
+            testID: "x0-privacy",
+            label: s("s5.privacy"),
+            detail: s("settings.open"),
+            display,
+            onPress: onOpenPrivacyPolicy
+          }
         )
       ]
     }
@@ -26710,7 +27295,7 @@ function ConsentNotice({
 }
 
 // apps/mobile/src/screens/T2.tsx
-import { jsx as jsx26, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx27, jsxs as jsxs19 } from "react/jsx-runtime";
 function TodayFirstRun({
   store,
   status = "ready",
@@ -26725,11 +27310,11 @@ function TodayFirstRun({
   const s = strings(language);
   const openingCash = store.state.day.openingCash;
   const started = openingCash !== null;
-  return /* @__PURE__ */ jsxs18(
+  return /* @__PURE__ */ jsxs19(
     Shell,
     {
       id: "t2",
-      overlay: exitPrompt === void 0 ? void 0 : /* @__PURE__ */ jsx26(ExitSheet, { id: "t2", s, prompt: exitPrompt, display }),
+      overlay: exitPrompt === void 0 ? void 0 : /* @__PURE__ */ jsx27(ExitSheet, { id: "t2", s, prompt: exitPrompt, display }),
       s,
       display,
       status,
@@ -26738,7 +27323,7 @@ function TodayFirstRun({
       subtitle: dateLine(store.state.day.date, s),
       onRetry,
       children: [
-        /* @__PURE__ */ jsxs18(
+        /* @__PURE__ */ jsxs19(
           ProgressCard,
           {
             testID: "t2-book",
@@ -26746,11 +27331,11 @@ function TodayFirstRun({
             s,
             display,
             heading: s(started ? "t6.title" : "t2.notStarted"),
-            caption: started ? /* @__PURE__ */ jsx26(Money, { testID: "t2-opening", amount: openingCash, mode: display, size: "figure" }) : /* @__PURE__ */ jsx26(Quiet, { testID: "t2-nothing-carried", text: s("t2.nothingCarried"), display }),
+            caption: started ? /* @__PURE__ */ jsx27(Money, { testID: "t2-opening", amount: openingCash, mode: display, size: "figure" }) : /* @__PURE__ */ jsx27(Quiet, { testID: "t2-nothing-carried", text: s("t2.nothingCarried"), display }),
             children: [
-              /* @__PURE__ */ jsx26(Quiet, { testID: "t2-prompt", text: s("t2.prompt"), display }),
-              /* @__PURE__ */ jsx26(Quiet, { testID: "t2-carried", text: s("t2.carried"), display }),
-              /* @__PURE__ */ jsx26(
+              /* @__PURE__ */ jsx27(Quiet, { testID: "t2-prompt", text: s("t2.prompt"), display }),
+              /* @__PURE__ */ jsx27(Quiet, { testID: "t2-carried", text: s("t2.carried"), display }),
+              /* @__PURE__ */ jsx27(
                 PrimaryButton,
                 {
                   testID: "t2-enter-opening",
@@ -26764,14 +27349,14 @@ function TodayFirstRun({
             ]
           }
         ),
-        /* @__PURE__ */ jsx26(EmptyNote, { testID: "t2-empty", text: s("t2.empty"), display })
+        /* @__PURE__ */ jsx27(EmptyNote, { testID: "t2-empty", text: s("t2.empty"), display })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/T3.tsx
-import { jsx as jsx27, jsxs as jsxs19 } from "react/jsx-runtime";
+import { jsx as jsx28, jsxs as jsxs20 } from "react/jsx-runtime";
 var timeOf2 = (stamp) => stamp && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(stamp) ? stamp.slice(11, 16) : null;
 function TodayClosed({
   store,
@@ -26796,7 +27381,7 @@ function TodayClosed({
 }) {
   const t = tokens(display);
   const s = strings(language);
-  const entries = store.state.entries;
+  const entries = store.live;
   const day = store.state.day;
   const closedTime = timeOf2(day.closedAt);
   const progress = progressOf(store);
@@ -26806,11 +27391,11 @@ function TodayClosed({
     lineHeight: t.leading(t.type.body),
     color: t.color.inkMuted
   };
-  return /* @__PURE__ */ jsxs19(
+  return /* @__PURE__ */ jsxs20(
     Shell,
     {
       id: "t3",
-      overlay: exitPrompt === void 0 ? void 0 : /* @__PURE__ */ jsx27(ExitSheet, { id: "t3", s, prompt: exitPrompt, display }),
+      overlay: exitPrompt === void 0 ? void 0 : /* @__PURE__ */ jsx28(ExitSheet, { id: "t3", s, prompt: exitPrompt, display }),
       s,
       display,
       status,
@@ -26819,9 +27404,9 @@ function TodayClosed({
       subtitle: dateLine(day.date, s),
       pill: s("t1.pill.closed"),
       onRetry,
-      nav: /* @__PURE__ */ jsx27(BottomNav, { active: "today", onSelect: onSelectTab, s, display }),
+      nav: /* @__PURE__ */ jsx28(BottomNav, { active: "today", onSelect: onSelectTab, s, display }),
       children: [
-        /* @__PURE__ */ jsxs19(
+        /* @__PURE__ */ jsxs20(
           ProgressCard,
           {
             testID: "t3-book",
@@ -26838,7 +27423,7 @@ function TodayClosed({
                * line under the rule. Both are read, neither computed - on a frozen
                * day those are the two facts.
                */
-              /* @__PURE__ */ jsx27(
+              /* @__PURE__ */ jsx28(
                 Text_default,
                 {
                   testID: closedTime ? "t3-closed-at" : void 0,
@@ -26849,12 +27434,12 @@ function TodayClosed({
               )
             ),
             children: [
-              day.countedCash === null ? null : /* @__PURE__ */ jsxs19(View_default, { style: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" }, children: [
-                /* @__PURE__ */ jsx27(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...quiet, marginRight: t.space.xs }, children: s("t11.counted") }),
-                /* @__PURE__ */ jsx27(Money, { testID: "t3-counted", amount: day.countedCash, mode: display, size: "body" })
+              day.countedCash === null ? null : /* @__PURE__ */ jsxs20(View_default, { style: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" }, children: [
+                /* @__PURE__ */ jsx28(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...quiet, marginRight: t.space.xs }, children: s("t11.counted") }),
+                /* @__PURE__ */ jsx28(Money, { testID: "t3-counted", amount: day.countedCash, mode: display, size: "body" })
               ] }),
-              /* @__PURE__ */ jsx27(OpeningLine, { testID: "t3-opening", store, s, display }),
-              /* @__PURE__ */ jsx27(
+              /* @__PURE__ */ jsx28(OpeningLine, { testID: "t3-opening", store, s, display }),
+              /* @__PURE__ */ jsx28(
                 PrimaryButton,
                 {
                   testID: "t3-summary",
@@ -26868,9 +27453,9 @@ function TodayClosed({
             ]
           }
         ),
-        /* @__PURE__ */ jsx27(SoFarHeader, { id: "t3", store, s, display }),
-        entries.length === 0 ? /* @__PURE__ */ jsx27(EmptyNote, { testID: "t3-empty", text: s("t3.empty"), display }) : /* @__PURE__ */ jsx27(TodayFigures, { id: "t3", store, s, display }),
-        /* @__PURE__ */ jsx27(
+        /* @__PURE__ */ jsx28(SoFarHeader, { id: "t3", store, s, display }),
+        entries.length === 0 ? /* @__PURE__ */ jsx28(EmptyNote, { testID: "t3-empty", text: s("t3.empty"), display }) : /* @__PURE__ */ jsx28(TodayFigures, { id: "t3", store, s, display }),
+        /* @__PURE__ */ jsx28(
           PartyTotals,
           {
             id: "t3",
@@ -26880,11 +27465,11 @@ function TodayClosed({
             onPress: () => onSelectTab("parties")
           }
         ),
-        /* @__PURE__ */ jsxs19(View_default, { style: { paddingHorizontal: t.space.md, paddingTop: t.space.lg }, children: [
-          /* @__PURE__ */ jsx27(SectionLabel, { testID: "t3-add", text: s("t1.addToToday"), display }),
-          /* @__PURE__ */ jsx27(Text_default, { testID: "t3-banner", maxFontSizeMultiplier: t.maxFontScale, style: quiet, children: store.closedUnderWrongDate ? fill(s("t3.wrongDate.body"), { date: dateLine(day.date, s) }) : s("t3.banner") })
+        /* @__PURE__ */ jsxs20(View_default, { style: { paddingHorizontal: t.space.md, paddingTop: t.space.lg }, children: [
+          /* @__PURE__ */ jsx28(SectionLabel, { testID: "t3-add", text: s("t1.addToToday"), display }),
+          /* @__PURE__ */ jsx28(Text_default, { testID: "t3-banner", maxFontSizeMultiplier: t.maxFontScale, style: quiet, children: store.closedUnderWrongDate ? fill(s("t3.wrongDate.body"), { date: dateLine(day.date, s) }) : s("t3.banner") })
         ] }),
-        /* @__PURE__ */ jsx27(
+        /* @__PURE__ */ jsx28(
           PrimaryButton,
           {
             testID: "t3-correction",
@@ -26895,7 +27480,7 @@ function TodayClosed({
             size: "md"
           }
         ),
-        /* @__PURE__ */ jsx27(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.md }, children: /* @__PURE__ */ jsx27(ActionGrid, { testID: "t3-rails", display, children: ACT_SECTIONS.map(({ section, labelKey, kind }) => /* @__PURE__ */ jsx27(
+        /* @__PURE__ */ jsx28(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.md }, children: /* @__PURE__ */ jsx28(ActionGrid, { testID: "t3-rails", display, children: ACT_SECTIONS.map(({ section, labelKey, kind }) => /* @__PURE__ */ jsx28(
           ActionTile,
           {
             testID: "t3-rail-" + section,
@@ -26908,8 +27493,8 @@ function TodayClosed({
           },
           section
         )) }) }),
-        /* @__PURE__ */ jsxs19(View_default, { style: { paddingVertical: t.space.sm }, children: [
-          /* @__PURE__ */ jsx27(
+        /* @__PURE__ */ jsxs20(View_default, { style: { paddingVertical: t.space.sm }, children: [
+          /* @__PURE__ */ jsx28(
             PrimaryButton,
             {
               testID: "t3-ask",
@@ -26920,7 +27505,7 @@ function TodayClosed({
               onPress: onOpenChat
             }
           ),
-          /* @__PURE__ */ jsx27(
+          /* @__PURE__ */ jsx28(
             PrimaryButton,
             {
               testID: "t3-settings",
@@ -26931,7 +27516,7 @@ function TodayClosed({
               onPress: onOpenSettings
             }
           ),
-          /* @__PURE__ */ jsx27(
+          /* @__PURE__ */ jsx28(
             PrimaryButton,
             {
               testID: "t3-privacy",
@@ -26949,7 +27534,7 @@ function TodayClosed({
 }
 
 // apps/mobile/src/screens/T13.tsx
-import { jsx as jsx28, jsxs as jsxs20 } from "react/jsx-runtime";
+import { jsx as jsx29, jsxs as jsxs21 } from "react/jsx-runtime";
 function CashBalanced({
   store,
   countedPaise,
@@ -26966,7 +27551,7 @@ function CashBalanced({
   const s = strings(language);
   const expected = store.expectedCash().value;
   const balanced = countedPaise === expected;
-  return /* @__PURE__ */ jsxs20(
+  return /* @__PURE__ */ jsxs21(
     Shell,
     {
       id: "t13",
@@ -26976,7 +27561,7 @@ function CashBalanced({
       titleKey: "t13.title",
       onRetry,
       onBack,
-      footer: /* @__PURE__ */ jsx28(
+      footer: /* @__PURE__ */ jsx29(
         PrimaryButton,
         {
           testID: "t13-close",
@@ -26987,16 +27572,16 @@ function CashBalanced({
         }
       ),
       children: [
-        /* @__PURE__ */ jsxs20(Card, { testID: "t13-match", display, children: [
-          /* @__PURE__ */ jsx28(
+        /* @__PURE__ */ jsxs21(Card, { testID: "t13-match", display, children: [
+          /* @__PURE__ */ jsx29(
             View_default,
             {
               testID: "t13-band",
               style: { height: t.space.xs, backgroundColor: t.color.brand }
             }
           ),
-          /* @__PURE__ */ jsxs20(View_default, { style: { padding: t.space.lg, alignItems: "center" }, children: [
-            /* @__PURE__ */ jsx28(
+          /* @__PURE__ */ jsxs21(View_default, { style: { padding: t.space.lg, alignItems: "center" }, children: [
+            /* @__PURE__ */ jsx29(
               Text_default,
               {
                 testID: "t13-matches",
@@ -27011,8 +27596,8 @@ function CashBalanced({
                 children: balanced ? s("t13.matches") : s("t12.difference")
               }
             ),
-            /* @__PURE__ */ jsx28(Money, { testID: "t13-figure", amount: countedPaise, mode: display, size: "figure" }),
-            /* @__PURE__ */ jsxs20(
+            /* @__PURE__ */ jsx29(Money, { testID: "t13-figure", amount: countedPaise, mode: display, size: "figure" }),
+            /* @__PURE__ */ jsxs21(
               View_default,
               {
                 testID: "t13-confirm",
@@ -27024,7 +27609,7 @@ function CashBalanced({
                   marginTop: t.space.md
                 },
                 children: [
-                  /* @__PURE__ */ jsx28(
+                  /* @__PURE__ */ jsx29(
                     Text_default,
                     {
                       maxFontSizeMultiplier: t.maxFontScale,
@@ -27038,8 +27623,8 @@ function CashBalanced({
                       children: s("t11.counted")
                     }
                   ),
-                  /* @__PURE__ */ jsx28(Money, { testID: "t13-counted", amount: countedPaise, mode: display, size: "body" }),
-                  /* @__PURE__ */ jsx28(
+                  /* @__PURE__ */ jsx29(Money, { testID: "t13-counted", amount: countedPaise, mode: display, size: "body" }),
+                  /* @__PURE__ */ jsx29(
                     Text_default,
                     {
                       maxFontSizeMultiplier: t.maxFontScale,
@@ -27053,7 +27638,7 @@ function CashBalanced({
                       children: "\xB7"
                     }
                   ),
-                  /* @__PURE__ */ jsx28(
+                  /* @__PURE__ */ jsx29(
                     Text_default,
                     {
                       maxFontSizeMultiplier: t.maxFontScale,
@@ -27067,11 +27652,11 @@ function CashBalanced({
                       children: s("t11.expected")
                     }
                   ),
-                  /* @__PURE__ */ jsx28(Money, { testID: "t13-expected", amount: expected, mode: display, size: "body" })
+                  /* @__PURE__ */ jsx29(Money, { testID: "t13-expected", amount: expected, mode: display, size: "body" })
                 ]
               }
             ),
-            balanced ? /* @__PURE__ */ jsx28(
+            balanced ? /* @__PURE__ */ jsx29(
               Text_default,
               {
                 testID: "t13-every-rupee",
@@ -27089,7 +27674,7 @@ function CashBalanced({
             ) : null
           ] })
         ] }),
-        /* @__PURE__ */ jsx28(Card, { testID: "t13-carry", display, children: /* @__PURE__ */ jsxs20(
+        /* @__PURE__ */ jsx29(Card, { testID: "t13-carry", display, children: /* @__PURE__ */ jsxs21(
           View_default,
           {
             style: {
@@ -27100,7 +27685,7 @@ function CashBalanced({
               padding: t.space.md
             },
             children: [
-              /* @__PURE__ */ jsx28(
+              /* @__PURE__ */ jsx29(
                 Text_default,
                 {
                   testID: "t13-carry-copy",
@@ -27117,18 +27702,18 @@ function CashBalanced({
                   children: s("t13.carry")
                 }
               ),
-              /* @__PURE__ */ jsx28(Money, { testID: "t13-carry-amount", amount: countedPaise, mode: display, size: "body" })
+              /* @__PURE__ */ jsx29(Money, { testID: "t13-carry-amount", amount: countedPaise, mode: display, size: "body" })
             ]
           }
         ) }),
-        /* @__PURE__ */ jsx28(UpiCheckCard, { testID: "t13-upi", store, s, display })
+        /* @__PURE__ */ jsx29(UpiCheckCard, { testID: "t13-upi", store, s, display })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/X1.tsx
-import { Fragment as Fragment10, jsx as jsx29, jsxs as jsxs21 } from "react/jsx-runtime";
+import { Fragment as Fragment10, jsx as jsx30, jsxs as jsxs22 } from "react/jsx-runtime";
 var BRAND = "SWAFTO";
 var LANGUAGES = [
   { key: "or", autonym: "\u0B13\u0B21\u0B3C\u0B3F\u0B06" },
@@ -27163,7 +27748,7 @@ function Onboarding({
 }) {
   const t = tokens(display);
   const s = strings(language);
-  const questionLabel = (testID, n, label2) => /* @__PURE__ */ jsx29(
+  const questionLabel = (testID, n, label2) => /* @__PURE__ */ jsx30(
     Text_default,
     {
       testID,
@@ -27178,7 +27763,7 @@ function Onboarding({
       children: String(n) + " \xB7 " + label2
     }
   );
-  const helper = (testID, words2) => /* @__PURE__ */ jsx29(
+  const helper = (testID, words2) => /* @__PURE__ */ jsx30(
     Text_default,
     {
       testID,
@@ -27193,7 +27778,7 @@ function Onboarding({
       children: words2
     }
   );
-  const choice = (testID, label2, selected, onPress) => /* @__PURE__ */ jsx29(
+  const choice = (testID, label2, selected, onPress) => /* @__PURE__ */ jsx30(
     Pressable_default,
     {
       testID,
@@ -27224,7 +27809,7 @@ function Onboarding({
         alignItems: "center",
         justifyContent: "center"
       },
-      children: /* @__PURE__ */ jsx29(
+      children: /* @__PURE__ */ jsx30(
         Text_default,
         {
           maxFontSizeMultiplier: t.maxFontScale,
@@ -27241,7 +27826,7 @@ function Onboarding({
     },
     testID
   );
-  const figure2 = (testID) => openingCashPaise === null ? /* @__PURE__ */ jsx29(
+  const figure2 = (testID) => openingCashPaise === null ? /* @__PURE__ */ jsx30(
     Text_default,
     {
       testID: testID + "-placeholder",
@@ -27254,9 +27839,9 @@ function Onboarding({
       },
       children: "\u20B9 0"
     }
-  ) : /* @__PURE__ */ jsx29(Money, { testID, amount: openingCashPaise, mode: display, size: "figure" });
+  ) : /* @__PURE__ */ jsx30(Money, { testID, amount: openingCashPaise, mode: display, size: "figure" });
   const question = { marginTop: t.space.lg };
-  return /* @__PURE__ */ jsx29(
+  return /* @__PURE__ */ jsx30(
     Shell,
     {
       id: "x1",
@@ -27266,7 +27851,7 @@ function Onboarding({
       titleKey: "x1.heading",
       eyebrow: BRAND,
       onRetry,
-      footer: /* @__PURE__ */ jsxs21(
+      footer: /* @__PURE__ */ jsxs22(
         View_default,
         {
           testID: "x1-footer",
@@ -27277,8 +27862,8 @@ function Onboarding({
             paddingHorizontal: t.space.sm
           },
           children: [
-            keypadOpen ? /* @__PURE__ */ jsxs21(Fragment10, { children: [
-              /* @__PURE__ */ jsxs21(
+            keypadOpen ? /* @__PURE__ */ jsxs22(Fragment10, { children: [
+              /* @__PURE__ */ jsxs22(
                 View_default,
                 {
                   testID: "x1-opening-draft",
@@ -27291,7 +27876,7 @@ function Onboarding({
                     paddingTop: t.space.xs
                   },
                   children: [
-                    /* @__PURE__ */ jsx29(
+                    /* @__PURE__ */ jsx30(
                       Text_default,
                       {
                         maxFontSizeMultiplier: t.maxFontScale,
@@ -27309,9 +27894,9 @@ function Onboarding({
                   ]
                 }
               ),
-              /* @__PURE__ */ jsx29(Keypad, { onKey, s, mode: display })
+              /* @__PURE__ */ jsx30(Keypad, { onKey, s, mode: display })
             ] }) : null,
-            /* @__PURE__ */ jsx29(
+            /* @__PURE__ */ jsx30(
               PrimaryButton,
               {
                 testID: "x1-finish",
@@ -27324,10 +27909,10 @@ function Onboarding({
           ]
         }
       ),
-      children: /* @__PURE__ */ jsxs21(View_default, { style: { paddingHorizontal: t.space.md, paddingBottom: t.space.lg }, children: [
-        /* @__PURE__ */ jsxs21(View_default, { testID: "x1-q1", style: question, children: [
+      children: /* @__PURE__ */ jsxs22(View_default, { style: { paddingHorizontal: t.space.md, paddingBottom: t.space.lg }, children: [
+        /* @__PURE__ */ jsxs22(View_default, { testID: "x1-q1", style: question, children: [
           questionLabel("x1-q1-label", 1, s("x1.shopName")),
-          /* @__PURE__ */ jsx29(
+          /* @__PURE__ */ jsx30(
             TextInput_default,
             {
               testID: "x1-shopName",
@@ -27354,9 +27939,9 @@ function Onboarding({
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs21(View_default, { testID: "x1-q2", style: question, children: [
+        /* @__PURE__ */ jsxs22(View_default, { testID: "x1-q2", style: question, children: [
           questionLabel("x1-q2-label", 2, s("x1.language")),
-          /* @__PURE__ */ jsx29(
+          /* @__PURE__ */ jsx30(
             View_default,
             {
               accessibilityRole: "radiogroup",
@@ -27369,9 +27954,9 @@ function Onboarding({
           ),
           helper("x1-language-help", s("x1.languageHelp"))
         ] }),
-        /* @__PURE__ */ jsxs21(View_default, { testID: "x1-q3", style: question, children: [
+        /* @__PURE__ */ jsxs22(View_default, { testID: "x1-q3", style: question, children: [
           questionLabel("x1-q3-label", 3, s("s3.display")),
-          /* @__PURE__ */ jsx29(
+          /* @__PURE__ */ jsx30(
             View_default,
             {
               accessibilityRole: "radiogroup",
@@ -27383,9 +27968,9 @@ function Onboarding({
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs21(View_default, { testID: "x1-q4", style: question, children: [
+        /* @__PURE__ */ jsxs22(View_default, { testID: "x1-q4", style: question, children: [
           questionLabel("x1-q4-label", 4, s("x1.cashNow")),
-          /* @__PURE__ */ jsx29(
+          /* @__PURE__ */ jsx30(
             Pressable_default,
             {
               testID: "x1-opening-field",
@@ -27417,7 +28002,7 @@ function Onboarding({
 }
 
 // apps/mobile/src/components/Avatar.tsx
-import { jsx as jsx30 } from "react/jsx-runtime";
+import { jsx as jsx31 } from "react/jsx-runtime";
 var VIRAMA = /* @__PURE__ */ new Set([2381, 2893]);
 var isMark = (cp) => cp >= 768 && cp <= 879 || cp === 8204 || cp === 8205 || // Devanagari: candrabindu..visarga, nukta, vowel signs, virama, stress, vowel signs L/LL.
 cp >= 2304 && cp <= 2307 || cp === 2362 || cp === 2363 || cp === 2364 || cp >= 2366 && cp <= 2383 || cp >= 2385 && cp <= 2391 || cp >= 2402 && cp <= 2403 || // Odia: candrabindu..visarga, nukta, vowel signs, virama, length marks.
@@ -27470,7 +28055,7 @@ function Avatar({
   const t = tokens(display);
   const initial = initialOf(name);
   const [tint, ink] = initial === "" ? ["tintMore", "inkMore"] : avatarPairOf(partyId);
-  return /* @__PURE__ */ jsx30(
+  return /* @__PURE__ */ jsx31(
     View_default,
     {
       testID,
@@ -27486,7 +28071,7 @@ function Avatar({
         alignItems: "center",
         justifyContent: "center"
       },
-      children: initial === "" ? /* @__PURE__ */ jsx30(Icon, { name: "user", size: "md", color: "inkMore", display }) : /* @__PURE__ */ jsx30(
+      children: initial === "" ? /* @__PURE__ */ jsx31(Icon, { name: "user", size: "md", color: "inkMore", display }) : /* @__PURE__ */ jsx31(
         Text_default,
         {
           maxFontSizeMultiplier: 1,
@@ -27505,7 +28090,7 @@ function Avatar({
 }
 
 // apps/mobile/src/screens/P1.tsx
-import { jsx as jsx31, jsxs as jsxs22 } from "react/jsx-runtime";
+import { jsx as jsx32, jsxs as jsxs23 } from "react/jsx-runtime";
 function PartiesList({
   store,
   status = "ready",
@@ -27525,7 +28110,7 @@ function PartiesList({
   const customers = parties.filter((p) => p.kind === "customer");
   const suppliers = parties.filter((p) => p.kind === "supplier");
   const byOwed = (group) => group.map((p) => ({ party: p, balance: store.partyBalance(p.id) })).sort((x, y) => x.balance === y.balance ? 0 : x.balance > y.balance ? -1 : 1);
-  const partyRows = (group, prefix, kind) => byOwed(group).map(({ party: p, balance }) => /* @__PURE__ */ jsx31(
+  const partyRows = (group, prefix, kind) => byOwed(group).map(({ party: p, balance }) => /* @__PURE__ */ jsx32(
     PartyRow,
     {
       testID: prefix + p.id,
@@ -27540,7 +28125,7 @@ function PartiesList({
     },
     p.id
   ));
-  return /* @__PURE__ */ jsxs22(
+  return /* @__PURE__ */ jsxs23(
     Shell,
     {
       id: "p1",
@@ -27559,35 +28144,36 @@ function PartiesList({
          * keypad beside a bottom navigation - cannot occur. P1.test.tsx
          * asserts both halves separately so neither can drift.
          */
-        /* @__PURE__ */ jsx31(BottomNav, { active: "parties", onSelect: onSelectTab, s, display })
+        /* @__PURE__ */ jsx32(BottomNav, { active: "parties", onSelect: onSelectTab, s, display })
       ),
       children: [
-        /* @__PURE__ */ jsxs22(Card, { testID: "p1-totals", display, title: s("p1.shopTotals"), children: [
-          /* @__PURE__ */ jsx31(
+        /* @__PURE__ */ jsxs23(Card, { testID: "p1-totals", display, title: s("p1.shopTotals"), children: [
+          /* @__PURE__ */ jsx32(
             Row,
             {
               testID: "p1-to-collect",
-              label: s("p1.toCollect"),
-              amount: primary.p7CreditOutstanding.value,
+              label: s(primary.p7CreditOutstanding.value < 0 ? "p1.advanceFromCustomers" : "p1.toCollect"),
+              amount: unsigned(primary.p7CreditOutstanding.value),
               display
             }
           ),
-          /* @__PURE__ */ jsx31(
+          /* @__PURE__ */ jsx32(
             Row,
             {
               testID: "p1-you-owe",
-              label: s("p1.youOwe"),
-              amount: primary.p8SupplierOutstanding.value,
+              label: s(primary.p8SupplierOutstanding.value < 0 ? "p1.advanceToSuppliers" : "p1.youOwe"),
+              amount: unsigned(primary.p8SupplierOutstanding.value),
               display
             }
           )
         ] }),
-        customers.length === 0 ? null : /* @__PURE__ */ jsx31(Card, { testID: "p1-customers", display, title: s("p1.customers"), children: partyRows(customers, "p1-customer-", "customer") }),
-        suppliers.length === 0 ? null : /* @__PURE__ */ jsx31(Card, { testID: "p1-suppliers", display, title: s("p1.suppliers"), children: partyRows(suppliers, "p1-supplier-", "supplier") })
+        customers.length === 0 ? null : /* @__PURE__ */ jsx32(Card, { testID: "p1-customers", display, title: s("p1.customers"), children: partyRows(customers, "p1-customer-", "customer") }),
+        suppliers.length === 0 ? null : /* @__PURE__ */ jsx32(Card, { testID: "p1-suppliers", display, title: s("p1.suppliers"), children: partyRows(suppliers, "p1-supplier-", "supplier") })
       ]
     }
   );
 }
+var unsigned = (amount) => amount < 0 ? subtract3(0, amount) : amount;
 function PartyRow({
   testID,
   partyId,
@@ -27600,7 +28186,7 @@ function PartyRow({
   onPress
 }) {
   const t = tokens(display);
-  return /* @__PURE__ */ jsxs22(
+  return /* @__PURE__ */ jsxs23(
     Pressable_default,
     {
       testID,
@@ -27622,9 +28208,9 @@ function PartyRow({
         borderBottomColor: t.color.border
       },
       children: [
-        /* @__PURE__ */ jsx31(View_default, { style: { marginRight: t.space.gutter }, children: /* @__PURE__ */ jsx31(Avatar, { partyId, name, display }) }),
-        /* @__PURE__ */ jsxs22(View_default, { style: { flexGrow: 1, flexShrink: 1, flexBasis: "40%", marginRight: t.space.sm }, children: [
-          /* @__PURE__ */ jsx31(
+        /* @__PURE__ */ jsx32(View_default, { style: { marginRight: t.space.gutter }, children: /* @__PURE__ */ jsx32(Avatar, { partyId, name, display }) }),
+        /* @__PURE__ */ jsxs23(View_default, { style: { flexGrow: 1, flexShrink: 1, flexBasis: "40%", marginRight: t.space.sm }, children: [
+          /* @__PURE__ */ jsx32(
             Text_default,
             {
               testID: testID + "-name",
@@ -27638,8 +28224,8 @@ function PartyRow({
               children: name
             }
           ),
-          today === 0 ? null : /* @__PURE__ */ jsxs22(View_default, { style: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" }, children: [
-            /* @__PURE__ */ jsx31(
+          today === 0 ? null : /* @__PURE__ */ jsxs23(View_default, { style: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" }, children: [
+            /* @__PURE__ */ jsx32(
               Text_default,
               {
                 ...t.bodyText,
@@ -27653,11 +28239,11 @@ function PartyRow({
                 children: s("p1.changedToday")
               }
             ),
-            /* @__PURE__ */ jsx31(Money, { testID: testID + "-today", amount: today, mode: display, size: "body", withSign: true, tone: "directional" })
+            /* @__PURE__ */ jsx32(Money, { testID: testID + "-today", amount: today, mode: display, size: "body", withSign: true, tone: "directional" })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs22(View_default, { style: { alignItems: "flex-end", marginLeft: "auto" }, children: [
-          /* @__PURE__ */ jsx31(
+        /* @__PURE__ */ jsxs23(View_default, { style: { alignItems: "flex-end", marginLeft: "auto" }, children: [
+          /* @__PURE__ */ jsx32(
             Text_default,
             {
               ...t.bodyText,
@@ -27670,13 +28256,13 @@ function PartyRow({
               children: s(balanceWord(kind, balance))
             }
           ),
-          /* @__PURE__ */ jsx31(
+          /* @__PURE__ */ jsx32(
             Money,
             {
               testID: testID + "-balance",
               amount: balance < 0 ? subtract3(0, balance) : balance,
               mode: display,
-              size: "figure"
+              size: "heading"
             }
           )
         ] })
@@ -27780,7 +28366,7 @@ function accountantCsv(language, v) {
 }
 
 // apps/mobile/src/components/PartyDetail.tsx
-import { Fragment as Fragment11, jsx as jsx32, jsxs as jsxs23 } from "react/jsx-runtime";
+import { Fragment as Fragment11, jsx as jsx33, jsxs as jsxs24 } from "react/jsx-runtime";
 function PartyDetail({
   id: id2,
   store,
@@ -27803,7 +28389,7 @@ function PartyDetail({
   const party = store.state.parties.find((p) => p.id === partyId);
   const entries = store.partyEntries(partyId);
   const signed = partyEffect;
-  return /* @__PURE__ */ jsx32(
+  return /* @__PURE__ */ jsx33(
     Shell,
     {
       id: id2,
@@ -27817,7 +28403,7 @@ function PartyDetail({
       emptyKey,
       onRetry,
       onBack,
-      footer: actions.length === 0 ? null : /* @__PURE__ */ jsx32(View_default, { style: { padding: t.space.sm }, children: actions.map((a) => /* @__PURE__ */ jsx32(
+      footer: actions.length === 0 ? null : /* @__PURE__ */ jsx33(View_default, { style: { padding: t.space.sm }, children: actions.map((a) => /* @__PURE__ */ jsx33(
         PrimaryButton,
         {
           testID: id2 + "-action-" + a.key,
@@ -27829,8 +28415,8 @@ function PartyDetail({
         },
         a.key
       )) }),
-      bodyHeader: /* @__PURE__ */ jsxs23(Fragment11, { children: [
-        party === void 0 ? null : /* @__PURE__ */ jsx32(Card, { testID: id2 + "-party", display, children: /* @__PURE__ */ jsx32(View_default, { style: { padding: t.space.md, backgroundColor: t.color.surface }, children: /* @__PURE__ */ jsx32(
+      bodyHeader: /* @__PURE__ */ jsxs24(Fragment11, { children: [
+        party === void 0 ? null : /* @__PURE__ */ jsx33(Card, { testID: id2 + "-party", display, children: /* @__PURE__ */ jsx33(View_default, { style: { padding: t.space.md, backgroundColor: t.color.surface }, children: /* @__PURE__ */ jsx33(
           Text_default,
           {
             testID: id2 + "-name",
@@ -27846,10 +28432,10 @@ function PartyDetail({
         ) }) }),
         extra
       ] }),
-      children: /* @__PURE__ */ jsx32(Card, { testID: id2 + "-ledger", display, title: s("p2.ledger"), children: entries.map((e3) => {
+      children: /* @__PURE__ */ jsx33(Card, { testID: id2 + "-ledger", display, title: s("p2.ledger"), children: entries.map((e3) => {
         const delta = signed(e3);
         const color = delta > 0 ? t.color.negative : t.color.positive;
-        return /* @__PURE__ */ jsxs23(
+        return /* @__PURE__ */ jsxs24(
           View_default,
           {
             testID: id2 + "-line-" + e3.id,
@@ -27865,7 +28451,7 @@ function PartyDetail({
               borderBottomColor: t.color.border
             },
             children: [
-              /* @__PURE__ */ jsx32(
+              /* @__PURE__ */ jsx33(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -27880,7 +28466,7 @@ function PartyDetail({
                   children: lineLabel(s, e3)
                 }
               ),
-              delta === 0 ? null : /* @__PURE__ */ jsx32(
+              delta === 0 ? null : /* @__PURE__ */ jsx33(
                 Text_default,
                 {
                   testID: id2 + "-line-" + e3.id + "-amount",
@@ -27905,7 +28491,7 @@ function PartyDetail({
 }
 
 // apps/mobile/src/screens/P2.tsx
-import { jsx as jsx33, jsxs as jsxs24 } from "react/jsx-runtime";
+import { jsx as jsx34, jsxs as jsxs25 } from "react/jsx-runtime";
 function CustomerDetail({
   store,
   partyId,
@@ -27937,8 +28523,8 @@ function CustomerDetail({
   const noPhone = whatsappNumber(party?.phone) === null;
   const balance = store.partyBalance(partyId);
   const limit = store.creditLimit(partyId);
-  const account = party === void 0 ? null : /* @__PURE__ */ jsxs24(Card, { testID: "p2-account", display, title: s("p2.share"), children: [
-    /* @__PURE__ */ jsx33(
+  const account = party === void 0 ? null : /* @__PURE__ */ jsxs25(Card, { testID: "p2-account", display, title: s("p2.share"), children: [
+    /* @__PURE__ */ jsx34(
       Row,
       {
         testID: "p2-change-today",
@@ -27948,7 +28534,7 @@ function CustomerDetail({
         directional: true
       }
     ),
-    /* @__PURE__ */ jsx33(
+    /* @__PURE__ */ jsx34(
       LinkRow,
       {
         testID: "p2-limit",
@@ -27958,7 +28544,7 @@ function CustomerDetail({
         onPress: onOpenCreditLimit
       }
     ),
-    balance > 0 ? /* @__PURE__ */ jsx33(
+    balance > 0 ? /* @__PURE__ */ jsx34(
       LinkRow,
       {
         testID: "p2-remind",
@@ -27968,8 +28554,8 @@ function CustomerDetail({
         onPress: onRemind
       }
     ) : null,
-    noPhone ? /* @__PURE__ */ jsxs24(View_default, { testID: "p2-phone", children: [
-      /* @__PURE__ */ jsx33(
+    noPhone ? /* @__PURE__ */ jsxs25(View_default, { testID: "p2-phone", children: [
+      /* @__PURE__ */ jsx34(
         Text_default,
         {
           maxFontSizeMultiplier: t.maxFontScale,
@@ -27985,7 +28571,7 @@ function CustomerDetail({
           children: s("p2.addPhone")
         }
       ),
-      /* @__PURE__ */ jsxs24(
+      /* @__PURE__ */ jsxs25(
         View_default,
         {
           testID: "p2-phone-row",
@@ -27997,7 +28583,7 @@ function CustomerDetail({
             paddingBottom: t.space.sm
           },
           children: [
-            /* @__PURE__ */ jsx33(
+            /* @__PURE__ */ jsx34(
               TextInput_default,
               {
                 testID: "p2-phone-input",
@@ -28033,7 +28619,7 @@ function CustomerDetail({
                 }
               }
             ),
-            /* @__PURE__ */ jsx33(
+            /* @__PURE__ */ jsx34(
               PrimaryButton,
               {
                 testID: "p2-phone-save",
@@ -28048,14 +28634,14 @@ function CustomerDetail({
         }
       )
     ] }) : null,
-    /* @__PURE__ */ jsx33(LinkRow, { testID: "p2-statement", label: s("p2.statement"), display, onPress: onShareStatement })
+    /* @__PURE__ */ jsx34(LinkRow, { testID: "p2-statement", label: s("p2.statement"), display, onPress: onShareStatement })
   ] });
   const actions = [
     // Item 5: "Collect" is the one primary; a new udhar sale is the quiet second.
     { key: "collect", labelKey: "act.collect", onPress: onRecordCollection, variant: "primary" },
     { key: "udhar", labelKey: "p2.newUdhar", onPress: onNewUdhar, variant: "tonal" }
   ];
-  return /* @__PURE__ */ jsx33(
+  return /* @__PURE__ */ jsx34(
     PartyDetail,
     {
       id: "p2",
@@ -28077,7 +28663,7 @@ function CustomerDetail({
 }
 
 // apps/mobile/src/screens/P3.tsx
-import { jsx as jsx34 } from "react/jsx-runtime";
+import { jsx as jsx35 } from "react/jsx-runtime";
 function SupplierDetail({
   store,
   partyId,
@@ -28093,7 +28679,7 @@ function SupplierDetail({
   const actions = [
     { key: "pay", labelKey: "p3.recordPayment", onPress: onRecordPayment }
   ];
-  return /* @__PURE__ */ jsx34(
+  return /* @__PURE__ */ jsx35(
     PartyDetail,
     {
       id: "p3",
@@ -28113,7 +28699,7 @@ function SupplierDetail({
 }
 
 // apps/mobile/src/screens/S1.tsx
-import { jsx as jsx35, jsxs as jsxs25 } from "react/jsx-runtime";
+import { jsx as jsx36, jsxs as jsxs26 } from "react/jsx-runtime";
 function Settings({
   store,
   status = "ready",
@@ -28152,7 +28738,7 @@ function Settings({
   const s = strings(language);
   const t = tokens(display);
   void store;
-  return /* @__PURE__ */ jsxs25(
+  return /* @__PURE__ */ jsxs26(
     Shell,
     {
       id: "s1",
@@ -28164,8 +28750,8 @@ function Settings({
       onBack,
       onRetry,
       children: [
-        /* @__PURE__ */ jsxs25(Card, { testID: "s1-shop-group", title: s("s1.group.shop"), display, children: [
-          /* @__PURE__ */ jsx35(
+        /* @__PURE__ */ jsxs26(Card, { testID: "s1-shop-group", title: s("s1.group.shop"), display, children: [
+          /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-shop",
@@ -28176,7 +28762,7 @@ function Settings({
               onPress: onOpenShop
             }
           ),
-          /* @__PURE__ */ jsx35(
+          /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-language",
@@ -28186,12 +28772,12 @@ function Settings({
               onPress: onOpenLanguage
             }
           ),
-          onOpenPlan === void 0 ? null : /* @__PURE__ */ jsx35(LinkRow, { testID: "s1-plan", label: s("s1.plan"), display, onPress: onOpenPlan }),
-          onOpenItems === void 0 ? null : /* @__PURE__ */ jsx35(LinkRow, { testID: "s1-items", label: s("s1.items"), display, onPress: onOpenItems }),
-          /* @__PURE__ */ jsx35(LinkRow, { testID: "s1-export", icon: "share", label: s("s1.export"), display, onPress: onOpenExport })
+          onOpenPlan === void 0 ? null : /* @__PURE__ */ jsx36(LinkRow, { testID: "s1-plan", label: s("s1.plan"), display, onPress: onOpenPlan }),
+          onOpenItems === void 0 ? null : /* @__PURE__ */ jsx36(LinkRow, { testID: "s1-items", label: s("s1.items"), display, onPress: onOpenItems }),
+          /* @__PURE__ */ jsx36(LinkRow, { testID: "s1-export", icon: "share", label: s("s1.export"), display, onPress: onOpenExport })
         ] }),
-        /* @__PURE__ */ jsxs25(Card, { testID: "s1-lock-group", title: s("s1.group.yourAccount"), display, children: [
-          /* @__PURE__ */ jsx35(
+        /* @__PURE__ */ jsxs26(Card, { testID: "s1-lock-group", title: s("s1.group.yourAccount"), display, children: [
+          /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-app-lock",
@@ -28202,7 +28788,7 @@ function Settings({
               onPress: onToggleAppLock
             }
           ),
-          appLockUnavailable ? /* @__PURE__ */ jsx35(
+          appLockUnavailable ? /* @__PURE__ */ jsx36(
             Text_default,
             {
               testID: "s1-app-lock-unavailable",
@@ -28218,7 +28804,7 @@ function Settings({
               children: s("s1.appLockNoScreenLock")
             }
           ) : null,
-          /* @__PURE__ */ jsx35(
+          /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-your-data",
@@ -28228,7 +28814,7 @@ function Settings({
               onPress: onOpenYourData
             }
           ),
-          onOpenDevices === void 0 ? null : /* @__PURE__ */ jsx35(
+          onOpenDevices === void 0 ? null : /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-devices",
@@ -28240,7 +28826,7 @@ function Settings({
             }
           )
         ] }),
-        onSignIn === void 0 && onLogOut === void 0 ? null : /* @__PURE__ */ jsx35(Card, { testID: "s1-account-group", title: s("s1.group.account"), display, children: onLogOut !== void 0 ? /* @__PURE__ */ jsx35(
+        onSignIn === void 0 && onLogOut === void 0 ? null : /* @__PURE__ */ jsx36(Card, { testID: "s1-account-group", title: s("s1.group.account"), display, children: onLogOut !== void 0 ? /* @__PURE__ */ jsx36(
           LinkRow,
           {
             testID: "s1-log-out",
@@ -28249,7 +28835,7 @@ function Settings({
             display,
             onPress: onLogOut
           }
-        ) : /* @__PURE__ */ jsx35(
+        ) : /* @__PURE__ */ jsx36(
           LinkRow,
           {
             testID: "s1-sign-in",
@@ -28260,8 +28846,8 @@ function Settings({
             })
           }
         ) }),
-        /* @__PURE__ */ jsxs25(Card, { testID: "s1-legal-group", title: s("s1.group.legal"), display, children: [
-          /* @__PURE__ */ jsx35(
+        /* @__PURE__ */ jsxs26(Card, { testID: "s1-legal-group", title: s("s1.group.legal"), display, children: [
+          /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-privacy",
@@ -28271,11 +28857,11 @@ function Settings({
               onPress: onOpenPrivacy
             }
           ),
-          /* @__PURE__ */ jsx35(LinkRow, { testID: "s1-about", icon: "info", label: s("s1.about"), display, onPress: onOpenAbout }),
-          /* @__PURE__ */ jsx35(LinkRow, { testID: "s1-help", icon: "alert", label: s("s1.help"), display, onPress: onOpenHelp })
+          /* @__PURE__ */ jsx36(LinkRow, { testID: "s1-about", icon: "info", label: s("s1.about"), display, onPress: onOpenAbout }),
+          /* @__PURE__ */ jsx36(LinkRow, { testID: "s1-help", icon: "alert", label: s("s1.help"), display, onPress: onOpenHelp })
         ] }),
-        /* @__PURE__ */ jsxs25(Card, { testID: "s1-danger-group", title: s("s1.group.danger"), display, children: [
-          /* @__PURE__ */ jsx35(
+        /* @__PURE__ */ jsxs26(Card, { testID: "s1-danger-group", title: s("s1.group.danger"), display, children: [
+          /* @__PURE__ */ jsx36(
             LinkRow,
             {
               testID: "s1-delete-account",
@@ -28286,7 +28872,7 @@ function Settings({
               onPress: onDeleteAccount
             }
           ),
-          /* @__PURE__ */ jsx35(
+          /* @__PURE__ */ jsx36(
             Text_default,
             {
               testID: "s1-delete-detail",
@@ -28309,7 +28895,7 @@ function Settings({
 }
 
 // apps/mobile/src/screens/S5.tsx
-import { jsx as jsx36, jsxs as jsxs26 } from "react/jsx-runtime";
+import { jsx as jsx37, jsxs as jsxs27 } from "react/jsx-runtime";
 function About({
   store,
   status = "ready",
@@ -28332,7 +28918,7 @@ function About({
   const s = strings(language);
   const t = tokens(display);
   void store;
-  return /* @__PURE__ */ jsxs26(
+  return /* @__PURE__ */ jsxs27(
     Shell,
     {
       id: "s5",
@@ -28344,8 +28930,8 @@ function About({
       onBack,
       onRetry,
       children: [
-        /* @__PURE__ */ jsxs26(Card, { testID: "s5-app-group", display, children: [
-          version === null || version === "" ? null : /* @__PURE__ */ jsxs26(
+        /* @__PURE__ */ jsxs27(Card, { testID: "s5-app-group", display, children: [
+          version === null || version === "" ? null : /* @__PURE__ */ jsxs27(
             View_default,
             {
               testID: "s5-version",
@@ -28358,7 +28944,7 @@ function About({
                 justifyContent: "center"
               },
               children: [
-                /* @__PURE__ */ jsx36(
+                /* @__PURE__ */ jsx37(
                   Text_default,
                   {
                     maxFontSizeMultiplier: t.maxFontScale,
@@ -28371,7 +28957,7 @@ function About({
                     children: s("s5.version")
                   }
                 ),
-                /* @__PURE__ */ jsx36(
+                /* @__PURE__ */ jsx37(
                   Text_default,
                   {
                     testID: "s5-version-value",
@@ -28389,7 +28975,7 @@ function About({
               ]
             }
           ),
-          /* @__PURE__ */ jsx36(
+          /* @__PURE__ */ jsx37(
             LinkRow,
             {
               testID: "s5-privacy",
@@ -28399,7 +28985,7 @@ function About({
               onPress: onOpenPrivacyPolicy
             }
           ),
-          /* @__PURE__ */ jsx36(
+          /* @__PURE__ */ jsx37(
             LinkRow,
             {
               testID: "s5-terms",
@@ -28409,7 +28995,7 @@ function About({
               onPress: onOpenTerms
             }
           ),
-          /* @__PURE__ */ jsx36(
+          /* @__PURE__ */ jsx37(
             LinkRow,
             {
               testID: "s5-licences",
@@ -28420,7 +29006,7 @@ function About({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx36(Card, { testID: "s5-legal-group", display, children: /* @__PURE__ */ jsx36(
+        /* @__PURE__ */ jsx37(Card, { testID: "s5-legal-group", display, children: /* @__PURE__ */ jsx37(
           Text_default,
           {
             testID: "s5-not-tax",
@@ -28435,8 +29021,8 @@ function About({
             children: s("s5.notTax")
           }
         ) }),
-        deleteAccountUrl === null ? null : /* @__PURE__ */ jsxs26(Card, { testID: "s5-web-delete-group", display, children: [
-          /* @__PURE__ */ jsx36(
+        deleteAccountUrl === null ? null : /* @__PURE__ */ jsxs27(Card, { testID: "s5-web-delete-group", display, children: [
+          /* @__PURE__ */ jsx37(
             Text_default,
             {
               maxFontSizeMultiplier: t.maxFontScale,
@@ -28451,7 +29037,7 @@ function About({
               children: s("s5.webDelete")
             }
           ),
-          /* @__PURE__ */ jsx36(
+          /* @__PURE__ */ jsx37(
             LinkRow,
             {
               testID: "s5-web-delete",
@@ -28468,7 +29054,7 @@ function About({
 }
 
 // apps/mobile/src/screens/S6.tsx
-import { jsx as jsx37, jsxs as jsxs27 } from "react/jsx-runtime";
+import { jsx as jsx38, jsxs as jsxs28 } from "react/jsx-runtime";
 function Help({
   store,
   status = "ready",
@@ -28482,7 +29068,7 @@ function Help({
   const s = strings(language);
   const t = tokens(display);
   void store;
-  return /* @__PURE__ */ jsx37(
+  return /* @__PURE__ */ jsx38(
     Shell,
     {
       id: "s6",
@@ -28493,7 +29079,7 @@ function Help({
       empty: false,
       onBack,
       onRetry,
-      children: /* @__PURE__ */ jsx37(Card, { testID: "s6-grievance-group", display, title: s("s6.grievance"), children: grievanceOfficer === null ? /* @__PURE__ */ jsx37(
+      children: /* @__PURE__ */ jsx38(Card, { testID: "s6-grievance-group", display, title: s("s6.grievance"), children: grievanceOfficer === null ? /* @__PURE__ */ jsx38(
         View_default,
         {
           testID: "s6-pending-block",
@@ -28501,7 +29087,7 @@ function Help({
             paddingHorizontal: t.space.md,
             paddingBottom: t.space.md
           },
-          children: /* @__PURE__ */ jsx37(
+          children: /* @__PURE__ */ jsx38(
             Text_default,
             {
               testID: "s6-pending",
@@ -28516,7 +29102,7 @@ function Help({
             }
           )
         }
-      ) : /* @__PURE__ */ jsxs27(
+      ) : /* @__PURE__ */ jsxs28(
         View_default,
         {
           testID: "s6-officer",
@@ -28525,7 +29111,7 @@ function Help({
             paddingBottom: t.space.md
           },
           children: [
-            /* @__PURE__ */ jsx37(
+            /* @__PURE__ */ jsx38(
               Text_default,
               {
                 testID: "s6-officer-name",
@@ -28540,7 +29126,7 @@ function Help({
                 children: grievanceOfficer.name
               }
             ),
-            /* @__PURE__ */ jsx37(
+            /* @__PURE__ */ jsx38(
               Text_default,
               {
                 testID: "s6-officer-email",
@@ -28564,7 +29150,7 @@ function Help({
 }
 
 // apps/mobile/src/screens/S11.tsx
-import { jsx as jsx38 } from "react/jsx-runtime";
+import { jsx as jsx39 } from "react/jsx-runtime";
 function AppLocked({
   store,
   status = "ready",
@@ -28578,7 +29164,7 @@ function AppLocked({
   const s = strings(language);
   const t = tokens(display);
   void store;
-  return /* @__PURE__ */ jsx38(
+  return /* @__PURE__ */ jsx39(
     Shell,
     {
       id: "s11",
@@ -28588,7 +29174,7 @@ function AppLocked({
       titleKey: "s11.title",
       empty: false,
       onRetry,
-      footer: /* @__PURE__ */ jsx38(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx38(
+      footer: /* @__PURE__ */ jsx39(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx39(
         PrimaryButton,
         {
           testID: "s11-unlock",
@@ -28597,7 +29183,7 @@ function AppLocked({
           display
         }
       ) }),
-      children: /* @__PURE__ */ jsx38(Card, { testID: "s11-cover", display, children: /* @__PURE__ */ jsx38(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx38(
+      children: /* @__PURE__ */ jsx39(Card, { testID: "s11-cover", display, children: /* @__PURE__ */ jsx39(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx39(
         Text_default,
         {
           testID: "s11-sentence",
@@ -28616,7 +29202,7 @@ function AppLocked({
 }
 
 // apps/mobile/src/screens/S2.tsx
-import { jsx as jsx39, jsxs as jsxs28 } from "react/jsx-runtime";
+import { jsx as jsx40, jsxs as jsxs29 } from "react/jsx-runtime";
 function ShopProfile({
   store,
   status = "ready",
@@ -28632,7 +29218,7 @@ function ShopProfile({
   const s = strings(language);
   const dayStartsAt = store.state.dayStartsAt ?? "00:00";
   const unnamed = shopName === null || shopName === "";
-  return /* @__PURE__ */ jsxs28(
+  return /* @__PURE__ */ jsxs29(
     Shell,
     {
       id: "s2",
@@ -28644,7 +29230,7 @@ function ShopProfile({
       onBack,
       onRetry,
       children: [
-        /* @__PURE__ */ jsx39(Card, { testID: "s2-shop", display, children: /* @__PURE__ */ jsxs28(
+        /* @__PURE__ */ jsx40(Card, { testID: "s2-shop", display, children: /* @__PURE__ */ jsxs29(
           View_default,
           {
             style: {
@@ -28652,7 +29238,7 @@ function ShopProfile({
               backgroundColor: t.color.surface
             },
             children: [
-              /* @__PURE__ */ jsx39(
+              /* @__PURE__ */ jsx40(
                 Text_default,
                 {
                   testID: "s2-name-label",
@@ -28666,7 +29252,7 @@ function ShopProfile({
                   children: s("s2.name")
                 }
               ),
-              /* @__PURE__ */ jsx39(
+              /* @__PURE__ */ jsx40(
                 Text_default,
                 {
                   testID: "s2-name",
@@ -28684,8 +29270,8 @@ function ShopProfile({
             ]
           }
         ) }),
-        onSelectDayStart && /* @__PURE__ */ jsxs28(Card, { testID: "s2-day-start-card", display, children: [
-          /* @__PURE__ */ jsx39(
+        onSelectDayStart && /* @__PURE__ */ jsxs29(Card, { testID: "s2-day-start-card", display, children: [
+          /* @__PURE__ */ jsx40(
             Text_default,
             {
               testID: "s2-day-start-label",
@@ -28701,14 +29287,14 @@ function ShopProfile({
               children: s("s2.dayStart")
             }
           ),
-          /* @__PURE__ */ jsxs28(
+          /* @__PURE__ */ jsxs29(
             View_default,
             {
               accessibilityRole: "radiogroup",
               accessibilityLabel: s("s2.dayStart"),
               style: { paddingBottom: t.space.sm, backgroundColor: t.color.surface },
               children: [
-                /* @__PURE__ */ jsx39(
+                /* @__PURE__ */ jsx40(
                   Segmented,
                   {
                     testID: "s2-day-start",
@@ -28718,7 +29304,7 @@ function ShopProfile({
                     display
                   }
                 ),
-                /* @__PURE__ */ jsx39(
+                /* @__PURE__ */ jsx40(
                   Text_default,
                   {
                     testID: "s2-day-start-note",
@@ -28737,14 +29323,14 @@ function ShopProfile({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx39(Card, { testID: "s2-note-card", display, children: /* @__PURE__ */ jsx39(
+        /* @__PURE__ */ jsx40(Card, { testID: "s2-note-card", display, children: /* @__PURE__ */ jsx40(
           View_default,
           {
             style: {
               padding: t.space.md,
               backgroundColor: t.color.surface
             },
-            children: /* @__PURE__ */ jsx39(
+            children: /* @__PURE__ */ jsx40(
               Text_default,
               {
                 testID: "s2-note",
@@ -28766,7 +29352,7 @@ function ShopProfile({
 }
 
 // apps/mobile/src/components/TextSizePicker.tsx
-import { jsx as jsx40, jsxs as jsxs29 } from "react/jsx-runtime";
+import { jsx as jsx41, jsxs as jsxs30 } from "react/jsx-runtime";
 var LABEL = {
   normal: "textSize.normal",
   large: "textSize.large",
@@ -28775,8 +29361,8 @@ var LABEL = {
 function TextSizePicker({ testID, s, value, onChange, display = "comfort", sample }) {
   const t = tokens(display);
   const p = tokens(display, value);
-  return /* @__PURE__ */ jsxs29(View_default, { testID, children: [
-    /* @__PURE__ */ jsx40(
+  return /* @__PURE__ */ jsxs30(View_default, { testID, children: [
+    /* @__PURE__ */ jsx41(
       Text_default,
       {
         testID: testID + "-title",
@@ -28792,17 +29378,18 @@ function TextSizePicker({ testID, s, value, onChange, display = "comfort", sampl
         children: s("textSize.title")
       }
     ),
-    /* @__PURE__ */ jsx40(
+    /* @__PURE__ */ jsx41(
       Segmented,
       {
         testID: testID + "-options",
         options: TEXT_SIZES.map((key) => ({ key, label: s(LABEL[key]) })),
         value,
         onChange,
-        display
+        display,
+        columns: 2
       }
     ),
-    /* @__PURE__ */ jsxs29(
+    /* @__PURE__ */ jsxs30(
       View_default,
       {
         testID: testID + "-preview",
@@ -28816,7 +29403,7 @@ function TextSizePicker({ testID, s, value, onChange, display = "comfort", sampl
           backgroundColor: t.color.surface
         },
         children: [
-          /* @__PURE__ */ jsx40(
+          /* @__PURE__ */ jsx41(
             Text_default,
             {
               maxFontSizeMultiplier: t.maxFontScale,
@@ -28829,7 +29416,7 @@ function TextSizePicker({ testID, s, value, onChange, display = "comfort", sampl
               children: s("textSize.preview")
             }
           ),
-          /* @__PURE__ */ jsx40(
+          /* @__PURE__ */ jsx41(
             Text_default,
             {
               testID: testID + "-preview-label",
@@ -28843,11 +29430,11 @@ function TextSizePicker({ testID, s, value, onChange, display = "comfort", sampl
               children: s("box.sales")
             }
           ),
-          /* @__PURE__ */ jsx40(Money, { testID: testID + "-preview-amount", amount: sample, mode: display, size: "figure", textSize: value })
+          /* @__PURE__ */ jsx41(Money, { testID: testID + "-preview-amount", amount: sample, mode: display, size: "figure", textSize: value })
         ]
       }
     ),
-    /* @__PURE__ */ jsx40(
+    /* @__PURE__ */ jsx41(
       Text_default,
       {
         testID: testID + "-hint",
@@ -28867,7 +29454,7 @@ function TextSizePicker({ testID, s, value, onChange, display = "comfort", sampl
 }
 
 // apps/mobile/src/screens/S3.tsx
-import { jsx as jsx41, jsxs as jsxs30 } from "react/jsx-runtime";
+import { jsx as jsx42, jsxs as jsxs31 } from "react/jsx-runtime";
 var LANGUAGES2 = [
   { key: "en", autonym: "English" },
   { key: "hi", autonym: "\u0939\u093F\u0928\u094D\u0926\u0940" },
@@ -28898,7 +29485,7 @@ function LanguageSettings({
   const s = strings(language);
   void store;
   const chosenLanguage = language === "longest" ? null : language;
-  const question = (testID, label2) => /* @__PURE__ */ jsx41(
+  const question = (testID, label2) => /* @__PURE__ */ jsx42(
     Text_default,
     {
       testID,
@@ -28914,7 +29501,7 @@ function LanguageSettings({
       children: label2
     }
   );
-  return /* @__PURE__ */ jsxs30(
+  return /* @__PURE__ */ jsxs31(
     Shell,
     {
       id: "s3",
@@ -28926,15 +29513,15 @@ function LanguageSettings({
       onBack,
       onRetry,
       children: [
-        /* @__PURE__ */ jsxs30(Card, { testID: "s3-language-card", display, children: [
+        /* @__PURE__ */ jsxs31(Card, { testID: "s3-language-card", display, children: [
           question("s3-language-label", s("s3.language")),
-          /* @__PURE__ */ jsx41(
+          /* @__PURE__ */ jsx42(
             View_default,
             {
               accessibilityRole: "radiogroup",
               accessibilityLabel: s("s3.language"),
               style: { paddingBottom: t.space.sm, backgroundColor: t.color.surface },
-              children: /* @__PURE__ */ jsx41(
+              children: /* @__PURE__ */ jsx42(
                 Segmented,
                 {
                   testID: "s3-language",
@@ -28947,15 +29534,15 @@ function LanguageSettings({
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs30(Card, { testID: "s3-display-card", display, children: [
+        /* @__PURE__ */ jsxs31(Card, { testID: "s3-display-card", display, children: [
           question("s3-display-label", s("s3.display")),
-          /* @__PURE__ */ jsx41(
+          /* @__PURE__ */ jsx42(
             View_default,
             {
               accessibilityRole: "radiogroup",
               accessibilityLabel: s("s3.display"),
               style: { paddingBottom: t.space.sm, backgroundColor: t.color.surface },
-              children: /* @__PURE__ */ jsx41(
+              children: /* @__PURE__ */ jsx42(
                 Segmented,
                 {
                   testID: "s3-display",
@@ -28968,13 +29555,13 @@ function LanguageSettings({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx41(Card, { testID: "s3-text-size-card", display, children: /* @__PURE__ */ jsx41(
+        /* @__PURE__ */ jsx42(Card, { testID: "s3-text-size-card", display, children: /* @__PURE__ */ jsx42(
           View_default,
           {
             accessibilityRole: "radiogroup",
             accessibilityLabel: s("textSize.title"),
             style: { paddingBottom: t.space.sm, backgroundColor: t.color.surface },
-            children: /* @__PURE__ */ jsx41(
+            children: /* @__PURE__ */ jsx42(
               TextSizePicker,
               {
                 testID: "s3-text-size",
@@ -28993,7 +29580,7 @@ function LanguageSettings({
 }
 
 // apps/mobile/src/screens/S7.tsx
-import { jsx as jsx42, jsxs as jsxs31 } from "react/jsx-runtime";
+import { jsx as jsx43, jsxs as jsxs32 } from "react/jsx-runtime";
 function DeleteAccount({
   store,
   status = "ready",
@@ -29008,7 +29595,7 @@ function DeleteAccount({
   const t = tokens(display);
   const s = strings(language);
   void store;
-  return /* @__PURE__ */ jsx42(
+  return /* @__PURE__ */ jsx43(
     Shell,
     {
       id: "s7",
@@ -29019,7 +29606,7 @@ function DeleteAccount({
       empty: false,
       onBack,
       onRetry,
-      footer: /* @__PURE__ */ jsx42(
+      footer: /* @__PURE__ */ jsx43(
         PrimaryButton,
         {
           testID: "s7-continue",
@@ -29030,8 +29617,8 @@ function DeleteAccount({
           size: "lg"
         }
       ),
-      children: /* @__PURE__ */ jsx42(View_default, { style: { flexGrow: 1, justifyContent: "center" }, children: /* @__PURE__ */ jsx42(Card, { testID: "s7-what-group", display, children: /* @__PURE__ */ jsxs31(View_default, { style: { padding: t.space.md }, children: [
-        /* @__PURE__ */ jsx42(
+      children: /* @__PURE__ */ jsx43(View_default, { style: { flexGrow: 1, justifyContent: "center" }, children: /* @__PURE__ */ jsx43(Card, { testID: "s7-what-group", display, children: /* @__PURE__ */ jsxs32(View_default, { style: { padding: t.space.md }, children: [
+        /* @__PURE__ */ jsx43(
           Text_default,
           {
             testID: "s7-what",
@@ -29045,7 +29632,7 @@ function DeleteAccount({
             children: s("s7.what")
           }
         ),
-        /* @__PURE__ */ jsx42(
+        /* @__PURE__ */ jsx43(
           Text_default,
           {
             testID: "s7-grace",
@@ -29066,7 +29653,7 @@ function DeleteAccount({
 }
 
 // apps/mobile/src/screens/S8.tsx
-import { Fragment as Fragment12, jsx as jsx43, jsxs as jsxs32 } from "react/jsx-runtime";
+import { Fragment as Fragment12, jsx as jsx44, jsxs as jsxs33 } from "react/jsx-runtime";
 var bodyText = (t, colour) => ({
   fontFamily: t.font.regular,
   fontSize: t.type.body,
@@ -29093,7 +29680,7 @@ function ConfirmDelete({
   const t = tokens(display);
   const s = strings(language);
   if (outcome) {
-    return /* @__PURE__ */ jsx43(
+    return /* @__PURE__ */ jsx44(
       Shell,
       {
         id: "s8",
@@ -29104,7 +29691,7 @@ function ConfirmDelete({
         empty: false,
         onBack: onDone,
         onRetry,
-        footer: /* @__PURE__ */ jsx43(
+        footer: /* @__PURE__ */ jsx44(
           PrimaryButton,
           {
             testID: "s8-done",
@@ -29115,9 +29702,9 @@ function ConfirmDelete({
             size: "xl"
           }
         ),
-        children: /* @__PURE__ */ jsx43(View_default, { style: { flexGrow: 1, justifyContent: "center" }, children: /* @__PURE__ */ jsx43(Card, { testID: "s8-outcome", display, children: /* @__PURE__ */ jsx43(View_default, { style: { padding: t.space.md }, children: outcome.kind === "scheduled" ? /* @__PURE__ */ jsxs32(Fragment12, { children: [
-          /* @__PURE__ */ jsx43(Text_default, { testID: "s8-scheduled", maxFontSizeMultiplier: t.maxFontScale, style: bodyText(t, t.color.ink), children: s("s8.scheduled") }),
-          /* @__PURE__ */ jsx43(
+        children: /* @__PURE__ */ jsx44(View_default, { style: { flexGrow: 1, justifyContent: "center" }, children: /* @__PURE__ */ jsx44(Card, { testID: "s8-outcome", display, children: /* @__PURE__ */ jsx44(View_default, { style: { padding: t.space.md }, children: outcome.kind === "scheduled" ? /* @__PURE__ */ jsxs33(Fragment12, { children: [
+          /* @__PURE__ */ jsx44(Text_default, { testID: "s8-scheduled", maxFontSizeMultiplier: t.maxFontScale, style: bodyText(t, t.color.ink), children: s("s8.scheduled") }),
+          /* @__PURE__ */ jsx44(
             Text_default,
             {
               maxFontSizeMultiplier: t.maxFontScale,
@@ -29125,7 +29712,7 @@ function ConfirmDelete({
               children: s("s8.erasesOn")
             }
           ),
-          /* @__PURE__ */ jsx43(
+          /* @__PURE__ */ jsx44(
             Text_default,
             {
               testID: "s8-erases-at",
@@ -29135,7 +29722,7 @@ function ConfirmDelete({
               children: outcome.erasesAt.slice(0, 10)
             }
           ),
-          /* @__PURE__ */ jsx43(
+          /* @__PURE__ */ jsx44(
             Text_default,
             {
               testID: "s8-phone-wiped",
@@ -29144,12 +29731,12 @@ function ConfirmDelete({
               children: s("s8.phoneWiped")
             }
           )
-        ] }) : /* @__PURE__ */ jsx43(Text_default, { testID: "s8-local-done", maxFontSizeMultiplier: t.maxFontScale, style: bodyText(t, t.color.ink), children: s("s8.localDone") }) }) }) })
+        ] }) : /* @__PURE__ */ jsx44(Text_default, { testID: "s8-local-done", maxFontSizeMultiplier: t.maxFontScale, style: bodyText(t, t.color.ink), children: s("s8.localDone") }) }) }) })
       }
     );
   }
   const outstanding = store.primary().p7CreditOutstanding.value;
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     Shell,
     {
       id: "s8",
@@ -29169,8 +29756,8 @@ function ConfirmDelete({
          * the largest target on the screen, which is the point of the ordering: it
          * comes FIRST, under the thumb, before the other one.
          */
-        /* @__PURE__ */ jsxs32(View_default, { testID: "s8-actions", children: [
-          /* @__PURE__ */ jsx43(
+        /* @__PURE__ */ jsxs33(View_default, { testID: "s8-actions", children: [
+          /* @__PURE__ */ jsx44(
             PrimaryButton,
             {
               testID: "s8-cancel",
@@ -29181,7 +29768,7 @@ function ConfirmDelete({
               size: "xl"
             }
           ),
-          /* @__PURE__ */ jsx43(
+          /* @__PURE__ */ jsx44(
             PrimaryButton,
             {
               testID: "s8-confirm",
@@ -29194,9 +29781,9 @@ function ConfirmDelete({
           )
         ] })
       ),
-      children: /* @__PURE__ */ jsxs32(View_default, { style: { flexGrow: 1, justifyContent: "center" }, children: [
-        /* @__PURE__ */ jsx43(Card, { testID: "s8-what-group", display, children: /* @__PURE__ */ jsxs32(View_default, { style: { padding: t.space.md }, children: [
-          /* @__PURE__ */ jsx43(
+      children: /* @__PURE__ */ jsxs33(View_default, { style: { flexGrow: 1, justifyContent: "center" }, children: [
+        /* @__PURE__ */ jsx44(Card, { testID: "s8-what-group", display, children: /* @__PURE__ */ jsxs33(View_default, { style: { padding: t.space.md }, children: [
+          /* @__PURE__ */ jsx44(
             Text_default,
             {
               testID: "s8-what",
@@ -29210,7 +29797,7 @@ function ConfirmDelete({
               children: s("s7.what")
             }
           ),
-          /* @__PURE__ */ jsx43(
+          /* @__PURE__ */ jsx44(
             Text_default,
             {
               testID: signedIn ? "s8-phone-now" : "s8-local-only",
@@ -29220,8 +29807,8 @@ function ConfirmDelete({
             }
           )
         ] }) }),
-        outstanding > 0 ? /* @__PURE__ */ jsx43(Card, { testID: "s8-owed-group", display, children: /* @__PURE__ */ jsxs32(View_default, { style: { padding: t.space.md }, children: [
-          /* @__PURE__ */ jsx43(
+        outstanding > 0 ? /* @__PURE__ */ jsx44(Card, { testID: "s8-owed-group", display, children: /* @__PURE__ */ jsxs33(View_default, { style: { padding: t.space.md }, children: [
+          /* @__PURE__ */ jsx44(
             Text_default,
             {
               testID: "s8-owed",
@@ -29235,7 +29822,7 @@ function ConfirmDelete({
               children: s("s8.owed")
             }
           ),
-          /* @__PURE__ */ jsx43(View_default, { style: { marginTop: t.space.sm }, children: /* @__PURE__ */ jsx43(
+          /* @__PURE__ */ jsx44(View_default, { style: { marginTop: t.space.sm }, children: /* @__PURE__ */ jsx44(
             Money,
             {
               testID: "s8-owed-amount",
@@ -29252,7 +29839,7 @@ function ConfirmDelete({
 }
 
 // apps/mobile/src/components/ReportParts.tsx
-import { jsx as jsx44, jsxs as jsxs33 } from "react/jsx-runtime";
+import { jsx as jsx45, jsxs as jsxs34 } from "react/jsx-runtime";
 var partyName = (store, partyId) => store.state.parties.find((p) => p.id === partyId)?.name ?? partyId;
 var reasonText = (reason, s) => reason !== void 0 && reason in STRINGS ? " \xB7 " + s(reason) : "";
 function Reading({
@@ -29262,7 +29849,7 @@ function Reading({
   display
 }) {
   const t = tokens(display);
-  return /* @__PURE__ */ jsxs33(
+  return /* @__PURE__ */ jsxs34(
     View_default,
     {
       testID,
@@ -29278,7 +29865,7 @@ function Reading({
         borderBottomColor: t.color.border
       },
       children: [
-        /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx45(
           Text_default,
           {
             maxFontSizeMultiplier: t.maxFontScale,
@@ -29294,7 +29881,7 @@ function Reading({
             children: label2
           }
         ),
-        /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx45(
           Text_default,
           {
             testID: testID + "-value",
@@ -29318,7 +29905,7 @@ function Note({
   display
 }) {
   const t = tokens(display);
-  return /* @__PURE__ */ jsx44(
+  return /* @__PURE__ */ jsx45(
     View_default,
     {
       style: {
@@ -29327,7 +29914,7 @@ function Note({
         paddingBottom: t.space.md,
         backgroundColor: t.color.surface
       },
-      children: /* @__PURE__ */ jsx44(
+      children: /* @__PURE__ */ jsx45(
         Text_default,
         {
           testID,
@@ -29353,7 +29940,7 @@ function Gate({
 }) {
   const t = tokens(display);
   if (gated.available) return null;
-  return /* @__PURE__ */ jsxs33(
+  return /* @__PURE__ */ jsxs34(
     View_default,
     {
       testID,
@@ -29365,7 +29952,7 @@ function Gate({
         borderBottomColor: t.color.border
       },
       children: [
-        /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx45(
           Text_default,
           {
             maxFontSizeMultiplier: t.maxFontScale,
@@ -29378,7 +29965,7 @@ function Gate({
             children: label2
           }
         ),
-        /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx45(
           Text_default,
           {
             testID: testID + "-gate",
@@ -29398,7 +29985,7 @@ function Gate({
 }
 
 // apps/mobile/src/components/BasicReports.tsx
-import { Fragment as Fragment13, jsx as jsx45, jsxs as jsxs34 } from "react/jsx-runtime";
+import { Fragment as Fragment13, jsx as jsx46, jsxs as jsxs35 } from "react/jsx-runtime";
 var DUES_PARTIES_SHOWN = 5;
 var CASH_CHECK_DAYS_SHOWN = 7;
 function DuesCard({
@@ -29410,8 +29997,8 @@ function DuesCard({
   s,
   display
 }) {
-  return /* @__PURE__ */ jsx45(Card, { testID, title: s(titleKey), display, children: dues.parties.length === 0 ? /* @__PURE__ */ jsx45(Note, { testID: testID + "-none", text: s(noneKey), display }) : /* @__PURE__ */ jsxs34(Fragment13, { children: [
-    DUE_AGE_BUCKETS.map((_, i) => /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsx46(Card, { testID, title: s(titleKey), display, children: dues.parties.length === 0 ? /* @__PURE__ */ jsx46(Note, { testID: testID + "-none", text: s(noneKey), display }) : /* @__PURE__ */ jsxs35(Fragment13, { children: [
+    DUE_AGE_BUCKETS.map((_, i) => /* @__PURE__ */ jsx46(
       Row,
       {
         testID: `${testID}-bucket-${i}`,
@@ -29421,7 +30008,7 @@ function DuesCard({
       },
       i
     )),
-    dues.parties.slice(0, DUES_PARTIES_SHOWN).map((p) => /* @__PURE__ */ jsx45(
+    dues.parties.slice(0, DUES_PARTIES_SHOWN).map((p) => /* @__PURE__ */ jsx46(
       Row,
       {
         testID: `${testID}-party-${p.partyId}`,
@@ -29431,7 +30018,7 @@ function DuesCard({
       },
       p.partyId
     )),
-    /* @__PURE__ */ jsx45(Note, { testID: testID + "-note", text: s("rep.dues.note"), display })
+    /* @__PURE__ */ jsx46(Note, { testID: testID + "-note", text: s("rep.dues.note"), display })
   ] }) });
 }
 function MonthCard({
@@ -29441,9 +30028,9 @@ function MonthCard({
   s,
   display
 }) {
-  const row = (id2, key, amount, directional = false) => /* @__PURE__ */ jsx45(Row, { testID: `${testID}-${id2}`, label: s(key), amount, directional, display });
-  return /* @__PURE__ */ jsxs34(Card, { testID, title: s(titleKey), display, children: [
-    /* @__PURE__ */ jsx45(Reading, { testID: testID + "-closed", label: s("r1.daysClosed"), value: String(m2.closedDays), display }),
+  const row = (id2, key, amount, directional = false) => /* @__PURE__ */ jsx46(Row, { testID: `${testID}-${id2}`, label: s(key), amount, directional, display });
+  return /* @__PURE__ */ jsxs35(Card, { testID, title: s(titleKey), display, children: [
+    /* @__PURE__ */ jsx46(Reading, { testID: testID + "-closed", label: s("r1.daysClosed"), value: String(m2.closedDays), display }),
     row("net-sales", "rep.month.netSales", m2.netSales),
     row("cash", "rep.month.cash", m2.cashSales),
     row("upi", "rep.month.upi", m2.upiSales),
@@ -29453,23 +30040,23 @@ function MonthCard({
     row("profit", "rep.month.profit", m2.estimatedProfit, true),
     row("taken-home", "rep.month.takenHome", m2.withdrawals),
     row("left", "rep.month.left", m2.profitLeftInShop, true),
-    /* @__PURE__ */ jsx45(Note, { testID: testID + "-note", text: s("rep.month.note"), display })
+    /* @__PURE__ */ jsx46(Note, { testID: testID + "-note", text: s("rep.month.note"), display })
   ] });
 }
 function BasicReportCards({ store, s, display }) {
   const b = store.basicReports();
   const c = b.cashChecks;
   const of = (n) => fill(s("r1.ofDays"), { n, w: c.days.length });
-  return /* @__PURE__ */ jsxs34(Fragment13, { children: [
-    /* @__PURE__ */ jsx45(DuesCard, { testID: "r1-dues", titleKey: "rep.dues.title", noneKey: "rep.dues.none", dues: b.customerDues, store, s, display }),
-    /* @__PURE__ */ jsx45(DuesCard, { testID: "r1-owe", titleKey: "rep.owe.title", noneKey: "rep.owe.none", dues: b.supplierDues, store, s, display }),
-    /* @__PURE__ */ jsx45(MonthCard, { testID: "r1-month", titleKey: "rep.month.this", m: b.months[0], s, display }),
-    b.months[1] === void 0 ? null : /* @__PURE__ */ jsx45(MonthCard, { testID: "r1-last-month", titleKey: "rep.month.last", m: b.months[1], s, display }),
-    /* @__PURE__ */ jsxs34(Card, { testID: "r1-cash", title: s("rep.cash.title"), display, children: [
-      /* @__PURE__ */ jsx45(Reading, { testID: "r1-cash-balanced", label: s("rep.cash.balanced"), value: of(c.balancedDays), display }),
-      /* @__PURE__ */ jsx45(Reading, { testID: "r1-cash-short", label: s("rep.cash.short"), value: of(c.shortDays), display }),
-      /* @__PURE__ */ jsx45(Reading, { testID: "r1-cash-extra", label: s("rep.cash.extra"), value: of(c.extraDays), display }),
-      c.days.slice(0, CASH_CHECK_DAYS_SHOWN).map((d) => /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsxs35(Fragment13, { children: [
+    /* @__PURE__ */ jsx46(DuesCard, { testID: "r1-dues", titleKey: "rep.dues.title", noneKey: "rep.dues.none", dues: b.customerDues, store, s, display }),
+    /* @__PURE__ */ jsx46(DuesCard, { testID: "r1-owe", titleKey: "rep.owe.title", noneKey: "rep.owe.none", dues: b.supplierDues, store, s, display }),
+    /* @__PURE__ */ jsx46(MonthCard, { testID: "r1-month", titleKey: "rep.month.this", m: b.months[0], s, display }),
+    b.months[1] === void 0 ? null : /* @__PURE__ */ jsx46(MonthCard, { testID: "r1-last-month", titleKey: "rep.month.last", m: b.months[1], s, display }),
+    /* @__PURE__ */ jsxs35(Card, { testID: "r1-cash", title: s("rep.cash.title"), display, children: [
+      /* @__PURE__ */ jsx46(Reading, { testID: "r1-cash-balanced", label: s("rep.cash.balanced"), value: of(c.balancedDays), display }),
+      /* @__PURE__ */ jsx46(Reading, { testID: "r1-cash-short", label: s("rep.cash.short"), value: of(c.shortDays), display }),
+      /* @__PURE__ */ jsx46(Reading, { testID: "r1-cash-extra", label: s("rep.cash.extra"), value: of(c.extraDays), display }),
+      c.days.slice(0, CASH_CHECK_DAYS_SHOWN).map((d) => /* @__PURE__ */ jsx46(
         Row,
         {
           testID: `r1-cash-${d.date}`,
@@ -29481,8 +30068,8 @@ function BasicReportCards({ store, s, display }) {
         d.date
       ))
     ] }),
-    /* @__PURE__ */ jsx45(Card, { testID: "r1-upi", title: s("rep.upi.title"), display, children: b.upiMonths.map((u, i) => /* @__PURE__ */ jsxs34(View_default, { children: [
-      /* @__PURE__ */ jsx45(
+    /* @__PURE__ */ jsx46(Card, { testID: "r1-upi", title: s("rep.upi.title"), display, children: b.upiMonths.map((u, i) => /* @__PURE__ */ jsxs35(View_default, { children: [
+      /* @__PURE__ */ jsx46(
         Row,
         {
           testID: `r1-upi-${i}`,
@@ -29491,7 +30078,7 @@ function BasicReportCards({ store, s, display }) {
           display
         }
       ),
-      /* @__PURE__ */ jsx45(
+      /* @__PURE__ */ jsx46(
         Reading,
         {
           testID: `r1-upi-${i}-count`,
@@ -29505,7 +30092,7 @@ function BasicReportCards({ store, s, display }) {
 }
 
 // apps/mobile/src/screens/R1.tsx
-import { Fragment as Fragment14, jsx as jsx46, jsxs as jsxs35 } from "react/jsx-runtime";
+import { Fragment as Fragment14, jsx as jsx47, jsxs as jsxs36 } from "react/jsx-runtime";
 var share = (r) => formatBasisPoints(r.basisPoints);
 var ofDays = (s, r) => fill(s("r1.ofDays"), { n: r.numeratorPaise, w: r.denominatorPaise });
 function Reports({
@@ -29529,7 +30116,7 @@ function Reports({
   const cc = r.cashConfidence;
   const oc = r.operationalConsistency;
   const daysClosed = r.closedDays;
-  return /* @__PURE__ */ jsxs35(
+  return /* @__PURE__ */ jsxs36(
     Shell,
     {
       id: "r1",
@@ -29540,8 +30127,8 @@ function Reports({
       empty: daysClosed === 0,
       emptyKey: "r1.empty",
       onRetry,
-      nav: /* @__PURE__ */ jsx46(BottomNav, { active: "reports", onSelect: onSelectTab, s, display }),
-      bodyHeader: /* @__PURE__ */ jsx46(View_default, { style: { paddingHorizontal: t.space.md, paddingTop: t.space.md }, children: /* @__PURE__ */ jsx46(
+      nav: /* @__PURE__ */ jsx47(BottomNav, { active: "reports", onSelect: onSelectTab, s, display }),
+      bodyHeader: /* @__PURE__ */ jsx47(View_default, { style: { paddingHorizontal: t.space.md, paddingTop: t.space.md }, children: /* @__PURE__ */ jsx47(
         PrimaryButton,
         {
           testID: "r1-ask",
@@ -29553,8 +30140,8 @@ function Reports({
         }
       ) }),
       children: [
-        /* @__PURE__ */ jsxs35(Card, { testID: "r1-figures", display, children: [
-          /* @__PURE__ */ jsx46(
+        /* @__PURE__ */ jsxs36(Card, { testID: "r1-figures", display, children: [
+          /* @__PURE__ */ jsx47(
             Reading,
             {
               testID: "r1-days-closed",
@@ -29563,7 +30150,7 @@ function Reports({
               display
             }
           ),
-          /* @__PURE__ */ jsx46(
+          /* @__PURE__ */ jsx47(
             Row,
             {
               testID: "r1-total-sales",
@@ -29572,7 +30159,7 @@ function Reports({
               display
             }
           ),
-          /* @__PURE__ */ jsx46(
+          /* @__PURE__ */ jsx47(
             Row,
             {
               testID: "r1-total-expenses",
@@ -29581,7 +30168,7 @@ function Reports({
               display
             }
           ),
-          /* @__PURE__ */ jsx46(
+          /* @__PURE__ */ jsx47(
             Row,
             {
               testID: "r1-credit-outstanding",
@@ -29590,9 +30177,9 @@ function Reports({
               display
             }
           ),
-          /* @__PURE__ */ jsx46(Note, { testID: "r1-note", text: s("r1.note"), display })
+          /* @__PURE__ */ jsx47(Note, { testID: "r1-note", text: s("r1.note"), display })
         ] }),
-        onOpenDashboard === void 0 ? null : /* @__PURE__ */ jsx46(Card, { testID: "r1-dashboard-card", display, children: /* @__PURE__ */ jsx46(
+        onOpenDashboard === void 0 ? null : /* @__PURE__ */ jsx47(Card, { testID: "r1-dashboard-card", display, children: /* @__PURE__ */ jsx47(
           LinkRow,
           {
             testID: "r1-dashboard",
@@ -29602,10 +30189,10 @@ function Reports({
             display
           }
         ) }),
-        /* @__PURE__ */ jsx46(BasicReportCards, { store, s, display }),
-        /* @__PURE__ */ jsxs35(Card, { testID: "r1-changing", title: s("r1.changing"), display, children: [
-          bi.bi1ProfitTrend.available ? /* @__PURE__ */ jsxs35(Fragment14, { children: [
-            /* @__PURE__ */ jsx46(
+        /* @__PURE__ */ jsx47(BasicReportCards, { store, s, display }),
+        /* @__PURE__ */ jsxs36(Card, { testID: "r1-changing", title: s("r1.changing"), display, children: [
+          bi.bi1ProfitTrend.available ? /* @__PURE__ */ jsxs36(Fragment14, { children: [
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-bi1",
@@ -29614,7 +30201,7 @@ function Reports({
                 display
               }
             ),
-            /* @__PURE__ */ jsx46(
+            /* @__PURE__ */ jsx47(
               Row,
               {
                 testID: "r1-bi1-earlier",
@@ -29624,7 +30211,7 @@ function Reports({
                 display
               }
             ),
-            /* @__PURE__ */ jsx46(
+            /* @__PURE__ */ jsx47(
               Row,
               {
                 testID: "r1-bi1-later",
@@ -29634,8 +30221,8 @@ function Reports({
                 display
               }
             )
-          ] }) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-bi1", label: s("r1.bi1"), gated: bi.bi1ProfitTrend, s, display }),
-          bi.bi2SalesConsistency.available ? /* @__PURE__ */ jsx46(
+          ] }) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-bi1", label: s("r1.bi1"), gated: bi.bi1ProfitTrend, s, display }),
+          bi.bi2SalesConsistency.available ? /* @__PURE__ */ jsx47(
             Reading,
             {
               testID: "r1-bi2",
@@ -29643,11 +30230,11 @@ function Reports({
               value: share(bi.bi2SalesConsistency.value),
               display
             }
-          ) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-bi2", label: s("r1.bi2"), gated: bi.bi2SalesConsistency, s, display })
+          ) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-bi2", label: s("r1.bi2"), gated: bi.bi2SalesConsistency, s, display })
         ] }),
-        /* @__PURE__ */ jsxs35(Card, { testID: "r1-pressure", title: s("r1.pressure"), display, children: [
-          bi.bi3CashFlowStability.available ? /* @__PURE__ */ jsxs35(Fragment14, { children: [
-            /* @__PURE__ */ jsx46(
+        /* @__PURE__ */ jsxs36(Card, { testID: "r1-pressure", title: s("r1.pressure"), display, children: [
+          bi.bi3CashFlowStability.available ? /* @__PURE__ */ jsxs36(Fragment14, { children: [
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-bi3",
@@ -29656,7 +30243,7 @@ function Reports({
                 display
               }
             ),
-            /* @__PURE__ */ jsx46(
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-bi3-short",
@@ -29668,8 +30255,8 @@ function Reports({
                 display
               }
             )
-          ] }) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-bi3", label: s("r1.bi3"), gated: bi.bi3CashFlowStability, s, display }),
-          bi.bi4WorkingCapitalPressure.available ? /* @__PURE__ */ jsx46(
+          ] }) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-bi3", label: s("r1.bi3"), gated: bi.bi3CashFlowStability, s, display }),
+          bi.bi4WorkingCapitalPressure.available ? /* @__PURE__ */ jsx47(
             Reading,
             {
               testID: "r1-bi4",
@@ -29677,9 +30264,9 @@ function Reports({
               value: share(bi.bi4WorkingCapitalPressure.value),
               display
             }
-          ) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-bi4", label: s("r1.bi4"), gated: bi.bi4WorkingCapitalPressure, s, display }),
-          bi.bi6CreditConcentration.available ? /* @__PURE__ */ jsxs35(Fragment14, { children: [
-            /* @__PURE__ */ jsx46(
+          ) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-bi4", label: s("r1.bi4"), gated: bi.bi4WorkingCapitalPressure, s, display }),
+          bi.bi6CreditConcentration.available ? /* @__PURE__ */ jsxs36(Fragment14, { children: [
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-bi6",
@@ -29688,7 +30275,7 @@ function Reports({
                 display
               }
             ),
-            /* @__PURE__ */ jsx46(
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-bi6-direction",
@@ -29697,11 +30284,11 @@ function Reports({
                 display
               }
             )
-          ] }) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-bi6", label: s("r1.bi6"), gated: bi.bi6CreditConcentration, s, display })
+          ] }) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-bi6", label: s("r1.bi6"), gated: bi.bi6CreditConcentration, s, display })
         ] }),
-        /* @__PURE__ */ jsxs35(Card, { testID: "r1-cc", title: s("r1.cc.title"), display, children: [
-          cc.available ? /* @__PURE__ */ jsxs35(Fragment14, { children: [
-            /* @__PURE__ */ jsx46(
+        /* @__PURE__ */ jsxs36(Card, { testID: "r1-cc", title: s("r1.cc.title"), display, children: [
+          cc.available ? /* @__PURE__ */ jsxs36(Fragment14, { children: [
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-cc-match",
@@ -29710,7 +30297,7 @@ function Reports({
                 display
               }
             ),
-            /* @__PURE__ */ jsx46(
+            /* @__PURE__ */ jsx47(
               Reading,
               {
                 testID: "r1-cc-gap",
@@ -29719,11 +30306,11 @@ function Reports({
                 display
               }
             )
-          ] }) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-cc-match", label: s("r1.cc.match"), gated: cc, s, display }),
-          /* @__PURE__ */ jsx46(Note, { testID: "r1-cc-not-yet", text: s("r1.cc.notYet"), display })
+          ] }) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-cc-match", label: s("r1.cc.match"), gated: cc, s, display }),
+          /* @__PURE__ */ jsx47(Note, { testID: "r1-cc-not-yet", text: s("r1.cc.notYet"), display })
         ] }),
-        /* @__PURE__ */ jsx46(Card, { testID: "r1-oc", title: s("r1.oc.title"), display, children: oc.available ? /* @__PURE__ */ jsxs35(Fragment14, { children: [
-          /* @__PURE__ */ jsx46(
+        /* @__PURE__ */ jsx47(Card, { testID: "r1-oc", title: s("r1.oc.title"), display, children: oc.available ? /* @__PURE__ */ jsxs36(Fragment14, { children: [
+          /* @__PURE__ */ jsx47(
             Reading,
             {
               testID: "r1-oc-closing",
@@ -29732,7 +30319,7 @@ function Reports({
               display
             }
           ),
-          /* @__PURE__ */ jsx46(
+          /* @__PURE__ */ jsx47(
             Reading,
             {
               testID: "r1-oc-recording",
@@ -29741,7 +30328,7 @@ function Reports({
               display
             }
           ),
-          /* @__PURE__ */ jsx46(
+          /* @__PURE__ */ jsx47(
             Reading,
             {
               testID: "r1-oc-corrections",
@@ -29750,15 +30337,15 @@ function Reports({
               display
             }
           )
-        ] }) : /* @__PURE__ */ jsx46(Gate, { testID: "r1-oc-closing", label: s("r1.oc.closing"), gated: oc, s, display }) }),
-        /* @__PURE__ */ jsx46(View_default, { style: { marginBottom: t.space.md }, children: /* @__PURE__ */ jsx46(Card, { testID: "r1-bh", display, children: /* @__PURE__ */ jsx46(Note, { testID: "r1-bh-note", text: s("r1.bh"), display }) }) })
+        ] }) : /* @__PURE__ */ jsx47(Gate, { testID: "r1-oc-closing", label: s("r1.oc.closing"), gated: oc, s, display }) }),
+        /* @__PURE__ */ jsx47(View_default, { style: { marginBottom: t.space.md }, children: /* @__PURE__ */ jsx47(Card, { testID: "r1-bh", display, children: /* @__PURE__ */ jsx47(Note, { testID: "r1-bh-note", text: s("r1.bh"), display }) }) })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/M1.tsx
-import { Fragment as Fragment15, jsx as jsx47, jsxs as jsxs36 } from "react/jsx-runtime";
+import { Fragment as Fragment15, jsx as jsx48, jsxs as jsxs37 } from "react/jsx-runtime";
 function RangeLine({
   testID,
   low,
@@ -29773,7 +30360,7 @@ function RangeLine({
     lineHeight: t.leading(t.type.body),
     color: t.color.inkMuted
   };
-  return /* @__PURE__ */ jsxs36(
+  return /* @__PURE__ */ jsxs37(
     View_default,
     {
       testID,
@@ -29788,19 +30375,19 @@ function RangeLine({
         borderBottomColor: t.color.border
       },
       children: [
-        /* @__PURE__ */ jsx47(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...label2, flex: 1, marginRight: t.space.sm }, children: s("m1.forecast.range") }),
-        /* @__PURE__ */ jsx47(Money, { testID: testID + "-low", amount: low, mode: display, size: "body" }),
-        /* @__PURE__ */ jsx47(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...label2, marginHorizontal: t.space.xs }, children: "-" }),
-        /* @__PURE__ */ jsx47(Money, { testID: testID + "-high", amount: high, mode: display, size: "body" })
+        /* @__PURE__ */ jsx48(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...label2, flex: 1, marginRight: t.space.sm }, children: s("m1.forecast.range") }),
+        /* @__PURE__ */ jsx48(Money, { testID: testID + "-low", amount: low, mode: display, size: "body" }),
+        /* @__PURE__ */ jsx48(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...label2, marginHorizontal: t.space.xs }, children: "-" }),
+        /* @__PURE__ */ jsx48(Money, { testID: testID + "-high", amount: high, mode: display, size: "body" })
       ]
     }
   );
 }
 function ForecastBody({ f, s, display }) {
   const hw = f.holtWintersGate;
-  return /* @__PURE__ */ jsxs36(Fragment15, { children: [
-    /* @__PURE__ */ jsx47(Note, { testID: "m1-forecast-method", text: s(`m1.forecast.${f.method}`), display }),
-    /* @__PURE__ */ jsx47(
+  return /* @__PURE__ */ jsxs37(Fragment15, { children: [
+    /* @__PURE__ */ jsx48(Note, { testID: "m1-forecast-method", text: s(`m1.forecast.${f.method}`), display }),
+    /* @__PURE__ */ jsx48(
       Note,
       {
         testID: "m1-forecast-window",
@@ -29808,12 +30395,12 @@ function ForecastBody({ f, s, display }) {
         display
       }
     ),
-    f.days.map((d) => /* @__PURE__ */ jsxs36(View_default, { children: [
-      /* @__PURE__ */ jsx47(Row, { testID: `m1-forecast-${d.date}`, label: dateLine(d.date, s), amount: d.point, display }),
-      d.low === null || d.high === null ? null : /* @__PURE__ */ jsx47(RangeLine, { testID: `m1-forecast-${d.date}-range`, low: d.low, high: d.high, s, display })
+    f.days.map((d) => /* @__PURE__ */ jsxs37(View_default, { children: [
+      /* @__PURE__ */ jsx48(Row, { testID: `m1-forecast-${d.date}`, label: dateLine(d.date, s), amount: d.point, display }),
+      d.low === null || d.high === null ? null : /* @__PURE__ */ jsx48(RangeLine, { testID: `m1-forecast-${d.date}-range`, low: d.low, high: d.high, s, display })
     ] }, d.date)),
-    f.typicalMiss === null ? /* @__PURE__ */ jsx47(Note, { testID: "m1-forecast-no-range", text: s("m1.forecast.noRange"), display }) : /* @__PURE__ */ jsx47(Row, { testID: "m1-forecast-miss", label: s("m1.forecast.miss"), amount: f.typicalMiss, display }),
-    f.method === "holt_winters" ? /* @__PURE__ */ jsx47(
+    f.typicalMiss === null ? /* @__PURE__ */ jsx48(Note, { testID: "m1-forecast-no-range", text: s("m1.forecast.noRange"), display }) : /* @__PURE__ */ jsx48(Row, { testID: "m1-forecast-miss", label: s("m1.forecast.miss"), amount: f.typicalMiss, display }),
+    f.method === "holt_winters" ? /* @__PURE__ */ jsx48(
       Reading,
       {
         testID: "m1-forecast-mase",
@@ -29821,19 +30408,19 @@ function ForecastBody({ f, s, display }) {
         value: formatBasisPoints(f.holtWintersMaseBasisPoints),
         display
       }
-    ) : hw.soFar < hw.required ? /* @__PURE__ */ jsx47(Note, { testID: "m1-forecast-hw-gate", text: fill(s("m1.forecast.hwGate"), { need: hw.required, have: hw.soFar }), display }) : /* @__PURE__ */ jsx47(Note, { testID: "m1-forecast-hw-lost", text: s("m1.forecast.hwLost"), display })
+    ) : hw.soFar < hw.required ? /* @__PURE__ */ jsx48(Note, { testID: "m1-forecast-hw-gate", text: fill(s("m1.forecast.hwGate"), { need: hw.required, have: hw.soFar }), display }) : /* @__PURE__ */ jsx48(Note, { testID: "m1-forecast-hw-lost", text: s("m1.forecast.hwLost"), display })
   ] });
 }
 function PremiumCards({ store, s, display }) {
   const p = store.premiumReports();
   const ly = p.samePeriodLastYear;
-  return /* @__PURE__ */ jsxs36(Fragment15, { children: [
-    /* @__PURE__ */ jsxs36(Card, { testID: "m1-forecast", title: s("m1.forecast.title"), display, children: [
-      p.forecast.available ? /* @__PURE__ */ jsx47(ForecastBody, { f: p.forecast.value, s, display }) : /* @__PURE__ */ jsx47(Gate, { testID: "m1-forecast-gate", label: s("m1.forecast.title"), gated: p.forecast, s, display }),
-      /* @__PURE__ */ jsx47(Note, { testID: "m1-forecast-estimate", text: s("m1.forecast.estimate"), display })
+  return /* @__PURE__ */ jsxs37(Fragment15, { children: [
+    /* @__PURE__ */ jsxs37(Card, { testID: "m1-forecast", title: s("m1.forecast.title"), display, children: [
+      p.forecast.available ? /* @__PURE__ */ jsx48(ForecastBody, { f: p.forecast.value, s, display }) : /* @__PURE__ */ jsx48(Gate, { testID: "m1-forecast-gate", label: s("m1.forecast.title"), gated: p.forecast, s, display }),
+      /* @__PURE__ */ jsx48(Note, { testID: "m1-forecast-estimate", text: s("m1.forecast.estimate"), display })
     ] }),
-    /* @__PURE__ */ jsxs36(Card, { testID: "m1-last-year", title: s("m1.lastYear.title"), display, children: [
-      /* @__PURE__ */ jsx47(
+    /* @__PURE__ */ jsxs37(Card, { testID: "m1-last-year", title: s("m1.lastYear.title"), display, children: [
+      /* @__PURE__ */ jsx48(
         Row,
         {
           testID: "m1-last-year-this",
@@ -29842,7 +30429,7 @@ function PremiumCards({ store, s, display }) {
           display
         }
       ),
-      ly.lastYear.closedDays === 0 ? /* @__PURE__ */ jsx47(Note, { testID: "m1-last-year-none", text: s("m1.lastYear.none"), display }) : /* @__PURE__ */ jsx47(
+      ly.lastYear.closedDays === 0 ? /* @__PURE__ */ jsx48(Note, { testID: "m1-last-year-none", text: s("m1.lastYear.none"), display }) : /* @__PURE__ */ jsx48(
         Row,
         {
           testID: "m1-last-year-last",
@@ -29852,9 +30439,9 @@ function PremiumCards({ store, s, display }) {
         }
       )
     ] }),
-    /* @__PURE__ */ jsxs36(Card, { testID: "m1-festival", title: s("m1.festival.title"), display, children: [
-      p.festivalWeeks.length === 0 ? /* @__PURE__ */ jsx47(Note, { testID: "m1-festival-none", text: s("m1.festival.none"), display }) : p.festivalWeeks.map((f) => /* @__PURE__ */ jsxs36(View_default, { children: [
-        /* @__PURE__ */ jsx47(
+    /* @__PURE__ */ jsxs37(Card, { testID: "m1-festival", title: s("m1.festival.title"), display, children: [
+      p.festivalWeeks.length === 0 ? /* @__PURE__ */ jsx48(Note, { testID: "m1-festival-none", text: s("m1.festival.none"), display }) : p.festivalWeeks.map((f) => /* @__PURE__ */ jsxs37(View_default, { children: [
+        /* @__PURE__ */ jsx48(
           Row,
           {
             testID: `m1-festival-${f.date}`,
@@ -29863,7 +30450,7 @@ function PremiumCards({ store, s, display }) {
             display
           }
         ),
-        /* @__PURE__ */ jsx47(
+        /* @__PURE__ */ jsx48(
           Row,
           {
             testID: `m1-festival-${f.date}-before`,
@@ -29873,10 +30460,10 @@ function PremiumCards({ store, s, display }) {
           }
         )
       ] }, f.date)),
-      /* @__PURE__ */ jsx47(Note, { testID: "m1-festival-source", text: s("m1.festival.source"), display })
+      /* @__PURE__ */ jsx48(Note, { testID: "m1-festival-source", text: s("m1.festival.source"), display })
     ] }),
-    /* @__PURE__ */ jsx47(Card, { testID: "m1-pay", title: s("m1.pay.title"), display, children: p.daysToPay.length === 0 ? /* @__PURE__ */ jsx47(Note, { testID: "m1-pay-none", text: s("m1.pay.none"), display }) : /* @__PURE__ */ jsxs36(Fragment15, { children: [
-      p.daysToPay.map((d) => /* @__PURE__ */ jsx47(
+    /* @__PURE__ */ jsx48(Card, { testID: "m1-pay", title: s("m1.pay.title"), display, children: p.daysToPay.length === 0 ? /* @__PURE__ */ jsx48(Note, { testID: "m1-pay-none", text: s("m1.pay.none"), display }) : /* @__PURE__ */ jsxs37(Fragment15, { children: [
+      p.daysToPay.map((d) => /* @__PURE__ */ jsx48(
         Reading,
         {
           testID: `m1-pay-${d.partyId}`,
@@ -29886,10 +30473,10 @@ function PremiumCards({ store, s, display }) {
         },
         d.partyId
       )),
-      /* @__PURE__ */ jsx47(Note, { testID: "m1-pay-note", text: s("m1.pay.note"), display })
+      /* @__PURE__ */ jsx48(Note, { testID: "m1-pay-note", text: s("m1.pay.note"), display })
     ] }) }),
-    /* @__PURE__ */ jsx47(Card, { testID: "m1-returns", title: s("m1.returns.title"), display, children: p.returnsTrend.map((w2) => /* @__PURE__ */ jsxs36(View_default, { children: [
-      /* @__PURE__ */ jsx47(
+    /* @__PURE__ */ jsx48(Card, { testID: "m1-returns", title: s("m1.returns.title"), display, children: p.returnsTrend.map((w2) => /* @__PURE__ */ jsxs37(View_default, { children: [
+      /* @__PURE__ */ jsx48(
         Row,
         {
           testID: `m1-returns-${w2.to}`,
@@ -29898,7 +30485,7 @@ function PremiumCards({ store, s, display }) {
           display
         }
       ),
-      /* @__PURE__ */ jsx47(
+      /* @__PURE__ */ jsx48(
         Row,
         {
           testID: `m1-returns-${w2.to}-adjustments`,
@@ -29927,7 +30514,7 @@ function Dashboard({
   const s = strings(language);
   const locked = readOnly(plan, "dashboard");
   const closedDays = store.reports().closedDays;
-  return /* @__PURE__ */ jsxs36(
+  return /* @__PURE__ */ jsxs37(
     Shell,
     {
       id: "m1",
@@ -29940,19 +30527,19 @@ function Dashboard({
       onRetry,
       onBack,
       children: [
-        locked ? /* @__PURE__ */ jsxs36(Card, { testID: "m1-locked", title: s("m1.locked.title"), display, children: [
-          /* @__PURE__ */ jsx47(Note, { testID: "m1-locked-body", text: s("m1.locked.body"), display }),
-          onUpgrade === void 0 ? null : /* @__PURE__ */ jsx47(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx47(PrimaryButton, { testID: "m1-upgrade", label: s("m1.upgrade"), onPress: onUpgrade, variant: "secondary", size: "lg", display }) })
-        ] }) : /* @__PURE__ */ jsx47(PremiumCards, { store, s, display }),
+        locked ? /* @__PURE__ */ jsxs37(Card, { testID: "m1-locked", title: s("m1.locked.title"), display, children: [
+          /* @__PURE__ */ jsx48(Note, { testID: "m1-locked-body", text: s("m1.locked.body"), display }),
+          onUpgrade === void 0 ? null : /* @__PURE__ */ jsx48(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx48(PrimaryButton, { testID: "m1-upgrade", label: s("m1.upgrade"), onPress: onUpgrade, variant: "secondary", size: "lg", display }) })
+        ] }) : /* @__PURE__ */ jsx48(PremiumCards, { store, s, display }),
         itemCards === void 0 ? null : itemCards({ readOnly: locked, display, s }),
-        /* @__PURE__ */ jsx47(View_default, { style: { height: t.space.md } })
+        /* @__PURE__ */ jsx48(View_default, { style: { height: t.space.md } })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/S4.tsx
-import { jsx as jsx48, jsxs as jsxs37 } from "react/jsx-runtime";
+import { jsx as jsx49, jsxs as jsxs38 } from "react/jsx-runtime";
 function PrivacySettings({
   store,
   status = "ready",
@@ -29967,7 +30554,7 @@ function PrivacySettings({
   const t = tokens(display);
   const s = strings(language);
   void store;
-  return /* @__PURE__ */ jsx48(
+  return /* @__PURE__ */ jsx49(
     Shell,
     {
       id: "s4",
@@ -29978,8 +30565,8 @@ function PrivacySettings({
       empty: false,
       onBack,
       onRetry,
-      children: /* @__PURE__ */ jsxs37(Card, { testID: "s4-consent-group", display, children: [
-        /* @__PURE__ */ jsx48(
+      children: /* @__PURE__ */ jsxs38(Card, { testID: "s4-consent-group", display, children: [
+        /* @__PURE__ */ jsx49(
           LinkRow,
           {
             testID: "s4-review",
@@ -29988,7 +30575,7 @@ function PrivacySettings({
             onPress: onReviewConsent
           }
         ),
-        /* @__PURE__ */ jsx48(
+        /* @__PURE__ */ jsx49(
           Text_default,
           {
             testID: "s4-withdraw",
@@ -30009,13 +30596,13 @@ function PrivacySettings({
 }
 
 // apps/mobile/src/screens/A1.tsx
-import { jsx as jsx49 } from "react/jsx-runtime";
+import { jsx as jsx50 } from "react/jsx-runtime";
 var WORDMARK = "SWAFTO";
 function Splash({ language = "en", display = "comfort", onContinue = () => {
 } }) {
   const t = tokens(display);
   const s = strings(language);
-  return /* @__PURE__ */ jsx49(
+  return /* @__PURE__ */ jsx50(
     Pressable_default,
     {
       testID: "a1",
@@ -30030,7 +30617,7 @@ function Splash({ language = "en", display = "comfort", onContinue = () => {
         alignItems: "center",
         justifyContent: "center"
       },
-      children: /* @__PURE__ */ jsx49(
+      children: /* @__PURE__ */ jsx50(
         Text_default,
         {
           testID: "a1-wordmark",
@@ -30050,7 +30637,7 @@ function Splash({ language = "en", display = "comfort", onContinue = () => {
 }
 
 // apps/mobile/src/screens/A2.tsx
-import { jsx as jsx50, jsxs as jsxs38 } from "react/jsx-runtime";
+import { jsx as jsx51, jsxs as jsxs39 } from "react/jsx-runtime";
 var LANGUAGE_NAMES = [
   { key: "or", name: "\u0B13\u0B21\u0B3C\u0B3F\u0B06" },
   { key: "hi", name: "\u0939\u093F\u0928\u094D\u0926\u0940" },
@@ -30073,7 +30660,7 @@ function LanguageChoice({
      * `band`: the reference A2 has a thin navy status band and the question on
      * the cream page. On the device the title sat inside the bar instead.
      */
-    /* @__PURE__ */ jsx50(
+    /* @__PURE__ */ jsx51(
       Shell,
       {
         id: "a2",
@@ -30083,8 +30670,8 @@ function LanguageChoice({
         titleKey: "a2.title",
         bar: "band",
         onRetry,
-        children: /* @__PURE__ */ jsxs38(View_default, { style: { padding: t.space.md }, children: [
-          /* @__PURE__ */ jsx50(
+        children: /* @__PURE__ */ jsxs39(View_default, { style: { padding: t.space.md }, children: [
+          /* @__PURE__ */ jsx51(
             Text_default,
             {
               testID: "a2-title",
@@ -30100,7 +30687,7 @@ function LanguageChoice({
               children: s("a2.title")
             }
           ),
-          /* @__PURE__ */ jsx50(
+          /* @__PURE__ */ jsx51(
             Text_default,
             {
               testID: "a2-hint",
@@ -30115,7 +30702,7 @@ function LanguageChoice({
               children: CHOOSE_HINT
             }
           ),
-          LANGUAGE_NAMES.map(({ key, name }) => /* @__PURE__ */ jsx50(
+          LANGUAGE_NAMES.map(({ key, name }) => /* @__PURE__ */ jsx51(
             Pressable_default,
             {
               testID: "a2-" + key,
@@ -30135,7 +30722,7 @@ function LanguageChoice({
                 elevation: t.elevation.card,
                 justifyContent: "center"
               },
-              children: /* @__PURE__ */ jsx50(
+              children: /* @__PURE__ */ jsx51(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -30154,1325 +30741,6 @@ function LanguageChoice({
         ] })
       }
     )
-  );
-}
-
-// apps/mobile/src/screens/authParts.tsx
-import { jsx as jsx51 } from "react/jsx-runtime";
-var formatPhone = (digits) => digits.length > 5 ? digits.slice(0, 5) + " " + digits.slice(5) : digits;
-var fill2 = (template, values) => template.replace(/\{(\w+)\}/g, (whole, k2) => k2 in values ? String(values[k2]) : whole);
-var NOTICE = {
-  offline: "auth.offline",
-  failed: "auth.failed"
-};
-function AuthNotice({
-  problem,
-  s,
-  display = "comfort"
-}) {
-  const key = problem === null ? void 0 : NOTICE[problem];
-  if (key === void 0) return null;
-  const t = tokens(display);
-  return /* @__PURE__ */ jsx51(
-    View_default,
-    {
-      testID: "auth-notice-" + problem,
-      accessibilityRole: "alert",
-      accessibilityLiveRegion: "polite",
-      style: {
-        marginHorizontal: t.space.md,
-        marginTop: t.space.sm,
-        padding: t.space.md,
-        borderRadius: t.radius.lg,
-        backgroundColor: t.color.surfaceRaised,
-        borderWidth: t.hairline,
-        borderColor: t.color.borderStrong
-      },
-      children: /* @__PURE__ */ jsx51(
-        Text_default,
-        {
-          maxFontSizeMultiplier: t.maxFontScale,
-          style: {
-            fontFamily: t.font.regular,
-            fontSize: t.type.body,
-            lineHeight: t.leading(t.type.body),
-            color: t.color.ink
-          },
-          children: s(key)
-        }
-      )
-    }
-  );
-}
-
-// apps/mobile/src/screens/A3.tsx
-import { jsx as jsx52, jsxs as jsxs39 } from "react/jsx-runtime";
-var PHONE_PLACEHOLDER = "00000 00000";
-function PhoneNumber({
-  phone = "",
-  busy = false,
-  problem = null,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onKey = () => {
-  },
-  onSend = () => {
-  },
-  onChangedNumber = () => {
-  },
-  onBack,
-  onRetry = () => {
-  }
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const complete = INDIAN_MOBILE.test(phone);
-  const notMobile = phone.length === 10 && !complete;
-  return /* @__PURE__ */ jsxs39(
-    Shell,
-    {
-      id: "a3",
-      s,
-      display,
-      status,
-      titleKey: "a3.bar",
-      subtitle: s("a3.step"),
-      onBack,
-      onRetry,
-      footer: /* @__PURE__ */ jsxs39(View_default, { children: [
-        /* @__PURE__ */ jsxs39(
-          View_default,
-          {
-            testID: "a3-field",
-            style: {
-              flexDirection: "row",
-              alignItems: "center",
-              margin: t.space.md,
-              minHeight: t.control.lg,
-              paddingHorizontal: t.space.md,
-              borderRadius: t.radius.md,
-              borderWidth: t.hairline * 2,
-              borderColor: t.color.brand,
-              backgroundColor: t.color.surface
-            },
-            children: [
-              /* @__PURE__ */ jsx52(
-                Text_default,
-                {
-                  maxFontSizeMultiplier: t.maxFontScale,
-                  style: {
-                    fontFamily: t.font.bold,
-                    fontSize: t.type.figure,
-                    lineHeight: t.leading(t.type.figure),
-                    color: t.color.inkMuted,
-                    fontVariant: ["tabular-nums"],
-                    paddingRight: t.space.sm,
-                    marginRight: t.space.sm,
-                    borderRightWidth: t.hairline,
-                    borderRightColor: t.color.borderStrong
-                  },
-                  children: "+91"
-                }
-              ),
-              /* @__PURE__ */ jsx52(
-                Text_default,
-                {
-                  testID: "a3-phone",
-                  maxFontSizeMultiplier: t.maxFontScale,
-                  style: {
-                    flexShrink: 1,
-                    fontFamily: t.font.bold,
-                    fontSize: t.type.figure,
-                    lineHeight: t.leading(t.type.figure),
-                    color: phone === "" ? t.color.inkMuted : t.color.ink,
-                    fontVariant: ["tabular-nums"]
-                  },
-                  children: phone === "" ? PHONE_PLACEHOLDER : formatPhone(phone)
-                }
-              )
-            ]
-          }
-        ),
-        notMobile ? /* @__PURE__ */ jsx52(
-          Text_default,
-          {
-            testID: "a3-not-mobile",
-            accessibilityLiveRegion: "polite",
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              marginHorizontal: t.space.md,
-              fontFamily: t.font.regular,
-              fontSize: t.type.body,
-              lineHeight: t.leading(t.type.body),
-              color: t.color.inkMuted
-            },
-            children: s("a3.notMobile")
-          }
-        ) : null,
-        /* @__PURE__ */ jsx52(AuthNotice, { problem, s, display }),
-        /* @__PURE__ */ jsx52(Keypad, { onKey, s, mode: display, testID: "a3-keypad" }),
-        /* @__PURE__ */ jsx52(
-          PrimaryButton,
-          {
-            testID: "a3-send",
-            label: s(busy ? "a3.sending" : "a3.send"),
-            onPress: onSend,
-            disabled: !complete || busy,
-            display
-          }
-        ),
-        /* @__PURE__ */ jsx52(
-          PrimaryButton,
-          {
-            testID: "a3-changed",
-            label: s("a3.changed"),
-            onPress: onChangedNumber,
-            variant: "ghost",
-            size: "md",
-            display
-          }
-        )
-      ] }),
-      children: [
-        /* @__PURE__ */ jsx52(
-          Text_default,
-          {
-            testID: "a3-heading",
-            accessibilityRole: "header",
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              paddingHorizontal: t.space.md,
-              paddingTop: t.space.md,
-              fontFamily: t.font.bold,
-              fontSize: t.type.heading,
-              lineHeight: t.leading(t.type.heading),
-              color: t.color.ink
-            },
-            children: s("a3.bar")
-          }
-        ),
-        /* @__PURE__ */ jsx52(
-          Text_default,
-          {
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              paddingHorizontal: t.space.md,
-              paddingTop: t.space.sm,
-              fontFamily: t.font.regular,
-              fontSize: t.type.body,
-              lineHeight: t.leading(t.type.body),
-              color: t.color.inkMuted
-            },
-            children: fill2(s("a3.help"), { digits: OTP_DIGITS })
-          }
-        )
-      ]
-    }
-  );
-}
-
-// apps/mobile/src/screens/A4.tsx
-import { jsx as jsx53, jsxs as jsxs40 } from "react/jsx-runtime";
-var NO_CODE_AFTER_RESENDS = 2;
-function CodeEntry({
-  phone = "",
-  code = "",
-  busy = false,
-  problem = null,
-  resends = 0,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onKey = () => {
-  },
-  onEditPhone = () => {
-  },
-  onResend = () => {
-  },
-  onRetryVerify = () => {
-  },
-  onTrouble = () => {
-  },
-  onNoCode = () => {
-  },
-  onBack,
-  onRetry = () => {
-  }
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const body = {
-    fontFamily: t.font.regular,
-    fontSize: t.type.body,
-    lineHeight: t.leading(t.type.body),
-    color: t.color.inkMuted
-  };
-  const boxes = Array.from({ length: OTP_DIGITS }, (_, i) => code[i] ?? "");
-  return /* @__PURE__ */ jsxs40(
-    Shell,
-    {
-      id: "a4",
-      s,
-      display,
-      status,
-      titleKey: "a4.bar",
-      subtitle: s("a4.step"),
-      onBack,
-      onRetry,
-      footer: /* @__PURE__ */ jsxs40(View_default, { children: [
-        /* @__PURE__ */ jsx53(View_default, { testID: "a4-boxes", style: { flexDirection: "row", paddingHorizontal: t.space.sm }, children: boxes.map((d, i) => /* @__PURE__ */ jsx53(
-          View_default,
-          {
-            testID: "a4-box-" + i,
-            style: {
-              flex: 1,
-              minHeight: t.control.md,
-              margin: t.space.xs,
-              borderRadius: t.radius.md,
-              borderWidth: t.hairline * 2,
-              borderColor: i === code.length ? t.color.brand : t.color.inkMuted,
-              backgroundColor: t.color.surface,
-              alignItems: "center",
-              justifyContent: "center"
-            },
-            children: /* @__PURE__ */ jsx53(
-              Text_default,
-              {
-                maxFontSizeMultiplier: t.maxFontScale,
-                style: {
-                  fontFamily: t.font.bold,
-                  fontSize: t.type.figure,
-                  lineHeight: t.leading(t.type.figure),
-                  color: t.color.ink,
-                  fontVariant: ["tabular-nums"]
-                },
-                children: d
-              }
-            )
-          },
-          i
-        )) }),
-        busy ? null : /* @__PURE__ */ jsx53(AuthNotice, { problem, s, display }),
-        busy ? null : /* @__PURE__ */ jsx53(Keypad, { onKey, s, mode: display, testID: "a4-keypad" })
-      ] }),
-      children: [
-        /* @__PURE__ */ jsx53(
-          Text_default,
-          {
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              paddingHorizontal: t.space.md,
-              paddingTop: t.space.md,
-              fontFamily: t.font.bold,
-              fontSize: t.type.heading,
-              lineHeight: t.leading(t.type.heading),
-              color: t.color.ink
-            },
-            children: s("a4.title")
-          }
-        ),
-        /* @__PURE__ */ jsxs40(
-          View_default,
-          {
-            style: {
-              flexDirection: "row",
-              flexWrap: "wrap",
-              alignItems: "center",
-              paddingHorizontal: t.space.md
-            },
-            children: [
-              /* @__PURE__ */ jsx53(Text_default, { testID: "a4-sent-to", maxFontSizeMultiplier: t.maxFontScale, style: body, children: fill2(s("a4.sentTo"), { phone: formatPhone(phone) }) }),
-              /* @__PURE__ */ jsx53(
-                PrimaryButton,
-                {
-                  testID: "a4-edit",
-                  label: s("a4.edit"),
-                  onPress: onEditPhone,
-                  variant: "ghost",
-                  size: "md",
-                  display
-                }
-              )
-            ]
-          }
-        ),
-        busy ? /* @__PURE__ */ jsx53(
-          Text_default,
-          {
-            testID: "a4-checking",
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: { ...body, paddingHorizontal: t.space.md },
-            children: s("a4.checking")
-          }
-        ) : null,
-        problem === "offline" || problem === "failed" ? /* @__PURE__ */ jsx53(
-          PrimaryButton,
-          {
-            testID: "a4-retry",
-            label: s("common.retry"),
-            onPress: onRetryVerify,
-            display
-          }
-        ) : null,
-        /* @__PURE__ */ jsx53(
-          PrimaryButton,
-          {
-            testID: "a4-resend",
-            label: s("a4.resend"),
-            onPress: onResend,
-            disabled: busy,
-            variant: "ghost",
-            size: "md",
-            display
-          }
-        ),
-        resends >= NO_CODE_AFTER_RESENDS ? /* @__PURE__ */ jsx53(
-          PrimaryButton,
-          {
-            testID: "a4-no-code",
-            label: s("a5.noCode.title"),
-            onPress: onNoCode,
-            variant: "ghost",
-            size: "md",
-            display
-          }
-        ) : null,
-        /* @__PURE__ */ jsx53(
-          PrimaryButton,
-          {
-            testID: "a4-trouble",
-            label: s("a4.trouble"),
-            onPress: onTrouble,
-            variant: "ghost",
-            size: "md",
-            display
-          }
-        )
-      ]
-    }
-  );
-}
-
-// apps/mobile/src/screens/A5.tsx
-import { jsx as jsx54, jsxs as jsxs41 } from "react/jsx-runtime";
-var CARD = {
-  mismatch: { title: "a5.mismatch.title", body: "a5.mismatch.body", tint: "tintRed" },
-  expired: { title: "a5.expired.title", body: "a5.expired.body", tint: "tintGold" },
-  locked: { title: "a5.locked.title", body: "a5.locked.body", tint: "tintRed" },
-  noCode: { title: "a5.noCode.title", body: "a5.noCode.body", tint: "tintIndigo" }
-};
-var minutes = (seconds) => Math.ceil(seconds / 60);
-function CodeProblem({
-  problem = "mismatch",
-  retryAfterSeconds = null,
-  busy = false,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onSendNew = () => {
-  },
-  onBack,
-  onRetry = () => {
-  }
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const card = problem === null ? void 0 : CARD[problem];
-  const body = problem === "locked" && retryAfterSeconds === null ? s("a5.locked.later") : card === void 0 ? "" : fill2(s(card.body), {
-    digits: OTP_DIGITS,
-    minutes: minutes(problem === "locked" ? retryAfterSeconds ?? 0 : OTP_TTL_SECONDS)
-  });
-  const canSend = problem === "expired" || problem === "offline" || problem === "failed";
-  return /* @__PURE__ */ jsxs41(
-    Shell,
-    {
-      id: "a5",
-      s,
-      display,
-      status,
-      titleKey: "a5.bar",
-      onBack,
-      onRetry,
-      footer: canSend ? /* @__PURE__ */ jsx54(
-        PrimaryButton,
-        {
-          testID: "a5-send-new",
-          label: s(problem === "expired" ? "a5.expired.cta" : "common.retry"),
-          onPress: onSendNew,
-          disabled: busy,
-          display
-        }
-      ) : void 0,
-      children: [
-        card === void 0 ? null : /* @__PURE__ */ jsxs41(
-          View_default,
-          {
-            testID: "a5-" + problem,
-            accessibilityRole: "alert",
-            style: {
-              margin: t.space.md,
-              padding: t.space.md,
-              borderRadius: t.radius.lg,
-              borderWidth: t.hairline,
-              // The reference rules the indigo card with `rule`, the others `rule-strong`.
-              borderColor: card.tint === "tintIndigo" ? t.color.border : t.color.borderStrong,
-              backgroundColor: t.color[card.tint]
-            },
-            children: [
-              /* @__PURE__ */ jsx54(
-                Text_default,
-                {
-                  maxFontSizeMultiplier: t.maxFontScale,
-                  style: {
-                    fontFamily: t.font.bold,
-                    fontSize: t.type.body,
-                    lineHeight: t.leading(t.type.body),
-                    color: t.color.ink
-                  },
-                  children: s(card.title)
-                }
-              ),
-              /* @__PURE__ */ jsx54(
-                Text_default,
-                {
-                  testID: "a5-message",
-                  maxFontSizeMultiplier: t.maxFontScale,
-                  style: {
-                    marginTop: t.space.xs,
-                    fontFamily: t.font.regular,
-                    fontSize: t.type.body,
-                    lineHeight: t.leading(t.type.body),
-                    color: t.color.ink
-                  },
-                  children: body
-                }
-              )
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsx54(AuthNotice, { problem, s, display })
-      ]
-    }
-  );
-}
-
-// apps/mobile/src/screens/A6.tsx
-import { jsx as jsx55, jsxs as jsxs42 } from "react/jsx-runtime";
-function SessionExpired({
-  shopName = "",
-  phone = "",
-  busy = false,
-  problem = null,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onVerify = () => {
-  },
-  onRetry = () => {
-  }
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  return /* @__PURE__ */ jsxs42(
-    Shell,
-    {
-      id: "a6",
-      s,
-      display,
-      status,
-      titleKey: "a6.bar",
-      bar: "band",
-      onRetry,
-      footer: /* @__PURE__ */ jsx55(
-        PrimaryButton,
-        {
-          testID: "a6-verify",
-          label: fill2(s("a6.verify"), { phone: formatPhone(phone) }),
-          onPress: onVerify,
-          disabled: busy,
-          display
-        }
-      ),
-      children: [
-        /* @__PURE__ */ jsxs42(View_default, { style: { padding: t.space.lg, alignItems: "center" }, children: [
-          /* @__PURE__ */ jsx55(
-            Text_default,
-            {
-              testID: "a6-shop",
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                fontFamily: t.font.bold,
-                fontSize: t.type.heading,
-                lineHeight: t.leading(t.type.heading),
-                color: t.color.ink,
-                textAlign: "center"
-              },
-              children: shopName === "" ? s("s2.unnamed") : shopName
-            }
-          ),
-          /* @__PURE__ */ jsx55(
-            Text_default,
-            {
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                marginTop: t.space.sm,
-                fontFamily: t.font.regular,
-                fontSize: t.type.body,
-                lineHeight: t.leading(t.type.body),
-                color: t.color.inkMuted,
-                textAlign: "center"
-              },
-              children: s("a6.body")
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsx55(AuthNotice, { problem, s, display })
-      ]
-    }
-  );
-}
-
-// apps/mobile/src/screens/A7.tsx
-import { jsx as jsx56, jsxs as jsxs43 } from "react/jsx-runtime";
-function NumberChanged({
-  stage = "decide",
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onHaveOld = () => {
-  },
-  onNoOld = () => {
-  },
-  onOpenHelp = () => {
-  },
-  onBack,
-  onRetry = () => {
-  }
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const para = {
-    padding: t.space.md,
-    fontFamily: t.font.regular,
-    fontSize: t.type.body,
-    lineHeight: t.leading(t.type.body),
-    color: t.color.inkMuted
-  };
-  const option = (testID, title, sub, onPress) => /* @__PURE__ */ jsxs43(
-    Pressable_default,
-    {
-      testID,
-      accessibilityRole: "button",
-      accessibilityLabel: s(title),
-      onPress,
-      android_ripple: { color: t.color.surfaceRaised },
-      style: {
-        minHeight: t.control.xl,
-        minWidth: t.touchTarget,
-        marginHorizontal: t.space.md,
-        marginBottom: t.space.md,
-        padding: t.space.md,
-        borderRadius: t.radius.lg,
-        borderWidth: t.hairline,
-        borderColor: t.color.inkMuted,
-        backgroundColor: t.color.surface,
-        elevation: t.elevation.card,
-        justifyContent: "center"
-      },
-      children: [
-        /* @__PURE__ */ jsx56(
-          Text_default,
-          {
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              fontFamily: t.font.bold,
-              fontSize: t.type.body,
-              lineHeight: t.leading(t.type.body),
-              color: t.color.ink
-            },
-            children: s(title)
-          }
-        ),
-        /* @__PURE__ */ jsx56(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...para, padding: 0 }, children: s(sub) })
-      ]
-    }
-  );
-  return /* @__PURE__ */ jsx56(
-    Shell,
-    {
-      id: "a7",
-      s,
-      display,
-      status,
-      titleKey: "a7.bar",
-      subtitle: s("a7.sub"),
-      onBack,
-      onRetry,
-      children: stage === "decide" ? /* @__PURE__ */ jsxs43(View_default, { children: [
-        /* @__PURE__ */ jsx56(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: para, children: s("a7.intro") }),
-        option("a7-have-old", "a7.haveOld", "a7.haveOld.sub", onHaveOld),
-        option("a7-no-old", "a7.noOld", "a7.noOld.sub", onNoOld)
-      ] }) : /* @__PURE__ */ jsxs43(
-        View_default,
-        {
-          testID: "a7-handoff",
-          style: {
-            margin: t.space.md,
-            borderRadius: t.radius.lg,
-            borderWidth: t.hairline,
-            borderColor: t.color.border,
-            backgroundColor: t.color.surfaceRaised
-          },
-          children: [
-            /* @__PURE__ */ jsx56(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...para, color: t.color.ink }, children: s("a7.handoff") }),
-            /* @__PURE__ */ jsx56(
-              PrimaryButton,
-              {
-                testID: "a7-help",
-                label: s("a7.help"),
-                onPress: onOpenHelp,
-                variant: "ghost",
-                size: "md",
-                display
-              }
-            )
-          ]
-        }
-      )
-    }
-  );
-}
-
-// apps/mobile/src/screens/A8.tsx
-import { jsx as jsx57, jsxs as jsxs44 } from "react/jsx-runtime";
-function LogoutConfirm({
-  shopName = "",
-  phone = "",
-  pendingEntries = 0,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onStay = () => {
-  },
-  onLogOut = () => {
-  },
-  onRetry = () => {
-  }
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const shop = shopName === "" ? s("s2.unnamed") : shopName;
-  const line = pendingEntries === 0 ? s("a8.saved") : pendingEntries === 1 ? s("a8.pendingOne") : fill2(s("a8.pending"), { n: pendingEntries });
-  return /* @__PURE__ */ jsxs44(
-    Shell,
-    {
-      id: "a8",
-      s,
-      display,
-      status,
-      titleKey: "a8.bar",
-      bar: "band",
-      onRetry,
-      footer: /* @__PURE__ */ jsxs44(View_default, { children: [
-        /* @__PURE__ */ jsx57(
-          PrimaryButton,
-          {
-            testID: "a8-stay",
-            label: s("a8.stay"),
-            onPress: onStay,
-            variant: "tonal",
-            display
-          }
-        ),
-        /* @__PURE__ */ jsx57(
-          PrimaryButton,
-          {
-            testID: "a8-logout",
-            label: s("a8.logout"),
-            onPress: onLogOut,
-            variant: "secondary",
-            display
-          }
-        )
-      ] }),
-      children: [
-        /* @__PURE__ */ jsx57(
-          Text_default,
-          {
-            testID: "a8-heading",
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              paddingHorizontal: t.space.md,
-              paddingTop: t.space.md,
-              fontFamily: t.font.bold,
-              fontSize: t.type.heading,
-              lineHeight: t.leading(t.type.heading),
-              color: t.color.ink
-            },
-            children: fill2(s("a8.title"), { shop })
-          }
-        ),
-        /* @__PURE__ */ jsx57(
-          Text_default,
-          {
-            maxFontSizeMultiplier: t.maxFontScale,
-            style: {
-              paddingHorizontal: t.space.md,
-              paddingTop: t.space.sm,
-              fontFamily: t.font.regular,
-              fontSize: t.type.body,
-              lineHeight: t.leading(t.type.body),
-              color: t.color.inkMuted
-            },
-            children: fill2(s("a8.body"), { phone: formatPhone(phone) })
-          }
-        ),
-        /* @__PURE__ */ jsx57(
-          View_default,
-          {
-            testID: pendingEntries === 0 ? "a8-saved" : "a8-pending",
-            style: {
-              margin: t.space.md,
-              padding: t.space.md,
-              borderRadius: t.radius.lg,
-              borderWidth: t.hairline,
-              borderColor: t.color.borderStrong,
-              backgroundColor: t.color.surfaceRaised
-            },
-            children: /* @__PURE__ */ jsx57(
-              Text_default,
-              {
-                maxFontSizeMultiplier: t.maxFontScale,
-                style: {
-                  fontFamily: t.font.regular,
-                  fontSize: t.type.body,
-                  lineHeight: t.leading(t.type.body),
-                  color: t.color.ink
-                },
-                children: line
-              }
-            )
-          }
-        )
-      ]
-    }
-  );
-}
-
-// apps/mobile/src/screens/T18.tsx
-import { Fragment as Fragment16, jsx as jsx58, jsxs as jsxs45 } from "react/jsx-runtime";
-var SETTLEMENT_OPTIONS = [
-  { key: "cash", labelKey: "t18.opt.cash" },
-  { key: "upi", labelKey: "t18.opt.upi" },
-  { key: "udhar", labelKey: "t18.opt.udhar" },
-  { key: "pending", labelKey: "t18.opt.pending" },
-  { key: "exchange", labelKey: "t18.opt.exchange" }
-];
-var MONEY_OPTIONS = [
-  { key: "cash", labelKey: "formA.mode.cash" },
-  { key: "upi", labelKey: "formA.mode.upi" },
-  { key: "udhar", labelKey: "formA.mode.udhar" }
-];
-var SETTLE_OPTIONS = [
-  { key: "cash", labelKey: "t18.opt.cash" },
-  { key: "upi", labelKey: "t18.opt.upi" },
-  { key: "udhar", labelKey: "t18.opt.udhar" }
-];
-var noop = () => {
-};
-var describe = (e3, s, parties) => [
-  s("section." + e3.section),
-  dateLine(e3.dayId, s),
-  e3.partyId === void 0 ? "" : parties.get(e3.partyId) ?? ""
-].filter((x) => x !== "").join(" \xB7 ");
-function ReturnOrExchange({
-  store,
-  flow = null,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onRetry = noop,
-  onBack,
-  onKey = noop,
-  onChooseSale = noop,
-  onChooseSettle = noop,
-  onSettlement = noop,
-  onField = noop,
-  onDifferenceMode = noop,
-  onSettleMode = noop,
-  onSave = noop,
-  onSettle = noop,
-  entryPartyId = null,
-  pickingParty = false,
-  onOpenPartyPicker = noop,
-  onChooseParty = noop,
-  onCancelPartyPicker = noop,
-  newParty
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const parties = new Map(store.state.parties.map((p) => [p.id, p.name]));
-  const sale = flow?.saleId ? store.findEntry(flow.saleId) : void 0;
-  const ret = flow?.settleId ? store.findEntry(flow.settleId) : void 0;
-  const shell = {
-    id: "t18",
-    s,
-    display,
-    status,
-    titleKey: "t18.title",
-    onRetry,
-    onBack
-  };
-  const sentence = (testID, key, negative = false) => /* @__PURE__ */ jsx58(
-    Text_default,
-    {
-      testID,
-      maxFontSizeMultiplier: t.maxFontScale,
-      style: {
-        marginHorizontal: t.space.md,
-        marginTop: t.space.sm,
-        fontFamily: t.font.regular,
-        fontSize: t.type.body,
-        lineHeight: t.leading(t.type.body),
-        color: negative ? t.color.negative : t.color.inkMuted
-      },
-      children: s(key)
-    }
-  );
-  const draftRow = (labelKey, amount, action) => /* @__PURE__ */ jsxs45(
-    View_default,
-    {
-      testID: "t18-draft",
-      style: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        paddingHorizontal: t.space.md,
-        paddingVertical: t.space.sm,
-        backgroundColor: t.color.surface,
-        borderTopWidth: t.hairline,
-        borderTopColor: t.color.borderStrong
-      },
-      children: [
-        /* @__PURE__ */ jsxs45(View_default, { style: { flexShrink: 1, marginRight: t.space.sm }, children: [
-          /* @__PURE__ */ jsx58(
-            Text_default,
-            {
-              testID: "t18-draft-label",
-              maxFontSizeMultiplier: t.maxFontScale,
-              style: {
-                fontFamily: t.font.regular,
-                fontSize: t.type.label,
-                lineHeight: t.leading(t.type.label),
-                color: t.color.inkMuted
-              },
-              children: s(labelKey)
-            }
-          ),
-          /* @__PURE__ */ jsx58(Money, { testID: "t18-draft-amount", amount: amount ?? 0, mode: display, size: "figure" })
-        ] }),
-        /* @__PURE__ */ jsx58(
-          PrimaryButton,
-          {
-            testID: "t18-save",
-            label: action.label,
-            display,
-            size: "md",
-            disabled: action.disabled,
-            onPress: action.onPress
-          }
-        )
-      ]
-    }
-  );
-  if (ret !== void 0) {
-    const st = store.settlement(ret);
-    const typed = flow?.returned ?? null;
-    const tooMuch = typed !== null && typed > st.outstanding;
-    return /* @__PURE__ */ jsxs45(
-      Shell,
-      {
-        ...shell,
-        footer: /* @__PURE__ */ jsxs45(Fragment16, { children: [
-          draftRow("t18.settleAmount", typed, {
-            label: s("common.save"),
-            disabled: typed === null || tooMuch,
-            onPress: onSettle
-          }),
-          /* @__PURE__ */ jsx58(Keypad, { onKey, s, mode: display })
-        ] }),
-        children: [
-          /* @__PURE__ */ jsxs45(Card, { testID: "t18-return", display, children: [
-            /* @__PURE__ */ jsx58(Row, { testID: "t18-return-line", label: describe(ret, s, parties), amount: ret.amount, display }),
-            /* @__PURE__ */ jsx58(Row, { testID: "t18-outstanding", label: s("t18.outstanding"), amount: st.outstanding, display })
-          ] }),
-          sentence("t18-settle-how", "t18.settleHow"),
-          /* @__PURE__ */ jsx58(
-            Segmented,
-            {
-              testID: "t18-settle-mode",
-              options: SETTLE_OPTIONS.map((o) => ({ key: o.key, label: s(o.labelKey) })),
-              value: flow?.settleMode ?? "cash",
-              onChange: onSettleMode,
-              display
-            }
-          ),
-          tooMuch ? sentence("t18-too-much", "t18.tooMuchSettle", true) : null
-        ]
-      }
-    );
-  }
-  if (sale !== void 0 && flow !== null) {
-    const returnable = returnableOf(sale, store.entriesReferringTo(sale.id));
-    const exchange = flow.settlement === "exchange";
-    const returned = flow.returned;
-    const replacement = flow.replacement;
-    const diff = exchange && returned !== null && replacement !== null ? subtract3(replacement, returned) : null;
-    const owedBack = diff !== null && diff < 0 ? subtract3(0, diff) : diff ?? 0;
-    const needsParty = flow.settlement === "udhar" || flow.settlement === "pending" || diff !== null && diff !== 0 && flow.differenceMode === "udhar";
-    const askParty = needsParty && sale.partyId === void 0;
-    const partyName2 = entryPartyId === null ? null : parties.get(entryPartyId) ?? null;
-    const partyMissing = askParty && partyName2 === null;
-    const tooMuch = returned !== null && returned > returnable;
-    const save = {
-      label: s("t18.save"),
-      disabled: returned === null || tooMuch || partyMissing || exchange && replacement === null,
-      onPress: onSave
-    };
-    return /* @__PURE__ */ jsxs45(
-      Shell,
-      {
-        ...shell,
-        overlay: pickingParty ? /* @__PURE__ */ jsx58(
-          PartyPicker,
-          {
-            testID: "t18-picker",
-            store,
-            s,
-            kind: "customer",
-            display,
-            onChoose: onChooseParty,
-            onCancel: onCancelPartyPicker,
-            newParty
-          }
-        ) : null,
-        footer: /* @__PURE__ */ jsxs45(Fragment16, { children: [
-          exchange && flow.field === "replacement" ? draftRow("t18.replacement", replacement, save) : draftRow("t18.returned", returned, save),
-          /* @__PURE__ */ jsx58(Keypad, { onKey, s, mode: display })
-        ] }),
-        children: [
-          /* @__PURE__ */ jsxs45(Card, { testID: "t18-sale", display, title: s("t18.sale"), children: [
-            /* @__PURE__ */ jsx58(Row, { testID: "t18-sale-line", label: describe(sale, s, parties), amount: sale.amount, display }),
-            returnable === sale.amount ? null : /* @__PURE__ */ jsx58(Row, { testID: "t18-returnable", label: s("t18.returnable"), amount: returnable, display })
-          ] }),
-          sentence("t18-how", "t18.how"),
-          /* @__PURE__ */ jsx58(
-            Segmented,
-            {
-              testID: "t18-settlement",
-              options: SETTLEMENT_OPTIONS.map((o) => ({ key: o.key, label: s(o.labelKey) })),
-              value: flow.settlement,
-              onChange: onSettlement,
-              display
-            }
-          ),
-          exchange ? /* @__PURE__ */ jsxs45(Fragment16, { children: [
-            /* @__PURE__ */ jsxs45(Card, { testID: "t18-amounts", display, children: [
-              /* @__PURE__ */ jsx58(Row, { testID: "t18-returned", label: s("t18.returned"), amount: returned ?? 0, display }),
-              /* @__PURE__ */ jsx58(
-                Row,
-                {
-                  testID: "t18-replacement",
-                  label: s("t18.replacement"),
-                  amount: replacement ?? 0,
-                  display
-                }
-              )
-            ] }),
-            /* @__PURE__ */ jsx58(
-              Segmented,
-              {
-                testID: "t18-field",
-                options: [
-                  { key: "returned", label: s("t18.returned") },
-                  { key: "replacement", label: s("t18.replacement") }
-                ],
-                value: flow.field,
-                onChange: onField,
-                display
-              }
-            )
-          ] }) : null,
-          diff === null ? null : /* @__PURE__ */ jsx58(Card, { testID: "t18-difference", display, children: /* @__PURE__ */ jsx58(
-            Row,
-            {
-              testID: "t18-difference-line",
-              label: s(diff > 0 ? "t18.diffFrom" : diff < 0 ? "t18.diffTo" : "t18.diffNone"),
-              amount: owedBack,
-              display
-            }
-          ) }),
-          diff === null || diff === 0 ? null : /* @__PURE__ */ jsxs45(Fragment16, { children: [
-            sentence("t18-diff-how", "t18.diffHow"),
-            /* @__PURE__ */ jsx58(
-              Segmented,
-              {
-                testID: "t18-difference-mode",
-                options: MONEY_OPTIONS.map((o) => ({ key: o.key, label: s(o.labelKey) })),
-                value: flow.differenceMode,
-                onChange: onDifferenceMode,
-                display
-              }
-            )
-          ] }),
-          askParty ? /* @__PURE__ */ jsxs45(
-            Pressable_default,
-            {
-              testID: "t18-party",
-              accessibilityRole: "button",
-              accessibilityLabel: partyName2 ?? s("party.chooseCustomer"),
-              onPress: onOpenPartyPicker,
-              android_ripple: { color: t.color.brandSoft },
-              style: {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                minHeight: t.control.lg,
-                minWidth: t.touchTarget,
-                marginHorizontal: t.space.md,
-                marginTop: t.space.sm,
-                paddingHorizontal: t.space.md,
-                borderRadius: t.radius.md,
-                backgroundColor: t.color.surface,
-                borderWidth: t.hairline,
-                borderColor: t.color.inkMuted
-              },
-              children: [
-                /* @__PURE__ */ jsx58(
-                  Text_default,
-                  {
-                    maxFontSizeMultiplier: t.maxFontScale,
-                    style: {
-                      marginRight: t.space.sm,
-                      fontFamily: t.font.regular,
-                      fontSize: t.type.label,
-                      lineHeight: t.leading(t.type.label),
-                      color: t.color.inkMuted
-                    },
-                    children: s("party.customer")
-                  }
-                ),
-                /* @__PURE__ */ jsx58(
-                  Text_default,
-                  {
-                    testID: "t18-party-value",
-                    maxFontSizeMultiplier: t.maxFontScale,
-                    style: {
-                      flexShrink: 1,
-                      fontFamily: t.font.medium,
-                      fontSize: t.type.body,
-                      lineHeight: t.leading(t.type.body),
-                      color: partyName2 === null ? t.color.brandSoft : t.color.ink,
-                      textAlign: "right"
-                    },
-                    children: partyName2 ?? s("party.chooseCustomer")
-                  }
-                )
-              ]
-            }
-          ) : null,
-          partyMissing ? sentence("t18-party-required", "party.required", true) : null,
-          tooMuch ? sentence("t18-too-much", "t18.tooMuch", true) : null,
-          sentence("t18-confirm", "t18.confirm")
-        ]
-      }
-    );
-  }
-  const sales = store.recentSales().map((e3) => ({ e: e3, returnable: returnableOf(e3, store.entriesReferringTo(e3.id)) })).filter((x) => x.returnable > 0);
-  const pending = store.recentReturns().map((e3) => ({ e: e3, st: store.settlement(e3) })).filter((x) => x.st.state === "pending_settlement");
-  const recorded = flow?.recordedId ? store.findEntry(flow.recordedId) : void 0;
-  return /* @__PURE__ */ jsxs45(
-    Shell,
-    {
-      ...shell,
-      empty: sales.length === 0 && pending.length === 0,
-      emptyKey: "t18.empty",
-      bodyHeader: recorded === void 0 || recorded.section !== "sales_return" ? null : /* @__PURE__ */ jsx58(View_default, { style: { marginHorizontal: t.space.md, marginTop: t.space.md }, children: /* @__PURE__ */ jsx58(
-        Quiet,
-        {
-          testID: "t18-recorded",
-          text: fill(s("t18.recorded"), {
-            state: s("settlement." + store.settlement(recorded).state)
-          }),
-          display
-        }
-      ) }),
-      children: [
-        sales.length === 0 ? null : /* @__PURE__ */ jsx58(Card, { testID: "t18-sales", display, title: s("t18.sales"), children: sales.map(({ e: e3, returnable }) => /* @__PURE__ */ jsx58(
-          Row,
-          {
-            testID: "t18-sale-" + e3.id,
-            label: describe(e3, s, parties) + timeOf(e3.createdAt) + (returnable === e3.amount ? "" : " \xB7 " + s("t18.partReturned")),
-            accessibleLabel: [describe(e3, s, parties) + timeOf(e3.createdAt), formatPaise(returnable)].join(", "),
-            amount: returnable,
-            display,
-            onPress: () => onChooseSale(e3.id)
-          },
-          e3.id
-        )) }),
-        pending.length === 0 ? null : /* @__PURE__ */ jsx58(Card, { testID: "t18-pending", display, title: s("t18.pending"), children: pending.map(({ e: e3, st }) => /* @__PURE__ */ jsx58(
-          Row,
-          {
-            testID: "t18-pending-" + e3.id,
-            label: describe(e3, s, parties) + timeOf(e3.createdAt),
-            accessibleLabel: [describe(e3, s, parties) + timeOf(e3.createdAt), formatPaise(st.outstanding)].join(", "),
-            amount: st.outstanding,
-            display,
-            onPress: () => onChooseSettle(e3.id)
-          },
-          e3.id
-        )) })
-      ]
-    }
-  );
-}
-
-// apps/mobile/src/screens/T16.tsx
-import { Fragment as Fragment17, jsx as jsx59, jsxs as jsxs46 } from "react/jsx-runtime";
-var noop2 = () => {
-};
-var addsTo = (e3, s) => fill(s("t16.addsTo"), { section: s("section." + e3.section), date: dateLine(e3.dayId, s) });
-function CorrectDay({
-  store,
-  correction = null,
-  draftPaise = null,
-  status = "ready",
-  language = "en",
-  display = "comfort",
-  onRetry = noop2,
-  onBack,
-  onKey = noop2,
-  onChoose = noop2,
-  onAdd = noop2
-}) {
-  const t = tokens(display);
-  const s = strings(language);
-  const day = store.state.day;
-  const closed = day.state === "closed";
-  const entries = closed ? store.state.entries.filter((e3) => !isEventSection(e3.section)) : [];
-  const held = store.state.heldCorrections ?? [];
-  const target = correction?.originalId ? store.findEntry(correction.originalId) : void 0;
-  const outcome = correction?.outcome ?? null;
-  return /* @__PURE__ */ jsxs46(
-    Shell,
-    {
-      id: "t16",
-      s,
-      display,
-      status,
-      titleKey: "t3.correction",
-      onRetry,
-      onBack,
-      empty: target === void 0 && entries.length === 0 && held.length === 0,
-      emptyKey: "t16.empty",
-      bodyHeader: /* @__PURE__ */ jsxs46(View_default, { style: { marginHorizontal: t.space.md, marginTop: t.space.md }, children: [
-        /* @__PURE__ */ jsx59(Quiet, { testID: "t16-frozen", text: s("t16.frozen"), display }),
-        closed ? /* @__PURE__ */ jsx59(View_default, { style: { marginTop: t.space.sm }, children: /* @__PURE__ */ jsx59(
-          Quiet,
-          {
-            testID: "t16-next-day",
-            text: fill(s("t16.nextDay"), { time: store.state.dayStartsAt ?? "00:00" }),
-            display
-          }
-        ) }) : null,
-        outcome === null ? null : /* @__PURE__ */ jsx59(
-          View_default,
-          {
-            style: {
-              marginTop: t.space.md,
-              padding: t.space.md,
-              borderRadius: t.radius.md,
-              backgroundColor: t.color.surface
-            },
-            children: /* @__PURE__ */ jsx59(
-              Quiet,
-              {
-                testID: "t16-outcome-" + outcome,
-                text: s(outcome === "held" ? "t16.held" : "t16.recorded"),
-                display
-              }
-            )
-          }
-        )
-      ] }),
-      footer: target === void 0 ? null : /* @__PURE__ */ jsxs46(Fragment17, { children: [
-        /* @__PURE__ */ jsxs46(
-          View_default,
-          {
-            testID: "t16-draft",
-            style: {
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              paddingHorizontal: t.space.md,
-              paddingVertical: t.space.sm,
-              backgroundColor: t.color.surface,
-              borderTopWidth: t.hairline,
-              borderTopColor: t.color.borderStrong
-            },
-            children: [
-              /* @__PURE__ */ jsxs46(View_default, { style: { flexShrink: 1, marginRight: t.space.sm }, children: [
-                /* @__PURE__ */ jsx59(Quiet, { text: s("t16.amount"), display }),
-                /* @__PURE__ */ jsx59(Money, { testID: "t16-draft-amount", amount: draftPaise ?? 0, mode: display, size: "figure" })
-              ] }),
-              /* @__PURE__ */ jsx59(
-                PrimaryButton,
-                {
-                  testID: "t16-add",
-                  label: s("common.add"),
-                  display,
-                  size: "md",
-                  disabled: draftPaise === null,
-                  onPress: onAdd
-                }
-              )
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsx59(Keypad, { onKey, s, mode: display })
-      ] }),
-      children: [
-        target === void 0 ? null : /* @__PURE__ */ jsx59(Card, { testID: "t16-target", display, children: /* @__PURE__ */ jsx59(Row, { testID: "t16-target-line", label: addsTo(target, s), amount: target.amount, display }) }),
-        target !== void 0 || entries.length === 0 ? null : /* @__PURE__ */ jsx59(Card, { testID: "t16-entries", display, title: s("t16.entries"), children: entries.map((e3) => /* @__PURE__ */ jsx59(
-          Row,
-          {
-            testID: "t16-entry-" + e3.id,
-            label: s("section." + e3.section) + (e3.label ? " \xB7 " + e3.label : ""),
-            amount: e3.amount,
-            display,
-            onPress: () => onChoose(e3.id)
-          },
-          e3.id
-        )) }),
-        held.length === 0 ? null : /* @__PURE__ */ jsx59(Card, { testID: "t16-held", display, title: s("t16.waiting"), children: held.map((h) => {
-          const original = store.findEntry(h.originalId);
-          return /* @__PURE__ */ jsx59(
-            Row,
-            {
-              testID: "t16-held-" + h.id,
-              label: original === void 0 ? s("t16.waiting") : addsTo(original, s),
-              amount: h.amount,
-              display
-            },
-            h.id
-          );
-        }) })
-      ]
-    }
   );
 }
 
@@ -32749,7 +32017,17 @@ function match(text, ctx) {
 // apps/mobile/src/app/session.tsx
 var A5_PROBLEMS = ["mismatch", "expired", "locked", "noCode"];
 var PHONE_DIGITS = 10;
-var CODE_DIGITS = OTP_DIGITS;
+var digitsForMode = (mode) => mode === "invite" ? INVITE_CODE_DIGITS : OTP_DIGITS;
+var DIGIT_ZEROS = [48, 2406, 2918, 1632, 1776];
+function codeDigitsOf(raw) {
+  let out = "";
+  for (const ch of raw) {
+    const cp = ch.codePointAt(0) ?? 0;
+    const zero = DIGIT_ZEROS.find((z) => cp >= z && cp <= z + 9);
+    if (zero !== void 0) out += String.fromCharCode(48 + (cp - zero));
+  }
+  return out;
+}
 var PARSER_FOR = {
   cash_sales: parseSalesEntry,
   upi_sales: parseSalesEntry,
@@ -32763,6 +32041,13 @@ var PARSER_FOR = {
 var MAX_DIGITS = 8;
 var overEntryMax = (digits) => Number(digits + "00") > MAX_ENTRY_PAISE;
 var PICKER_SETTLE_MS = 600;
+function localDateOf(stamp, nowIso) {
+  const at = Date.parse(stamp);
+  if (Number.isNaN(at)) return "";
+  const m2 = /([+-])(\d{2}):?(\d{2})$/.exec(nowIso);
+  const offsetMs = m2 ? (m2[1] === "-" ? -1 : 1) * (parseInt(m2[2], 10) * 60 + parseInt(m2[3], 10)) * 6e4 : 0;
+  return new Date(at + offsetMs).toISOString().slice(0, 10);
+}
 var CHAT_TURNS_KEPT = 20;
 var ITEM_START = { saleId: null, itemId: null, field: "quantity", quantity: null, amount: null };
 var RETURN_START = {
@@ -32880,7 +32165,10 @@ var Session = class _Session {
         retryAfterSeconds: null,
         resends: 0,
         recovery: "decide",
-        recoveryFrom: "A3"
+        recoveryFrom: "A3",
+        codeMode: options.codeMode ?? "sms",
+        codeDigits: digitsForMode(options.codeMode ?? "sms"),
+        codeModeKnown: options.codeMode !== void 0
       },
       appLock: options.appLock === true,
       // Cold start with the lock on: covered before anything is drawn.
@@ -32944,7 +32232,9 @@ var Session = class _Session {
       planNotice: null,
       itemFlow: null,
       itemName: "",
-      lastSavedId: null
+      lastSavedId: null,
+      cancelAsk: null,
+      cancelledId: null
     };
     this.#fieldDigits = { returned: "", replacement: "" };
     this.#itemDigits = { quantity: "", amount: "" };
@@ -33334,7 +32624,19 @@ var Session = class _Session {
    * clearing it would punish him for correcting the mode before saving.
    */
   selectCommit(index) {
-    this.#state = { ...this.#state, selectedCommit: index, advanceConfirm: null };
+    const open = this.#state.entrySection;
+    const route = open !== null && open in ROUTE_FOR_SECTION ? ROUTE_FOR_SECTION[open] : void 0;
+    const section = route?.commits[index]?.section;
+    const want = section === void 0 ? void 0 : PARTY_KIND[section];
+    const who = this.#state.entryPartyId;
+    const kind = who === null ? void 0 : this.#store.state.parties.find((p) => p.id === who)?.kind;
+    const wrongKind = who !== null && want !== void 0 && kind !== want;
+    this.#state = {
+      ...this.#state,
+      selectedCommit: index,
+      advanceConfirm: null,
+      ...wrongKind ? { entryPartyId: null } : {}
+    };
   }
   setLanguage(language) {
     this.#state = { ...this.#state, language };
@@ -33349,6 +32651,10 @@ var Session = class _Session {
    */
   todayIso() {
     return this.#options.now().slice(0, 10);
+  }
+  /** RTI-7: a server stamp as a date on this phone's clock (`localDateOf`). */
+  localDate(stamp) {
+    return localDateOf(stamp, this.#options.now());
   }
   /** M3: Normal, Large or Extra large - words and figures, never the chrome (V2 3.15). */
   setTextSize(textSize) {
@@ -33375,6 +32681,12 @@ var Session = class _Session {
       ...this.#state,
       devices: list === null ? { status: "error", list: [], confirm: null, done: was?.done ?? false } : { status: "ready", list, confirm: null, done: was?.done ?? false }
     };
+  }
+  /** RTI-7: the new-phone notice, as the host last derived it. Null clears it. */
+  newPhoneSeen(newPhone) {
+    const was = this.#state.newPhone ?? null;
+    if (was?.id === newPhone?.id && was?.createdAt === newPhone?.createdAt) return;
+    this.#state = { ...this.#state, newPhone };
   }
   /** "Sign out that phone?" - only for a phone that is not this one and not already out. */
   askSignOut(deviceId) {
@@ -33514,7 +32826,7 @@ var Session = class _Session {
       });
       this.#store.append(entry);
       this.#digits = "";
-      this.#state = { ...this.#state, draftPaise: null, lastRefusal: null, advanceConfirm: null, lastSavedId: entry.id };
+      this.#state = { ...this.#state, draftPaise: null, lastRefusal: null, advanceConfirm: null, lastSavedId: entry.id, cancelledId: null };
       return entry;
     } catch (e3) {
       const wrongKind = e3.name === "PartyKindMismatch";
@@ -33529,6 +32841,58 @@ var Session = class _Session {
       };
       return null;
     }
+  }
+  /* ---- Cancel this entry (docs/design/CANCEL-ENTRY-GATE.md §4) ------- */
+  /** He tapped a line on an entry form: the confirm sheet, naming that entry. */
+  askCancel(entryId) {
+    this.#state = { ...this.#state, cancelAsk: entryId, lastRefusal: null };
+  }
+  /** "Keep it", the scrim or Back: nothing is written. */
+  dismissCancel() {
+    this.#state = { ...this.#state, cancelAsk: null };
+  }
+  /**
+   * "Cancel this entry" on the sheet. The ask is cleared FIRST, so a double tap
+   * reaches here once with an id and once with nothing - one cancel row, never
+   * two. A refusal is said in words (App's REFUSAL_HINT), never as its code.
+   */
+  confirmCancel() {
+    const targetId = this.#state.cancelAsk ?? null;
+    if (targetId === null) return null;
+    this.#state = { ...this.#state, cancelAsk: null };
+    try {
+      const cancel = this.#store.cancel({ targetId, id: this.#options.newId(), createdAt: this.#options.now() });
+      this.#state = { ...this.#state, cancelledId: targetId, lastSavedId: null, lastRefusal: null, advanceConfirm: null };
+      return cancel;
+    } catch (e3) {
+      this.#refuseFrom(e3);
+      return null;
+    }
+  }
+  /**
+   * "Enter it again correctly": the same form, its segment set to the cancelled
+   * entry's section and mode - and NOTHING else. No amount and no person: a
+   * figure the app filled in is a figure nobody typed.
+   */
+  enterAgain() {
+    const id2 = this.#state.cancelledId ?? null;
+    const target = id2 === null ? void 0 : this.#store.findEntry(id2);
+    if (target === void 0) return;
+    const open = this.#state.entrySection;
+    const route = open !== null && open in ROUTE_FOR_SECTION ? ROUTE_FOR_SECTION[open] : void 0;
+    const exact = route?.commits.findIndex((c) => c.section === target.section && c.mode === target.mode) ?? -1;
+    const near = route?.commits.findIndex((c) => c.section === target.section) ?? -1;
+    const index = exact >= 0 ? exact : near;
+    this.#digits = "";
+    this.#state = {
+      ...this.#state,
+      ...index >= 0 ? { selectedCommit: index } : {},
+      draftPaise: null,
+      entryPartyId: null,
+      cancelledId: null,
+      advanceConfirm: null,
+      lastRefusal: null
+    };
   }
   /** QA-03: he said yes to "record it as advance" - save what is on the form, as typed. */
   confirmAdvance(option) {
@@ -33800,6 +33164,14 @@ var Session = class _Session {
       this.goTo(this.#state.chat?.from ?? "T1");
       return true;
     }
+    if ((this.#state.cancelAsk ?? null) !== null) {
+      this.dismissCancel();
+      return true;
+    }
+    if (this.#state.screen === "X4") {
+      this.finishLockOffer();
+      return true;
+    }
     if (this.#state.screen === "A7") {
       this.goTo(this.#state.auth.recoveryFrom);
       return true;
@@ -33855,19 +33227,30 @@ var Session = class _Session {
       };
       return false;
     }
+    const next = this.#options.offerAppLock === true && this.#state.appLock !== true ? "X4" : "T1";
     if (this.#state.draftPaise === null) {
       this.#digits = "";
       this.#state = {
         ...this.#state,
-        screen: "T1",
+        screen: next,
         onboardingKeypad: false,
         lastRefusal: null
       };
       return true;
     }
     const saved = this.confirmOpeningCash();
-    if (saved) this.#state = { ...this.#state, onboardingKeypad: false };
+    if (saved) this.#state = { ...this.#state, onboardingKeypad: false, screen: next };
     return saved;
+  }
+  /**
+   * X4 "Not now", "Continue", or the lock just turned on: on to Today. A note
+   * about a missing screen lock belongs to the offer and does not follow him.
+   * The lock stays where it is - off unless he turned it on - and S1 keeps
+   * the switch for later.
+   */
+  finishLockOffer() {
+    this.#state = { ...this.#state, lockNote: null };
+    this.goTo("T1");
   }
   /**
    * X1: whether the in-app keypad is up. It appears only while question 4 is
@@ -33940,14 +33323,14 @@ var Session = class _Session {
     const draft = this.#state.newParty ?? { name: "", phone: "" };
     const name = draft.name.trim();
     const phone = draft.phone.replace(/\s+/g, "");
-    const refuse = (field, message) => {
+    const refuse2 = (field, message) => {
       this.#state = { ...this.#state, lastRefusal: { field, message } };
       return false;
     };
-    if (name === "") return refuse("partyName", "a new party needs a name");
-    if ([...name].length > PARTY_NAME_MAX) return refuse("partyName", "that name is too long");
+    if (name === "") return refuse2("partyName", "a new party needs a name");
+    if ([...name].length > PARTY_NAME_MAX) return refuse2("partyName", "that name is too long");
     if (phone !== "" && !INDIAN_MOBILE.test(phone)) {
-      return refuse("partyPhone", "a mobile number is ten digits, starting 6 to 9");
+      return refuse2("partyPhone", "a mobile number is ten digits, starting 6 to 9");
     }
     const party = {
       id: this.#options.newId(),
@@ -33958,7 +33341,7 @@ var Session = class _Session {
     try {
       this.#store.addParty(party);
     } catch (e3) {
-      return refuse("party", e3.message);
+      return refuse2("party", e3.message);
     }
     this.#state = {
       ...this.#state,
@@ -34279,26 +33662,54 @@ var Session = class _Session {
    */
   pressCode(key) {
     const c = this.#state.auth.code;
-    const code = key === "clear" ? "" : key === "back" ? c.slice(0, -1) : c.length < CODE_DIGITS ? c + key : c;
+    const max = this.#state.auth.codeDigits;
+    const digit = key === "clear" || key === "back" ? "" : codeDigitsOf(key);
+    const code = key === "clear" ? "" : key === "back" ? c.slice(0, -1) : c.length < max ? c + digit : c;
     this.#auth({ code, problem: null });
-    return code.length === CODE_DIGITS && c.length !== CODE_DIGITS;
+    return code.length === max && c.length !== max;
+  }
+  /**
+   * F-1: A PASTED CODE. Cleaned by `codeDigitsOf` and cut at the box count, so
+   * "4821 0937" fills all eight boxes first time. Returns true when it filled
+   * them - the caller then verifies, exactly as for the last keypad digit. A
+   * paste with no digits in it changes nothing.
+   */
+  enterCode(raw) {
+    const max = this.#state.auth.codeDigits;
+    const code = codeDigitsOf(raw).slice(0, max);
+    if (code === "") return false;
+    this.#auth({ code, problem: null });
+    return code.length === max;
   }
   /** A request left. The previous problem is no longer the news. */
   authBusy() {
     this.#auth({ busy: true, problem: null, retryAfterSeconds: null });
   }
-  /** A code went out. Straight to A4 with an empty code, counting a resend. */
-  codeSent(resend) {
+  /**
+   * A code went out - or, in invite mode, the server said none would. Straight
+   * to A4 with an empty code, counting a resend, with the box count and the
+   * words the reply asked for.
+   */
+  codeSent(resend, reply) {
     this.#auth(
       {
         busy: false,
         code: "",
         problem: null,
         retryAfterSeconds: null,
-        resends: this.#state.auth.resends + (resend ? 1 : 0)
+        resends: this.#state.auth.resends + (resend ? 1 : 0),
+        ...reply === void 0 ? {} : { codeMode: reply.mode, codeDigits: reply.digits, codeModeKnown: true }
       },
       "A4"
     );
+  }
+  /**
+   * LIVE DEMO S3-4: A5 "Try again" - back to an empty code entry for the same
+   * number. Nothing is sent and nothing is said about why the last code failed:
+   * the server's answer is the same for every wrong code, and so is this.
+   */
+  retryCode() {
+    this.#auth({ code: "", problem: null, busy: false, retryAfterSeconds: null }, "A4");
   }
   /**
    * Something refused. A code problem is A5; no signal or a broken server is a
@@ -34355,6 +33766,1380 @@ var Session = class _Session {
     this.goTo("A1");
   }
 };
+
+// apps/mobile/src/screens/authParts.tsx
+import { jsx as jsx52 } from "react/jsx-runtime";
+var formatPhone = (digits) => digits.length > 5 ? digits.slice(0, 5) + " " + digits.slice(5) : digits;
+var fill2 = (template, values) => template.replace(/\{(\w+)\}/g, (whole, k2) => k2 in values ? String(values[k2]) : whole);
+var NOTICE = {
+  offline: "auth.offline",
+  failed: "auth.failed"
+};
+function AuthNotice({
+  problem,
+  s,
+  display = "comfort"
+}) {
+  const key = problem === null ? void 0 : NOTICE[problem];
+  if (key === void 0) return null;
+  const t = tokens(display);
+  return /* @__PURE__ */ jsx52(
+    View_default,
+    {
+      testID: "auth-notice-" + problem,
+      accessibilityRole: "alert",
+      accessibilityLiveRegion: "polite",
+      style: {
+        marginHorizontal: t.space.md,
+        marginTop: t.space.sm,
+        padding: t.space.md,
+        borderRadius: t.radius.lg,
+        backgroundColor: t.color.surfaceRaised,
+        borderWidth: t.hairline,
+        borderColor: t.color.borderStrong
+      },
+      children: /* @__PURE__ */ jsx52(
+        Text_default,
+        {
+          maxFontSizeMultiplier: t.maxFontScale,
+          style: {
+            fontFamily: t.font.regular,
+            fontSize: t.type.body,
+            lineHeight: t.leading(t.type.body),
+            color: t.color.ink
+          },
+          children: s(key)
+        }
+      )
+    }
+  );
+}
+
+// apps/mobile/src/screens/A3.tsx
+import { jsx as jsx53, jsxs as jsxs40 } from "react/jsx-runtime";
+var PHONE_PLACEHOLDER = "00000 00000";
+function PhoneNumber({
+  phone = "",
+  busy = false,
+  problem = null,
+  mode = "sms",
+  digits = digitsForMode(mode ?? "sms"),
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onKey = () => {
+  },
+  onSend = () => {
+  },
+  onChangedNumber = () => {
+  },
+  onBack,
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const complete = INDIAN_MOBILE.test(phone);
+  const notMobile = phone.length === 10 && !complete;
+  const invite = mode === "invite";
+  const unknown = mode === null;
+  return /* @__PURE__ */ jsxs40(
+    Shell,
+    {
+      id: "a3",
+      s,
+      display,
+      status,
+      titleKey: "a3.bar",
+      subtitle: s("a3.step"),
+      onBack,
+      onRetry,
+      footer: /* @__PURE__ */ jsxs40(View_default, { children: [
+        /* @__PURE__ */ jsxs40(
+          View_default,
+          {
+            testID: "a3-field",
+            style: {
+              flexDirection: "row",
+              alignItems: "center",
+              margin: t.space.md,
+              minHeight: t.control.lg,
+              paddingHorizontal: t.space.md,
+              borderRadius: t.radius.md,
+              borderWidth: t.hairline * 2,
+              borderColor: t.color.brand,
+              backgroundColor: t.color.surface
+            },
+            children: [
+              /* @__PURE__ */ jsx53(
+                Text_default,
+                {
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    fontFamily: t.font.bold,
+                    fontSize: t.type.figure,
+                    lineHeight: t.leading(t.type.figure),
+                    color: t.color.inkMuted,
+                    fontVariant: ["tabular-nums"],
+                    paddingRight: t.space.sm,
+                    marginRight: t.space.sm,
+                    borderRightWidth: t.hairline,
+                    borderRightColor: t.color.borderStrong
+                  },
+                  children: "+91"
+                }
+              ),
+              /* @__PURE__ */ jsx53(
+                Text_default,
+                {
+                  testID: "a3-phone",
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    flexShrink: 1,
+                    fontFamily: t.font.bold,
+                    fontSize: t.type.figure,
+                    lineHeight: t.leading(t.type.figure),
+                    color: phone === "" ? t.color.inkMuted : t.color.ink,
+                    fontVariant: ["tabular-nums"]
+                  },
+                  children: phone === "" ? PHONE_PLACEHOLDER : formatPhone(phone)
+                }
+              )
+            ]
+          }
+        ),
+        notMobile ? /* @__PURE__ */ jsx53(
+          Text_default,
+          {
+            testID: "a3-not-mobile",
+            accessibilityLiveRegion: "polite",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              marginHorizontal: t.space.md,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.inkMuted
+            },
+            children: s("a3.notMobile")
+          }
+        ) : null,
+        /* @__PURE__ */ jsx53(AuthNotice, { problem, s, display }),
+        /* @__PURE__ */ jsx53(Keypad, { onKey, s, mode: display, testID: "a3-keypad" }),
+        /* @__PURE__ */ jsx53(
+          PrimaryButton,
+          {
+            testID: "a3-send",
+            label: s(busy ? invite || unknown ? "a4.checking" : "a3.sending" : invite || unknown ? "a3.next" : "a3.send"),
+            onPress: onSend,
+            disabled: !complete || busy,
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx53(
+          PrimaryButton,
+          {
+            testID: "a3-changed",
+            label: s("a3.changed"),
+            onPress: onChangedNumber,
+            variant: "ghost",
+            size: "md",
+            display
+          }
+        )
+      ] }),
+      children: [
+        /* @__PURE__ */ jsx53(
+          Text_default,
+          {
+            testID: "a3-heading",
+            accessibilityRole: "header",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              paddingHorizontal: t.space.md,
+              paddingTop: t.space.md,
+              fontFamily: t.font.bold,
+              fontSize: t.type.heading,
+              lineHeight: t.leading(t.type.heading),
+              color: t.color.ink
+            },
+            children: s("a3.bar")
+          }
+        ),
+        /* @__PURE__ */ jsx53(
+          Text_default,
+          {
+            testID: "a3-help",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              paddingHorizontal: t.space.md,
+              paddingTop: t.space.sm,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.inkMuted
+            },
+            children: unknown ? s("a3.neutral.help") : fill2(s(invite ? "a3.invite.help" : "a3.help"), { digits })
+          }
+        )
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/A4.tsx
+import { jsx as jsx54, jsxs as jsxs41 } from "react/jsx-runtime";
+var NO_CODE_AFTER_RESENDS = 2;
+var CODE_GROUP = 4;
+function CodeEntry({
+  phone = "",
+  code = "",
+  busy = false,
+  problem = null,
+  resends = 0,
+  mode = "sms",
+  digits = digitsForMode(mode),
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onKey = () => {
+  },
+  onEditPhone = () => {
+  },
+  onResend = () => {
+  },
+  onRetryVerify = () => {
+  },
+  onTrouble = () => {
+  },
+  onNoCode = () => {
+  },
+  onPaste,
+  onBack,
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const body = {
+    fontFamily: t.font.regular,
+    fontSize: t.type.body,
+    lineHeight: t.leading(t.type.body),
+    color: t.color.inkMuted
+  };
+  const invite = mode === "invite";
+  const boxes = Array.from({ length: digits }, (_, i) => code[i] ?? "");
+  const groupStart = (i) => digits > 6 && i > 0 && i % CODE_GROUP === 0;
+  return /* @__PURE__ */ jsxs41(
+    Shell,
+    {
+      id: "a4",
+      s,
+      display,
+      status,
+      titleKey: "a4.bar",
+      subtitle: s("a4.step"),
+      onBack,
+      onRetry,
+      footer: /* @__PURE__ */ jsxs41(View_default, { children: [
+        /* @__PURE__ */ jsx54(View_default, { testID: "a4-boxes", style: { flexDirection: "row", paddingHorizontal: t.space.sm }, children: boxes.map((d, i) => /* @__PURE__ */ jsx54(
+          View_default,
+          {
+            testID: "a4-box-" + i,
+            style: {
+              flex: 1,
+              minHeight: t.control.md,
+              margin: t.space.xs,
+              ...groupStart(i) ? { marginLeft: t.space.md } : {},
+              borderRadius: t.radius.md,
+              borderWidth: t.hairline * 2,
+              borderColor: i === code.length ? t.color.brand : t.color.inkMuted,
+              backgroundColor: t.color.surface,
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            children: /* @__PURE__ */ jsx54(
+              Text_default,
+              {
+                maxFontSizeMultiplier: t.maxFontScale,
+                style: {
+                  fontFamily: t.font.bold,
+                  fontSize: t.type.figure,
+                  lineHeight: t.leading(t.type.figure),
+                  color: t.color.ink,
+                  fontVariant: ["tabular-nums"]
+                },
+                children: d
+              }
+            )
+          },
+          i
+        )) }),
+        busy ? null : /* @__PURE__ */ jsx54(AuthNotice, { problem, s, display }),
+        busy ? null : /* @__PURE__ */ jsx54(Keypad, { onKey, s, mode: display, testID: "a4-keypad" })
+      ] }),
+      children: [
+        /* @__PURE__ */ jsx54(
+          Text_default,
+          {
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              paddingHorizontal: t.space.md,
+              paddingTop: t.space.md,
+              fontFamily: t.font.bold,
+              fontSize: t.type.heading,
+              lineHeight: t.leading(t.type.heading),
+              color: t.color.ink
+            },
+            children: s("a4.title")
+          }
+        ),
+        /* @__PURE__ */ jsxs41(
+          View_default,
+          {
+            style: {
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "center",
+              paddingHorizontal: t.space.md
+            },
+            children: [
+              /* @__PURE__ */ jsx54(Text_default, { testID: "a4-sent-to", maxFontSizeMultiplier: t.maxFontScale, style: body, children: fill2(s(invite ? "a4.invite.for" : "a4.sentTo"), { phone: formatPhone(phone) }) }),
+              /* @__PURE__ */ jsx54(
+                PrimaryButton,
+                {
+                  testID: "a4-edit",
+                  label: s("a4.edit"),
+                  onPress: onEditPhone,
+                  variant: "ghost",
+                  size: "md",
+                  display
+                }
+              )
+            ]
+          }
+        ),
+        busy ? /* @__PURE__ */ jsx54(
+          Text_default,
+          {
+            testID: "a4-checking",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: { ...body, paddingHorizontal: t.space.md },
+            children: s("a4.checking")
+          }
+        ) : null,
+        problem === "offline" || problem === "failed" ? /* @__PURE__ */ jsx54(
+          PrimaryButton,
+          {
+            testID: "a4-retry",
+            label: s("common.retry"),
+            onPress: onRetryVerify,
+            display
+          }
+        ) : null,
+        invite && onPaste !== void 0 ? /* @__PURE__ */ jsx54(
+          PrimaryButton,
+          {
+            testID: "a4-paste",
+            label: s("a4.paste"),
+            onPress: onPaste,
+            disabled: busy,
+            variant: "ghost",
+            size: "md",
+            display
+          }
+        ) : null,
+        invite ? null : /* @__PURE__ */ jsx54(
+          PrimaryButton,
+          {
+            testID: "a4-resend",
+            label: s("a4.resend"),
+            onPress: onResend,
+            disabled: busy,
+            variant: "ghost",
+            size: "md",
+            display
+          }
+        ),
+        !invite && resends >= NO_CODE_AFTER_RESENDS ? /* @__PURE__ */ jsx54(
+          PrimaryButton,
+          {
+            testID: "a4-no-code",
+            label: s("a5.noCode.title"),
+            onPress: onNoCode,
+            variant: "ghost",
+            size: "md",
+            display
+          }
+        ) : null,
+        /* @__PURE__ */ jsx54(
+          PrimaryButton,
+          {
+            testID: "a4-trouble",
+            label: s("a4.trouble"),
+            onPress: onTrouble,
+            variant: "ghost",
+            size: "md",
+            display
+          }
+        )
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/A5.tsx
+import { jsx as jsx55, jsxs as jsxs42 } from "react/jsx-runtime";
+var CARD = {
+  mismatch: { title: "a5.mismatch.title", body: "a5.mismatch.body", tint: "tintRed" },
+  expired: { title: "a5.expired.title", body: "a5.expired.body", tint: "tintGold" },
+  locked: { title: "a5.locked.title", body: "a5.locked.body", tint: "tintRed" },
+  noCode: { title: "a5.noCode.title", body: "a5.noCode.body", tint: "tintIndigo" }
+};
+var minutes = (seconds) => Math.ceil(seconds / 60);
+function CodeProblem({
+  problem = "mismatch",
+  retryAfterSeconds = null,
+  mode = "sms",
+  digits = digitsForMode(mode),
+  busy = false,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onSendNew = () => {
+  },
+  onTryAgain = () => {
+  },
+  onBack,
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const card = problem === null ? void 0 : CARD[problem];
+  const invite = mode === "invite";
+  const body = invite && problem === "expired" ? s("a5.invite.ask") : problem === "locked" && retryAfterSeconds === null ? s("a5.locked.later") : card === void 0 ? "" : fill2(s(card.body), {
+    digits,
+    minutes: minutes(problem === "locked" ? retryAfterSeconds ?? 0 : OTP_TTL_SECONDS)
+  });
+  const ask = invite && (problem === "mismatch" || problem === "locked");
+  const canSend = problem === "expired" && !invite || problem === "offline" || problem === "failed";
+  return /* @__PURE__ */ jsxs42(
+    Shell,
+    {
+      id: "a5",
+      s,
+      display,
+      status,
+      titleKey: "a5.bar",
+      onBack,
+      onRetry,
+      footer: canSend ? /* @__PURE__ */ jsx55(
+        PrimaryButton,
+        {
+          testID: "a5-send-new",
+          label: s(problem === "expired" ? "a5.expired.cta" : "common.retry"),
+          onPress: onSendNew,
+          disabled: busy,
+          display
+        }
+      ) : problem === "mismatch" ? /* @__PURE__ */ jsx55(
+        PrimaryButton,
+        {
+          testID: "a5-try-again",
+          label: s("common.retry"),
+          onPress: onTryAgain,
+          display
+        }
+      ) : void 0,
+      children: [
+        card === void 0 ? null : /* @__PURE__ */ jsxs42(
+          View_default,
+          {
+            testID: "a5-" + problem,
+            accessibilityRole: "alert",
+            style: {
+              margin: t.space.md,
+              padding: t.space.md,
+              borderRadius: t.radius.lg,
+              borderWidth: t.hairline,
+              // The reference rules the indigo card with `rule`, the others `rule-strong`.
+              borderColor: card.tint === "tintIndigo" ? t.color.border : t.color.borderStrong,
+              backgroundColor: t.color[card.tint]
+            },
+            children: [
+              /* @__PURE__ */ jsx55(
+                Text_default,
+                {
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    fontFamily: t.font.bold,
+                    fontSize: t.type.body,
+                    lineHeight: t.leading(t.type.body),
+                    color: t.color.ink
+                  },
+                  children: s(card.title)
+                }
+              ),
+              /* @__PURE__ */ jsx55(
+                Text_default,
+                {
+                  testID: "a5-message",
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    marginTop: t.space.xs,
+                    fontFamily: t.font.regular,
+                    fontSize: t.type.body,
+                    lineHeight: t.leading(t.type.body),
+                    color: t.color.ink
+                  },
+                  children: body
+                }
+              ),
+              ask ? /* @__PURE__ */ jsx55(
+                Text_default,
+                {
+                  testID: "a5-ask",
+                  maxFontSizeMultiplier: t.maxFontScale,
+                  style: {
+                    marginTop: t.space.xs,
+                    fontFamily: t.font.bold,
+                    fontSize: t.type.body,
+                    lineHeight: t.leading(t.type.body),
+                    color: t.color.ink
+                  },
+                  children: s("a5.invite.ask")
+                }
+              ) : null
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx55(AuthNotice, { problem, s, display })
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/A6.tsx
+import { jsx as jsx56, jsxs as jsxs43 } from "react/jsx-runtime";
+function SessionExpired({
+  shopName = "",
+  phone = "",
+  busy = false,
+  problem = null,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onVerify = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  return /* @__PURE__ */ jsxs43(
+    Shell,
+    {
+      id: "a6",
+      s,
+      display,
+      status,
+      titleKey: "a6.bar",
+      bar: "band",
+      onRetry,
+      footer: /* @__PURE__ */ jsx56(
+        PrimaryButton,
+        {
+          testID: "a6-verify",
+          label: fill2(s("a6.verify"), { phone: formatPhone(phone) }),
+          onPress: onVerify,
+          disabled: busy,
+          display
+        }
+      ),
+      children: [
+        /* @__PURE__ */ jsxs43(View_default, { style: { padding: t.space.lg, alignItems: "center" }, children: [
+          /* @__PURE__ */ jsx56(
+            Text_default,
+            {
+              testID: "a6-shop",
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                fontFamily: t.font.bold,
+                fontSize: t.type.heading,
+                lineHeight: t.leading(t.type.heading),
+                color: t.color.ink,
+                textAlign: "center"
+              },
+              children: shopName === "" ? s("s2.unnamed") : shopName
+            }
+          ),
+          /* @__PURE__ */ jsx56(
+            Text_default,
+            {
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                marginTop: t.space.sm,
+                fontFamily: t.font.regular,
+                fontSize: t.type.body,
+                lineHeight: t.leading(t.type.body),
+                color: t.color.inkMuted,
+                textAlign: "center"
+              },
+              children: s("a6.body")
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx56(AuthNotice, { problem, s, display })
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/A7.tsx
+import { jsx as jsx57, jsxs as jsxs44 } from "react/jsx-runtime";
+function NumberChanged({
+  stage = "decide",
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onHaveOld = () => {
+  },
+  onNoOld = () => {
+  },
+  onOpenHelp = () => {
+  },
+  onBack,
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const para = {
+    padding: t.space.md,
+    fontFamily: t.font.regular,
+    fontSize: t.type.body,
+    lineHeight: t.leading(t.type.body),
+    color: t.color.inkMuted
+  };
+  const option = (testID, title, sub, onPress) => /* @__PURE__ */ jsxs44(
+    Pressable_default,
+    {
+      testID,
+      accessibilityRole: "button",
+      accessibilityLabel: s(title),
+      onPress,
+      android_ripple: { color: t.color.surfaceRaised },
+      style: {
+        minHeight: t.control.xl,
+        minWidth: t.touchTarget,
+        marginHorizontal: t.space.md,
+        marginBottom: t.space.md,
+        padding: t.space.md,
+        borderRadius: t.radius.lg,
+        borderWidth: t.hairline,
+        borderColor: t.color.inkMuted,
+        backgroundColor: t.color.surface,
+        elevation: t.elevation.card,
+        justifyContent: "center"
+      },
+      children: [
+        /* @__PURE__ */ jsx57(
+          Text_default,
+          {
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              fontFamily: t.font.bold,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.ink
+            },
+            children: s(title)
+          }
+        ),
+        /* @__PURE__ */ jsx57(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...para, padding: 0 }, children: s(sub) })
+      ]
+    }
+  );
+  return /* @__PURE__ */ jsx57(
+    Shell,
+    {
+      id: "a7",
+      s,
+      display,
+      status,
+      titleKey: "a7.bar",
+      subtitle: s("a7.sub"),
+      onBack,
+      onRetry,
+      children: stage === "decide" ? /* @__PURE__ */ jsxs44(View_default, { children: [
+        /* @__PURE__ */ jsx57(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: para, children: s("a7.intro") }),
+        option("a7-have-old", "a7.haveOld", "a7.haveOld.sub", onHaveOld),
+        option("a7-no-old", "a7.noOld", "a7.noOld.sub", onNoOld)
+      ] }) : /* @__PURE__ */ jsxs44(
+        View_default,
+        {
+          testID: "a7-handoff",
+          style: {
+            margin: t.space.md,
+            borderRadius: t.radius.lg,
+            borderWidth: t.hairline,
+            borderColor: t.color.border,
+            backgroundColor: t.color.surfaceRaised
+          },
+          children: [
+            /* @__PURE__ */ jsx57(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...para, color: t.color.ink }, children: s("a7.handoff") }),
+            /* @__PURE__ */ jsx57(
+              PrimaryButton,
+              {
+                testID: "a7-help",
+                label: s("a7.help"),
+                onPress: onOpenHelp,
+                variant: "ghost",
+                size: "md",
+                display
+              }
+            )
+          ]
+        }
+      )
+    }
+  );
+}
+
+// apps/mobile/src/screens/A8.tsx
+import { jsx as jsx58, jsxs as jsxs45 } from "react/jsx-runtime";
+function LogoutConfirm({
+  shopName = "",
+  phone = "",
+  pendingEntries = 0,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onStay = () => {
+  },
+  onLogOut = () => {
+  },
+  onRetry = () => {
+  }
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const shop = shopName === "" ? s("s2.unnamed") : shopName;
+  const line = pendingEntries === 0 ? s("a8.saved") : pendingEntries === 1 ? s("a8.pendingOne") : fill2(s("a8.pending"), { n: pendingEntries });
+  return /* @__PURE__ */ jsxs45(
+    Shell,
+    {
+      id: "a8",
+      s,
+      display,
+      status,
+      titleKey: "a8.bar",
+      bar: "band",
+      onRetry,
+      footer: /* @__PURE__ */ jsxs45(View_default, { children: [
+        /* @__PURE__ */ jsx58(
+          PrimaryButton,
+          {
+            testID: "a8-stay",
+            label: s("a8.stay"),
+            onPress: onStay,
+            variant: "tonal",
+            display
+          }
+        ),
+        /* @__PURE__ */ jsx58(
+          PrimaryButton,
+          {
+            testID: "a8-logout",
+            label: s("a8.logout"),
+            onPress: onLogOut,
+            variant: "secondary",
+            display
+          }
+        )
+      ] }),
+      children: [
+        /* @__PURE__ */ jsx58(
+          Text_default,
+          {
+            testID: "a8-heading",
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              paddingHorizontal: t.space.md,
+              paddingTop: t.space.md,
+              fontFamily: t.font.bold,
+              fontSize: t.type.heading,
+              lineHeight: t.leading(t.type.heading),
+              color: t.color.ink
+            },
+            children: fill2(s("a8.title"), { shop })
+          }
+        ),
+        /* @__PURE__ */ jsx58(
+          Text_default,
+          {
+            maxFontSizeMultiplier: t.maxFontScale,
+            style: {
+              paddingHorizontal: t.space.md,
+              paddingTop: t.space.sm,
+              fontFamily: t.font.regular,
+              fontSize: t.type.body,
+              lineHeight: t.leading(t.type.body),
+              color: t.color.inkMuted
+            },
+            children: fill2(s("a8.body"), { phone: formatPhone(phone) })
+          }
+        ),
+        /* @__PURE__ */ jsx58(
+          View_default,
+          {
+            testID: pendingEntries === 0 ? "a8-saved" : "a8-pending",
+            style: {
+              margin: t.space.md,
+              padding: t.space.md,
+              borderRadius: t.radius.lg,
+              borderWidth: t.hairline,
+              borderColor: t.color.borderStrong,
+              backgroundColor: t.color.surfaceRaised
+            },
+            children: /* @__PURE__ */ jsx58(
+              Text_default,
+              {
+                maxFontSizeMultiplier: t.maxFontScale,
+                style: {
+                  fontFamily: t.font.regular,
+                  fontSize: t.type.body,
+                  lineHeight: t.leading(t.type.body),
+                  color: t.color.ink
+                },
+                children: line
+              }
+            )
+          }
+        )
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/T18.tsx
+import { Fragment as Fragment16, jsx as jsx59, jsxs as jsxs46 } from "react/jsx-runtime";
+var SETTLEMENT_OPTIONS = [
+  { key: "cash", labelKey: "t18.opt.cash" },
+  { key: "upi", labelKey: "t18.opt.upi" },
+  { key: "udhar", labelKey: "t18.opt.udhar" },
+  { key: "pending", labelKey: "t18.opt.pending" },
+  { key: "exchange", labelKey: "t18.opt.exchange" }
+];
+var MONEY_OPTIONS = [
+  { key: "cash", labelKey: "formA.mode.cash" },
+  { key: "upi", labelKey: "formA.mode.upi" },
+  { key: "udhar", labelKey: "formA.mode.udhar" }
+];
+var SETTLE_OPTIONS = [
+  { key: "cash", labelKey: "t18.opt.cash" },
+  { key: "upi", labelKey: "t18.opt.upi" },
+  { key: "udhar", labelKey: "t18.opt.udhar" }
+];
+var noop = () => {
+};
+var describe = (e3, s, parties) => [
+  s("section." + e3.section),
+  dateLine(e3.dayId, s),
+  e3.partyId === void 0 ? "" : parties.get(e3.partyId) ?? ""
+].filter((x) => x !== "").join(" \xB7 ");
+function ReturnOrExchange({
+  store,
+  flow = null,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onRetry = noop,
+  onBack,
+  onKey = noop,
+  onChooseSale = noop,
+  onChooseSettle = noop,
+  onSettlement = noop,
+  onField = noop,
+  onDifferenceMode = noop,
+  onSettleMode = noop,
+  onSave = noop,
+  onSettle = noop,
+  entryPartyId = null,
+  pickingParty = false,
+  onOpenPartyPicker = noop,
+  onChooseParty = noop,
+  onCancelPartyPicker = noop,
+  newParty
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const parties = new Map(store.state.parties.map((p) => [p.id, p.name]));
+  const sale = flow?.saleId ? store.findEntry(flow.saleId) : void 0;
+  const ret = flow?.settleId ? store.findEntry(flow.settleId) : void 0;
+  const shell = {
+    id: "t18",
+    s,
+    display,
+    status,
+    titleKey: "t18.title",
+    onRetry,
+    onBack
+  };
+  const sentence = (testID, key, negative = false) => /* @__PURE__ */ jsx59(
+    Text_default,
+    {
+      testID,
+      maxFontSizeMultiplier: t.maxFontScale,
+      style: {
+        marginHorizontal: t.space.md,
+        marginTop: t.space.sm,
+        fontFamily: t.font.regular,
+        fontSize: t.type.body,
+        lineHeight: t.leading(t.type.body),
+        color: negative ? t.color.negative : t.color.inkMuted
+      },
+      children: s(key)
+    }
+  );
+  const draftRow = (labelKey, amount, action) => /* @__PURE__ */ jsxs46(
+    View_default,
+    {
+      testID: "t18-draft",
+      style: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        paddingHorizontal: t.space.md,
+        paddingVertical: t.space.sm,
+        backgroundColor: t.color.surface,
+        borderTopWidth: t.hairline,
+        borderTopColor: t.color.borderStrong
+      },
+      children: [
+        /* @__PURE__ */ jsxs46(View_default, { style: { flexShrink: 1, marginRight: t.space.sm }, children: [
+          /* @__PURE__ */ jsx59(
+            Text_default,
+            {
+              testID: "t18-draft-label",
+              maxFontSizeMultiplier: t.maxFontScale,
+              style: {
+                fontFamily: t.font.regular,
+                fontSize: t.type.label,
+                lineHeight: t.leading(t.type.label),
+                color: t.color.inkMuted
+              },
+              children: s(labelKey)
+            }
+          ),
+          /* @__PURE__ */ jsx59(Money, { testID: "t18-draft-amount", amount: amount ?? 0, mode: display, size: "figure" })
+        ] }),
+        /* @__PURE__ */ jsx59(
+          PrimaryButton,
+          {
+            testID: "t18-save",
+            label: action.label,
+            display,
+            size: "md",
+            disabled: action.disabled,
+            onPress: action.onPress
+          }
+        )
+      ]
+    }
+  );
+  if (ret !== void 0) {
+    const st = store.settlement(ret);
+    const typed = flow?.returned ?? null;
+    const tooMuch = typed !== null && typed > st.outstanding;
+    return /* @__PURE__ */ jsxs46(
+      Shell,
+      {
+        ...shell,
+        footer: /* @__PURE__ */ jsxs46(Fragment16, { children: [
+          draftRow("t18.settleAmount", typed, {
+            label: s("common.save"),
+            disabled: typed === null || tooMuch,
+            onPress: onSettle
+          }),
+          /* @__PURE__ */ jsx59(Keypad, { onKey, s, mode: display })
+        ] }),
+        children: [
+          /* @__PURE__ */ jsxs46(Card, { testID: "t18-return", display, children: [
+            /* @__PURE__ */ jsx59(Row, { testID: "t18-return-line", label: describe(ret, s, parties), amount: ret.amount, display }),
+            /* @__PURE__ */ jsx59(Row, { testID: "t18-outstanding", label: s("t18.outstanding"), amount: st.outstanding, display })
+          ] }),
+          sentence("t18-settle-how", "t18.settleHow"),
+          /* @__PURE__ */ jsx59(
+            Segmented,
+            {
+              testID: "t18-settle-mode",
+              options: SETTLE_OPTIONS.map((o) => ({ key: o.key, label: s(o.labelKey) })),
+              value: flow?.settleMode ?? "cash",
+              onChange: onSettleMode,
+              display,
+              columns: 2
+            }
+          ),
+          tooMuch ? sentence("t18-too-much", "t18.tooMuchSettle", true) : null
+        ]
+      }
+    );
+  }
+  if (sale !== void 0 && flow !== null) {
+    const returnable = returnableOf(sale, store.entriesReferringTo(sale.id));
+    const exchange = flow.settlement === "exchange";
+    const returned = flow.returned;
+    const replacement = flow.replacement;
+    const diff = exchange && returned !== null && replacement !== null ? subtract3(replacement, returned) : null;
+    const owedBack = diff !== null && diff < 0 ? subtract3(0, diff) : diff ?? 0;
+    const needsParty = flow.settlement === "udhar" || flow.settlement === "pending" || diff !== null && diff !== 0 && flow.differenceMode === "udhar";
+    const askParty = needsParty && sale.partyId === void 0;
+    const partyName2 = entryPartyId === null ? null : parties.get(entryPartyId) ?? null;
+    const partyMissing = askParty && partyName2 === null;
+    const tooMuch = returned !== null && returned > returnable;
+    const save = {
+      label: s("t18.save"),
+      disabled: returned === null || tooMuch || partyMissing || exchange && replacement === null,
+      onPress: onSave
+    };
+    return /* @__PURE__ */ jsxs46(
+      Shell,
+      {
+        ...shell,
+        overlay: pickingParty ? /* @__PURE__ */ jsx59(
+          PartyPicker,
+          {
+            testID: "t18-picker",
+            store,
+            s,
+            kind: "customer",
+            display,
+            onChoose: onChooseParty,
+            onCancel: onCancelPartyPicker,
+            newParty
+          }
+        ) : null,
+        footer: /* @__PURE__ */ jsxs46(Fragment16, { children: [
+          exchange && flow.field === "replacement" ? draftRow("t18.replacement", replacement, save) : draftRow("t18.returned", returned, save),
+          /* @__PURE__ */ jsx59(Keypad, { onKey, s, mode: display })
+        ] }),
+        children: [
+          /* @__PURE__ */ jsxs46(Card, { testID: "t18-sale", display, title: s("t18.sale"), children: [
+            /* @__PURE__ */ jsx59(Row, { testID: "t18-sale-line", label: describe(sale, s, parties), amount: sale.amount, display }),
+            returnable === sale.amount ? null : /* @__PURE__ */ jsx59(Row, { testID: "t18-returnable", label: s("t18.returnable"), amount: returnable, display })
+          ] }),
+          sentence("t18-how", "t18.how"),
+          /* @__PURE__ */ jsx59(
+            Segmented,
+            {
+              testID: "t18-settlement",
+              options: SETTLEMENT_OPTIONS.map((o) => ({ key: o.key, label: s(o.labelKey) })),
+              value: flow.settlement,
+              onChange: onSettlement,
+              display,
+              columns: 2
+            }
+          ),
+          exchange ? /* @__PURE__ */ jsxs46(Fragment16, { children: [
+            /* @__PURE__ */ jsxs46(Card, { testID: "t18-amounts", display, children: [
+              /* @__PURE__ */ jsx59(Row, { testID: "t18-returned", label: s("t18.returned"), amount: returned ?? 0, display }),
+              /* @__PURE__ */ jsx59(
+                Row,
+                {
+                  testID: "t18-replacement",
+                  label: s("t18.replacement"),
+                  amount: replacement ?? 0,
+                  display
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx59(
+              Segmented,
+              {
+                testID: "t18-field",
+                options: [
+                  { key: "returned", label: s("t18.returned") },
+                  { key: "replacement", label: s("t18.replacement") }
+                ],
+                value: flow.field,
+                onChange: onField,
+                display
+              }
+            )
+          ] }) : null,
+          diff === null ? null : /* @__PURE__ */ jsx59(Card, { testID: "t18-difference", display, children: /* @__PURE__ */ jsx59(
+            Row,
+            {
+              testID: "t18-difference-line",
+              label: s(diff > 0 ? "t18.diffFrom" : diff < 0 ? "t18.diffTo" : "t18.diffNone"),
+              amount: owedBack,
+              display
+            }
+          ) }),
+          diff === null || diff === 0 ? null : /* @__PURE__ */ jsxs46(Fragment16, { children: [
+            sentence("t18-diff-how", "t18.diffHow"),
+            /* @__PURE__ */ jsx59(
+              Segmented,
+              {
+                testID: "t18-difference-mode",
+                options: MONEY_OPTIONS.map((o) => ({ key: o.key, label: s(o.labelKey) })),
+                value: flow.differenceMode,
+                onChange: onDifferenceMode,
+                display
+              }
+            )
+          ] }),
+          askParty ? /* @__PURE__ */ jsxs46(
+            Pressable_default,
+            {
+              testID: "t18-party",
+              accessibilityRole: "button",
+              accessibilityLabel: partyName2 ?? s("party.chooseCustomer"),
+              onPress: onOpenPartyPicker,
+              android_ripple: { color: t.color.brandSoft },
+              style: {
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                minHeight: t.control.lg,
+                minWidth: t.touchTarget,
+                marginHorizontal: t.space.md,
+                marginTop: t.space.sm,
+                paddingHorizontal: t.space.md,
+                borderRadius: t.radius.md,
+                backgroundColor: t.color.surface,
+                borderWidth: t.hairline,
+                borderColor: t.color.inkMuted
+              },
+              children: [
+                /* @__PURE__ */ jsx59(
+                  Text_default,
+                  {
+                    maxFontSizeMultiplier: t.maxFontScale,
+                    style: {
+                      marginRight: t.space.sm,
+                      fontFamily: t.font.regular,
+                      fontSize: t.type.label,
+                      lineHeight: t.leading(t.type.label),
+                      color: t.color.inkMuted
+                    },
+                    children: s("party.customer")
+                  }
+                ),
+                /* @__PURE__ */ jsx59(
+                  Text_default,
+                  {
+                    testID: "t18-party-value",
+                    maxFontSizeMultiplier: t.maxFontScale,
+                    style: {
+                      flexShrink: 1,
+                      fontFamily: t.font.medium,
+                      fontSize: t.type.body,
+                      lineHeight: t.leading(t.type.body),
+                      color: partyName2 === null ? t.color.brandSoft : t.color.ink,
+                      textAlign: "right"
+                    },
+                    children: partyName2 ?? s("party.chooseCustomer")
+                  }
+                )
+              ]
+            }
+          ) : null,
+          partyMissing ? sentence("t18-party-required", "party.required", true) : null,
+          tooMuch ? sentence("t18-too-much", "t18.tooMuch", true) : null,
+          sentence("t18-confirm", "t18.confirm")
+        ]
+      }
+    );
+  }
+  const sales = store.recentSales().map((e3) => ({ e: e3, returnable: returnableOf(e3, store.entriesReferringTo(e3.id)) })).filter((x) => x.returnable > 0);
+  const pending = store.recentReturns().map((e3) => ({ e: e3, st: store.settlement(e3) })).filter((x) => x.st.state === "pending_settlement");
+  const recorded = flow?.recordedId ? store.findEntry(flow.recordedId) : void 0;
+  return /* @__PURE__ */ jsxs46(
+    Shell,
+    {
+      ...shell,
+      empty: sales.length === 0 && pending.length === 0,
+      emptyKey: "t18.empty",
+      bodyHeader: recorded === void 0 || recorded.section !== "sales_return" ? null : /* @__PURE__ */ jsx59(View_default, { style: { marginHorizontal: t.space.md, marginTop: t.space.md }, children: /* @__PURE__ */ jsx59(
+        Quiet,
+        {
+          testID: "t18-recorded",
+          text: fill(s("t18.recorded"), {
+            state: s("settlement." + store.settlement(recorded).state)
+          }),
+          display
+        }
+      ) }),
+      children: [
+        sales.length === 0 ? null : /* @__PURE__ */ jsx59(Card, { testID: "t18-sales", display, title: s("t18.sales"), children: sales.map(({ e: e3, returnable }) => /* @__PURE__ */ jsx59(
+          Row,
+          {
+            testID: "t18-sale-" + e3.id,
+            label: describe(e3, s, parties) + timeOf(e3.createdAt) + (returnable === e3.amount ? "" : " \xB7 " + s("t18.partReturned")),
+            accessibleLabel: [describe(e3, s, parties) + timeOf(e3.createdAt), formatPaise(returnable)].join(", "),
+            amount: returnable,
+            display,
+            onPress: () => onChooseSale(e3.id)
+          },
+          e3.id
+        )) }),
+        pending.length === 0 ? null : /* @__PURE__ */ jsx59(Card, { testID: "t18-pending", display, title: s("t18.pending"), children: pending.map(({ e: e3, st }) => /* @__PURE__ */ jsx59(
+          Row,
+          {
+            testID: "t18-pending-" + e3.id,
+            label: describe(e3, s, parties) + timeOf(e3.createdAt),
+            accessibleLabel: [describe(e3, s, parties) + timeOf(e3.createdAt), formatPaise(st.outstanding)].join(", "),
+            amount: st.outstanding,
+            display,
+            onPress: () => onChooseSettle(e3.id)
+          },
+          e3.id
+        )) })
+      ]
+    }
+  );
+}
+
+// apps/mobile/src/screens/T16.tsx
+import { Fragment as Fragment17, jsx as jsx60, jsxs as jsxs47 } from "react/jsx-runtime";
+var noop2 = () => {
+};
+var addsTo = (e3, s) => fill(s("t16.addsTo"), { section: s("section." + e3.section), date: dateLine(e3.dayId, s) });
+function CorrectDay({
+  store,
+  correction = null,
+  draftPaise = null,
+  status = "ready",
+  language = "en",
+  display = "comfort",
+  onRetry = noop2,
+  onBack,
+  onKey = noop2,
+  onChoose = noop2,
+  onAdd = noop2
+}) {
+  const t = tokens(display);
+  const s = strings(language);
+  const day = store.state.day;
+  const closed = day.state === "closed";
+  const entries = closed ? store.live.filter((e3) => !isEventSection(e3.section)) : [];
+  const held = store.state.heldCorrections ?? [];
+  const target = correction?.originalId ? store.findEntry(correction.originalId) : void 0;
+  const outcome = correction?.outcome ?? null;
+  return /* @__PURE__ */ jsxs47(
+    Shell,
+    {
+      id: "t16",
+      s,
+      display,
+      status,
+      titleKey: "t3.correction",
+      onRetry,
+      onBack,
+      empty: target === void 0 && entries.length === 0 && held.length === 0,
+      emptyKey: "t16.empty",
+      bodyHeader: /* @__PURE__ */ jsxs47(View_default, { style: { marginHorizontal: t.space.md, marginTop: t.space.md }, children: [
+        /* @__PURE__ */ jsx60(Quiet, { testID: "t16-frozen", text: s("t16.frozen"), display }),
+        closed ? /* @__PURE__ */ jsx60(View_default, { style: { marginTop: t.space.sm }, children: /* @__PURE__ */ jsx60(
+          Quiet,
+          {
+            testID: "t16-next-day",
+            text: fill(s("t16.nextDay"), { time: store.state.dayStartsAt ?? "00:00" }),
+            display
+          }
+        ) }) : null,
+        outcome === null ? null : /* @__PURE__ */ jsx60(
+          View_default,
+          {
+            style: {
+              marginTop: t.space.md,
+              padding: t.space.md,
+              borderRadius: t.radius.md,
+              backgroundColor: t.color.surface
+            },
+            children: /* @__PURE__ */ jsx60(
+              Quiet,
+              {
+                testID: "t16-outcome-" + outcome,
+                text: s(outcome === "held" ? "t16.held" : "t16.recorded"),
+                display
+              }
+            )
+          }
+        )
+      ] }),
+      footer: target === void 0 ? null : /* @__PURE__ */ jsxs47(Fragment17, { children: [
+        /* @__PURE__ */ jsxs47(
+          View_default,
+          {
+            testID: "t16-draft",
+            style: {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              paddingHorizontal: t.space.md,
+              paddingVertical: t.space.sm,
+              backgroundColor: t.color.surface,
+              borderTopWidth: t.hairline,
+              borderTopColor: t.color.borderStrong
+            },
+            children: [
+              /* @__PURE__ */ jsxs47(View_default, { style: { flexShrink: 1, marginRight: t.space.sm }, children: [
+                /* @__PURE__ */ jsx60(Quiet, { text: s("t16.amount"), display }),
+                /* @__PURE__ */ jsx60(Money, { testID: "t16-draft-amount", amount: draftPaise ?? 0, mode: display, size: "figure" })
+              ] }),
+              /* @__PURE__ */ jsx60(
+                PrimaryButton,
+                {
+                  testID: "t16-add",
+                  label: s("common.add"),
+                  display,
+                  size: "md",
+                  disabled: draftPaise === null,
+                  onPress: onAdd
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx60(Keypad, { onKey, s, mode: display })
+      ] }),
+      children: [
+        target === void 0 ? null : /* @__PURE__ */ jsx60(Card, { testID: "t16-target", display, children: /* @__PURE__ */ jsx60(Row, { testID: "t16-target-line", label: addsTo(target, s), amount: target.amount, display }) }),
+        target !== void 0 || entries.length === 0 ? null : /* @__PURE__ */ jsx60(Card, { testID: "t16-entries", display, title: s("t16.entries"), children: entries.map((e3) => /* @__PURE__ */ jsx60(
+          Row,
+          {
+            testID: "t16-entry-" + e3.id,
+            label: s("section." + e3.section) + (e3.label ? " \xB7 " + e3.label : ""),
+            amount: e3.amount,
+            display,
+            onPress: () => onChoose(e3.id)
+          },
+          e3.id
+        )) }),
+        held.length === 0 ? null : /* @__PURE__ */ jsx60(Card, { testID: "t16-held", display, title: s("t16.waiting"), children: held.map((h) => {
+          const original = store.findEntry(h.originalId);
+          return /* @__PURE__ */ jsx60(
+            Row,
+            {
+              testID: "t16-held-" + h.id,
+              label: original === void 0 ? s("t16.waiting") : addsTo(original, s),
+              amount: h.amount,
+              display
+            },
+            h.id
+          );
+        }) })
+      ]
+    }
+  );
+}
 
 // apps/mobile/src/chat/answer.ts
 var FAQ = /* @__PURE__ */ new Set([
@@ -34705,7 +35490,7 @@ function answer(r, store, plan, s) {
 }
 
 // apps/mobile/src/screens/C1.tsx
-import { Fragment as Fragment18, jsx as jsx60, jsxs as jsxs47 } from "react/jsx-runtime";
+import { Fragment as Fragment18, jsx as jsx61, jsxs as jsxs48 } from "react/jsx-runtime";
 var SUGGEST_FREE = [
   { intent: "sales", slots: {} },
   { intent: "expected", slots: {} },
@@ -34727,7 +35512,7 @@ function Line({
 }) {
   const t = tokens(display);
   const size = muted ? t.type.label : t.type.body;
-  return /* @__PURE__ */ jsx60(
+  return /* @__PURE__ */ jsx61(
     Text_default,
     {
       testID,
@@ -34753,7 +35538,7 @@ function Chips({
   onChip
 }) {
   const t = tokens(display);
-  return /* @__PURE__ */ jsx60(View_default, { style: { padding: t.space.sm, gap: t.space.sm }, children: options.map((r, j) => /* @__PURE__ */ jsx60(
+  return /* @__PURE__ */ jsx61(View_default, { style: { padding: t.space.sm, gap: t.space.sm }, children: options.map((r, j) => /* @__PURE__ */ jsx61(
     PrimaryButton,
     {
       testID: id2 + "-" + String(j),
@@ -34778,8 +35563,8 @@ function Answered({
   const t = tokens(display);
   const a = answer(resolution, store, plan, s);
   const chips = allows(plan, "shopChat") ? a.chips : [];
-  return /* @__PURE__ */ jsxs47(Card, { testID: id2 + "-answer", display, children: [
-    /* @__PURE__ */ jsx60(
+  return /* @__PURE__ */ jsxs48(Card, { testID: id2 + "-answer", display, children: [
+    /* @__PURE__ */ jsx61(
       Line,
       {
         testID: id2 + "-heard",
@@ -34788,8 +35573,8 @@ function Answered({
         display
       }
     ),
-    a.lines.map((line, j) => /* @__PURE__ */ jsx60(Line, { testID: id2 + "-line-" + String(j), text: line, display }, j)),
-    /* @__PURE__ */ jsx60(View_default, { style: { paddingTop: t.space.sm }, children: a.figures.map((f) => /* @__PURE__ */ jsx60(
+    a.lines.map((line, j) => /* @__PURE__ */ jsx61(Line, { testID: id2 + "-line-" + String(j), text: line, display }, j)),
+    /* @__PURE__ */ jsx61(View_default, { style: { paddingTop: t.space.sm }, children: a.figures.map((f) => /* @__PURE__ */ jsx61(
       Row,
       {
         testID: id2 + "-" + f.testID,
@@ -34800,11 +35585,11 @@ function Answered({
       },
       f.testID
     )) }),
-    a.derived ? /* @__PURE__ */ jsx60(Line, { testID: id2 + "-covers", text: s("c1.covers"), muted: true, display }) : null,
-    chips.length > 0 ? /* @__PURE__ */ jsxs47(Fragment18, { children: [
-      /* @__PURE__ */ jsx60(Line, { testID: id2 + "-next", text: s("c1.next"), muted: true, display }),
-      /* @__PURE__ */ jsx60(Chips, { id: id2 + "-chip", options: chips, store, s, display, onChip })
-    ] }) : /* @__PURE__ */ jsx60(View_default, { style: { height: t.space.sm } })
+    a.derived ? /* @__PURE__ */ jsx61(Line, { testID: id2 + "-covers", text: s("c1.covers"), muted: true, display }) : null,
+    chips.length > 0 ? /* @__PURE__ */ jsxs48(Fragment18, { children: [
+      /* @__PURE__ */ jsx61(Line, { testID: id2 + "-next", text: s("c1.next"), muted: true, display }),
+      /* @__PURE__ */ jsx61(Chips, { id: id2 + "-chip", options: chips, store, s, display, onChip })
+    ] }) : /* @__PURE__ */ jsx61(View_default, { style: { height: t.space.sm } })
   ] });
 }
 function Turn({
@@ -34819,8 +35604,8 @@ function Turn({
   const t = tokens(display);
   const id2 = "c1-turn-" + String(i);
   const asked = turn.question ?? (turn.result.kind === "resolved" ? describe2(turn.result.resolution, store, s) : "");
-  return /* @__PURE__ */ jsxs47(View_default, { testID: id2, style: { marginTop: t.space.md }, children: [
-    /* @__PURE__ */ jsx60(
+  return /* @__PURE__ */ jsxs48(View_default, { testID: id2, style: { marginTop: t.space.md }, children: [
+    /* @__PURE__ */ jsx61(
       View_default,
       {
         style: {
@@ -34831,7 +35616,7 @@ function Turn({
           borderRadius: t.radius.md,
           backgroundColor: t.color.surfaceRaised
         },
-        children: /* @__PURE__ */ jsx60(
+        children: /* @__PURE__ */ jsx61(
           Text_default,
           {
             testID: id2 + "-q",
@@ -34847,9 +35632,9 @@ function Turn({
         )
       }
     ),
-    turn.result.kind === "unsure" ? /* @__PURE__ */ jsxs47(Card, { testID: id2 + "-unsure", display, children: [
-      /* @__PURE__ */ jsx60(Line, { testID: id2 + "-didYouMean", text: s("c1.didYouMean"), display }),
-      /* @__PURE__ */ jsx60(
+    turn.result.kind === "unsure" ? /* @__PURE__ */ jsxs48(Card, { testID: id2 + "-unsure", display, children: [
+      /* @__PURE__ */ jsx61(Line, { testID: id2 + "-didYouMean", text: s("c1.didYouMean"), display }),
+      /* @__PURE__ */ jsx61(
         Chips,
         {
           id: id2 + "-chip",
@@ -34860,7 +35645,7 @@ function Turn({
           onChip
         }
       )
-    ] }) : /* @__PURE__ */ jsx60(
+    ] }) : /* @__PURE__ */ jsx61(
       Answered,
       {
         id: id2,
@@ -34896,7 +35681,7 @@ function Ask({
   const s = strings(language);
   const c = chat ?? EMPTY_CHAT;
   const suggestions = allows(plan, "shopChat") ? [...SUGGEST_FREE, ...SUGGEST_PREMIUM] : SUGGEST_FREE;
-  return /* @__PURE__ */ jsxs47(
+  return /* @__PURE__ */ jsxs48(
     Shell,
     {
       id: "c1",
@@ -34909,13 +35694,13 @@ function Ask({
       empty: c.turns.length === 0,
       emptyKey: "c1.empty",
       followEnd: true,
-      bodyHeader: c.turns.length === 0 ? /* @__PURE__ */ jsx60(Card, { testID: "c1-suggested", title: s("c1.suggested"), display, children: /* @__PURE__ */ jsx60(Chips, { id: "c1-suggest", options: suggestions, store, s, display, onChip }) }) : void 0,
+      bodyHeader: c.turns.length === 0 ? /* @__PURE__ */ jsx61(Card, { testID: "c1-suggested", title: s("c1.suggested"), display, children: /* @__PURE__ */ jsx61(Chips, { id: "c1-suggest", options: suggestions, store, s, display, onChip }) }) : void 0,
       footer: (
         /*
          * STACKED, NOT SIDE BY SIDE. Field and button on one row ran the Odia
          * "Ask" up to 186px off a 360dp screen at the largest type (check:layout).
          */
-        /* @__PURE__ */ jsxs47(
+        /* @__PURE__ */ jsxs48(
           View_default,
           {
             style: {
@@ -34926,7 +35711,7 @@ function Ask({
               backgroundColor: t.color.surface
             },
             children: [
-              /* @__PURE__ */ jsx60(
+              /* @__PURE__ */ jsx61(
                 TextInput_default,
                 {
                   testID: "c1-input",
@@ -34955,7 +35740,7 @@ function Ask({
                   }
                 }
               ),
-              /* @__PURE__ */ jsx60(
+              /* @__PURE__ */ jsx61(
                 PrimaryButton,
                 {
                   testID: "c1-ask",
@@ -34971,15 +35756,15 @@ function Ask({
         )
       ),
       children: [
-        c.turns.map((turn, i) => /* @__PURE__ */ jsx60(Turn, { i, turn, store, plan, s, display, onChip }, i)),
-        /* @__PURE__ */ jsx60(View_default, { style: { height: t.space.md } })
+        c.turns.map((turn, i) => /* @__PURE__ */ jsx61(Turn, { i, turn, store, plan, s, display, onChip }, i)),
+        /* @__PURE__ */ jsx61(View_default, { style: { height: t.space.md } })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/S10.tsx
-import { jsx as jsx61, jsxs as jsxs48 } from "react/jsx-runtime";
+import { jsx as jsx62, jsxs as jsxs49 } from "react/jsx-runtime";
 var ON_HOLD = "SUBSCRIPTION_STATE_ON_HOLD";
 var NOTICE2 = {
   previewStarted: "s10.notice.previewStarted",
@@ -35063,7 +35848,7 @@ function YourPlan({
     color: t.color.ink
   };
   const muted = { ...body, color: t.color.inkMuted };
-  const list = (id2, keys) => keys.map((key, i) => /* @__PURE__ */ jsx61(
+  const list = (id2, keys) => keys.map((key, i) => /* @__PURE__ */ jsx62(
     Text_default,
     {
       testID: id2 + "-" + String(i + 1),
@@ -35079,7 +35864,7 @@ function YourPlan({
     },
     key
   ));
-  return /* @__PURE__ */ jsxs48(
+  return /* @__PURE__ */ jsxs49(
     Shell,
     {
       id: "s10",
@@ -35091,7 +35876,7 @@ function YourPlan({
       onBack,
       onRetry,
       children: [
-        notice === null ? null : /* @__PURE__ */ jsx61(
+        notice === null ? null : /* @__PURE__ */ jsx62(
           View_default,
           {
             testID: "s10-notice-" + notice,
@@ -35106,11 +35891,11 @@ function YourPlan({
               borderWidth: t.hairline,
               borderColor: t.color.borderStrong
             },
-            children: /* @__PURE__ */ jsx61(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: body, children: s(NOTICE2[notice]) })
+            children: /* @__PURE__ */ jsx62(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: body, children: s(NOTICE2[notice]) })
           }
         ),
-        /* @__PURE__ */ jsxs48(Card, { testID: "s10-status-group", display, children: [
-          /* @__PURE__ */ jsx61(
+        /* @__PURE__ */ jsxs49(Card, { testID: "s10-status-group", display, children: [
+          /* @__PURE__ */ jsx62(
             Text_default,
             {
               testID: "s10-status",
@@ -35119,8 +35904,8 @@ function YourPlan({
               children: planStatus(plan, answer2, s)
             }
           ),
-          canCancel ? /* @__PURE__ */ jsxs48(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.sm }, children: [
-            /* @__PURE__ */ jsx61(
+          canCancel ? /* @__PURE__ */ jsxs49(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.sm }, children: [
+            /* @__PURE__ */ jsx62(
               PrimaryButton,
               {
                 testID: "s10-cancel",
@@ -35131,7 +35916,7 @@ function YourPlan({
                 size: "lg"
               }
             ),
-            /* @__PURE__ */ jsx61(
+            /* @__PURE__ */ jsx62(
               Text_default,
               {
                 testID: "s10-cancel-note",
@@ -35141,8 +35926,8 @@ function YourPlan({
               }
             )
           ] }) : null,
-          showPreview ? /* @__PURE__ */ jsxs48(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.sm }, children: [
-            /* @__PURE__ */ jsx61(
+          showPreview ? /* @__PURE__ */ jsxs49(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.sm }, children: [
+            /* @__PURE__ */ jsx62(
               PrimaryButton,
               {
                 testID: "s10-preview",
@@ -35154,7 +35939,7 @@ function YourPlan({
                 size: "lg"
               }
             ),
-            /* @__PURE__ */ jsx61(
+            /* @__PURE__ */ jsx62(
               Text_default,
               {
                 testID: "s10-preview-note",
@@ -35165,8 +35950,8 @@ function YourPlan({
             )
           ] }) : null
         ] }),
-        showBuy ? /* @__PURE__ */ jsxs48(Card, { testID: "s10-price-group", display, title: s("s10.price.title"), children: [
-          /* @__PURE__ */ jsx61(
+        showBuy ? /* @__PURE__ */ jsxs49(Card, { testID: "s10-price-group", display, title: s("s10.price.title"), children: [
+          /* @__PURE__ */ jsx62(
             Text_default,
             {
               testID: "s10-terms",
@@ -35175,7 +35960,7 @@ function YourPlan({
               children: s("s10.cancelTerms")
             }
           ),
-          anyClosed ? /* @__PURE__ */ jsx61(
+          anyClosed ? /* @__PURE__ */ jsx62(
             Text_default,
             {
               testID: "s10-not-open",
@@ -35184,7 +35969,7 @@ function YourPlan({
               children: s("s10.notOpen")
             }
           ) : null,
-          /* @__PURE__ */ jsx61(View_default, { style: { flexDirection: "row", flexWrap: "wrap", padding: t.space.xs }, children: BASE_PLANS.map((base2) => /* @__PURE__ */ jsxs48(
+          /* @__PURE__ */ jsx62(View_default, { style: { flexDirection: "row", flexWrap: "wrap", padding: t.space.xs }, children: BASE_PLANS.map((base2) => /* @__PURE__ */ jsxs49(
             View_default,
             {
               testID: "s10-price-" + base2,
@@ -35203,8 +35988,8 @@ function YourPlan({
                 justifyContent: "space-between"
               },
               children: [
-                /* @__PURE__ */ jsxs48(View_default, { style: { paddingHorizontal: t.space.sm }, children: [
-                  /* @__PURE__ */ jsx61(
+                /* @__PURE__ */ jsxs49(View_default, { style: { paddingHorizontal: t.space.sm }, children: [
+                  /* @__PURE__ */ jsx62(
                     Text_default,
                     {
                       maxFontSizeMultiplier: t.maxFontScale,
@@ -35212,7 +35997,7 @@ function YourPlan({
                       children: s(base2 === "monthly" ? "s10.price.monthly" : "s10.price.yearly")
                     }
                   ),
-                  /* @__PURE__ */ jsx61(
+                  /* @__PURE__ */ jsx62(
                     Money,
                     {
                       testID: "s10-price-" + base2 + "-amount",
@@ -35221,10 +36006,10 @@ function YourPlan({
                       size: "figure"
                     }
                   ),
-                  /* @__PURE__ */ jsx61(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: muted, children: s(base2 === "monthly" ? "s10.price.perMonth" : "s10.price.perYear") }),
-                  /* @__PURE__ */ jsx61(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: muted, children: s(base2 === "monthly" ? "s10.renew.monthly" : "s10.renew.yearly") })
+                  /* @__PURE__ */ jsx62(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: muted, children: s(base2 === "monthly" ? "s10.price.perMonth" : "s10.price.perYear") }),
+                  /* @__PURE__ */ jsx62(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: muted, children: s(base2 === "monthly" ? "s10.renew.monthly" : "s10.renew.yearly") })
                 ] }),
-                /* @__PURE__ */ jsx61(
+                /* @__PURE__ */ jsx62(
                   PrimaryButton,
                   {
                     testID: "s10-buy-" + base2,
@@ -35241,8 +36026,8 @@ function YourPlan({
             base2
           )) })
         ] }) : null,
-        /* @__PURE__ */ jsxs48(Card, { testID: "s10-free-group", display, title: s("s10.free.title"), children: [
-          /* @__PURE__ */ jsx61(
+        /* @__PURE__ */ jsxs49(Card, { testID: "s10-free-group", display, title: s("s10.free.title"), children: [
+          /* @__PURE__ */ jsx62(
             Text_default,
             {
               testID: "s10-free-promise",
@@ -35253,14 +36038,14 @@ function YourPlan({
           ),
           list("s10-free", FREE_ITEMS)
         ] }),
-        /* @__PURE__ */ jsx61(View_default, { style: { paddingBottom: t.space.md }, children: /* @__PURE__ */ jsx61(Card, { testID: "s10-premium-group", display, title: s("s10.premium.title"), children: list("s10-premium", PREMIUM_ITEMS) }) })
+        /* @__PURE__ */ jsx62(View_default, { style: { paddingBottom: t.space.md }, children: /* @__PURE__ */ jsx62(Card, { testID: "s10-premium-group", display, title: s("s10.premium.title"), children: list("s10-premium", PREMIUM_ITEMS) }) })
       ]
     }
   );
 }
 
 // apps/mobile/src/screens/I1.tsx
-import { Fragment as Fragment19, jsx as jsx62, jsxs as jsxs49 } from "react/jsx-runtime";
+import { Fragment as Fragment19, jsx as jsx63, jsxs as jsxs50 } from "react/jsx-runtime";
 var describe3 = (e3, s, store) => [s("section." + e3.section), store.state.parties.find((p) => p.id === e3.partyId)?.name ?? ""].filter((x) => x !== "").join(" \xB7 ");
 function ItemsForSale({
   store,
@@ -35289,7 +36074,7 @@ function ItemsForSale({
   const s = strings(language);
   const premium = allows(plan, "items");
   const closed = store.state.day.state === "closed";
-  const sales = store.state.entries.filter((e3) => ITEM_SALE_SECTIONS.includes(e3.section));
+  const sales = store.live.filter((e3) => ITEM_SALE_SECTIONS.includes(e3.section));
   const sale = flow?.saleId ? sales.find((e3) => e3.id === flow.saleId) : void 0;
   const lines = sale ? store.saleLines(sale.id) : [];
   const items = store.items;
@@ -35298,7 +36083,7 @@ function ItemsForSale({
   const picked = typing && flow.itemId !== null;
   const canSave = typing && flow.itemId !== null && flow.quantity !== null && flow.quantity > 0 && flow.amount !== null && flow.amount > 0;
   const needQuantity = picked && flow.amount !== null && flow.amount > 0 && (flow.quantity === null || flow.quantity <= 0);
-  const text = (testID, value, muted = true) => /* @__PURE__ */ jsx62(
+  const text = (testID, value, muted = true) => /* @__PURE__ */ jsx63(
     Text_default,
     {
       testID,
@@ -35315,7 +36100,7 @@ function ItemsForSale({
     },
     testID
   );
-  const inline2 = (testID, value) => /* @__PURE__ */ jsx62(
+  const inline2 = (testID, value) => /* @__PURE__ */ jsx63(
     Text_default,
     {
       testID,
@@ -35337,7 +36122,7 @@ function ItemsForSale({
   } else if (sale === void 0) {
     body.push(text("i1-optional", s("i1.optional")));
     body.push(
-      /* @__PURE__ */ jsx62(Card, { testID: "i1-sales", display, title: s("i1.pickSale"), children: sales.map((e3) => /* @__PURE__ */ jsx62(
+      /* @__PURE__ */ jsx63(Card, { testID: "i1-sales", display, title: s("i1.pickSale"), children: sales.map((e3) => /* @__PURE__ */ jsx63(
         Row,
         {
           testID: "i1-sale-" + e3.id,
@@ -35353,9 +36138,9 @@ function ItemsForSale({
   } else {
     const so = saleItemised(sale, lines);
     body.push(
-      /* @__PURE__ */ jsxs49(Card, { testID: "i1-sale", display, children: [
-        /* @__PURE__ */ jsx62(Row, { testID: "i1-sale-line", label: describe3(sale, s, store), amount: sale.amount, display }),
-        /* @__PURE__ */ jsxs49(
+      /* @__PURE__ */ jsxs50(Card, { testID: "i1-sale", display, children: [
+        /* @__PURE__ */ jsx63(Row, { testID: "i1-sale-line", label: describe3(sale, s, store), amount: sale.amount, display }),
+        /* @__PURE__ */ jsxs50(
           View_default,
           {
             testID: "i1-recorded",
@@ -35368,13 +36153,13 @@ function ItemsForSale({
             },
             children: [
               inline2("i1-recorded-label", s("i1.recorded")),
-              /* @__PURE__ */ jsx62(View_default, { style: { marginRight: t.space.xs }, children: /* @__PURE__ */ jsx62(Money, { testID: "i1-recorded-itemised", amount: so.itemised, mode: display, size: "body" }) }),
+              /* @__PURE__ */ jsx63(View_default, { style: { marginRight: t.space.xs }, children: /* @__PURE__ */ jsx63(Money, { testID: "i1-recorded-itemised", amount: so.itemised, mode: display, size: "body" }) }),
               inline2("i1-recorded-of", s("i1.of")),
-              /* @__PURE__ */ jsx62(Money, { testID: "i1-recorded-sale", amount: so.sale, mode: display, size: "body" })
+              /* @__PURE__ */ jsx63(Money, { testID: "i1-recorded-sale", amount: so.sale, mode: display, size: "body" })
             ]
           }
         ),
-        lines.map((l) => /* @__PURE__ */ jsx62(
+        lines.map((l) => /* @__PURE__ */ jsx63(
           Row,
           {
             testID: "i1-line-" + l.id,
@@ -35392,9 +36177,9 @@ function ItemsForSale({
       const choices = [...items.map((i) => ({ id: i.id, label: i.name })), { id: "other", label: s("i1.other") }];
       body.push(
         // A column, like T19's list: a long item name wraps inside its row, never off the edge.
-        /* @__PURE__ */ jsx62(View_default, { testID: "i1-choices", style: { paddingHorizontal: t.space.sm }, children: choices.map((c) => {
+        /* @__PURE__ */ jsx63(View_default, { testID: "i1-choices", style: { paddingHorizontal: t.space.sm }, children: choices.map((c) => {
           const on = flow.itemId === c.id;
-          return /* @__PURE__ */ jsx62(
+          return /* @__PURE__ */ jsx63(
             Pressable_default,
             {
               testID: "i1-item-" + c.id,
@@ -35414,7 +36199,7 @@ function ItemsForSale({
                 backgroundColor: t.color.bg,
                 justifyContent: "center"
               },
-              children: /* @__PURE__ */ jsx62(
+              children: /* @__PURE__ */ jsx63(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -35434,7 +36219,7 @@ function ItemsForSale({
       );
     }
   }
-  return /* @__PURE__ */ jsx62(
+  return /* @__PURE__ */ jsx63(
     Shell,
     {
       id: "i1",
@@ -35455,9 +36240,9 @@ function ItemsForSale({
          * and a tap aimed at a hidden item landed in the footer. A save
          * starts the next line with no item, so the list is back in view.
          */
-        /* @__PURE__ */ jsx62(PrimaryButton, { testID: "i1-save", label: s("i1.save"), onPress: onSave, display, disabled: true })
-      ) : /* @__PURE__ */ jsxs49(Fragment19, { children: [
-        /* @__PURE__ */ jsx62(View_default, { testID: "i1-picked", style: { paddingHorizontal: t.space.md }, children: /* @__PURE__ */ jsx62(
+        /* @__PURE__ */ jsx63(PrimaryButton, { testID: "i1-save", label: s("i1.save"), onPress: onSave, display, disabled: true })
+      ) : /* @__PURE__ */ jsxs50(Fragment19, { children: [
+        /* @__PURE__ */ jsx63(View_default, { testID: "i1-picked", style: { paddingHorizontal: t.space.md }, children: /* @__PURE__ */ jsx63(
           Text_default,
           {
             testID: "i1-picked-name",
@@ -35471,7 +36256,7 @@ function ItemsForSale({
             children: nameOf(flow.itemId === "other" ? void 0 : flow.itemId ?? void 0)
           }
         ) }),
-        /* @__PURE__ */ jsx62(View_default, { style: { paddingHorizontal: t.space.md }, children: /* @__PURE__ */ jsx62(
+        /* @__PURE__ */ jsx63(View_default, { style: { paddingHorizontal: t.space.md }, children: /* @__PURE__ */ jsx63(
           Segmented,
           {
             testID: "i1-field",
@@ -35484,7 +36269,7 @@ function ItemsForSale({
             display
           }
         ) }),
-        /* @__PURE__ */ jsxs49(
+        /* @__PURE__ */ jsxs50(
           View_default,
           {
             testID: "i1-typed",
@@ -35498,7 +36283,7 @@ function ItemsForSale({
               borderTopColor: t.color.border
             },
             children: [
-              needQuantity ? /* @__PURE__ */ jsx62(
+              needQuantity ? /* @__PURE__ */ jsx63(
                 Text_default,
                 {
                   testID: "i1-need-quantity",
@@ -35513,7 +36298,7 @@ function ItemsForSale({
                   },
                   children: s("i1.needQuantity")
                 }
-              ) : /* @__PURE__ */ jsx62(
+              ) : /* @__PURE__ */ jsx63(
                 Text_default,
                 {
                   testID: "i1-quantity-figure",
@@ -35527,9 +36312,9 @@ function ItemsForSale({
                   children: s("i1.quantity") + ": " + (flow.quantity === null ? "\u2013" : String(flow.quantity))
                 }
               ),
-              /* @__PURE__ */ jsx62(Money, { testID: "i1-amount-figure", amount: flow.amount ?? 0, mode: display, size: "figure" }),
-              /* @__PURE__ */ jsx62(PrimaryButton, { testID: "i1-save", label: s("i1.save"), onPress: onSave, display, size: "md", disabled: !canSave }),
-              /* @__PURE__ */ jsx62(
+              /* @__PURE__ */ jsx63(Money, { testID: "i1-amount-figure", amount: flow.amount ?? 0, mode: display, size: "figure" }),
+              /* @__PURE__ */ jsx63(PrimaryButton, { testID: "i1-save", label: s("i1.save"), onPress: onSave, display, size: "md", disabled: !canSave }),
+              /* @__PURE__ */ jsx63(
                 Pressable_default,
                 {
                   testID: "i1-change",
@@ -35545,7 +36330,7 @@ function ItemsForSale({
                     alignItems: "center",
                     justifyContent: "center"
                   },
-                  children: /* @__PURE__ */ jsx62(
+                  children: /* @__PURE__ */ jsx63(
                     Text_default,
                     {
                       maxFontSizeMultiplier: t.maxFontScale,
@@ -35563,7 +36348,7 @@ function ItemsForSale({
             ]
           }
         ),
-        /* @__PURE__ */ jsx62(Keypad, { onKey, s, mode: display })
+        /* @__PURE__ */ jsx63(Keypad, { onKey, s, mode: display })
       ] }),
       children: body
     }
@@ -35571,7 +36356,7 @@ function ItemsForSale({
 }
 
 // apps/mobile/src/screens/S9.tsx
-import { jsx as jsx63, jsxs as jsxs50 } from "react/jsx-runtime";
+import { jsx as jsx64, jsxs as jsxs51 } from "react/jsx-runtime";
 function YourItems({
   store,
   plan = "free",
@@ -35591,7 +36376,7 @@ function YourItems({
   const s = strings(language);
   const premium = allows(plan, "items");
   const items = store.items;
-  const para = (testID, value, color = t.color.inkMuted) => /* @__PURE__ */ jsx63(
+  const para = (testID, value, color = t.color.inkMuted) => /* @__PURE__ */ jsx64(
     Text_default,
     {
       testID,
@@ -35607,11 +36392,11 @@ function YourItems({
       children: value
     }
   );
-  return /* @__PURE__ */ jsxs50(Shell, { id: "s9", s, display, status, titleKey: "s9.title", empty: false, onRetry, onBack, children: [
+  return /* @__PURE__ */ jsxs51(Shell, { id: "s9", s, display, status, titleKey: "s9.title", empty: false, onRetry, onBack, children: [
     para("s9-intro", s("s9.intro")),
     premium ? null : para("s9-premium", s("s9.premium")),
-    premium ? /* @__PURE__ */ jsxs50(Card, { testID: "s9-add", display, children: [
-      /* @__PURE__ */ jsx63(
+    premium ? /* @__PURE__ */ jsxs51(Card, { testID: "s9-add", display, children: [
+      /* @__PURE__ */ jsx64(
         Text_default,
         {
           maxFontSizeMultiplier: t.maxFontScale,
@@ -35626,7 +36411,7 @@ function YourItems({
           children: s("s9.name")
         }
       ),
-      /* @__PURE__ */ jsx63(
+      /* @__PURE__ */ jsx64(
         TextInput_default,
         {
           testID: "s9-name",
@@ -35651,7 +36436,7 @@ function YourItems({
           }
         }
       ),
-      /* @__PURE__ */ jsx63(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.sm }, children: /* @__PURE__ */ jsx63(
+      /* @__PURE__ */ jsx64(View_default, { style: { paddingHorizontal: t.space.sm, paddingBottom: t.space.sm }, children: /* @__PURE__ */ jsx64(
         PrimaryButton,
         {
           testID: "s9-add-button",
@@ -35663,7 +36448,7 @@ function YourItems({
         }
       ) })
     ] }) : null,
-    /* @__PURE__ */ jsx63(Card, { testID: "s9-list", display, children: items.length === 0 ? para("s9-empty", s("s9.empty")) : items.map((i) => /* @__PURE__ */ jsx63(
+    /* @__PURE__ */ jsx64(Card, { testID: "s9-list", display, children: items.length === 0 ? para("s9-empty", s("s9.empty")) : items.map((i) => /* @__PURE__ */ jsx64(
       View_default,
       {
         testID: "s9-item-" + i.id,
@@ -35677,12 +36462,12 @@ function YourItems({
       },
       i.id
     )) }),
-    /* @__PURE__ */ jsx63(Card, { testID: "s9-notice", display, title: s("s9.noticeTitle"), children: para("s9-notice-text", s("s9.notice"), t.color.ink) })
+    /* @__PURE__ */ jsx64(Card, { testID: "s9-notice", display, title: s("s9.noticeTitle"), children: para("s9-notice-text", s("s9.notice"), t.color.ink) })
   ] });
 }
 
 // apps/mobile/src/screens/P6.tsx
-import { Fragment as Fragment20, jsx as jsx64, jsxs as jsxs51 } from "react/jsx-runtime";
+import { Fragment as Fragment20, jsx as jsx65, jsxs as jsxs52 } from "react/jsx-runtime";
 function CreditLimit({
   store,
   partyId,
@@ -35709,7 +36494,7 @@ function CreditLimit({
     lineHeight: t.leading(t.type.body),
     color: t.color.ink
   };
-  return /* @__PURE__ */ jsxs51(
+  return /* @__PURE__ */ jsxs52(
     Shell,
     {
       id: "p6",
@@ -35719,8 +36504,8 @@ function CreditLimit({
       titleKey: "p6.title",
       onRetry,
       onBack,
-      footer: /* @__PURE__ */ jsxs51(Fragment20, { children: [
-        /* @__PURE__ */ jsxs51(
+      footer: /* @__PURE__ */ jsxs52(Fragment20, { children: [
+        /* @__PURE__ */ jsxs52(
           View_default,
           {
             testID: "p6-amount",
@@ -35734,7 +36519,7 @@ function CreditLimit({
               borderTopColor: t.color.border
             },
             children: [
-              /* @__PURE__ */ jsx64(
+              /* @__PURE__ */ jsx65(
                 Text_default,
                 {
                   maxFontSizeMultiplier: t.maxFontScale,
@@ -35747,11 +36532,11 @@ function CreditLimit({
                   children: s("p6.amount")
                 }
               ),
-              /* @__PURE__ */ jsx64(Money, { testID: "p6-amount-figure", amount: amountPaise ?? 0, mode: display, size: "figure" })
+              /* @__PURE__ */ jsx65(Money, { testID: "p6-amount-figure", amount: amountPaise ?? 0, mode: display, size: "figure" })
             ]
           }
         ),
-        /* @__PURE__ */ jsx64(
+        /* @__PURE__ */ jsx65(
           PrimaryButton,
           {
             testID: "p6-save",
@@ -35761,10 +36546,10 @@ function CreditLimit({
             disabled: amountPaise === null || amountPaise <= 0
           }
         ),
-        /* @__PURE__ */ jsx64(Keypad, { onKey, s, mode: display })
+        /* @__PURE__ */ jsx65(Keypad, { onKey, s, mode: display })
       ] }),
       children: [
-        /* @__PURE__ */ jsx64(
+        /* @__PURE__ */ jsx65(
           Text_default,
           {
             testID: "p6-prompt",
@@ -35773,7 +36558,7 @@ function CreditLimit({
             children: fill(s("p6.prompt"), { name: party?.name ?? "" })
           }
         ),
-        /* @__PURE__ */ jsxs51(
+        /* @__PURE__ */ jsxs52(
           View_default,
           {
             style: {
@@ -35783,8 +36568,8 @@ function CreditLimit({
               paddingHorizontal: t.space.md
             },
             children: [
-              /* @__PURE__ */ jsx64(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...body, fontFamily: t.font.medium }, children: s("p6.current") }),
-              /* @__PURE__ */ jsx64(
+              /* @__PURE__ */ jsx65(Text_default, { maxFontSizeMultiplier: t.maxFontScale, style: { ...body, fontFamily: t.font.medium }, children: s("p6.current") }),
+              /* @__PURE__ */ jsx65(
                 Text_default,
                 {
                   testID: "p6-current",
@@ -35796,7 +36581,7 @@ function CreditLimit({
             ]
           }
         ),
-        limit === null ? null : /* @__PURE__ */ jsx64(
+        limit === null ? null : /* @__PURE__ */ jsx65(
           PrimaryButton,
           {
             testID: "p6-clear",
@@ -35813,7 +36598,7 @@ function CreditLimit({
 }
 
 // apps/mobile/src/screens/S12.tsx
-import { jsx as jsx65, jsxs as jsxs52 } from "react/jsx-runtime";
+import { jsx as jsx66, jsxs as jsxs53 } from "react/jsx-runtime";
 function AccountantExport({
   store,
   status = "ready",
@@ -35835,7 +36620,7 @@ function AccountantExport({
     fontSize: t.type.body,
     lineHeight: t.leading(t.type.body)
   };
-  return /* @__PURE__ */ jsxs52(
+  return /* @__PURE__ */ jsxs53(
     Shell,
     {
       id: "s12",
@@ -35848,9 +36633,9 @@ function AccountantExport({
       onRetry,
       onBack,
       children: [
-        /* @__PURE__ */ jsx65(Text_default, { testID: "s12-explain", maxFontSizeMultiplier: t.maxFontScale, style: { ...para, color: t.color.ink }, children: s("s12.body") }),
-        /* @__PURE__ */ jsx65(Text_default, { testID: "s12-not-tax", maxFontSizeMultiplier: t.maxFontScale, style: { ...para, color: t.color.inkMuted }, children: s("s5.notTax") }),
-        /* @__PURE__ */ jsx65(Card, { testID: "s12-months", display, title: s("s12.months"), children: months.map((m2) => /* @__PURE__ */ jsx65(
+        /* @__PURE__ */ jsx66(Text_default, { testID: "s12-explain", maxFontSizeMultiplier: t.maxFontScale, style: { ...para, color: t.color.ink }, children: s("s12.body") }),
+        /* @__PURE__ */ jsx66(Text_default, { testID: "s12-not-tax", maxFontSizeMultiplier: t.maxFontScale, style: { ...para, color: t.color.inkMuted }, children: s("s5.notTax") }),
+        /* @__PURE__ */ jsx66(Card, { testID: "s12-months", display, title: s("s12.months"), children: months.map((m2) => /* @__PURE__ */ jsx66(
           LinkRow,
           {
             testID: "s12-month-" + m2,
@@ -35866,7 +36651,7 @@ function AccountantExport({
 }
 
 // apps/mobile/src/screens/S13.tsx
-import { jsx as jsx66, jsxs as jsxs53 } from "react/jsx-runtime";
+import { jsx as jsx67, jsxs as jsxs54 } from "react/jsx-runtime";
 function YourData({
   store,
   status = "ready",
@@ -35883,7 +36668,7 @@ function YourData({
   const t = tokens(display);
   const s = strings(language);
   void store;
-  return /* @__PURE__ */ jsxs53(
+  return /* @__PURE__ */ jsxs54(
     Shell,
     {
       id: "s13",
@@ -35894,7 +36679,7 @@ function YourData({
       empty: false,
       onBack,
       onRetry,
-      footer: /* @__PURE__ */ jsx66(
+      footer: /* @__PURE__ */ jsx67(
         PrimaryButton,
         {
           testID: "s13-download",
@@ -35906,11 +36691,11 @@ function YourData({
         }
       ),
       children: [
-        /* @__PURE__ */ jsx66(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx66(Quiet, { testID: "s13-what", text: s("s13.body"), display }) }),
-        phase === "offline" ? /* @__PURE__ */ jsx66(Banner, { testID: "s13-offline", kind: "warning", icon: "offline", text: s("s13.offline"), display }) : phase === "failed" ? /* @__PURE__ */ jsx66(Banner, { testID: "s13-failed", kind: "error", text: s("common.error"), display }) : null,
-        /* @__PURE__ */ jsxs53(Card, { testID: "s13-rights", display, children: [
-          /* @__PURE__ */ jsx66(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx66(Quiet, { testID: "s13-correct", text: s("s13.correct"), display }) }),
-          /* @__PURE__ */ jsx66(
+        /* @__PURE__ */ jsx67(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx67(Quiet, { testID: "s13-what", text: s("s13.body"), display }) }),
+        phase === "offline" ? /* @__PURE__ */ jsx67(Banner, { testID: "s13-offline", kind: "warning", icon: "offline", text: s("s13.offline"), display }) : phase === "failed" ? /* @__PURE__ */ jsx67(Banner, { testID: "s13-failed", kind: "error", text: s("common.error"), display }) : null,
+        /* @__PURE__ */ jsxs54(Card, { testID: "s13-rights", display, children: [
+          /* @__PURE__ */ jsx67(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx67(Quiet, { testID: "s13-correct", text: s("s13.correct"), display }) }),
+          /* @__PURE__ */ jsx67(
             LinkRow,
             {
               testID: "s13-delete",
@@ -35928,7 +36713,7 @@ function YourData({
 }
 
 // apps/mobile/src/screens/S14.tsx
-import { jsx as jsx67, jsxs as jsxs54 } from "react/jsx-runtime";
+import { jsx as jsx68, jsxs as jsxs55 } from "react/jsx-runtime";
 function lastUsed(device, today, s) {
   if (device.current) return s("s14.lastUsed.now");
   if (device.lastSeenAt === null) return "";
@@ -35956,7 +36741,7 @@ function SignedInPhones({
   const s = strings(language);
   void store;
   const asked = devices.list.find((d) => d.id === devices.confirm);
-  return /* @__PURE__ */ jsxs54(
+  return /* @__PURE__ */ jsxs55(
     Shell,
     {
       id: "s14",
@@ -35967,7 +36752,7 @@ function SignedInPhones({
       empty: false,
       onBack,
       onRetry,
-      overlay: asked === void 0 ? void 0 : /* @__PURE__ */ jsxs54(
+      overlay: asked === void 0 ? void 0 : /* @__PURE__ */ jsxs55(
         Sheet,
         {
           testID: "s14-confirm",
@@ -35978,7 +36763,7 @@ function SignedInPhones({
           display,
           showClose: false,
           children: [
-            /* @__PURE__ */ jsx67(
+            /* @__PURE__ */ jsx68(
               PrimaryButton,
               {
                 testID: "s14-confirm-keep",
@@ -35987,7 +36772,7 @@ function SignedInPhones({
                 display
               }
             ),
-            /* @__PURE__ */ jsx67(
+            /* @__PURE__ */ jsx68(
               PrimaryButton,
               {
                 testID: "s14-confirm-yes",
@@ -36002,9 +36787,9 @@ function SignedInPhones({
         }
       ),
       children: [
-        /* @__PURE__ */ jsx67(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx67(Quiet, { testID: "s14-intro", text: s("s14.body"), display }) }),
-        devices.done ? /* @__PURE__ */ jsx67(Banner, { testID: "s14-done", kind: "info", icon: "tick", text: s("s14.done"), display }) : null,
-        devices.status === "error" ? /* @__PURE__ */ jsx67(
+        /* @__PURE__ */ jsx68(View_default, { style: { padding: t.space.md }, children: /* @__PURE__ */ jsx68(Quiet, { testID: "s14-intro", text: s("s14.body"), display }) }),
+        devices.done ? /* @__PURE__ */ jsx68(Banner, { testID: "s14-done", kind: "info", icon: "tick", text: s("s14.done"), display }) : null,
+        devices.status === "error" ? /* @__PURE__ */ jsx68(
           Banner,
           {
             testID: "s14-error",
@@ -36013,7 +36798,7 @@ function SignedInPhones({
             display,
             action: { testID: "s14-retry", label: s("common.retry"), onPress: onRetry }
           }
-        ) : /* @__PURE__ */ jsx67(Card, { testID: "s14-list", display, children: devices.list.map((d) => /* @__PURE__ */ jsxs54(
+        ) : /* @__PURE__ */ jsx68(Card, { testID: "s14-list", display, children: devices.list.map((d) => /* @__PURE__ */ jsxs55(
           View_default,
           {
             testID: "s14-device-" + d.id,
@@ -36024,7 +36809,7 @@ function SignedInPhones({
               borderBottomColor: t.color.border
             },
             children: [
-              /* @__PURE__ */ jsx67(
+              /* @__PURE__ */ jsx68(
                 Text_default,
                 {
                   testID: "s14-device-" + d.id + "-name",
@@ -36038,7 +36823,7 @@ function SignedInPhones({
                   children: d.current ? s("s14.thisPhone") : s("s14.android")
                 }
               ),
-              /* @__PURE__ */ jsx67(
+              /* @__PURE__ */ jsx68(
                 Quiet,
                 {
                   testID: "s14-device-" + d.id + "-detail",
@@ -36046,7 +36831,7 @@ function SignedInPhones({
                   display
                 }
               ),
-              d.current || d.revokedAt !== null ? null : /* @__PURE__ */ jsx67(
+              d.current || d.revokedAt !== null ? null : /* @__PURE__ */ jsx68(
                 PrimaryButton,
                 {
                   testID: "s14-device-" + d.id + "-signout",
@@ -36240,7 +37025,7 @@ function closedAdversarialWithDifference(shortByPaise = 25e3) {
 }
 
 // apps/mobile/src/screens/registry.tsx
-import { jsx as jsx68 } from "react/jsx-runtime";
+import { jsx as jsx69 } from "react/jsx-runtime";
 var storeOf = (input, parties, shopId) => {
   const state = {
     shopId,
@@ -36323,6 +37108,41 @@ var returnsStore = (store) => {
   };
   record(cash, RETURN_IDS.partial, big ? 12345600 : 12e4, "cash");
   if (udhar !== void 0) record(udhar, RETURN_IDS.pending, udhar.amount, "pending");
+  return store;
+};
+var CANCEL_ROW_ID = "01890000-0000-7000-8000-c0000000ca01";
+var firstCashOf = (store) => store.state.entries.find((e3) => e3.section === "cash_sales")?.id ?? "";
+var cancelledStore = () => {
+  const store = canonicalStore();
+  store.cancel({ targetId: firstCashOf(store), id: CANCEL_ROW_ID, createdAt: store.state.day.date + "T13:05:00.000+05:30" });
+  return store;
+};
+var cancelControls = (asking, justCancelled) => ({
+  asking,
+  justCancelled,
+  onAsk: () => {
+  },
+  onConfirm: () => {
+  },
+  onDismiss: () => {
+  },
+  onEnterAgain: () => {
+  }
+});
+var linkedSaleOf = (store) => store.findEntry(RETURN_IDS.partial)?.refersToEntryId ?? "";
+var supplierAdvanceStore = () => {
+  const store = canonicalStore();
+  const owed = store.primary().p8SupplierOutstanding.value;
+  store.append({
+    id: "01890000-0000-7000-8000-c0000000a036",
+    dayId: store.state.day.date,
+    section: "party_payment",
+    amount: add3(owed > 0 ? owed : 0, 3e4),
+    mode: "cash",
+    partyId: "p-wholesale",
+    source: "manual",
+    createdAt: store.state.day.date + "T12:17:00.000+05:30"
+  });
   return store;
 };
 var ITEM_IDS = ["item-atta", "item-dal", "item-tea"];
@@ -36449,16 +37269,32 @@ var authCase = (screen, id2, caption, el) => ({
   sheet: true,
   element: () => cloneElement2(el, { language: "en", display: "comfort" })
 });
+var LANGUAGE_PASS = [
+  { language: "en", display: "comfort", sheet: true },
+  { language: "hi", display: "comfort", sheet: false },
+  { language: "or", display: "comfort", sheet: true },
+  { language: "longest", display: "focus", sheet: false }
+];
+var everyLanguage = (screen, id2, caption, el) => LANGUAGE_PASS.map(({ language, display, sheet: sheet2 }) => ({
+  id: id2 + "-" + language,
+  screen,
+  caption: caption + " - " + language + ", " + display,
+  language,
+  display,
+  sheet: sheet2,
+  element: () => cloneElement2(el, { language, display })
+}));
+var CASE_NEW_PHONE = { id: "dev-new", date: "2026-07-14" };
 var SCREEN_CASES = [
-  ...standardCases("T2", "T2 Today - the first run", (_store, language, display) => /* @__PURE__ */ jsx68(TodayFirstRun, { store: firstRunStore(), language, display })),
-  ...standardCases("T3", "T3 Today - already closed", (_store, language, display) => /* @__PURE__ */ jsx68(TodayClosed, { store: closedStore(), language, display })),
+  ...standardCases("T2", "T2 Today - the first run", (_store, language, display) => /* @__PURE__ */ jsx69(TodayFirstRun, { store: firstRunStore(), language, display })),
+  ...standardCases("T3", "T3 Today - already closed", (_store, language, display) => /* @__PURE__ */ jsx69(TodayClosed, { store: closedStore(), language, display })),
   /*
    * T13 is reached ONLY when counted equals expected, so the case has to be
    * built that way rather than handed an arbitrary figure - a balanced screen
    * rendered against an unbalanced store would show the disabled state, which is
    * the opposite of the moment S03 says this screen is for.
    */
-  ...standardCases("T13", "T13 Cash check - it matches", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("T13", "T13 Cash check - it matches", (store, language, display) => /* @__PURE__ */ jsx69(
     CashBalanced,
     {
       store,
@@ -36467,7 +37303,7 @@ var SCREEN_CASES = [
       display
     }
   )),
-  ...standardCases("X1", "X1 Onboarding - four questions", (_store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("X1", "X1 Onboarding - four questions", (_store, language, display) => /* @__PURE__ */ jsx69(
     Onboarding,
     {
       language,
@@ -36487,7 +37323,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       Onboarding,
       {
         language: "en",
@@ -36505,7 +37341,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Onboarding, { language: "longest", display: "focus", openingCashPaise: 12345678, keypadOpen: true })
+    element: () => /* @__PURE__ */ jsx69(Onboarding, { language: "longest", display: "focus", openingCashPaise: 12345678, keypadOpen: true })
   },
   {
     id: "X1-unanswered",
@@ -36514,10 +37350,10 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Onboarding, { language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Onboarding, { language: "or", display: "comfort" })
   },
-  ...standardCases("P1", "P1 Parties", (store, language, display) => /* @__PURE__ */ jsx68(PartiesList, { store, language, display })),
-  ...standardCases("P2", "P2 Customer detail", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("P1", "P1 Parties", (store, language, display) => /* @__PURE__ */ jsx69(PartiesList, { store, language, display })),
+  ...standardCases("P2", "P2 Customer detail", (store, language, display) => /* @__PURE__ */ jsx69(
     CustomerDetail,
     {
       store,
@@ -36526,7 +37362,7 @@ var SCREEN_CASES = [
       display
     }
   )),
-  ...standardCases("P3", "P3 Supplier detail", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("P3", "P3 Supplier detail", (store, language, display) => /* @__PURE__ */ jsx69(
     SupplierDetail,
     {
       store,
@@ -36557,7 +37393,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: closedStore(), language: "en", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: closedStore(), language: "en", display: "comfort" })
   },
   {
     id: "R1-adversarial",
@@ -36566,7 +37402,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: closedAdversarialStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: closedAdversarialStore(), language: "or", display: "comfort" })
   },
   {
     id: "R1-adversarial-focus",
@@ -36575,7 +37411,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: closedAdversarialStore(), language: "or", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: closedAdversarialStore(), language: "or", display: "focus" })
   },
   {
     id: "R1-longest",
@@ -36584,7 +37420,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: closedAdversarialStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: closedAdversarialStore(), language: "longest", display: "focus" })
   },
   {
     id: "R1-empty",
@@ -36593,7 +37429,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: canonicalStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: canonicalStore(), language: "or", display: "comfort" })
   },
   /*
    * R1 PAST ITS GATES. Every case above holds one day, so every trend and score
@@ -36607,7 +37443,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: historyStore(), language: "en", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: historyStore(), language: "en", display: "comfort" })
   },
   {
     id: "R1-history-or-focus",
@@ -36616,7 +37452,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: historyStore(), language: "or", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: historyStore(), language: "or", display: "focus" })
   },
   {
     id: "R1-history-longest",
@@ -36625,7 +37461,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Reports, { store: historyStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Reports, { store: historyStore(), language: "longest", display: "focus" })
   },
   /*
    * M1 - THE PREMIUM DASHBOARD, written out for R1's reason: its subject is
@@ -36641,7 +37477,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Dashboard, { store: historyStore(), plan: "premium", language: "en", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Dashboard, { store: historyStore(), plan: "premium", language: "en", display: "comfort" })
   },
   {
     id: "M1-adversarial",
@@ -36650,7 +37486,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Dashboard, { store: closedAdversarialStore(), plan: "premium", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Dashboard, { store: closedAdversarialStore(), plan: "premium", language: "or", display: "comfort" })
   },
   {
     id: "M1-adversarial-focus",
@@ -36659,7 +37495,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Dashboard, { store: closedAdversarialStore(), plan: "premium", language: "or", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Dashboard, { store: closedAdversarialStore(), plan: "premium", language: "or", display: "focus" })
   },
   {
     id: "M1-longest",
@@ -36668,7 +37504,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Dashboard, { store: historyStore(70), plan: "premium", language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Dashboard, { store: historyStore(70), plan: "premium", language: "longest", display: "focus" })
   },
   {
     id: "M1-free",
@@ -36677,7 +37513,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Dashboard, { store: historyStore(), plan: "free", language: "or", display: "comfort", onUpgrade: () => {
+    element: () => /* @__PURE__ */ jsx69(Dashboard, { store: historyStore(), plan: "free", language: "or", display: "comfort", onUpgrade: () => {
     } })
   },
   {
@@ -36687,7 +37523,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Dashboard, { store: canonicalStore(), plan: "premium", language: "en", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Dashboard, { store: canonicalStore(), plan: "premium", language: "en", display: "comfort" })
   },
   /*
    * S2 AND S3 - the two settings screens reached from the top of S1, written
@@ -36718,7 +37554,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       ShopProfile,
       {
         store: canonicalStore(),
@@ -36739,7 +37575,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       ShopProfile,
       {
         store: adversarialStore(),
@@ -36760,7 +37596,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       ShopProfile,
       {
         store: adversarialStore(),
@@ -36781,7 +37617,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       ShopProfile,
       {
         store: adversarialStore(),
@@ -36802,7 +37638,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       LanguageSettings,
       {
         store: canonicalStore(),
@@ -36820,7 +37656,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       LanguageSettings,
       {
         store: adversarialStore(),
@@ -36838,7 +37674,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       LanguageSettings,
       {
         store: adversarialStore(),
@@ -36856,7 +37692,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       LanguageSettings,
       {
         store: adversarialStore(),
@@ -36887,7 +37723,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(PrivacySettings, { store: canonicalStore(), language: "en", display: "comfort", onBack: () => {
+    element: () => /* @__PURE__ */ jsx69(PrivacySettings, { store: canonicalStore(), language: "en", display: "comfort", onBack: () => {
     } })
   },
   {
@@ -36897,7 +37733,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       PrivacySettings,
       {
         store: adversarialStore(),
@@ -36915,7 +37751,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(PrivacySettings, { store: adversarialStore(), language: "or", display: "focus", onBack: () => {
+    element: () => /* @__PURE__ */ jsx69(PrivacySettings, { store: adversarialStore(), language: "or", display: "focus", onBack: () => {
     } })
   },
   {
@@ -36925,7 +37761,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       PrivacySettings,
       {
         store: adversarialStore(),
@@ -36955,7 +37791,7 @@ var SCREEN_CASES = [
    * The adversarial panels pass a long Odia shop name, since the hub's one
    * variable-width element is the name echoed on its first row.
    */
-  ...standardCases("S1", "S1 Settings", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("S1", "S1 Settings", (store, language, display) => /* @__PURE__ */ jsx69(
     Settings,
     {
       store,
@@ -36966,7 +37802,7 @@ var SCREEN_CASES = [
       }
     }
   )),
-  ...standardCases("S5", "S5 About this app", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("S5", "S5 About this app", (store, language, display) => /* @__PURE__ */ jsx69(
     About,
     {
       store,
@@ -36978,14 +37814,14 @@ var SCREEN_CASES = [
       }
     }
   )),
-  ...standardCases("S6", "S6 Help and contact", (store, language, display) => /* @__PURE__ */ jsx68(Help, { store, language, display, onBack: () => {
+  ...standardCases("S6", "S6 Help and contact", (store, language, display) => /* @__PURE__ */ jsx69(Help, { store, language, display, onBack: () => {
   } })),
   /*
    * S11 - THE APP-LOCK COVER (R5 FR-3). Rendered against the adversarial book
    * like everything else, because the one thing it must prove is that nothing
    * from the book reaches it.
    */
-  ...standardCases("S11", "S11 App locked", (store, language, display) => /* @__PURE__ */ jsx68(AppLocked, { store, language, display })),
+  ...standardCases("S11", "S11 App locked", (store, language, display) => /* @__PURE__ */ jsx69(AppLocked, { store, language, display })),
   {
     /*
      * S1 WITH THE "NO SCREEN LOCK" REASON UNDER THE APP-LOCK ROW - the longest
@@ -36997,7 +37833,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       Settings,
       {
         store: adversarialStore(),
@@ -37033,7 +37869,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       Help,
       {
         store: adversarialStore(),
@@ -37063,9 +37899,9 @@ var SCREEN_CASES = [
    * Both carry a back affordance in every case, like S5 and S6: a deletion flow
    * with no way out is the flow in which the only way out is confirming.
    */
-  ...standardCases("S7", "S7 Delete this account", (store, language, display) => /* @__PURE__ */ jsx68(DeleteAccount, { store, language, display, onBack: () => {
+  ...standardCases("S7", "S7 Delete this account", (store, language, display) => /* @__PURE__ */ jsx69(DeleteAccount, { store, language, display, onBack: () => {
   } })),
-  ...standardCases("S8", "S8 Are you sure?", (store, language, display) => /* @__PURE__ */ jsx68(ConfirmDelete, { store, language, display, onBack: () => {
+  ...standardCases("S8", "S8 Are you sure?", (store, language, display) => /* @__PURE__ */ jsx69(ConfirmDelete, { store, language, display, onBack: () => {
   } })),
   /*
    * F-22: the three things S8 can also say - before the press on a phone with
@@ -37078,7 +37914,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(ConfirmDelete, { store: adversarialStore(), language: "longest", display: "focus", signedIn: false })
+    element: () => /* @__PURE__ */ jsx69(ConfirmDelete, { store: adversarialStore(), language: "longest", display: "focus", signedIn: false })
   },
   {
     id: "S8-scheduled",
@@ -37087,7 +37923,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       ConfirmDelete,
       {
         store: emptyStore(),
@@ -37104,7 +37940,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(ConfirmDelete, { store: emptyStore(), language: "longest", display: "focus", outcome: { kind: "local" } })
+    element: () => /* @__PURE__ */ jsx69(ConfirmDelete, { store: emptyStore(), language: "longest", display: "focus", outcome: { kind: "local" } })
   },
   /*
    * S10 - YOUR PLAN (PR-7). The standard four render this build's true state:
@@ -37114,7 +37950,7 @@ var SCREEN_CASES = [
    * longest copy and largest type, because the status sentences and the Odia
    * renewal lines are the longest things on the screen.
    */
-  ...standardCases("S10", "S10 Your plan - Free, buying not open yet", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("S10", "S10 Your plan - Free, buying not open yet", (store, language, display) => /* @__PURE__ */ jsx69(
     YourPlan,
     {
       store,
@@ -37133,7 +37969,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       YourPlan,
       {
         store: canonicalStore(),
@@ -37153,7 +37989,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       YourPlan,
       {
         store: adversarialStore(),
@@ -37175,7 +38011,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       YourPlan,
       {
         store: adversarialStore(),
@@ -37204,7 +38040,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       YourPlan,
       {
         store: adversarialStore(),
@@ -37225,7 +38061,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       YourPlan,
       {
         store: adversarialStore(),
@@ -37241,13 +38077,13 @@ var SCREEN_CASES = [
       }
     )
   },
-  ...standardCases("T5", "T5 Day close list", (store, language, display) => /* @__PURE__ */ jsx68(DayCloseList, { store, language, display })),
-  ...standardCases("T6", "T6 Opening cash", (_store, language, display) => /* @__PURE__ */ jsx68(OpeningCash, { language, display, draftPaise: 25e4 })),
-  ...standardCases("T8", "T8 Form B - party and amount", (store, language, display) => /* @__PURE__ */ jsx68(FormB, { store, language, display, draftPaise: 45e3 })),
-  ...standardCases("T9", "T9 Form C - expense", (store, language, display) => /* @__PURE__ */ jsx68(FormC, { store, language, display, draftPaise: 12500 })),
-  ...standardCases("T10", "T10 Form D - money you took", (store, language, display) => /* @__PURE__ */ jsx68(FormD, { store, language, display, draftPaise: 5e5 })),
-  ...standardCases("T11", "T11 Cash check - counting", (store, language, display) => /* @__PURE__ */ jsx68(CashCheck, { store, language, display, countedPaise: 199237 })),
-  ...standardCases("T12", "T12 Cash check - the difference", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("T5", "T5 Day close list", (store, language, display) => /* @__PURE__ */ jsx69(DayCloseList, { store, language, display })),
+  ...standardCases("T6", "T6 Opening cash", (_store, language, display) => /* @__PURE__ */ jsx69(OpeningCash, { language, display, draftPaise: 25e4 })),
+  ...standardCases("T8", "T8 Form B - party and amount", (store, language, display) => /* @__PURE__ */ jsx69(FormB, { store, language, display, draftPaise: 45e3 })),
+  ...standardCases("T9", "T9 Form C - expense", (store, language, display) => /* @__PURE__ */ jsx69(FormC, { store, language, display, draftPaise: 12500 })),
+  ...standardCases("T10", "T10 Form D - money you took", (store, language, display) => /* @__PURE__ */ jsx69(FormD, { store, language, display, draftPaise: 5e5 })),
+  ...standardCases("T11", "T11 Cash check - counting", (store, language, display) => /* @__PURE__ */ jsx69(CashCheck, { store, language, display, countedPaise: 199237 })),
+  ...standardCases("T12", "T12 Cash check - the difference", (store, language, display) => /* @__PURE__ */ jsx69(
     CashDifference,
     {
       store,
@@ -37256,7 +38092,7 @@ var SCREEN_CASES = [
       countedPaise: 15e4
     }
   )),
-  ...standardCases("T14", "T14 Day closed", (store, language, display) => /* @__PURE__ */ jsx68(DayClosed, { store, language, display })),
+  ...standardCases("T14", "T14 Day closed", (store, language, display) => /* @__PURE__ */ jsx69(DayClosed, { store, language, display })),
   /*
    * T19 - a typed adjustment (decision 2): the fixed list with one chosen, its
    * effect line, the amount and the keypad. The longest type name and effect
@@ -37266,7 +38102,7 @@ var SCREEN_CASES = [
    * R5 FR-6 - P6, a customer's credit limit: one already set (so "Limit now"
    * and "Remove the limit" show), a new one typed, and the keypad.
    */
-  ...standardCases("P6", "P6 Credit limit - one set, a new one typed", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("P6", "P6 Credit limit - one set, a new one typed", (store, language, display) => /* @__PURE__ */ jsx69(
     CreditLimit,
     {
       store,
@@ -37279,7 +38115,7 @@ var SCREEN_CASES = [
     }
   )),
   /* R5 FR-4 - S12, the months a CSV can be made for. */
-  ...standardCases("S12", "S12 Entries for your accountant", (store, language, display) => /* @__PURE__ */ jsx68(AccountantExport, { store, language, display, onBack: () => {
+  ...standardCases("S12", "S12 Entries for your accountant", (store, language, display) => /* @__PURE__ */ jsx69(AccountantExport, { store, language, display, onBack: () => {
   } })),
   {
     id: "S12-empty",
@@ -37288,7 +38124,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(AccountantExport, { store: firstRunStore(), language: "or", display: "focus", onBack: () => {
+    element: () => /* @__PURE__ */ jsx69(AccountantExport, { store: firstRunStore(), language: "or", display: "focus", onBack: () => {
     } })
   },
   /*
@@ -37306,7 +38142,7 @@ var SCREEN_CASES = [
     element: () => {
       const store = adversarialStore();
       const partyId = withLimit(store, 100);
-      return /* @__PURE__ */ jsx68(
+      return /* @__PURE__ */ jsx69(
         FormB,
         {
           store,
@@ -37319,7 +38155,7 @@ var SCREEN_CASES = [
       );
     }
   },
-  ...standardCases("T19", "T19 Adjustment - a type chosen, an amount typed", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("T19", "T19 Adjustment - a type chosen, an amount typed", (store, language, display) => /* @__PURE__ */ jsx69(
     Adjustment,
     {
       store,
@@ -37336,7 +38172,7 @@ var SCREEN_CASES = [
    * customer notice. I1: a sale chosen, its lines and "recorded for X of Y",
    * an item chosen, a quantity and an amount typed, and the keypad.
    */
-  ...standardCases("S9", "S9 Your items - the list, a name typed, the customer notice", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("S9", "S9 Your items - the list, a name typed, the customer notice", (store, language, display) => /* @__PURE__ */ jsx69(
     YourItems,
     {
       store: itemsStore(store),
@@ -37351,7 +38187,7 @@ var SCREEN_CASES = [
   ...standardCases("I1", "I1 Items in a sale - a line being typed", (store, language, display) => {
     const s = itemsStore(store);
     const sale = s.state.entries.find((e3) => e3.section === "cash_sales");
-    return /* @__PURE__ */ jsx68(
+    return /* @__PURE__ */ jsx69(
       ItemsForSale,
       {
         store: s,
@@ -37371,7 +38207,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(ItemsForSale, { store: itemsStore(canonicalStore()), plan: "premium", onBack: () => {
+    element: () => /* @__PURE__ */ jsx69(ItemsForSale, { store: itemsStore(canonicalStore()), plan: "premium", onBack: () => {
     } })
   },
   {
@@ -37386,7 +38222,7 @@ var SCREEN_CASES = [
     element: () => {
       const s = itemsStore(canonicalStore());
       const sale = s.state.entries.find((e3) => e3.section === "cash_sales");
-      return /* @__PURE__ */ jsx68(
+      return /* @__PURE__ */ jsx69(
         ItemsForSale,
         {
           store: s,
@@ -37411,7 +38247,7 @@ var SCREEN_CASES = [
     element: () => {
       const s = itemsStore(adversarialStore());
       const sale = s.state.entries.find((e3) => e3.section === "cash_sales");
-      return /* @__PURE__ */ jsx68(
+      return /* @__PURE__ */ jsx69(
         ItemsForSale,
         {
           store: s,
@@ -37431,7 +38267,7 @@ var SCREEN_CASES = [
    * standard four so the contrast, target-size and Odia instruments cover it like
    * any other screen - the consent notice is the one screen every user must read.
    */
-  ...standardCases("X0", "X0 Consent notice", (_store, language, display) => /* @__PURE__ */ jsx68(ConsentNotice, { language, display })),
+  ...standardCases("X0", "X0 Consent notice", (_store, language, display) => /* @__PURE__ */ jsx69(ConsentNotice, { language, display })),
   {
     id: "X0-granted",
     screen: "X0",
@@ -37439,7 +38275,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       ConsentNotice,
       {
         language: "or",
@@ -37455,7 +38291,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Today, { store: canonicalStore(), language: "en", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Today, { store: canonicalStore(), language: "en", display: "comfort" })
   },
   {
     id: "T1-adversarial",
@@ -37464,7 +38300,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Today, { store: adversarialStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Today, { store: adversarialStore(), language: "or", display: "comfort" })
   },
   {
     id: "T1-adversarial-focus",
@@ -37473,7 +38309,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Today, { store: adversarialStore(), language: "or", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Today, { store: adversarialStore(), language: "or", display: "focus" })
   },
   {
     id: "T1-empty",
@@ -37482,7 +38318,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(Today, { store: emptyStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Today, { store: emptyStore(), language: "or", display: "comfort" })
   },
   {
     id: "T1-longest",
@@ -37491,7 +38327,22 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Today, { store: adversarialStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(Today, { store: adversarialStore(), language: "longest", display: "focus" })
+  },
+  ...everyLanguage(
+    "T1",
+    "T1-new-phone",
+    "T1 Today - RTI-7: a new phone signed in to the shop",
+    /* @__PURE__ */ jsx69(Today, { store: canonicalStore(), newPhone: CASE_NEW_PHONE })
+  ),
+  {
+    id: "T1-new-phone-adversarial",
+    screen: "T1",
+    caption: "T1 Today - RTI-7 notice over the adversarial shop, longest strings",
+    language: "longest",
+    display: "focus",
+    sheet: false,
+    element: () => /* @__PURE__ */ jsx69(Today, { store: adversarialStore(), language: "longest", display: "focus", newPhone: CASE_NEW_PHONE })
   },
   {
     id: "T1-error",
@@ -37500,7 +38351,7 @@ var SCREEN_CASES = [
     language: "hi",
     display: "comfort",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(Today, { store: canonicalStore(), status: "error", language: "hi", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(Today, { store: canonicalStore(), status: "error", language: "hi", display: "comfort" })
   },
   {
     id: "T7-canonical",
@@ -37509,7 +38360,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: canonicalStore(), language: "en", display: "comfort", draftPaise: 4500 })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: canonicalStore(), language: "en", display: "comfort", draftPaise: 4500 })
   },
   {
     id: "T7-adversarial",
@@ -37518,7 +38369,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: adversarialStore(), language: "or", display: "comfort", draftPaise: 12345678 })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: adversarialStore(), language: "or", display: "comfort", draftPaise: 12345678 })
   },
   {
     id: "T7-adversarial-focus",
@@ -37527,7 +38378,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: adversarialStore(), language: "or", display: "focus", draftPaise: 12345678 })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: adversarialStore(), language: "or", display: "focus", draftPaise: 12345678 })
   },
   {
     id: "T7-longest",
@@ -37536,7 +38387,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: adversarialStore(), language: "longest", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: adversarialStore(), language: "longest", display: "comfort" })
   },
   {
     id: "T7-empty",
@@ -37545,7 +38396,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: emptyStore(), language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: emptyStore(), language: "or", display: "comfort" })
   },
   {
     id: "T7-error",
@@ -37554,7 +38405,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: true,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: canonicalStore(), status: "error", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: canonicalStore(), status: "error", language: "or", display: "comfort" })
   },
   {
     id: "T7-loading",
@@ -37564,7 +38415,7 @@ var SCREEN_CASES = [
     display: "comfort",
     // Measured but not on the sheet: a spinner and a line of text is not worth a panel.
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: canonicalStore(), status: "loading", language: "or", display: "comfort" })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: canonicalStore(), status: "loading", language: "or", display: "comfort" })
   },
   {
     id: "T7-hindi",
@@ -37573,7 +38424,7 @@ var SCREEN_CASES = [
     language: "hi",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: canonicalStore(), language: "hi", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: canonicalStore(), language: "hi", display: "focus" })
   },
   /*
    * HT-51: THE TWO LINKS OFF THE SALES FORM, in front of the fold measure. The
@@ -37588,7 +38439,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       FormA,
       {
         store: itemsStore(canonicalStore()),
@@ -37609,7 +38460,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "comfort",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       FormA,
       {
         store: itemsStore(adversarialStore()),
@@ -37630,7 +38481,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(FormA, { store: adversarialStore(), language: "longest", display: "focus" })
+    element: () => /* @__PURE__ */ jsx69(FormA, { store: adversarialStore(), language: "longest", display: "focus" })
   },
   /*
    * F-10 and F-9 - the controls those fixes added, put in front of the
@@ -37644,7 +38495,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       FormB,
       {
         store: emptyStore(),
@@ -37676,7 +38527,7 @@ var SCREEN_CASES = [
     language: "en",
     display: "comfort",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       FormB,
       {
         store: emptyStore(),
@@ -37708,7 +38559,7 @@ var SCREEN_CASES = [
     language: "or",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       DayClosed,
       {
         store: closedAdversarialStore(),
@@ -37730,7 +38581,7 @@ var SCREEN_CASES = [
     sheet: false,
     element: () => {
       const store = adversarialStore();
-      return /* @__PURE__ */ jsx68(
+      return /* @__PURE__ */ jsx69(
         CustomerDetail,
         {
           store,
@@ -37750,7 +38601,7 @@ var SCREEN_CASES = [
     language: "longest",
     display: "focus",
     sheet: false,
-    element: () => /* @__PURE__ */ jsx68(
+    element: () => /* @__PURE__ */ jsx69(
       CashDifference,
       {
         store: adversarialStore(),
@@ -37772,20 +38623,35 @@ var SCREEN_CASES = [
    * The shop name comes from the store the case is rendered against, so the
    * adversarial panels carry the longest Odia shop name in the corpus.
    */
-  ...standardCases("A1", "A1 Splash", (_store, language, display) => /* @__PURE__ */ jsx68(Splash, { language, display })),
-  ...standardCases("A2", "A2 Choose your language", (_store, language, display) => /* @__PURE__ */ jsx68(LanguageChoice, { language, display })),
-  ...standardCases("A3", "A3 Phone number - typed", (_store, language, display) => /* @__PURE__ */ jsx68(PhoneNumber, { language, display, phone: CASE_PHONE, onBack: () => {
+  ...standardCases("A1", "A1 Splash", (_store, language, display) => /* @__PURE__ */ jsx69(Splash, { language, display })),
+  ...standardCases("A2", "A2 Choose your language", (_store, language, display) => /* @__PURE__ */ jsx69(LanguageChoice, { language, display })),
+  ...standardCases("A3", "A3 Phone number - typed", (_store, language, display) => /* @__PURE__ */ jsx69(PhoneNumber, { language, display, phone: CASE_PHONE, onBack: () => {
   } })),
-  authCase("A3", "A3-empty", "A3 Phone number - nothing typed yet", /* @__PURE__ */ jsx68(PhoneNumber, { onBack: () => {
+  authCase("A3", "A3-empty", "A3 Phone number - nothing typed yet", /* @__PURE__ */ jsx69(PhoneNumber, { onBack: () => {
   } })),
   authCase(
     "A3",
     "A3-offline",
     "A3 Phone number - no signal when sending",
-    /* @__PURE__ */ jsx68(PhoneNumber, { phone: CASE_PHONE, problem: "offline", onBack: () => {
+    /* @__PURE__ */ jsx69(PhoneNumber, { phone: CASE_PHONE, problem: "offline", onBack: () => {
     } })
   ),
-  ...standardCases("A4", "A4 Enter the code - three digits in", (_store, language, display) => /* @__PURE__ */ jsx68(
+  ...everyLanguage(
+    "A3",
+    "A3-invite",
+    'A3 Phone number - invite mode: no SMS, "Next"',
+    /* @__PURE__ */ jsx69(PhoneNumber, { phone: CASE_PHONE, mode: "invite", digits: 8, onBack: () => {
+    } })
+  ),
+  // LIVE DEMO S3-4: a first run, before any reply - no digit count, no promise of an SMS.
+  ...everyLanguage(
+    "A3",
+    "A3-neutral",
+    "A3 Phone number - first run, no reply yet: no digit count",
+    /* @__PURE__ */ jsx69(PhoneNumber, { phone: CASE_PHONE, mode: null, onBack: () => {
+    } })
+  ),
+  ...standardCases("A4", "A4 Enter the code - three digits in", (_store, language, display) => /* @__PURE__ */ jsx69(
     CodeEntry,
     {
       language,
@@ -37800,30 +38666,131 @@ var SCREEN_CASES = [
     "A4",
     "A4-checking",
     "A4 Enter the code - checking, keypad withdrawn",
-    /* @__PURE__ */ jsx68(CodeEntry, { phone: CASE_PHONE, code: "987654", busy: true, onBack: () => {
+    /* @__PURE__ */ jsx69(CodeEntry, { phone: CASE_PHONE, code: "987654", busy: true, onBack: () => {
     } })
   ),
   authCase(
     "A4",
     "A4-offline",
     "A4 Enter the code - no signal when checking, after two resends",
-    /* @__PURE__ */ jsx68(CodeEntry, { phone: CASE_PHONE, code: "987654", problem: "offline", resends: 2, onBack: () => {
+    /* @__PURE__ */ jsx69(CodeEntry, { phone: CASE_PHONE, code: "987654", problem: "offline", resends: 2, onBack: () => {
     } })
   ),
-  ...standardCases("A5", "A5 Code problem - it does not match", (_store, language, display) => /* @__PURE__ */ jsx68(CodeProblem, { language, display, problem: "mismatch", onBack: () => {
+  ...everyLanguage(
+    "A4",
+    "A4-invite",
+    "A4 Enter the code - invite mode, eight boxes in two fours, five in",
+    /* @__PURE__ */ jsx69(CodeEntry, { phone: CASE_PHONE, code: "48210", mode: "invite", digits: 8, onPaste: () => {
+    }, onBack: () => {
+    } })
+  ),
+  ...everyLanguage(
+    "A4",
+    "A4-invite-full",
+    "A4 Enter the code - invite mode, all eight in, checking",
+    /* @__PURE__ */ jsx69(CodeEntry, { phone: CASE_PHONE, code: "48210937", mode: "invite", digits: 8, busy: true, onBack: () => {
+    } })
+  ),
+  ...standardCases("A5", "A5 Code problem - it does not match", (_store, language, display) => /* @__PURE__ */ jsx69(CodeProblem, { language, display, problem: "mismatch", onBack: () => {
   } })),
-  authCase("A5", "A5-expired", "A5 Code problem - expired", /* @__PURE__ */ jsx68(CodeProblem, { problem: "expired", onBack: () => {
+  authCase("A5", "A5-expired", "A5 Code problem - expired", /* @__PURE__ */ jsx69(CodeProblem, { problem: "expired", onBack: () => {
   } })),
   authCase(
     "A5",
     "A5-locked",
     "A5 Code problem - too many tries, with the server wait",
-    /* @__PURE__ */ jsx68(CodeProblem, { problem: "locked", retryAfterSeconds: 598, onBack: () => {
+    /* @__PURE__ */ jsx69(CodeProblem, { problem: "locked", retryAfterSeconds: 598, onBack: () => {
     } })
   ),
-  authCase("A5", "A5-no-code", "A5 Code problem - still no code", /* @__PURE__ */ jsx68(CodeProblem, { problem: "noCode", onBack: () => {
+  authCase("A5", "A5-no-code", "A5 Code problem - still no code", /* @__PURE__ */ jsx69(CodeProblem, { problem: "noCode", onBack: () => {
   } })),
-  ...standardCases("A6", "A6 Session expired", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...everyLanguage(
+    "A5",
+    "A5-invite-expired",
+    "A5 Code problem - invite mode, dead: ask SWAFTO, no send button",
+    /* @__PURE__ */ jsx69(CodeProblem, { problem: "expired", mode: "invite", digits: 8, onBack: () => {
+    } })
+  ),
+  ...everyLanguage(
+    "A5",
+    "A5-invite-locked",
+    "A5 Code problem - invite mode, too many tries, plus the ask line",
+    /* @__PURE__ */ jsx69(CodeProblem, { problem: "locked", retryAfterSeconds: 598, mode: "invite", digits: 8, onBack: () => {
+    } })
+  ),
+  ...everyLanguage(
+    "A5",
+    "A5-invite-mismatch",
+    "A5 Code problem - invite mode, does not match (eight digits)",
+    /* @__PURE__ */ jsx69(CodeProblem, { problem: "mismatch", mode: "invite", digits: 8, onBack: () => {
+    } })
+  ),
+  /*
+   * LIVE DEMO: THE FOUR DEFECTS THAT ARE A MATTER OF LAYOUT, IN EVERY LANGUAGE.
+   * S4-1: five expense modes wrap to two rows, the chosen one (Udhar) in the
+   * second row's corner. S3-6: the Ledger with suppliers paid in advance. S3-1:
+   * the Sales list with one sale returned in full and one in part.
+   */
+  /* X4 (Saket, 2026-11-20): the app-lock offer at the end of setup, and its no-screen-lock note. */
+  ...standardCases("X4", "X4 App lock offer - Turn on or Not now", (_store, language, display) => /* @__PURE__ */ jsx69(LockOffer, { language, display })),
+  ...everyLanguage(
+    "X4",
+    "X4-no-screen-lock",
+    "X4 App lock offer - this phone has no screen lock: the note and Continue",
+    /* @__PURE__ */ jsx69(LockOffer, { noScreenLock: true })
+  ),
+  /*
+   * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md section 4), every language:
+   * the confirm naming the entry; the line struck through with "Enter it again
+   * correctly" above it; and a returned sale, whose sheet says to cancel the
+   * return first and offers no cancel.
+   */
+  ...(() => {
+    const store = canonicalStore();
+    return everyLanguage(
+      "T7",
+      "T7-cancel-confirm",
+      'T7 Sales - "Cancel this entry?" naming the line and its figure',
+      /* @__PURE__ */ jsx69(FormA, { store, cancel: cancelControls(firstCashOf(store), null) })
+    );
+  })(),
+  ...(() => {
+    const store = cancelledStore();
+    return everyLanguage(
+      "T7",
+      "T7-cancelled",
+      'T7 Sales - a sale cancelled: struck through, "cancelled", and "Enter it again correctly"',
+      /* @__PURE__ */ jsx69(FormA, { store, cancel: cancelControls(null, firstCashOf(store)) })
+    );
+  })(),
+  ...(() => {
+    const store = returnsStore(canonicalStore());
+    return everyLanguage(
+      "T7",
+      "T7-cancel-linked",
+      'T7 Sales - a returned sale: "Cancel the return first", no cancel button',
+      /* @__PURE__ */ jsx69(FormA, { store, cancel: cancelControls(linkedSaleOf(store), null) })
+    );
+  })(),
+  ...everyLanguage(
+    "T9",
+    "T9-five-modes",
+    "T9 Expense - five modes on two rows, Udhar chosen",
+    /* @__PURE__ */ jsx69(FormC, { store: canonicalStore(), draftPaise: 12500, selectedCommit: 3 })
+  ),
+  ...everyLanguage(
+    "P1",
+    "P1-supplier-advance",
+    'P1 Ledger - suppliers paid in advance: "Advance to suppliers", no minus',
+    /* @__PURE__ */ jsx69(PartiesList, { store: supplierAdvanceStore() })
+  ),
+  ...everyLanguage(
+    "T7",
+    "T7-returned",
+    "T7 Sales - a sale returned in full and one in part, each line says so",
+    /* @__PURE__ */ jsx69(FormA, { store: returnsStore(canonicalStore()) })
+  ),
+  ...standardCases("A6", "A6 Session expired", (store, language, display) => /* @__PURE__ */ jsx69(
     SessionExpired,
     {
       language,
@@ -37832,16 +38799,16 @@ var SCREEN_CASES = [
       phone: CASE_PHONE
     }
   )),
-  ...standardCases("A7", "A7 Change your number", (_store, language, display) => /* @__PURE__ */ jsx68(NumberChanged, { language, display, onBack: () => {
+  ...standardCases("A7", "A7 Change your number", (_store, language, display) => /* @__PURE__ */ jsx69(NumberChanged, { language, display, onBack: () => {
   } })),
   authCase(
     "A7",
     "A7-handoff",
     "A7 Change your number - no old number",
-    /* @__PURE__ */ jsx68(NumberChanged, { stage: "handoff", onBack: () => {
+    /* @__PURE__ */ jsx69(NumberChanged, { stage: "handoff", onBack: () => {
     } })
   ),
-  ...standardCases("A8", "A8 Log out - two entries not synced", (store, language, display) => /* @__PURE__ */ jsx68(
+  ...standardCases("A8", "A8 Log out - two entries not synced", (store, language, display) => /* @__PURE__ */ jsx69(
     LogoutConfirm,
     {
       language,
@@ -37855,7 +38822,7 @@ var SCREEN_CASES = [
     "A8",
     "A8-saved",
     "A8 Log out - everything synced",
-    /* @__PURE__ */ jsx68(LogoutConfirm, { shopName: CANONICAL_SHOP_NAME, phone: CASE_PHONE })
+    /* @__PURE__ */ jsx69(LogoutConfirm, { shopName: CANONICAL_SHOP_NAME, phone: CASE_PHONE })
   ),
   ...TODAY_FLOW_CASES(),
   ...MITRA_CASES(),
@@ -37885,7 +38852,7 @@ var ASK_PREMIUM = [
 function ASK_CASES() {
   const q = (language) => language === "en" ? ASK_QUESTIONS.en : ASK_QUESTIONS.or;
   return [
-    ...standardCases("C1", "C1 Ask - three questions on the free plan", (store, language, display) => /* @__PURE__ */ jsx68(Ask, { store, language, display, chat: askedChat(store, q(language)) })),
+    ...standardCases("C1", "C1 Ask - three questions on the free plan", (store, language, display) => /* @__PURE__ */ jsx69(Ask, { store, language, display, chat: askedChat(store, q(language)) })),
     {
       id: "C1-empty",
       screen: "C1",
@@ -37893,7 +38860,7 @@ function ASK_CASES() {
       language: "en",
       display: "comfort",
       sheet: true,
-      element: () => /* @__PURE__ */ jsx68(Ask, { store: canonicalStore(), language: "en", display: "comfort" })
+      element: () => /* @__PURE__ */ jsx69(Ask, { store: canonicalStore(), language: "en", display: "comfort" })
     },
     {
       id: "C1-premium",
@@ -37904,7 +38871,7 @@ function ASK_CASES() {
       sheet: true,
       element: () => {
         const store = historyStore();
-        return /* @__PURE__ */ jsx68(Ask, { store, plan: "premium", language: "en", display: "comfort", chat: askedChat(store, ASK_PREMIUM) });
+        return /* @__PURE__ */ jsx69(Ask, { store, plan: "premium", language: "en", display: "comfort", chat: askedChat(store, ASK_PREMIUM) });
       }
     },
     {
@@ -37916,7 +38883,7 @@ function ASK_CASES() {
       sheet: false,
       element: () => {
         const store = historyStore();
-        return /* @__PURE__ */ jsx68(Ask, { store, plan: "premium", language: "longest", display: "focus", chat: askedChat(store, ASK_PREMIUM) });
+        return /* @__PURE__ */ jsx69(Ask, { store, plan: "premium", language: "longest", display: "focus", chat: askedChat(store, ASK_PREMIUM) });
       }
     }
   ];
@@ -37929,7 +38896,7 @@ function RETURN_CASES() {
   const c = (id2, caption, language, display, sheet2, element) => ({ id: id2, screen: "T18", caption, language, display, sheet: sheet2, element });
   const face = (base2, language, display, flow) => () => {
     const store = returnsStore(base2());
-    return /* @__PURE__ */ jsx68(ReturnOrExchange, { store, language, display, onBack: back, flow: flow(store) });
+    return /* @__PURE__ */ jsx69(ReturnOrExchange, { store, language, display, onBack: back, flow: flow(store) });
   };
   const returnFlow = (store) => flowOf({ saleId: firstCash(store), returned: 5e4 });
   const exchangeFlow = (store) => flowOf({
@@ -37942,7 +38909,7 @@ function RETURN_CASES() {
   });
   const settleFlow = () => flowOf({ settleId: RETURN_IDS.pending, returned: 3e4 });
   return [
-    ...standardCases("T18", "T18 Return or exchange - the list", (store, language, display) => /* @__PURE__ */ jsx68(
+    ...standardCases("T18", "T18 Return or exchange - the list", (store, language, display) => /* @__PURE__ */ jsx69(
       ReturnOrExchange,
       {
         store: returnsStore(store),
@@ -37952,7 +38919,7 @@ function RETURN_CASES() {
         flow: flowOf({ recordedId: RETURN_IDS.pending })
       }
     )),
-    c("T18-empty", "T18 Return or exchange - no sale to return yet", "or", "comfort", false, () => /* @__PURE__ */ jsx68(ReturnOrExchange, { store: emptyStore(), language: "or", display: "comfort", onBack: back })),
+    c("T18-empty", "T18 Return or exchange - no sale to return yet", "or", "comfort", false, () => /* @__PURE__ */ jsx69(ReturnOrExchange, { store: emptyStore(), language: "or", display: "comfort", onBack: back })),
     c(
       "T18-return",
       "T18 Return - a cash refund, typed",
@@ -38017,7 +38984,7 @@ function RETURN_CASES() {
       language: "longest",
       display: "focus",
       sheet: false,
-      element: () => /* @__PURE__ */ jsx68(FormA, { store: adversarialStore(), language: "longest", display: "focus", onOpenReturns: back })
+      element: () => /* @__PURE__ */ jsx69(FormA, { store: adversarialStore(), language: "longest", display: "focus", onOpenReturns: back })
     },
     {
       id: "T7-returns-link-empty",
@@ -38026,7 +38993,7 @@ function RETURN_CASES() {
       language: "or",
       display: "comfort",
       sheet: false,
-      element: () => /* @__PURE__ */ jsx68(FormA, { store: emptyStore(), language: "or", display: "comfort", onOpenReturns: back })
+      element: () => /* @__PURE__ */ jsx69(FormA, { store: emptyStore(), language: "or", display: "comfort", onOpenReturns: back })
     }
   ];
 }
@@ -38037,7 +39004,7 @@ function CORRECTION_CASES() {
   const first = (store) => store.state.entries[0]?.id ?? "";
   const chosen = (base2, language, display, draft) => () => {
     const store = base2();
-    return /* @__PURE__ */ jsx68(
+    return /* @__PURE__ */ jsx69(
       CorrectDay,
       {
         store,
@@ -38052,7 +39019,7 @@ function CORRECTION_CASES() {
   const held = () => {
     const store = closedAdversarialStore();
     store.postCorrection({ id: "cor-held", originalId: first(store), amount: 5e4 });
-    return /* @__PURE__ */ jsx68(
+    return /* @__PURE__ */ jsx69(
       CorrectDay,
       {
         store,
@@ -38070,7 +39037,7 @@ function CORRECTION_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(CorrectDay, { store: closedStore(), language: "en", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(CorrectDay, { store: closedStore(), language: "en", display: "comfort", onBack: back })
     ),
     c(
       "T16-adversarial",
@@ -38078,7 +39045,7 @@ function CORRECTION_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(CorrectDay, { store: closedAdversarialStore(), language: "or", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(CorrectDay, { store: closedAdversarialStore(), language: "or", display: "comfort", onBack: back })
     ),
     c(
       "T16-adversarial-focus",
@@ -38086,7 +39053,7 @@ function CORRECTION_CASES() {
       "or",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(CorrectDay, { store: closedAdversarialStore(), language: "or", display: "focus", onBack: back })
+      () => /* @__PURE__ */ jsx69(CorrectDay, { store: closedAdversarialStore(), language: "or", display: "focus", onBack: back })
     ),
     c(
       "T16-longest",
@@ -38094,7 +39061,7 @@ function CORRECTION_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(CorrectDay, { store: closedAdversarialStore(), language: "longest", display: "focus", onBack: back })
+      () => /* @__PURE__ */ jsx69(CorrectDay, { store: closedAdversarialStore(), language: "longest", display: "focus", onBack: back })
     ),
     c(
       "T16-target",
@@ -38119,7 +39086,7 @@ function CORRECTION_CASES() {
       "hi",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(CorrectDay, { store: canonicalStore(), language: "hi", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(CorrectDay, { store: canonicalStore(), language: "hi", display: "comfort", onBack: back })
     )
   ];
 }
@@ -38179,7 +39146,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(canonicalStore()), language: "en", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(canonicalStore()), language: "en", display: "comfort" })
     ),
     c(
       "T1-named-adversarial",
@@ -38188,7 +39155,7 @@ function TODAY_FLOW_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(adversarialStore()), language: "or", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(adversarialStore()), language: "or", display: "comfort" })
     ),
     c(
       "T1-named-longest",
@@ -38197,7 +39164,7 @@ function TODAY_FLOW_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(adversarialStore()), language: "longest", display: "focus" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(adversarialStore()), language: "longest", display: "focus" })
     ),
     c(
       "T1-observation",
@@ -38206,7 +39173,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(observationStore()), language: "en", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(observationStore()), language: "en", display: "comfort" })
     ),
     c(
       "T1-observation-odia",
@@ -38215,7 +39182,7 @@ function TODAY_FLOW_CASES() {
       "or",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(observationStore()), language: "or", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(observationStore()), language: "or", display: "comfort" })
     ),
     c(
       "T1-empty-named",
@@ -38224,7 +39191,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(emptyStore()), language: "hi", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(emptyStore()), language: "hi", display: "comfort" })
     ),
     c(
       "T2-named",
@@ -38233,7 +39200,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(TodayFirstRun, { store: named(firstRunStore()), language: "en", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(TodayFirstRun, { store: named(firstRunStore()), language: "en", display: "comfort" })
     ),
     c(
       "T2-started",
@@ -38245,7 +39212,7 @@ function TODAY_FLOW_CASES() {
       () => {
         const store = named(firstRunStore());
         store.setOpeningCash(15e4);
-        return /* @__PURE__ */ jsx68(TodayFirstRun, { store, language: "or", display: "comfort" });
+        return /* @__PURE__ */ jsx69(TodayFirstRun, { store, language: "or", display: "comfort" });
       }
     ),
     c(
@@ -38255,7 +39222,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(TodayClosed, { store: named(closedStore()), language: "en", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(TodayClosed, { store: named(closedStore()), language: "en", display: "comfort" })
     ),
     c(
       "T3-named-adversarial",
@@ -38264,7 +39231,7 @@ function TODAY_FLOW_CASES() {
       "or",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(TodayClosed, { store: named(closedAdversarialStore()), language: "or", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(TodayClosed, { store: named(closedAdversarialStore()), language: "or", display: "comfort" })
     ),
     c(
       "T3-named-longest",
@@ -38273,7 +39240,7 @@ function TODAY_FLOW_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(TodayClosed, { store: named(closedAdversarialStore()), language: "longest", display: "focus" })
+      () => /* @__PURE__ */ jsx69(TodayClosed, { store: named(closedAdversarialStore()), language: "longest", display: "focus" })
     ),
     c(
       "T5-named",
@@ -38282,7 +39249,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: named(canonicalStore()), language: "en", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: named(canonicalStore()), language: "en", display: "comfort", onBack: back })
     ),
     c(
       "T5-first-morning",
@@ -38291,7 +39258,7 @@ function TODAY_FLOW_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: named(emptyStore()), language: "or", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: named(emptyStore()), language: "or", display: "comfort", onBack: back })
     ),
     c(
       "T5-first-morning-longest",
@@ -38300,7 +39267,7 @@ function TODAY_FLOW_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: named(emptyStore()), language: "longest", display: "focus", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: named(emptyStore()), language: "longest", display: "focus", onBack: back })
     ),
     c(
       "T5-unlocked",
@@ -38309,7 +39276,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: allAnswered(named(emptyStore())), language: "en", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: allAnswered(named(emptyStore())), language: "en", display: "comfort", onBack: back })
     ),
     c(
       "T5-closed",
@@ -38318,7 +39285,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: named(closedStore()), language: "hi", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: named(closedStore()), language: "hi", display: "comfort", onBack: back })
     ),
     /*
      * DECISIONS 2 AND 3 ON T5: the UPI check answerable (bulk and per payment)
@@ -38332,7 +39299,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(
+      () => /* @__PURE__ */ jsx69(
         DayCloseList,
         {
           store: withAdjustment(named(canonicalStore())),
@@ -38353,7 +39320,7 @@ function TODAY_FLOW_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(
+      () => /* @__PURE__ */ jsx69(
         DayCloseList,
         {
           store: withAdjustment(named(adversarialStore())),
@@ -38380,7 +39347,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: named(emptyStore()), language: "hi", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: named(emptyStore()), language: "hi", display: "comfort", onBack: back })
     ),
     c(
       "T5-first-morning-hindi-focus",
@@ -38389,7 +39356,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(DayCloseList, { store: named(emptyStore()), language: "hi", display: "focus", onBack: back })
+      () => /* @__PURE__ */ jsx69(DayCloseList, { store: named(emptyStore()), language: "hi", display: "focus", onBack: back })
     ),
     c(
       "T5-skipped",
@@ -38402,7 +39369,7 @@ function TODAY_FLOW_CASES() {
         const store = named(emptyStore());
         store.skip("purchase");
         store.skip("withdrawal");
-        return /* @__PURE__ */ jsx68(DayCloseList, { store, language: "en", display: "comfort", onBack: back });
+        return /* @__PURE__ */ jsx69(DayCloseList, { store, language: "en", display: "comfort", onBack: back });
       }
     ),
     c(
@@ -38415,7 +39382,7 @@ function TODAY_FLOW_CASES() {
       () => {
         const store = named(adversarialStore());
         store.skip("withdrawal");
-        return /* @__PURE__ */ jsx68(DayCloseList, { store, language: "or", display: "comfort", onBack: back });
+        return /* @__PURE__ */ jsx69(DayCloseList, { store, language: "or", display: "comfort", onBack: back });
       }
     ),
     c(
@@ -38425,7 +39392,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: named(canonicalStore()), language: "hi", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: named(canonicalStore()), language: "hi", display: "comfort" })
     ),
     c(
       "T1-closing-time",
@@ -38437,7 +39404,7 @@ function TODAY_FLOW_CASES() {
       () => {
         const state = named(canonicalStore()).state;
         const store = new Store(memoryPort(state), () => state.day.date + "T20:30:00.000+05:30");
-        return /* @__PURE__ */ jsx68(Today, { store, language: "en", display: "comfort" });
+        return /* @__PURE__ */ jsx69(Today, { store, language: "en", display: "comfort" });
       }
     ),
     c(
@@ -38458,7 +39425,7 @@ function TODAY_FLOW_CASES() {
           source: "manual",
           createdAt: store.state.day.date + "T11:00:00.000+05:30"
         });
-        return /* @__PURE__ */ jsx68(Today, { store, language: "or", display: "comfort" });
+        return /* @__PURE__ */ jsx69(Today, { store, language: "or", display: "comfort" });
       }
     ),
     c(
@@ -38468,7 +39435,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(FormB, { store: canonicalStore(), language: "en", display: "comfort", selectedCommit: 1, entryPartyId: "p-wholesale" })
+      () => /* @__PURE__ */ jsx69(FormB, { store: canonicalStore(), language: "en", display: "comfort", selectedCommit: 1, entryPartyId: "p-wholesale" })
     ),
     c(
       "T8-collect-chosen-hindi",
@@ -38477,7 +39444,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(FormB, { store: canonicalStore(), language: "hi", display: "comfort", entryPartyId: "p-ramesh" })
+      () => /* @__PURE__ */ jsx69(FormB, { store: canonicalStore(), language: "hi", display: "comfort", entryPartyId: "p-ramesh" })
     ),
     c(
       "T8-picker-balances-hindi",
@@ -38486,7 +39453,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(FormB, { store: canonicalStore(), language: "hi", display: "comfort", pickingParty: true })
+      () => /* @__PURE__ */ jsx69(FormB, { store: canonicalStore(), language: "hi", display: "comfort", pickingParty: true })
     ),
     c(
       "T7-saved",
@@ -38507,7 +39474,7 @@ function TODAY_FLOW_CASES() {
           source: "manual",
           createdAt: store.state.day.date + "T14:32:00.000+05:30"
         });
-        return /* @__PURE__ */ jsx68(FormA, { store, language: "en", display: "comfort", savedId: id2 });
+        return /* @__PURE__ */ jsx69(FormA, { store, language: "en", display: "comfort", savedId: id2 });
       }
     ),
     c(
@@ -38529,7 +39496,7 @@ function TODAY_FLOW_CASES() {
           source: "manual",
           createdAt: store.state.day.date + "T14:32:00.000+05:30"
         });
-        return /* @__PURE__ */ jsx68(FormA, { store, language: "longest", display: "focus", savedId: id2 });
+        return /* @__PURE__ */ jsx69(FormA, { store, language: "longest", display: "focus", savedId: id2 });
       }
     ),
     c(
@@ -38539,7 +39506,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(CashCheck, { store: canonicalStore(), language: "hi", display: "comfort", keypadOpen: false })
+      () => /* @__PURE__ */ jsx69(CashCheck, { store: canonicalStore(), language: "hi", display: "comfort", keypadOpen: false })
     ),
     c(
       "P1-hindi",
@@ -38548,7 +39515,7 @@ function TODAY_FLOW_CASES() {
       "hi",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(PartiesList, { store: canonicalStore(), language: "hi", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(PartiesList, { store: canonicalStore(), language: "hi", display: "comfort" })
     ),
     c(
       "T6-back",
@@ -38557,7 +39524,7 @@ function TODAY_FLOW_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(OpeningCash, { language: "en", display: "comfort", onBack: back })
+      () => /* @__PURE__ */ jsx69(OpeningCash, { language: "en", display: "comfort", onBack: back })
     ),
     c(
       "T6-back-longest",
@@ -38566,7 +39533,7 @@ function TODAY_FLOW_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(OpeningCash, { language: "longest", display: "focus", draftPaise: 12345678, onBack: back })
+      () => /* @__PURE__ */ jsx69(OpeningCash, { language: "longest", display: "focus", draftPaise: 12345678, onBack: back })
     )
   ];
 }
@@ -38604,7 +39571,7 @@ function MITRA_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: atClock(canonicalStore(), nextDay), language: "en", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: atClock(canonicalStore(), nextDay), language: "en", display: "comfort" })
     ),
     c(
       "T1-stale-longest",
@@ -38613,7 +39580,7 @@ function MITRA_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(Today, { store: atClock(adversarialStore(), nextDay), language: "longest", display: "focus" })
+      () => /* @__PURE__ */ jsx69(Today, { store: atClock(adversarialStore(), nextDay), language: "longest", display: "focus" })
     ),
     c(
       "T1-future",
@@ -38622,7 +39589,7 @@ function MITRA_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: atClock(canonicalStore(), dayBefore), language: "or", display: "comfort", onOpenDateSettings: () => {
+      () => /* @__PURE__ */ jsx69(Today, { store: atClock(canonicalStore(), dayBefore), language: "or", display: "comfort", onOpenDateSettings: () => {
       } })
     ),
     c(
@@ -38632,7 +39599,7 @@ function MITRA_CASES() {
       "hi",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(Today, { store: atClock(adversarialStore(), dayBefore), language: "hi", display: "focus" })
+      () => /* @__PURE__ */ jsx69(Today, { store: atClock(adversarialStore(), dayBefore), language: "hi", display: "focus" })
     ),
     c(
       "T1-loading",
@@ -38641,7 +39608,7 @@ function MITRA_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: canonicalStore(), status: "loading", language: "en", display: "comfort" })
+      () => /* @__PURE__ */ jsx69(Today, { store: canonicalStore(), status: "loading", language: "en", display: "comfort" })
     ),
     c(
       "T1-exit",
@@ -38650,7 +39617,7 @@ function MITRA_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(Today, { store: canonicalStore(), language: "or", display: "comfort", exitPrompt: EXIT })
+      () => /* @__PURE__ */ jsx69(Today, { store: canonicalStore(), language: "or", display: "comfort", exitPrompt: EXIT })
     ),
     c(
       "T1-exit-longest",
@@ -38659,7 +39626,7 @@ function MITRA_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(Today, { store: adversarialStore(), language: "longest", display: "focus", exitPrompt: EXIT })
+      () => /* @__PURE__ */ jsx69(Today, { store: adversarialStore(), language: "longest", display: "focus", exitPrompt: EXIT })
     ),
     c(
       "T3-exit",
@@ -38668,7 +39635,7 @@ function MITRA_CASES() {
       "hi",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(TodayClosed, { store: closedStore(), language: "hi", display: "comfort", exitPrompt: EXIT })
+      () => /* @__PURE__ */ jsx69(TodayClosed, { store: closedStore(), language: "hi", display: "comfort", exitPrompt: EXIT })
     ),
     c(
       "X0-manage-withdrawn",
@@ -38677,7 +39644,7 @@ function MITRA_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(ConsentNotice, { mode: "manage", language: "or", display: "comfort", granted: [], justWithdrawn: "sms_reminders", onBack: () => {
+      () => /* @__PURE__ */ jsx69(ConsentNotice, { mode: "manage", language: "or", display: "comfort", granted: [], justWithdrawn: "sms_reminders", onBack: () => {
       } })
     ),
     c(
@@ -38687,7 +39654,7 @@ function MITRA_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(ConsentNotice, { mode: "manage", language: "longest", display: "focus", granted: [], justWithdrawn: "crash_diagnostics", onBack: () => {
+      () => /* @__PURE__ */ jsx69(ConsentNotice, { mode: "manage", language: "longest", display: "focus", granted: [], justWithdrawn: "crash_diagnostics", onBack: () => {
       } })
     ),
     c(
@@ -38697,7 +39664,7 @@ function MITRA_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(LanguageSettings, { store: canonicalStore(), language: "or", display: "comfort", textSize: "large", onBack: () => {
+      () => /* @__PURE__ */ jsx69(LanguageSettings, { store: canonicalStore(), language: "or", display: "comfort", textSize: "large", onBack: () => {
       } })
     ),
     c(
@@ -38707,10 +39674,10 @@ function MITRA_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(LanguageSettings, { store: adversarialStore(), language: "longest", display: "focus", textSize: "xlarge", onBack: () => {
+      () => /* @__PURE__ */ jsx69(LanguageSettings, { store: adversarialStore(), language: "longest", display: "focus", textSize: "xlarge", onBack: () => {
       } })
     ),
-    ...standardCases("S13", "S13 Your data", (store, language, display) => /* @__PURE__ */ jsx68(YourData, { store, language, display, onDownload: () => {
+    ...standardCases("S13", "S13 Your data", (store, language, display) => /* @__PURE__ */ jsx69(YourData, { store, language, display, onDownload: () => {
     }, onBack: () => {
     } })),
     c(
@@ -38720,7 +39687,7 @@ function MITRA_CASES() {
       "hi",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(YourData, { store: canonicalStore(), language: "hi", display: "comfort", phase: "offline", onDownload: () => {
+      () => /* @__PURE__ */ jsx69(YourData, { store: canonicalStore(), language: "hi", display: "comfort", phase: "offline", onDownload: () => {
       }, onBack: () => {
       } })
     ),
@@ -38731,10 +39698,10 @@ function MITRA_CASES() {
       "en",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(YourData, { store: canonicalStore(), language: "en", display: "focus", onBack: () => {
+      () => /* @__PURE__ */ jsx69(YourData, { store: canonicalStore(), language: "en", display: "focus", onBack: () => {
       } })
     ),
-    ...standardCases("S14", "S14 Signed-in phones", (store, language, display) => /* @__PURE__ */ jsx68(SignedInPhones, { store, language, display, devices: devicesReady(), today: CANONICAL_DATE, onBack: () => {
+    ...standardCases("S14", "S14 Signed-in phones", (store, language, display) => /* @__PURE__ */ jsx69(SignedInPhones, { store, language, display, devices: devicesReady(), today: CANONICAL_DATE, onBack: () => {
     } })),
     c(
       "S14-confirm",
@@ -38743,7 +39710,7 @@ function MITRA_CASES() {
       "or",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(SignedInPhones, { store: canonicalStore(), language: "or", display: "comfort", devices: devicesReady({ confirm: "dev-old" }), today: CANONICAL_DATE, onBack: () => {
+      () => /* @__PURE__ */ jsx69(SignedInPhones, { store: canonicalStore(), language: "or", display: "comfort", devices: devicesReady({ confirm: "dev-old" }), today: CANONICAL_DATE, onBack: () => {
       } })
     ),
     c(
@@ -38753,7 +39720,7 @@ function MITRA_CASES() {
       "longest",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(SignedInPhones, { store: adversarialStore(), language: "longest", display: "focus", devices: devicesReady({ confirm: "dev-old" }), today: CANONICAL_DATE, onBack: () => {
+      () => /* @__PURE__ */ jsx69(SignedInPhones, { store: adversarialStore(), language: "longest", display: "focus", devices: devicesReady({ confirm: "dev-old" }), today: CANONICAL_DATE, onBack: () => {
       } })
     ),
     c(
@@ -38763,7 +39730,7 @@ function MITRA_CASES() {
       "hi",
       "comfort",
       false,
-      () => /* @__PURE__ */ jsx68(SignedInPhones, { store: canonicalStore(), language: "hi", display: "comfort", devices: devicesReady({ done: true }), today: CANONICAL_DATE, onBack: () => {
+      () => /* @__PURE__ */ jsx69(SignedInPhones, { store: canonicalStore(), language: "hi", display: "comfort", devices: devicesReady({ done: true }), today: CANONICAL_DATE, onBack: () => {
       } })
     ),
     c(
@@ -38773,7 +39740,7 @@ function MITRA_CASES() {
       "en",
       "comfort",
       true,
-      () => /* @__PURE__ */ jsx68(SignedInPhones, { store: canonicalStore(), language: "en", display: "comfort", devices: { status: "error", list: [], confirm: null, done: false }, today: CANONICAL_DATE, onBack: () => {
+      () => /* @__PURE__ */ jsx69(SignedInPhones, { store: canonicalStore(), language: "en", display: "comfort", devices: { status: "error", list: [], confirm: null, done: false }, today: CANONICAL_DATE, onBack: () => {
       } })
     ),
     c(
@@ -38783,7 +39750,7 @@ function MITRA_CASES() {
       "or",
       "focus",
       false,
-      () => /* @__PURE__ */ jsx68(SignedInPhones, { store: canonicalStore(), language: "or", display: "focus", today: CANONICAL_DATE, onBack: () => {
+      () => /* @__PURE__ */ jsx69(SignedInPhones, { store: canonicalStore(), language: "or", display: "focus", today: CANONICAL_DATE, onBack: () => {
       } })
     )
   ];

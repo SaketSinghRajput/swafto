@@ -802,3 +802,42 @@ describe('WCAG 2.5.3 - every tile is reached by the words on its face', () => {
     });
   }
 });
+
+describe('RTI-7 - "a new phone signed in to your shop"', () => {
+  const phone = { id: 'dev-new', date: '2026-07-14' } as const;
+
+  it('shown: the date from the data, and both answers reach their handlers', () => {
+    const hit: string[] = [];
+    const tree = render(
+      <Today
+        store={canonicalStore()}
+        newPhone={phone}
+        onOpenDevices={() => hit.push('open')}
+        onDismissNewPhone={() => hit.push('dismiss')}
+      />,
+    );
+    expect(text(byTestId(tree, 't1-new-phone-banner-text'))).toBe(
+      "A new phone signed in to your shop on Tuesday 14 July. If this wasn't you, open Signed-in phones and sign it out.",
+    );
+    expect(byTestId(tree, 't1-new-phone-open').props.accessibilityLabel).toBe('Signed-in phones');
+    byTestId(tree, 't1-new-phone-open').props.onPress();
+    byTestId(tree, 't1-new-phone-dismiss').props.onPress();
+    expect(hit).toEqual(['open', 'dismiss']);
+  });
+
+  it('hidden: no notice without a new phone', () => {
+    const ids = all(render(<Today store={canonicalStore()} />)).map((n) => String(n.props?.testID ?? ''));
+    expect(ids).not.toContain('t1-new-phone');
+  });
+
+  it('in Hindi and Odia, and the floors at the longest string', () => {
+    for (const language of ['hi', 'or'] as const) {
+      const tree = render(<Today store={canonicalStore()} newPhone={phone} language={language} />);
+      expect(text(byTestId(tree, 't1-new-phone-banner-text'))).toContain('14');
+    }
+    const worst = render(<Today store={adversarialStore()} newPhone={phone} language="longest" display="focus" />);
+    expect(undersizedTargets(worst)).toEqual([]);
+    expect(undersizedText(worst)).toEqual([]);
+    expect(failingContrast(worst)).toEqual([]);
+  });
+});

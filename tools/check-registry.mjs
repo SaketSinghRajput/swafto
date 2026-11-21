@@ -31,6 +31,7 @@ import {
   DLT_MAX_VARIABLE_SHARE_PCT,
   DLT_VARIABLE_MAX_CHARS,
   EXTERNAL_VALUES,
+  INVITE_CODE_DIGITS,
   OTP_DIGITS,
   OTP_TTL_SECONDS,
   TOUCH_TARGET_MIN_DP,
@@ -82,7 +83,21 @@ const RULES = [
     expect: OTP_DIGITS,
     re: /(\d+)[ -]digit/g,
     needs: /OTP|code/i,
-    not: /PIN|app lock/i,
+    // "8-digit invite code" is the INVITE CODE, a different value with its own registry name and rule
+    // below. The exclusion is as narrow as the phrase ("invite code" / "invite-code"), so a line that
+    // says "invite" and states the OTP length some other way is still read as an OTP claim. REASON:
+    // without it this rule reads the invite length as a claim about the six-digit OTP (the same
+    // ambiguity as the PIN above). Scoped by PHRASE; see docs/governance/REVIEW.md A12.
+    not: /PIN|app lock|invite[ -]codes?/i,
+  },
+  {
+    name: 'invite code digits',
+    expect: INVITE_CODE_DIGITS,
+    re: /(\d+)[ -]digit/g,
+    needs: /invite[ -]codes?/i,
+    // A line naming both lengths ("the 6-digit SMS code ... the 8-digit invite code") would read the
+    // OTP's as an invite claim; PIN and OTP lines are other rules' business.
+    not: /PIN|app lock|SMS|OTP/i,
   },
   { name: 'OTP TTL minutes', expect: OTP_TTL_SECONDS / 60, re: /(\d+)[ -]minute TTL|Valid (\d+) min/g },
 ];

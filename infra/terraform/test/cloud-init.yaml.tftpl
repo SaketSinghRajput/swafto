@@ -1,0 +1,72 @@
+#cloud-config
+# Test API host. Same approach as infra/cloud-init.yaml (production): no secrets
+# in user data (anything here is readable from IMDS), every download pinned and
+# sha256-checked, SSM is the only way in. Differences: arm64, Postgres on the
+# instance, no Caddy / TLS (the test API is reached over an SSM port-forward).
+#
+# swafto-api is deliberately NOT started here: /srv/swafto is empty until the
+# first deploy over SSM, exactly as in production.
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - ca-certificates
+  - curl
+  - jq
+  - unzip
+  - unattended-upgrades
+  - postgresql
+  - postgresql-client
+
+write_files:
+  - path: /etc/swafto/site.env
+    permissions: '0644'
+    content: |
+      SWAFTO_ENV=test
+      SWAFTO_API_PORT=${api_port}
+      AWS_DEFAULT_REGION=ap-south-1
+
+  # Creates the test database and its role with a password generated here, on
+  # the instance. The password is never in this file, in Terraform state or in
+  # user data. It lives in /etc/swafto/test-db.env, root-only, for the deploy
+  # step to read over SSM.
+  - path: /usr/local/bin/swafto-test-db-init
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      umask 077
+      if [ -f /etc/swafto/test-db.env ]; then exit 0; fi
+      pw=$(openssl rand -hex 24)
+      sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE swafto_test LOGIN PASSWORD '$pw'"
+      sudo -u postgres createdb -O swafto_test swafto_test
+      printf 'DATABASE_URL=postgres://swafto_test:%s@127.0.0.1:5432/swafto_test\n' "$pw" > /etc/swafto/test-db.env
+      chmod 0600 /etc/swafto/test-db.env
+
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    permissions: '0644'
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+runcmd:
+  # 2 GiB of RAM runs Node and Postgres together; a swapfile is the safety net.
+  - [ bash, -lc, "fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab && sysctl -w vm.swappiness=10" ]
+
+  # The SSM agent is the only way in. Make certain it runs.
+  - [ bash, -lc, "snap list amazon-ssm-agent >/dev/null 2>&1 && snap start --enable amazon-ssm-agent || systemctl enable --now amazon-ssm-agent || (snap install amazon-ssm-agent --classic && snap start --enable amazon-ssm-agent)" ]
+
+  # Node 24.22.3 for linux-arm64 from nodejs.org, sha256 checked first. The hash
+  # is the node-v24.22.3-linux-arm64.tar.xz line of
+  # https://nodejs.org/dist/v24.22.3/SHASUMS256.txt. A mismatch aborts (bash -e).
+  - [ bash, -lec, "curl -fsSL https://nodejs.org/dist/v24.22.3/node-v24.22.3-linux-arm64.tar.xz -o /tmp/node.tar.xz && echo '6e51a2ada00f0011cc266f65d98922b403d7ad88f809ca2aa615a5fe1ce6e86c  /tmp/node.tar.xz' | sha256sum -c - && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner && unlink /tmp/node.tar.xz && /usr/local/bin/node --version" ]
+
+  # Postgres listens on loopback only (the Ubuntu default); nothing outside the
+  # instance can reach it.
+  - [ bash, -lc, "systemctl enable --now postgresql" ]
+  - [ bash, -lc, "/usr/local/bin/swafto-test-db-init" ]
+
+  - [ bash, -lc, "useradd --system --no-create-home --shell /usr/sbin/nologin swafto || true" ]
+  - [ bash, -lc, "install -d -o swafto -g swafto /srv/swafto" ]
+  - [ bash, -lc, "echo \"cloud-init finished $(date -u +%FT%TZ)\" >> /var/log/swafto-build.log" ]

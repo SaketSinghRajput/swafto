@@ -435,6 +435,16 @@
     "file": "reports\\contact-sheet\\T1-empty.html"
   },
   {
+    "id": "T1-new-phone-en",
+    "caption": "T1 Today - RTI-7: a new phone signed in to the shop - en, comfort",
+    "file": "reports\\contact-sheet\\T1-new-phone-en.html"
+  },
+  {
+    "id": "T1-new-phone-or",
+    "caption": "T1 Today - RTI-7: a new phone signed in to the shop - or, comfort",
+    "file": "reports\\contact-sheet\\T1-new-phone-or.html"
+  },
+  {
     "id": "T7-canonical",
     "caption": "T7 Form A - canonical shop, English, Comfort",
     "file": "reports\\contact-sheet\\T7-canonical.html"
@@ -505,6 +515,16 @@
     "file": "reports\\contact-sheet\\A3-offline.html"
   },
   {
+    "id": "A3-invite-en",
+    "caption": "A3 Phone number - invite mode: no SMS, \"Next\" - en, comfort",
+    "file": "reports\\contact-sheet\\A3-invite-en.html"
+  },
+  {
+    "id": "A3-invite-or",
+    "caption": "A3 Phone number - invite mode: no SMS, \"Next\" - or, comfort",
+    "file": "reports\\contact-sheet\\A3-invite-or.html"
+  },
+  {
     "id": "A4-canonical",
     "caption": "A4 Enter the code - three digits in - canonical shop, English, Comfort",
     "file": "reports\\contact-sheet\\A4-canonical.html"
@@ -523,6 +543,26 @@
     "id": "A4-offline",
     "caption": "A4 Enter the code - no signal when checking, after two resends",
     "file": "reports\\contact-sheet\\A4-offline.html"
+  },
+  {
+    "id": "A4-invite-en",
+    "caption": "A4 Enter the code - invite mode, eight boxes in two fours, five in - en, comfort",
+    "file": "reports\\contact-sheet\\A4-invite-en.html"
+  },
+  {
+    "id": "A4-invite-or",
+    "caption": "A4 Enter the code - invite mode, eight boxes in two fours, five in - or, comfort",
+    "file": "reports\\contact-sheet\\A4-invite-or.html"
+  },
+  {
+    "id": "A4-invite-full-en",
+    "caption": "A4 Enter the code - invite mode, all eight in, checking - en, comfort",
+    "file": "reports\\contact-sheet\\A4-invite-full-en.html"
+  },
+  {
+    "id": "A4-invite-full-or",
+    "caption": "A4 Enter the code - invite mode, all eight in, checking - or, comfort",
+    "file": "reports\\contact-sheet\\A4-invite-full-or.html"
   },
   {
     "id": "A5-canonical",
@@ -548,6 +588,36 @@
     "id": "A5-no-code",
     "caption": "A5 Code problem - still no code",
     "file": "reports\\contact-sheet\\A5-no-code.html"
+  },
+  {
+    "id": "A5-invite-expired-en",
+    "caption": "A5 Code problem - invite mode, dead: ask SWAFTO, no send button - en, comfort",
+    "file": "reports\\contact-sheet\\A5-invite-expired-en.html"
+  },
+  {
+    "id": "A5-invite-expired-or",
+    "caption": "A5 Code problem - invite mode, dead: ask SWAFTO, no send button - or, comfort",
+    "file": "reports\\contact-sheet\\A5-invite-expired-or.html"
+  },
+  {
+    "id": "A5-invite-locked-en",
+    "caption": "A5 Code problem - invite mode, too many tries, plus the ask line - en, comfort",
+    "file": "reports\\contact-sheet\\A5-invite-locked-en.html"
+  },
+  {
+    "id": "A5-invite-locked-or",
+    "caption": "A5 Code problem - invite mode, too many tries, plus the ask line - or, comfort",
+    "file": "reports\\contact-sheet\\A5-invite-locked-or.html"
+  },
+  {
+    "id": "A5-invite-mismatch-en",
+    "caption": "A5 Code problem - invite mode, does not match (eight digits) - en, comfort",
+    "file": "reports\\contact-sheet\\A5-invite-mismatch-en.html"
+  },
+  {
+    "id": "A5-invite-mismatch-or",
+    "caption": "A5 Code problem - invite mode, does not match (eight digits) - or, comfort",
+    "file": "reports\\contact-sheet\\A5-invite-mismatch-or.html"
   },
   {
     "id": "A6-canonical",
@@ -678,6 +748,71 @@
     "id": "T6-back",
     "caption": "T6 Opening cash - with back, nothing typed yet",
     "file": "reports\\contact-sheet\\T6-back.html"
+  },
+  {
+    "id": "T1-stale",
+    "caption": "T1 Today - the book is still open for yesterday: a warning banner, \"Close it now\"",
+    "file": "reports\\contact-sheet\\T1-stale.html"
+  },
+  {
+    "id": "T1-future",
+    "caption": "T1 Today - phone date behind the book, with \"Open date settings\"",
+    "file": "reports\\contact-sheet\\T1-future.html"
+  },
+  {
+    "id": "T1-loading",
+    "caption": "T1 Today - opening the book: three static rows, no spinner",
+    "file": "reports\\contact-sheet\\T1-loading.html"
+  },
+  {
+    "id": "T1-exit",
+    "caption": "T1 Today - hardware Back: \"Exit the app?\", two equal answers",
+    "file": "reports\\contact-sheet\\T1-exit.html"
+  },
+  {
+    "id": "X0-manage-withdrawn",
+    "caption": "X0 What you agreed to - one switch turned off, in effect now, no Save",
+    "file": "reports\\contact-sheet\\X0-manage-withdrawn.html"
+  },
+  {
+    "id": "S3-large",
+    "caption": "S3 Language and screen - text size Large, the live preview",
+    "file": "reports\\contact-sheet\\S3-large.html"
+  },
+  {
+    "id": "S13-canonical",
+    "caption": "S13 Your data - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S13-canonical.html"
+  },
+  {
+    "id": "S13-adversarial",
+    "caption": "S13 Your data - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S13-adversarial.html"
+  },
+  {
+    "id": "S13-offline",
+    "caption": "S13 Your data - no signal, nothing downloaded",
+    "file": "reports\\contact-sheet\\S13-offline.html"
+  },
+  {
+    "id": "S14-canonical",
+    "caption": "S14 Signed-in phones - canonical shop, English, Comfort",
+    "file": "reports\\contact-sheet\\S14-canonical.html"
+  },
+  {
+    "id": "S14-adversarial",
+    "caption": "S14 Signed-in phones - adversarial shop, Odia, Comfort",
+    "file": "reports\\contact-sheet\\S14-adversarial.html"
+  },
+  {
+    "id": "S14-confirm",
+    "caption": "S14 Signed-in phones - \"Sign out that phone?\"",
+    "file": "reports\\contact-sheet\\S14-confirm.html"
+  },
+  {
+    "id": "S14-error",
+    "caption": "S14 Signed-in phones - the list could not be loaded",
+    "file": "reports\\contact-sheet\\S14-error.html"
   },
   {
     "id": "T18-canonical",

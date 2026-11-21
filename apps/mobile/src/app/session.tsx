@@ -48,7 +48,7 @@ import {
   type ReturnSettlementChoice,
   type Section,
 } from '@swafto/formula-engine';
-import type { Store } from '../store/index.ts';
+import { PARTY_KIND, type Store } from '../store/index.ts';
 import type { KeypadKey } from '../components/Keypad.tsx';
 import type { CommitOption } from '../components/EntryForm.tsx';
 import { ROUTE_FOR_SECTION } from '../screens/entryRoutes.ts';
@@ -66,7 +66,7 @@ import { CONSENT_PURPOSES, PRIVACY_NOTICE_VERSION, type ConsentPurpose, INDIAN_M
 import type { Mode as DisplayMode, TextSize } from '../theme/tokens.ts';
 import type { MyDataPhase } from '../screens/S13.tsx';
 import type { DeviceView, DevicesState } from '../screens/S14.tsx';
-import { OTP_DIGITS, MAX_ENTRY_PAISE } from '@swafto/values';
+import { OTP_DIGITS, INVITE_CODE_DIGITS, MAX_ENTRY_PAISE } from '@swafto/values';
 import { allows, planOf, type Plan, type PlanAnswer } from './plan.ts';
 import type { ProductsResult } from '../net/billing.ts';
 
@@ -76,6 +76,12 @@ export type ScreenId =
    * X1 - onboarding. Reached once from X0 at sign-up and never again.
    */
   | 'X1'
+  /**
+   * X4 - THE APP-LOCK OFFER (Saket, 2026-11-20). Once, straight after X1, on a
+   * phone that can ask for its own screen lock. Never on an install that had
+   * already finished setup: X1 is the only way in.
+   */
+  | 'X4'
   /**
    * T1 IS THREE SCREENS, AND ONLY ONE ROUTE.
    *
@@ -228,8 +234,23 @@ const A5_PROBLEMS: readonly AuthProblem[] = ['mismatch', 'expired', 'locked', 'n
 export interface AuthState {
   /** Up to ten digits as typed, without +91. Never reformatted or completed. */
   readonly phone: string;
-  /** Up to six digits as typed. */
+  /** Up to `codeDigits` digits as typed (or pasted, cleaned by `codeDigitsOf`). */
   readonly code: string;
+  /**
+   * INVITE GATE: how the last code request was answered. `sms`: a code went by
+   * SMS. `invite`: nothing was sent, and the code is the one SWAFTO gave him.
+   * From the server's reply, never guessed; `sms` until a reply says otherwise.
+   */
+  readonly codeMode: CodeMode;
+  /** How many digits the code has: OTP_DIGITS, or INVITE_CODE_DIGITS in invite mode. */
+  readonly codeDigits: number;
+  /**
+   * LIVE DEMO S3-4: WHETHER `codeMode` IS AN ANSWER OR A DEFAULT. A first run
+   * has had no reply, and A3 said "a 6-digit code" from the SMS default, then
+   * "8-digit" once the server said invite - the screen changed under him. Until
+   * a reply (or a mode kept from the last launch) says which, A3 names no count.
+   */
+  readonly codeModeKnown: boolean;
   readonly problem: AuthProblem | null;
   /** A request is in flight. The screen shows it and does not invite a second tap. */
   readonly busy: boolean;
@@ -245,7 +266,31 @@ export interface AuthState {
 
 /** Ten digits is an Indian mobile number; the +91 is the screen's, not his. */
 const PHONE_DIGITS = 10;
-const CODE_DIGITS = OTP_DIGITS;
+
+export type CodeMode = 'sms' | 'invite';
+
+/** The box count for a mode, when no reply has said otherwise. */
+export const digitsForMode = (mode: CodeMode): number => (mode === 'invite' ? INVITE_CODE_DIGITS : OTP_DIGITS);
+
+/**
+ * F-1: A CODE AS IT IS SENT - ASCII DIGITS AND NOTHING ELSE. A pasted
+ * "4821 0937", "4821-0937" or a WhatsApp line with the code in it would
+ * otherwise reach the server with its space and be refused before a single
+ * digit was compared. Devanagari, Odia and Arabic-Indic digits are the same
+ * numbers in another script, so they become 0-9; everything else is dropped.
+ * Nothing is added or guessed: the result is the digits that were there, in
+ * their order.
+ */
+const DIGIT_ZEROS = [0x30, 0x0966, 0x0b66, 0x0660, 0x06f0] as const;
+export function codeDigitsOf(raw: string): string {
+  let out = '';
+  for (const ch of raw) {
+    const cp = ch.codePointAt(0) ?? 0;
+    const zero = DIGIT_ZEROS.find((z) => cp >= z && cp <= z + 9);
+    if (zero !== undefined) out += String.fromCharCode(0x30 + (cp - zero));
+  }
+  return out;
+}
 
 /**
  * What the consent screen produces: one decision per purpose, plus the version
@@ -436,6 +481,14 @@ export interface SessionState {
    * was saved is what the book holds. Cleared when the form is left.
    */
   readonly lastSavedId?: string | null;
+  /**
+   * CANCEL THIS ENTRY: the line he tapped on an entry form, waiting on the
+   * confirm sheet. Null when no sheet is up. Cleared before the cancel is
+   * written, so a second tap on the confirm finds nothing to cancel.
+   */
+  readonly cancelAsk?: string | null;
+  /** The entry just cancelled, by id - for "Enter it again correctly". */
+  readonly cancelledId?: string | null;
   /** The A-series: what he has typed into sign-in, and what went wrong with it. */
   readonly auth: AuthState;
   /**
@@ -509,6 +562,33 @@ export interface SessionState {
   readonly myData?: MyDataPhase;
   /** M3, S14: the device list as the server last gave it, and any sign-out being asked. */
   readonly devices?: DevicesState;
+  /**
+   * RTI-7: another phone signed in to this shop in the last 72 hours and has
+   * not been dismissed here. Set by the host from `GET /v1/devices` on launch
+   * and foreground; absent or null draws nothing.
+   */
+  readonly newPhone?: NewPhone | null;
+}
+
+/**
+ * RTI-7: THE DAY A SERVER STAMP FELL ON, ON THIS PHONE'S WALL CLOCK. The
+ * server stamps in UTC; a phone in India signed in at 01:30 IST was signed in
+ * on the later date. The offset is read from the injected `now` (`localIso`
+ * carries it), so nothing here reads a clock. 'YYYY-MM-DD', or '' when the
+ * stamp is unreadable - a date that cannot be read is not drawn as a guess.
+ */
+export function localDateOf(stamp: string, nowIso: string): string {
+  const at = Date.parse(stamp);
+  if (Number.isNaN(at)) return '';
+  const m = /([+-])(\d{2}):?(\d{2})$/.exec(nowIso);
+  const offsetMs = m ? (m[1] === '-' ? -1 : 1) * (parseInt(m[2] as string, 10) * 60 + parseInt(m[3] as string, 10)) * 60_000 : 0;
+  return new Date(at + offsetMs).toISOString().slice(0, 10);
+}
+
+/** RTI-7: the one new phone Today tells him about. `createdAt` is the server's stamp. */
+export interface NewPhone {
+  readonly id: string;
+  readonly createdAt: string;
 }
 
 /**
@@ -645,6 +725,14 @@ export interface SessionOptions {
   readonly appLock?: boolean;
   /** M3: the text size as last saved (V2 3.15). */
   readonly textSize?: TextSize;
+  /** INVITE GATE: how the last code request was answered, as last saved, so A3 says it first time. */
+  readonly codeMode?: CodeMode;
+  /**
+   * X4: whether setup ends by offering the app lock. The host says yes when
+   * it has the phone's lock to ask (a device bridge); without one there is
+   * nothing the offer could turn on, so setup goes straight to Today.
+   */
+  readonly offerAppLock?: boolean;
 }
 
 export class Session {
@@ -757,6 +845,9 @@ export class Session {
         resends: 0,
         recovery: 'decide',
         recoveryFrom: 'A3',
+        codeMode: options.codeMode ?? 'sms',
+        codeDigits: digitsForMode(options.codeMode ?? 'sms'),
+        codeModeKnown: options.codeMode !== undefined,
       },
       appLock: options.appLock === true,
       // Cold start with the lock on: covered before anything is drawn.
@@ -843,6 +934,8 @@ export class Session {
       itemFlow: null,
       itemName: '',
       lastSavedId: null,
+      cancelAsk: null,
+      cancelledId: null,
     };
     this.#fieldDigits = { returned: '', replacement: '' };
     this.#itemDigits = { quantity: '', amount: '' };
@@ -1301,7 +1394,26 @@ export class Session {
    * clearing it would punish him for correcting the mode before saving.
    */
   selectCommit(index: number): void {
-    this.#state = { ...this.#state, selectedCommit: index, advanceConfirm: null };
+    /*
+     * LIVE DEMO S2-1: THE PERSON GOES WHEN HE IS THE WRONG KIND FOR THE NEW
+     * SEGMENT. A customer chosen for an udhar sale stayed in the slot when the
+     * segment moved to "Pay supplier", so the form showed a customer as the
+     * supplier with "you owe ₹700" - a debt in the wrong direction. Between two
+     * segments that name the same kind (credit sale and collect) he stays.
+     */
+    const open = this.#state.entrySection;
+    const route = open !== null && open in ROUTE_FOR_SECTION ? ROUTE_FOR_SECTION[open as Section] : undefined;
+    const section = route?.commits[index]?.section;
+    const want = section === undefined ? undefined : PARTY_KIND[section];
+    const who = this.#state.entryPartyId;
+    const kind = who === null ? undefined : this.#store.state.parties.find((p) => p.id === who)?.kind;
+    const wrongKind = who !== null && want !== undefined && kind !== want;
+    this.#state = {
+      ...this.#state,
+      selectedCommit: index,
+      advanceConfirm: null,
+      ...(wrongKind ? { entryPartyId: null } : {}),
+    };
   }
 
   setLanguage(language: Language): void {
@@ -1319,6 +1431,11 @@ export class Session {
    */
   todayIso(): string {
     return this.#options.now().slice(0, 10);
+  }
+
+  /** RTI-7: a server stamp as a date on this phone's clock (`localDateOf`). */
+  localDate(stamp: string): string {
+    return localDateOf(stamp, this.#options.now());
   }
 
   /** M3: Normal, Large or Extra large - words and figures, never the chrome (V2 3.15). */
@@ -1354,6 +1471,13 @@ export class Session {
           ? { status: 'error', list: [], confirm: null, done: was?.done ?? false }
           : { status: 'ready', list, confirm: null, done: was?.done ?? false },
     };
+  }
+
+  /** RTI-7: the new-phone notice, as the host last derived it. Null clears it. */
+  newPhoneSeen(newPhone: NewPhone | null): void {
+    const was = this.#state.newPhone ?? null;
+    if (was?.id === newPhone?.id && was?.createdAt === newPhone?.createdAt) return;
+    this.#state = { ...this.#state, newPhone };
   }
 
   /** "Sign out that phone?" - only for a phone that is not this one and not already out. */
@@ -1526,7 +1650,7 @@ export class Session {
       });
       this.#store.append(entry);
       this.#digits = '';
-      this.#state = { ...this.#state, draftPaise: null, lastRefusal: null, advanceConfirm: null, lastSavedId: entry.id };
+      this.#state = { ...this.#state, draftPaise: null, lastRefusal: null, advanceConfirm: null, lastSavedId: entry.id, cancelledId: null };
       return entry;
     } catch (e) {
       // DV-7: the wrong kind of person - drop them so the slot asks again.
@@ -1546,6 +1670,63 @@ export class Session {
       };
       return null;
     }
+  }
+
+  /* ---- Cancel this entry (docs/design/CANCEL-ENTRY-GATE.md §4) ------- */
+
+  /** He tapped a line on an entry form: the confirm sheet, naming that entry. */
+  askCancel(entryId: string): void {
+    this.#state = { ...this.#state, cancelAsk: entryId, lastRefusal: null };
+  }
+
+  /** "Keep it", the scrim or Back: nothing is written. */
+  dismissCancel(): void {
+    this.#state = { ...this.#state, cancelAsk: null };
+  }
+
+  /**
+   * "Cancel this entry" on the sheet. The ask is cleared FIRST, so a double tap
+   * reaches here once with an id and once with nothing - one cancel row, never
+   * two. A refusal is said in words (App's REFUSAL_HINT), never as its code.
+   */
+  confirmCancel(): Entry | null {
+    const targetId = this.#state.cancelAsk ?? null;
+    if (targetId === null) return null;
+    this.#state = { ...this.#state, cancelAsk: null };
+    try {
+      const cancel = this.#store.cancel({ targetId, id: this.#options.newId(), createdAt: this.#options.now() });
+      this.#state = { ...this.#state, cancelledId: targetId, lastSavedId: null, lastRefusal: null, advanceConfirm: null };
+      return cancel;
+    } catch (e) {
+      this.#refuseFrom(e);
+      return null;
+    }
+  }
+
+  /**
+   * "Enter it again correctly": the same form, its segment set to the cancelled
+   * entry's section and mode - and NOTHING else. No amount and no person: a
+   * figure the app filled in is a figure nobody typed.
+   */
+  enterAgain(): void {
+    const id = this.#state.cancelledId ?? null;
+    const target = id === null ? undefined : this.#store.findEntry(id);
+    if (target === undefined) return;
+    const open = this.#state.entrySection;
+    const route = open !== null && open in ROUTE_FOR_SECTION ? ROUTE_FOR_SECTION[open as Section] : undefined;
+    const exact = route?.commits.findIndex((c) => c.section === target.section && c.mode === target.mode) ?? -1;
+    const near = route?.commits.findIndex((c) => c.section === target.section) ?? -1;
+    const index = exact >= 0 ? exact : near;
+    this.#digits = '';
+    this.#state = {
+      ...this.#state,
+      ...(index >= 0 ? { selectedCommit: index } : {}),
+      draftPaise: null,
+      entryPartyId: null,
+      cancelledId: null,
+      advanceConfirm: null,
+      lastRefusal: null,
+    };
   }
 
   /** QA-03: he said yes to "record it as advance" - save what is on the form, as typed. */
@@ -1852,6 +2033,16 @@ export class Session {
       this.goTo(this.#state.chat?.from ?? 'T1');
       return true;
     }
+    // Cancel this entry: Back on the confirm is "Keep it", never a step past the form.
+    if ((this.#state.cancelAsk ?? null) !== null) {
+      this.dismissCancel();
+      return true;
+    }
+    // X4: setup is done behind it, so Back is "Not now" - never back into X1, never out of the app.
+    if (this.#state.screen === 'X4') {
+      this.finishLockOffer();
+      return true;
+    }
     // HT-26: A7 has two parents, and Back returns to the one it came from.
     if (this.#state.screen === 'A7') {
       this.goTo(this.#state.auth.recoveryFrom);
@@ -1935,19 +2126,32 @@ export class Session {
      * writes case above already lands in, so it is a state the app handles
      * rather than a new one. F-16: before this, T2 and T6 were unreachable.
      */
+    // X4: setup ends on the app-lock offer where the phone can be asked; Today otherwise.
+    const next: ScreenId = this.#options.offerAppLock === true && this.#state.appLock !== true ? 'X4' : 'T1';
     if (this.#state.draftPaise === null) {
       this.#digits = '';
       this.#state = {
         ...this.#state,
-        screen: 'T1',
+        screen: next,
         onboardingKeypad: false,
         lastRefusal: null,
       };
       return true;
     }
     const saved = this.confirmOpeningCash();
-    if (saved) this.#state = { ...this.#state, onboardingKeypad: false };
+    if (saved) this.#state = { ...this.#state, onboardingKeypad: false, screen: next };
     return saved;
+  }
+
+  /**
+   * X4 "Not now", "Continue", or the lock just turned on: on to Today. A note
+   * about a missing screen lock belongs to the offer and does not follow him.
+   * The lock stays where it is - off unless he turned it on - and S1 keeps
+   * the switch for later.
+   */
+  finishLockOffer(): void {
+    this.#state = { ...this.#state, lockNote: null };
+    this.goTo('T1');
   }
 
   /**
@@ -2405,10 +2609,25 @@ export class Session {
    */
   pressCode(key: KeypadKey): boolean {
     const c = this.#state.auth.code;
-    const code =
-      key === 'clear' ? '' : key === 'back' ? c.slice(0, -1) : c.length < CODE_DIGITS ? c + key : c;
+    const max = this.#state.auth.codeDigits;
+    const digit = key === 'clear' || key === 'back' ? '' : codeDigitsOf(key);
+    const code = key === 'clear' ? '' : key === 'back' ? c.slice(0, -1) : c.length < max ? c + digit : c;
     this.#auth({ code, problem: null });
-    return code.length === CODE_DIGITS && c.length !== CODE_DIGITS;
+    return code.length === max && c.length !== max;
+  }
+
+  /**
+   * F-1: A PASTED CODE. Cleaned by `codeDigitsOf` and cut at the box count, so
+   * "4821 0937" fills all eight boxes first time. Returns true when it filled
+   * them - the caller then verifies, exactly as for the last keypad digit. A
+   * paste with no digits in it changes nothing.
+   */
+  enterCode(raw: string): boolean {
+    const max = this.#state.auth.codeDigits;
+    const code = codeDigitsOf(raw).slice(0, max);
+    if (code === '') return false;
+    this.#auth({ code, problem: null });
+    return code.length === max;
   }
 
   /** A request left. The previous problem is no longer the news. */
@@ -2416,8 +2635,12 @@ export class Session {
     this.#auth({ busy: true, problem: null, retryAfterSeconds: null });
   }
 
-  /** A code went out. Straight to A4 with an empty code, counting a resend. */
-  codeSent(resend: boolean): void {
+  /**
+   * A code went out - or, in invite mode, the server said none would. Straight
+   * to A4 with an empty code, counting a resend, with the box count and the
+   * words the reply asked for.
+   */
+  codeSent(resend: boolean, reply?: { readonly mode: CodeMode; readonly digits: number }): void {
     this.#auth(
       {
         busy: false,
@@ -2425,9 +2648,19 @@ export class Session {
         problem: null,
         retryAfterSeconds: null,
         resends: this.#state.auth.resends + (resend ? 1 : 0),
+        ...(reply === undefined ? {} : { codeMode: reply.mode, codeDigits: reply.digits, codeModeKnown: true }),
       },
       'A4',
     );
+  }
+
+  /**
+   * LIVE DEMO S3-4: A5 "Try again" - back to an empty code entry for the same
+   * number. Nothing is sent and nothing is said about why the last code failed:
+   * the server's answer is the same for every wrong code, and so is this.
+   */
+  retryCode(): void {
+    this.#auth({ code: '', problem: null, busy: false, retryAfterSeconds: null }, 'A4');
   }
 
   /**

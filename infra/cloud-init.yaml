@@ -1,7 +1,10 @@
 #cloud-config
 # ============================================================================
 # SWAFTO origin server - ap-south-1 (Mumbai)
-# Paste into: EC2 launch wizard -> Advanced details -> User data.
+# DO NOT PASTE THIS: at ~30 KB it is over EC2's 16 KB user-data limit. Run
+# infra/make-user-data.sh, which fills in the site values and gzips it (~11 KB;
+# cloud-init unpacks gzip itself), then launch with the CLI: --user-data fileb://...
+# See docs/infra/HOSTING.md.
 #
 # CONTAINS NO SECRETS, BY DESIGN.
 # Anything placed in user data can be read back from inside the instance at
@@ -9,8 +12,9 @@
 # it for the life of the instance. Secrets are fetched from SSM Parameter
 # Store at service start using the instance role (decision S-17).
 #
-# Edit the three REPLACE_ME values in /etc/swafto/site.env below. Nothing
-# else in this file needs changing.
+# The three REPLACE_ME values in /etc/swafto/site.env below are filled in by
+# make-user-data.sh (--domain, --acme-email, --bucket). Nothing else in this file
+# needs changing.
 # ============================================================================
 
 package_update: true
@@ -32,6 +36,8 @@ write_files:
     permissions: '0644'
     content: |
       SWAFTO_DOMAIN=REPLACE_ME.swafto.app
+      # Optional. Empty = no expiry notices from Let's Encrypt; make-user-data.sh then
+      # drops the `email` line from the Caddyfile (an empty `email` is a Caddy error).
       SWAFTO_ACME_EMAIL=REPLACE_ME@swafto.app
       SWAFTO_BACKUP_BUCKET=REPLACE_ME-swafto-backups
       SWAFTO_SSM_PREFIX=/swafto/prod
@@ -186,7 +192,8 @@ write_files:
       # DATABASE_URL is the app role (swafto_app, NOBYPASSRLS); SYSTEM_DATABASE_URL
       # is the system role (swafto_system, BYPASSRLS). C-01: loadConfig refuses
       # to boot in production without both, and the two must be different roles.
-      for key in DATABASE_URL SYSTEM_DATABASE_URL SESSION_SIGNING_KEY RATE_LIMIT_KEY; do
+      # AUTH_MODE (invite or sms) is required: loadConfig refuses to boot in production without it.
+      for key in DATABASE_URL SYSTEM_DATABASE_URL SESSION_SIGNING_KEY RATE_LIMIT_KEY AUTH_MODE; do
         value=$(aws ssm get-parameter \
                   --name "${SWAFTO_SSM_PREFIX}/${key}" \
                   --with-decryption --query Parameter.Value --output text)
@@ -224,8 +231,48 @@ write_files:
         fi
       done
 
+      # Optional demo login (apps/api/src/auth/demo.ts): both parameters or neither. Only a genuine
+      # ParameterNotFound is tolerated; the API itself refuses to boot on one without the other.
+      for key in DEMO_LOGIN_PHONE DEMO_LOGIN_CODE_HASH; do
+        if value=$(aws ssm get-parameter \
+                     --name "${SWAFTO_SSM_PREFIX}/${key}" \
+                     --with-decryption --query Parameter.Value --output text \
+                     2>"$err"); then
+          case "$value" in *$'\n'*) echo "swafto-env: ${key} contains a newline" >&2; exit 1;; esac
+          printf '%s=%s\n' "$key" "$value" >> "$out"
+        elif grep -q ParameterNotFound "$err"; then
+          continue
+        else
+          cat "$err" >&2
+          exit 1
+        fi
+      done
+
       printf 'NODE_ENV=production\nPORT=8080\nHOST=127.0.0.1\n' >> "$out"
       chmod 0600 "$out"
+
+  # -- the invite CLI, run by root over SSM (tools/swafto-invite.mjs on the laptop) ---
+  # Fetches the API's environment into a root-only tmpfs file, loads it into this shell, deletes the
+  # file, and runs the CLI as the unprivileged swafto user. The code is printed once on stdout by the
+  # CLI; nothing here writes it anywhere. Arguments are passed through untouched ("$@") and the CLI
+  # validates every one against a closed pattern.
+  - path: /usr/local/bin/swafto-invite
+    permissions: '0750'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      envfile=/run/swafto/invite.env
+      trap 'rm -f "$envfile"' EXIT
+      /usr/local/bin/swafto-env "$envfile"
+      # Lines are KEY=VALUE as systemd reads them; export them literally (sourcing would
+      # interpret the metacharacters in a database URL).
+      while IFS= read -r line; do
+        [ -n "$line" ] && export "$line"
+      done < "$envfile"
+      rm -f "$envfile"
+      export PGSSLMODE=require NODE_EXTRA_CA_CERTS=/etc/swafto/rds-global-bundle.pem HOME=/tmp
+      cd /srv/swafto/apps/api
+      exec runuser -u swafto --preserve-environment -- /usr/local/bin/node src/admin/invite-cli.ts "$@"
 
   - path: /etc/systemd/system/swafto-api.service
     permissions: '0644'
@@ -245,8 +292,16 @@ write_files:
       # reads EnvironmentFile as root before dropping to User=, so the service
       # account itself never needs read access to the secrets.
       ExecStartPre=+/usr/local/bin/swafto-env
-      EnvironmentFile=/run/swafto/env
+      # The leading '-' matters: systemd reads this file when it spawns ExecStartPre,
+      # before swafto-env has written it, so a plain path fails the very first start
+      # (and the first start after a reboot, when /run is empty). Found 2026-11-20.
+      EnvironmentFile=-/run/swafto/env
       Environment=NODE_OPTIONS=--max-old-space-size=768
+      # RDS refuses unencrypted connections and the DATABASE_URLs carry no sslmode, so
+      # node-pg reads it here; it then verifies the server against the RDS CA bundle
+      # that runcmd puts at /etc/swafto/rds-global-bundle.pem.
+      Environment=PGSSLMODE=require
+      Environment=NODE_EXTRA_CA_CERTS=/etc/swafto/rds-global-bundle.pem
 
       ExecStart=/usr/local/bin/node src/server.ts
 
@@ -265,6 +320,11 @@ write_files:
       ProtectSystem=strict
       ProtectHome=true
       ReadWritePaths=/run/swafto
+      # ReadWritePaths needs the directory to exist before the unit's mount namespace
+      # is built, i.e. before ExecStartPre can create it. (Found 2026-11-20.)
+      RuntimeDirectory=swafto
+      RuntimeDirectoryMode=0700
+      RuntimeDirectoryPreserve=yes
       ProtectKernelTunables=true
       ProtectKernelModules=true
       ProtectControlGroups=true
@@ -285,7 +345,10 @@ write_files:
       set -euo pipefail
       source /etc/swafto/site.env
 
-      eval "$(aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/DATABASE_URL" \
+      # swafto_backup: BYPASSRLS + SELECT on everything + nothing else. NOT DATABASE_URL:
+      # that is swafto_app, which row-level security binds, so pg_dump through it fails
+      # or dumps nothing. See packages/schema/sql/roles.postgres.sql.
+      eval "$(aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/BACKUP_DATABASE_URL" \
                 --with-decryption --query Parameter.Value --output text \
               | /usr/local/bin/swafto-pgenv)"
 
@@ -320,7 +383,9 @@ write_files:
       set -euo pipefail
       source /etc/swafto/site.env
 
-      eval "$(aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/DATABASE_URL" \
+      # The master, because the drill must CREATE and DROP a database and swafto_backup
+      # (deliberately) cannot. It only ever touches the database named swafto_drill.
+      eval "$(aws ssm get-parameter --name "${SWAFTO_SSM_PREFIX}/MASTER_DATABASE_URL" \
                 --with-decryption --query Parameter.Value --output text \
               | /usr/local/bin/swafto-pgenv)"
 
@@ -350,13 +415,13 @@ write_files:
   # -- database roles and grants (C-01) ----------------------------------------
   # Runs packages/schema/sql/roles.postgres.sql AS THE RDS MASTER USER, then sets
   # the two role passwords in the same psql session. The SQL file creates
-  # swafto_app and swafto_system, sets their attributes and grants, and sets NO
-  # passwords. It is idempotent and must run AFTER every migration (its grants
+  # swafto_app, swafto_system and swafto_backup, sets their attributes and grants, and
+  # sets NO passwords. It is idempotent and must run AFTER every migration (its grants
   # skip tables that do not exist yet), so run it on every deploy:
   #   sudo /usr/local/bin/swafto-db-roles
   # SINGLE SOURCE FOR THE PASSWORDS: they are read out of the very same SSM
-  # SecureStrings the API connects with (DATABASE_URL -> swafto_app,
-  # SYSTEM_DATABASE_URL -> swafto_system), so the password the API presents and
+  # SecureStrings the roles connect with (DATABASE_URL -> swafto_app,
+  # SYSTEM_DATABASE_URL -> swafto_system, BACKUP_DATABASE_URL -> swafto_backup), so the password the API presents and
   # the one set on the role cannot diverge. The script refuses to run if either
   # URL names a different user than the fixed role. The master URL is
   # MASTER_DATABASE_URL (see H22). No password is in this file or the repo, and
@@ -374,13 +439,19 @@ write_files:
                 --with-decryption --query Parameter.Value --output text; }
       APP_URL=$(get DATABASE_URL)
       SYS_URL=$(get SYSTEM_DATABASE_URL)
-      export APP_URL SYS_URL
+      # BACKUP_DATABASE_URL is optional here: until a human creates it (H22) the role
+      # exists without a password, cannot log in, and swafto-backup fails loudly.
+      BACKUP_URL=$(get BACKUP_DATABASE_URL 2>/dev/null || true)
+      [ -n "$BACKUP_URL" ] || echo "swafto-db-roles: no BACKUP_DATABASE_URL in SSM - swafto_backup left without a password" >&2
+      export APP_URL SYS_URL BACKUP_URL
       eval "$(get MASTER_DATABASE_URL | /usr/local/bin/swafto-pgenv)"
       {
         python3 -c '
       import os, sys, urllib.parse as u
       def q(v): return "\x27" + v.replace("\\", "\\\\").replace("\x27", "\\\x27") + "\x27"
-      for tag, var, role in (("app", "APP_URL", "swafto_app"), ("system", "SYS_URL", "swafto_system")):
+      for tag, var, role in (("app", "APP_URL", "swafto_app"), ("system", "SYS_URL", "swafto_system"), ("backup", "BACKUP_URL", "swafto_backup")):
+          if tag == "backup" and not os.environ.get(var, "").strip():
+              continue
           p = u.urlparse(os.environ[var].strip())
           if u.unquote(p.username or "") != role or not p.password:
               sys.exit("swafto-db-roles: %s must name user %s and carry a password" % (var, role))
@@ -389,8 +460,9 @@ write_files:
         printf '\\i %s\n' "$sql"
         printf '%s\n' "ALTER ROLE swafto_app PASSWORD :'app_password';"
         printf '%s\n' "ALTER ROLE swafto_system PASSWORD :'system_password';"
+        [ -z "$BACKUP_URL" ] || printf '%s\n' "ALTER ROLE swafto_backup PASSWORD :'backup_password';"
       } | psql -v ON_ERROR_STOP=1 -X -q
-      echo "swafto-db-roles: roles.postgres.sql applied and role passwords set"
+      echo "swafto-db-roles: roles.postgres.sql applied and the role passwords set"
 
   # -- DPDP erasure and rate_events pruning (C-07 / OPS-07) -------------------
   # Daily. Output goes to the journal: journalctl -u swafto-purge. A failure
@@ -479,7 +551,12 @@ write_files:
       TimeoutStartSec=30min
       # Separate env file from the API's so a purge never rewrites it.
       ExecStartPre=+/usr/local/bin/swafto-env /run/swafto/purge.env
-      EnvironmentFile=/run/swafto/purge.env
+      EnvironmentFile=-/run/swafto/purge.env
+      Environment=PGSSLMODE=require
+      Environment=NODE_EXTRA_CA_CERTS=/etc/swafto/rds-global-bundle.pem
+      # HOME: with ProtectHome=true, psql's lookup of ~/.postgresql/postgresql.crt fails EACCES for
+      # the no-home swafto user and aborts the connection; /tmp is empty and private (ENOENT, fine).
+      Environment=HOME=/tmp
       ExecStart=/usr/local/bin/swafto-purge
       ExecStopPost=+/bin/rm -f /run/swafto/purge.env
 
@@ -626,14 +703,25 @@ runcmd:
   # node-v24.22.3-linux-x64.tar.xz in https://nodejs.org/dist/v24.22.3/SHASUMS256.txt
   - [ bash, -lec, "curl -fsSL https://nodejs.org/dist/v24.22.3/node-v24.22.3-linux-x64.tar.xz -o /tmp/node.tar.xz && echo '4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb  /tmp/node.tar.xz' | sha256sum -c - && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner && unlink /tmp/node.tar.xz && /usr/local/bin/node --version" ]
 
-  # pg_dump must be >= the server version, so take the client from PGDG. The
-  # signing key must be the one with the published fingerprint, or abort.
+  # pg_dump must be >= the server version, so take the client from PGDG, and its major
+  # must match the RDS engine (18.3): a v17 pg_dump refuses a v18 server outright
+  # (found on first boot, 2026-11-18). When RDS moves to a new major, bump the package
+  # name here and re-check swafto-backup. The signing key must be the one with the
+  # published fingerprint, or abort. Every apt-get below is non-interactive, with
+  # --force-confold: write_files has already written /etc/caddy/Caddyfile, and without
+  # it dpkg stops at "configuration file ... modified" with nobody to answer.
   # B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8 is the PostgreSQL apt repository key.
-  - [ bash, -lec, "install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && gpg --show-keys --with-colons /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc | grep -q '^fpr:::::::::B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8:' && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && apt-get install -y postgresql-client-17" ]
+  - [ bash, -lec, "install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && gpg --show-keys --with-colons /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc | grep -q '^fpr:::::::::B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8:' && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef postgresql-client-18" ]
+
+  # RDS CA bundle, so the API can verify the database's TLS certificate. Pinned: the
+  # sha256 below is of the global-bundle.pem fetched 2026-11-20. AWS re-issues this file
+  # occasionally; a mismatch aborts this step (bash -e) rather than trusting a new file
+  # unseen. To bump: download, inspect, update the hash.
+  - [ bash, -lec, "curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /etc/swafto/rds-global-bundle.pem && echo '90a6f1a7978a1b1b096dca6c57511ca48d3b8cf052f8e704baf358f34ea2f21b  /etc/swafto/rds-global-bundle.pem' | sha256sum -c - && chmod 0644 /etc/swafto/rds-global-bundle.pem" ]
 
   # Caddy 2.11.9 from the Caddy apt repo, key fingerprint checked first.
   # 65760C51EDEA2017CEA2CA15155B6D79CA56EA34 is the key of the Cloudsmith repo.
-  - [ bash, -lec, "curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key -o /tmp/caddy.key && gpg --show-keys --with-colons /tmp/caddy.key | grep -q '^fpr:::::::::65760C51EDEA2017CEA2CA15155B6D79CA56EA34:' && gpg --dearmor < /tmp/caddy.key > /usr/share/keyrings/caddy-stable-archive-keyring.gpg && unlink /tmp/caddy.key && curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt > /etc/apt/sources.list.d/caddy-stable.list && apt-get update && apt-get install -y caddy=2.11.9" ]
+  - [ bash, -lec, "curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key -o /tmp/caddy.key && gpg --show-keys --with-colons /tmp/caddy.key | grep -q '^fpr:::::::::65760C51EDEA2017CEA2CA15155B6D79CA56EA34:' && gpg --dearmor < /tmp/caddy.key > /usr/share/keyrings/caddy-stable-archive-keyring.gpg && unlink /tmp/caddy.key && curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt > /etc/apt/sources.list.d/caddy-stable.list && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef caddy=2.11.9" ]
 
   # CloudWatch agent 1.300074.1b2005 (a versioned path, not .../latest/).
   # sha256 computed from the .deb at that path; it matched the then-current

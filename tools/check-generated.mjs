@@ -26,6 +26,12 @@ const GENERATED = [
   // RT-10: migration 0004 (devices.refresh_gen), Postgres only.
   { file: 'packages/schema/migrations/0004_refresh_gen.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
   { file: 'packages/schema/migrations/0004_refresh_gen.postgres.down.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // Beta invite codes: migration 0005 (otp_pending.kind, invite_audit), Postgres only.
+  { file: 'packages/schema/migrations/0005_invite_codes.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  { file: 'packages/schema/migrations/0005_invite_codes.postgres.down.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  // Cancel this entry: migration 0006 (entries.cancels_entry_id), Postgres only.
+  { file: 'packages/schema/migrations/0006_cancel_entry.postgres.up.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
+  { file: 'packages/schema/migrations/0006_cancel_entry.postgres.down.sql', by: ['--experimental-strip-types', 'tools/emit-sql.mjs'] },
   // 4.2: the OpenAPI document is built from the routes the API serves (and fails if a route is undescribed).
   { file: 'docs/api/openapi.json', by: ['--experimental-strip-types', 'tools/gen-openapi.mjs'] },
   // §5.12: the verifier inventory is generated from the same data the check reads,

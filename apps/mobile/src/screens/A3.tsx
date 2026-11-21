@@ -9,14 +9,24 @@
  * NOTHING IS PREDICTED. No contact lookup, no SIM-number read, no autofill: the
  * ten digits are the ten he pressed. "Send code" stays disabled until there are
  * ten, so a short number is never sent and refused.
+ *
+ * INVITE GATE: when the last code request said `invite`, no SMS is coming, so
+ * the help line says to have the code SWAFTO gave him ready and the button is
+ * "Next" rather than "Send code". `mode` is the server's last answer, kept by
+ * the host.
+ *
+ * LIVE DEMO S3-4: BEFORE ANY ANSWER, NO DIGIT COUNT. `mode={null}` is a first
+ * run with no reply yet: the help line names no count and the button promises
+ * no SMS, because either could be wrong a second later. The count arrives with
+ * the server's reply and is then said on A4 and on every return to A3.
  */
 import { View, Text } from '@swafto/ui';
 import { Shell, PrimaryButton, type LoadStatus } from '../components/Shell.tsx';
 import { Keypad, type KeypadKey } from '../components/Keypad.tsx';
 import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
 import { strings, type RenderLanguage } from '../i18n/strings.ts';
-import { OTP_DIGITS, INDIAN_MOBILE } from '@swafto/values';
-import type { AuthProblem } from '../app/session.tsx';
+import { INDIAN_MOBILE } from '@swafto/values';
+import { digitsForMode, type AuthProblem, type CodeMode } from '../app/session.tsx';
 import { AuthNotice, fill, formatPhone } from './authParts.tsx';
 
 /** Shown in the empty field, exactly as the reference shows it. */
@@ -26,6 +36,10 @@ export interface PhoneNumberProps {
   readonly phone?: string;
   readonly busy?: boolean;
   readonly problem?: AuthProblem | null;
+  /** INVITE GATE: how the last code request was answered. Null: nothing has answered yet. */
+  readonly mode?: CodeMode | null;
+  /** How many digits that answer said the code has. Defaults to the mode's own. */
+  readonly digits?: number;
   readonly status?: LoadStatus;
   readonly language?: RenderLanguage;
   readonly display?: DisplayMode;
@@ -40,6 +54,8 @@ export function PhoneNumber({
   phone = '',
   busy = false,
   problem = null,
+  mode = 'sms',
+  digits = digitsForMode(mode ?? 'sms'),
   status = 'ready',
   language = 'en',
   display = 'comfort',
@@ -54,6 +70,8 @@ export function PhoneNumber({
   const complete = INDIAN_MOBILE.test(phone); // HT-5: ten digits AND a real mobile series
   // HT-25: ten digits that still cannot be sent say why, once there is nothing left to type.
   const notMobile = phone.length === 10 && !complete;
+  const invite = mode === 'invite';
+  const unknown = mode === null;
   return (
     <Shell
       id="a3"
@@ -137,7 +155,7 @@ export function PhoneNumber({
           <Keypad onKey={onKey} s={s} mode={display} testID="a3-keypad" />
           <PrimaryButton
             testID="a3-send"
-            label={s(busy ? 'a3.sending' : 'a3.send')}
+            label={s(busy ? (invite || unknown ? 'a4.checking' : 'a3.sending') : invite || unknown ? 'a3.next' : 'a3.send')}
             onPress={onSend}
             disabled={!complete || busy}
             display={display}
@@ -170,6 +188,7 @@ export function PhoneNumber({
         {s('a3.bar')}
       </Text>
       <Text
+        testID="a3-help"
         maxFontSizeMultiplier={t.maxFontScale}
         style={{
           paddingHorizontal: t.space.md,
@@ -180,7 +199,7 @@ export function PhoneNumber({
           color: t.color.inkMuted,
         }}
       >
-        {fill(s('a3.help'), { digits: OTP_DIGITS })}
+        {unknown ? s('a3.neutral.help') : fill(s(invite ? 'a3.invite.help' : 'a3.help'), { digits })}
       </Text>
 
 

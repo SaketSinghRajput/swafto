@@ -1,0 +1,6 @@
+# phase0 logcat excerpt, 2026-11-20T10:17:51Z, emulator-5554, app-debug.apk (x86_64 build)
+# FATAL lines in the whole buffer: 0
+# AndroidRuntime lines: 0
+11-20 15:46:27.497   604  1130 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.swafto/.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+11-20 15:46:30.726   604   636 I ActivityTaskManager: Displayed com.swafto/.MainActivity for user 0: +3s604ms
+11-20 15:46:33.335  2624  2847 I ReactNativeJS: Running "SWAFTO"

@@ -50,6 +50,9 @@ import {
   upiCheck,
   assertLineFits,
   EntryInputError,
+  liveEntries,
+  buildCancel,
+  assertPartyKind,
   itemReports,
   customerItems,
   ITEM_NAME_MAX,
@@ -703,13 +706,49 @@ export class Store {
     return 'recorded';
   }
 
-  /** DV-7, shared by both append paths. */
+  /**
+   * DV-7, shared by both append paths. The rule is the engine's
+   * `assertPartyKind` (the server runs the same one, `party_kind_mismatch`);
+   * this adds only what the engine leaves to the store - a party this book does
+   * not hold is not the right kind either.
+   */
   #assertPartyKind(entry: Entry): void {
     const kind = PARTY_KIND[entry.section];
-    if (kind && entry.partyId !== undefined) {
-      const party = this.#state.parties.find((p) => p.id === entry.partyId);
-      if (party?.kind !== kind) throw new PartyKindMismatch(entry.section, kind);
+    if (entry.partyId === undefined) return;
+    const party = this.#state.parties.find((p) => p.id === entry.partyId);
+    if (kind && party === undefined) throw new PartyKindMismatch(entry.section, kind);
+    try {
+      assertPartyKind(entry, party);
+    } catch (e) {
+      if (e instanceof EntryInputError && e.field === 'party_kind_mismatch') {
+        throw new PartyKindMismatch(entry.section, kind ?? 'different party');
+      }
+      throw e;
     }
+  }
+
+  /**
+   * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md). A new row that repeats
+   * the target exactly and names it in `cancelsEntryId`; the engine's
+   * `buildCancel` refuses a cancel of a cancel, a return leg, an entry with a
+   * return or correction pointing at it, and a second cancel. OPEN DAY ONLY:
+   * a closed day takes a correction (T16), and the D7 trigger agrees. Queued
+   * like any entry, so an offline cancel waits for signal.
+   */
+  cancel(d: { readonly targetId: string; readonly id: string; readonly createdAt: string }): Entry {
+    const target = this.#state.entries.find((e) => e.id === d.targetId);
+    if (target === undefined) throw new EntryInputError('cancel_target_missing', 'that entry is not in the book for today');
+    if (this.#state.day.state === 'closed' || target.dayId !== this.#state.day.date) {
+      throw new EntryInputError('entries_closed_day', 'the day is closed; post a correction instead');
+    }
+    const cancel = buildCancel({
+      target,
+      id: d.id,
+      createdAt: d.createdAt,
+      ledger: [...this.#state.entries, ...this.#port.entriesReferringTo(target.id)],
+    });
+    this.append(cancel);
+    return cancel;
   }
 
   get revision(): number {
@@ -801,11 +840,27 @@ export class Store {
     return { id: 'ob-day-' + day.date, kind: 'day', payload: day, queuedAt: at };
   }
 
+  /**
+   * CANCEL THIS ENTRY: today's entries that still count - every row but a
+   * cancel row and the entry it cancels (`liveEntries`). Every figure, list and
+   * count reads this; only the entry list itself (which strikes the original
+   * through) and the accountant export read the raw record.
+   */
+  get live(): readonly Entry[] {
+    return liveEntries(this.#state.entries);
+  }
+
+  /** Today's cancel row for this entry, or undefined. */
+  cancelOf(entryId: string): Entry | undefined {
+    return this.#state.entries.find((e) => e.cancelsEntryId === entryId);
+  }
+
   /** Exactly what the engine needs, assembled on demand. Never stored. */
   get input(): DayInput {
     return {
       day: this.#state.day,
-      entries: this.#state.entries,
+      // Cancel this entry: the pair is excluded ONCE, here, never inside a figure function.
+      entries: this.live,
       adjustments: this.#state.adjustments ?? [],
       upiConfirmations: this.#state.upiConfirmations ?? [],
       priorCreditOutstanding: this.#state.priorCreditOutstanding,
@@ -830,7 +885,7 @@ export class Store {
   reports(): Reports {
     const today = this.#state.day;
     const days = [...(this.#state.pastDays ?? []), today];
-    const entries = [...(this.#state.pastEntries ?? []), ...this.#state.entries];
+    const entries = liveEntries([...(this.#state.pastEntries ?? []), ...this.#state.entries]);
     // Only the trailing window is summarised: every reading needs no more, and
     // the full-history version was most of the measured cost (SCORES.md §7).
     const window = closedDaySummaries(days, entries, SCORE_WINDOW_DAYS);
@@ -863,7 +918,7 @@ export class Store {
     const st = this.#state;
     return {
       days: [...(st.pastDays ?? []), st.day],
-      entries: [...(st.pastEntries ?? []), ...st.entries],
+      entries: liveEntries([...(st.pastEntries ?? []), ...st.entries]),
       adjustments: [...(st.pastAdjustments ?? []), ...(st.adjustments ?? [])],
       upiConfirmations: [...(st.pastUpiConfirmations ?? []), ...(st.upiConfirmations ?? [])],
     };
@@ -924,7 +979,7 @@ export class Store {
    * also means a bare `+` on money would not survive check:money.
    */
   sectionTotal(section: Entry['section']): Paise {
-    return sum(this.#state.entries.filter((e) => e.section === section).map((e) => e.amount));
+    return sum(this.live.filter((e) => e.section === section).map((e) => e.amount));
   }
 
   /**
@@ -935,7 +990,7 @@ export class Store {
    * timestamp would be a second ordering that can disagree with the first.
    */
   partyEntries(partyId: string): readonly Entry[] {
-    return this.#state.entries.filter((e) => e.partyId === partyId);
+    return this.live.filter((e) => e.partyId === partyId);
   }
 
   /**
@@ -989,7 +1044,7 @@ export class Store {
    * port reads earlier days by seq, then today).
    */
   partyLedger(partyId: string): readonly Entry[] {
-    return this.allEntries().filter((e) => e.partyId === partyId);
+    return liveEntries(this.allEntries()).filter((e) => e.partyId === partyId);
   }
 
   /**
@@ -1012,7 +1067,7 @@ export class Store {
     const customers = new Set(this.#state.parties.filter((p) => p.kind === 'customer').map((p) => p.id));
     const owed = new Map<string, Paise>();
     const since = new Map<string, IsoDate>();
-    for (const e of this.allEntries()) {
+    for (const e of liveEntries(this.allEntries())) {
       if (e.partyId === undefined || !customers.has(e.partyId)) continue;
       const before = owed.get(e.partyId) ?? 0;
       const after = sum([before, partyEffect(e)]);
@@ -1353,12 +1408,12 @@ export class Store {
 
   /** PR-2, derived now from what was typed. Never stored, never cached. */
   itemReports(period: Period): ItemReports {
-    return itemReports(this.#allEntries(), this.#state.itemLines ?? [], this.items, period);
+    return itemReports(liveEntries(this.#allEntries()), this.#state.itemLines ?? [], this.items, period);
   }
 
   /** PR-2: what one named customer usually buys, over a period. */
   customerItems(partyId: string, period: Period): readonly ItemTotal[] {
-    return customerItems(this.#allEntries(), this.#state.itemLines ?? [], partyId, period);
+    return customerItems(liveEntries(this.#allEntries()), this.#state.itemLines ?? [], partyId, period);
   }
 
   isSkipped(section: Entry['section']): boolean {
@@ -1372,7 +1427,7 @@ export class Store {
    * empty, whatever was said earlier.
    */
   sectionState(section: Entry['section']): 'entered' | 'skipped' | 'untouched' {
-    if (this.#state.entries.some((e) => e.section === section)) return 'entered';
+    if (this.live.some((e) => e.section === section)) return 'entered';
     return this.isSkipped(section) ? 'skipped' : 'untouched';
   }
 

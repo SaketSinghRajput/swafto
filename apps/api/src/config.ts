@@ -17,7 +17,9 @@
  * found, because what it found may be most of a real secret.
  */
 import { assertSigningKey } from './auth/tokens.ts';
+import { normaliseIndianMobile } from './auth/phone.ts';
 import { assertUsableSecret } from './rate-limit/store.ts';
+import { parseDemoLogin, type DemoLogin } from './auth/demo.ts';
 
 export interface Config {
   readonly databaseUrl: string;
@@ -39,6 +41,11 @@ export interface Config {
    * warning at every boot.
    */
   readonly allowStubSms: boolean;
+  /**
+   * STAGING TESTER OTP PATH. Exact numbers (normalised, +91 99999 0xxxx only) whose OTP the stub
+   * SMS port writes to the log. Empty unless `ALLOW_STUB_SMS=1`; boot refuses otherwise.
+   */
+  readonly stagingTestPhones: readonly string[];
   /** OPS-09 · Fastify's trustProxy, from TRUST_PROXY. Defaults to loopback only. */
   readonly trustProxy: boolean | number | string;
   /** C-06 · per-statement ceiling, in ms. Reversible default 5000. */
@@ -51,6 +58,34 @@ export interface Config {
   readonly shutdownTimeoutMs: number;
   /** RT-W4-4 · NODE_ENV was not set at all. The SMS guard then treats the process as production. */
   readonly nodeEnvUnset: boolean;
+  /**
+   * AUTH_MODE: 'invite' (beta invite codes; no message is ever sent) or 'sms' (the OTP over SMS).
+   * Required in production and when NODE_ENV is unset; elsewhere it defaults to 'sms'.
+   */
+  readonly authMode: AuthMode;
+  /** DEMO_LOGIN_PHONE + DEMO_LOGIN_CODE_HASH, or null when the demo login is off. See auth/demo.ts. */
+  readonly demoLogin: DemoLogin | null;
+}
+
+export const NODE_ENVS = ['production', 'development', 'test'] as const;
+export const AUTH_MODES = ['invite', 'sms'] as const;
+export type AuthMode = (typeof AUTH_MODES)[number];
+
+/**
+ * AUTH_MODE, exactly 'invite' or 'sms'. UNSET REFUSES BOOT in production and with NODE_ENV unset (RT-W4-4):
+ * a default here would be a deploy that silently chose how people sign in. Elsewhere unset means 'sms',
+ * which is what every pre-invite caller and test already ran. The error names the variable, never the value.
+ */
+export function parseAuthMode(env: NodeJS.ProcessEnv, guarded: boolean): AuthMode {
+  const raw = env.AUTH_MODE;
+  if (raw === undefined || raw.trim() === '') {
+    if (guarded || raw !== undefined) {
+      throw new Error('AUTH_MODE is not set. It must be exactly invite or sms; there is no default in production.');
+    }
+    return 'sms';
+  }
+  if (!(AUTH_MODES as readonly string[]).includes(raw)) throw new Error('AUTH_MODE must be exactly invite or sms.');
+  return raw as AuthMode;
 }
 
 export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
@@ -104,6 +139,35 @@ export function unsafeTrustProxy(value: boolean | number | string): string | nul
     if (entry === '' || wide) return 'names an address range that is too wide (' + (entry || 'empty entry') + ')';
   }
   return null;
+}
+
+/** The reserved test range: +91 99999 0xxxx. No real subscriber can be put on the list by accident. */
+export const STAGING_TEST_PHONE_PREFIX = '+91999990';
+export const STAGING_TEST_PHONES_MAX = 20;
+
+/**
+ * STAGING_TEST_PHONES: a comma-separated allow-list that makes the stub SMS port log the OTP for
+ * those numbers (and only those). Refused at boot without ALLOW_STUB_SMS=1, with more than 20
+ * entries, or with any number outside the test range. Errors name the variable, never a number.
+ */
+export function parseStagingTestPhones(env: NodeJS.ProcessEnv): readonly string[] {
+  const items = (env.STAGING_TEST_PHONES ?? '').split(',').map((s) => s.trim()).filter((s) => s !== '');
+  if (items.length === 0) return [];
+  if (env.ALLOW_STUB_SMS !== '1') {
+    throw new Error('STAGING_TEST_PHONES requires ALLOW_STUB_SMS=1: the tester OTP path exists only on a staging stub SMS port.');
+  }
+  if (items.length > STAGING_TEST_PHONES_MAX) {
+    throw new Error('STAGING_TEST_PHONES may hold at most ' + String(STAGING_TEST_PHONES_MAX) + ' numbers.');
+  }
+  const phones = new Set<string>();
+  for (const item of items) {
+    const phone = normaliseIndianMobile(item);
+    if (phone === null || !phone.startsWith(STAGING_TEST_PHONE_PREFIX)) {
+      throw new Error('STAGING_TEST_PHONES may only hold numbers in the +91 99999 0xxxx test range, so a real number is never listed.');
+    }
+    phones.add(phone);
+  }
+  return [...phones];
 }
 
 const required = (env: NodeJS.ProcessEnv, name: string): string => {
@@ -238,11 +302,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
    * near-miss ('Production', 'prod') would quietly boot with every one of them off.
    * Anything that looks like an attempt at production and is not the word is refused.
    */
-  const nodeEnv = (env.NODE_ENV ?? '').trim();
-  if (/^prod/i.test(nodeEnv) && nodeEnv !== 'production') {
-    throw new Error("NODE_ENV looks like production but is not exactly 'production'; the production checks would be skipped.");
+  // RTI-6: an EXACT word from a closed set, or unset. A pasted space or CR ('production ') used to pass the
+  // near-miss check on its trimmed value and then boot with production=false, every guard off. Blank means
+  // unset (the guarded case); anything else that is not one of the three words, trimmed or not, refuses.
+  const nodeEnv = env.NODE_ENV ?? '';
+  if (nodeEnv !== '' && !(NODE_ENVS as readonly string[]).includes(nodeEnv)) {
+    throw new Error('NODE_ENV must be exactly one of ' + NODE_ENVS.join(', ') + ', or unset; a near miss would skip the production checks.');
   }
-  const production = env.NODE_ENV === 'production';
+  const production = nodeEnv === 'production';
 
   const logLevelRaw = (env.LOG_LEVEL ?? '').trim();
   if (logLevelRaw !== '' && !(LOG_LEVELS as readonly string[]).includes(logLevelRaw)) {
@@ -283,8 +350,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     production,
     systemDatabaseUrl,
     allowStubSms: env.ALLOW_STUB_SMS === '1',
+    stagingTestPhones: parseStagingTestPhones(env),
     trustProxy,
     nodeEnvUnset: env.NODE_ENV === undefined || nodeEnv === '',
+    authMode: parseAuthMode(env, production || env.NODE_ENV === undefined || nodeEnv === ''),
+    demoLogin: parseDemoLogin(env),
     statementTimeoutMs,
     logLevel,
     shutdownReadyGraceMs,

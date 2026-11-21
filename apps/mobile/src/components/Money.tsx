@@ -72,6 +72,8 @@ interface MoneyBase {
    * before it is chosen. Every other figure follows the app's setting.
    */
   readonly textSize?: TextSize;
+  /** Cancel this entry: a figure that no longer counts, struck through and kept in view (D1). */
+  readonly struck?: boolean;
 }
 
 /**
@@ -118,6 +120,7 @@ export function Money({
   out = false,
   testID,
   textSize,
+  struck = false,
 }: MoneyProps) {
   const t = tokens(mode, textSize);
   const shown = out ? subtract(0, amount) : amount;
@@ -160,6 +163,7 @@ export function Money({
         color,
         // DC-005. Without this the column does not line up, in any language.
         fontVariant: ['tabular-nums'],
+        ...(struck ? { textDecorationLine: 'line-through' as const } : {}),
       }}
     >
       {zeroOut ? `-${formatPaise(shown)}` : formatPaise(shown, { withSign })}

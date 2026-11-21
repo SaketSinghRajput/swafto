@@ -25,8 +25,9 @@ import {
   type SessionOptions,
   type ConsentDecision,
   type AuthProblem,
+  type NewPhone,
 } from './app/session.tsx';
-import { OTP_LIMITS, OTP_DIGITS, type ConsentPurpose } from '@swafto/values';
+import { OTP_LIMITS, type ConsentPurpose } from '@swafto/values';
 import type { Section } from '@swafto/formula-engine';
 import type { KeypadKey } from './components/Keypad.tsx';
 import type { DeviceBridge, ConfirmResult } from './platform/device.ts';
@@ -125,6 +126,50 @@ export interface HostOptions {
   readonly device?: DeviceBridge;
   /** FE-10: the backoff's clock (ms) and dice, injected so a test fixes both. */
   readonly backoff?: SyncBackoff;
+  /**
+   * RTI-7: the device ids whose "new phone signed in" notice he dismissed on
+   * this phone, as a JSON array. Local only - the server is not told. Absent
+   * in tests that do not need it (a dismissal then lasts the run).
+   */
+  readonly notices?: SecureStorage;
+}
+
+/**
+ * RTI-7: HOW LONG A NEW PHONE IS NEWS. Seventy-two hours, from the invite gate
+ * (INVITE-CODES-GATE section 1). A DESIGN CHOICE, NOT A MEASUREMENT: the
+ * notice fires only if this phone is opened inside the window, which is the
+ * residual the gate states.
+ */
+export const NEW_PHONE_WINDOW_MS = 72 * 60 * 60 * 1000;
+
+/** RTI-7: dismissals kept, newest last. A shop has a handful of phones; this is a bound, not a budget. */
+const NOTICES_KEPT = 50;
+
+/**
+ * RTI-7: THE NEW PHONE TO TELL HIM ABOUT, from the server's list and nothing
+ * else. Not this phone, not one already signed out, signed in under 72 hours
+ * before `nowMs`, and not dismissed here. A stamp from the future (a phone
+ * clock behind the server's) still counts: hiding a sign-in because a clock
+ * is wrong is the wrong way to fail. The newest wins. Null when there is none.
+ */
+export function newPhoneOf(
+  devices: readonly {
+    readonly id: string;
+    readonly createdAt: string | null;
+    readonly revokedAt: string | null;
+    readonly current: boolean;
+  }[],
+  nowMs: number,
+  dismissed: ReadonlySet<string>,
+): NewPhone | null {
+  let found: NewPhone | null = null;
+  for (const d of devices) {
+    if (d.current || d.revokedAt !== null || d.createdAt === null || dismissed.has(d.id)) continue;
+    const at = Date.parse(d.createdAt);
+    if (Number.isNaN(at) || nowMs - at >= NEW_PHONE_WINDOW_MS) continue;
+    if (found === null || at > Date.parse(found.createdAt)) found = { id: d.id, createdAt: d.createdAt };
+  }
+  return found;
 }
 
 /** What `planCache` holds. */
@@ -143,6 +188,9 @@ interface PlanCache {
  */
 export const LOCK_AFTER_MS = 5 * 60 * 1000;
 
+/** Push refusals that mean "not yet", not "never": the row stays in the queue (docs/design/CANCEL-ENTRY-GATE.md section 7). */
+export const RETRYABLE_REFUSALS: ReadonlySet<string> = new Set(['cancel_target_missing']);
+
 /** HT-21: what `draft` holds. The digits are the keys he pressed, never a derived figure. */
 interface Draft {
   readonly dayId: string;
@@ -150,7 +198,15 @@ interface Draft {
   readonly commit: number;
   readonly digits: string;
   readonly partyId: string | null;
+  /**
+   * LIVE DEMO S3-8: a correction being typed on T16, by the id of the entry it
+   * corrects. Present only when `section` is CORRECTION_DRAFT.
+   */
+  readonly originalId?: string;
 }
+
+/** Not a section: the marker for a T16 correction draft. */
+const CORRECTION_DRAFT = 'correction';
 
 const DRAFT_SECTIONS = [
   'cash_sales',
@@ -167,7 +223,8 @@ function readDraft(storage: SecureStorage | undefined): Draft | null {
   try {
     const raw = JSON.parse(storage?.read() ?? 'null') as Draft | null;
     if (raw === null || typeof raw !== 'object') return null;
-    if (!(DRAFT_SECTIONS as readonly string[]).includes(raw.section)) return null;
+    const correction = raw.section === CORRECTION_DRAFT && typeof raw.originalId === 'string';
+    if (!correction && !(DRAFT_SECTIONS as readonly string[]).includes(raw.section)) return null;
     if (typeof raw.digits !== 'string' || !/^[0-9]{1,8}$/.test(raw.digits)) return null;
     if (!Number.isInteger(raw.commit) || typeof raw.dayId !== 'string') return null;
     return raw;
@@ -182,6 +239,18 @@ interface Prefs {
   readonly appLock?: boolean;
   /** M3: kept only when it is not Normal, so an older prefs string is unchanged. */
   readonly textSize?: SessionOptions['textSize'];
+  /** INVITE GATE: the last code request said "invite", so A3 says so before the next one. */
+  readonly codeMode?: SessionOptions['codeMode'];
+}
+
+/** RTI-7: what `notices` holds - an array of device ids. Anything else is nothing dismissed. */
+function readDismissed(storage: SecureStorage | undefined): string[] {
+  try {
+    const raw = JSON.parse(storage?.read() ?? '[]') as unknown;
+    return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
 /** What `prefs` holds, or nothing - an unknown value is dropped, never rendered. */
@@ -193,6 +262,7 @@ function readPrefs(storage: SecureStorage | undefined): Prefs {
       ...(['comfort', 'focus'].includes(raw.display as string) ? { display: raw.display } : {}),
       ...(raw.appLock === true ? { appLock: true } : {}),
       ...(['large', 'xlarge'].includes(raw.textSize as string) ? { textSize: raw.textSize } : {}),
+      ...(raw.codeMode === 'invite' ? { codeMode: 'invite' as const } : {}),
     };
   } catch {
     return {};
@@ -367,6 +437,9 @@ export class Host {
   /** Wrong codes typed against the current one. */
   #wrongCodes = 0;
   readonly #planCache: SecureStorage | undefined;
+  readonly #notices: SecureStorage | undefined;
+  /** RTI-7: dismissed new-phone notices, by device id. Read once; written on each dismissal. */
+  readonly #dismissed: string[];
   readonly #billing: PlayBilling | undefined;
   readonly #device: DeviceBridge | undefined;
   /** R5 FR-3: when the app went to the background, in ms. Null while in front. */
@@ -401,6 +474,9 @@ export class Host {
       ...(display ? { display } : {}),
       ...(prefs.appLock ? { appLock: true } : {}),
       ...(prefs.textSize ? { textSize: prefs.textSize } : {}),
+      ...(prefs.codeMode ? { codeMode: prefs.codeMode } : {}),
+      // X4: the lock is offered at the end of setup only where the phone can be asked.
+      ...(options.device ? { offerAppLock: true } : {}),
       ...(this.#readAccount() ? { phone: this.#readAccount()!.phone } : {}),
       /*
        * No tokens and no finished onboarding means a new install, so the
@@ -432,17 +508,21 @@ export class Host {
     // HT-16: a language or display chosen in Settings used to revert on relaunch.
     let kept = JSON.stringify(prefs);
     this.session.subscribe(() => {
-      const { language: l, display: d, appLock: a, textSize: z } = this.session.state;
+      const { language: l, display: d, appLock: a, textSize: z, auth } = this.session.state;
       const now = JSON.stringify({
         language: l,
         display: d,
         ...(a ? { appLock: true } : {}),
         ...(z !== undefined && z !== 'normal' ? { textSize: z } : {}),
+        // INVITE GATE: kept only in invite mode, so an SMS-mode prefs string is unchanged.
+        ...(auth.codeMode === 'invite' ? { codeMode: 'invite' } : {}),
       });
       if (now !== kept) options.prefs?.write((kept = now));
     });
     this.#restoreDraft(options.draft);
     this.#planCache = options.planCache;
+    this.#notices = options.notices;
+    this.#dismissed = readDismissed(options.notices);
     this.#billing = options.billing;
     // PR-7: offline at launch, the plan is the last answer - and `planOf` ends it at its `until`.
     this.session.setPlanAnswer(this.#readPlan().answer);
@@ -573,12 +653,30 @@ export class Host {
    * different day's form would be the app choosing a date he never chose. A
    * party that is no longer in the book is not named. Nothing is committed -
    * the shopkeeper still taps Add himself.
+   *
+   * LIVE DEMO S3-8: T16'S CORRECTION TOO. The A36 test typed 123 into a
+   * correction, the process was killed, and it came back to Today with nothing.
+   * A correction is typed most often on a CLOSED day - that is what it is for -
+   * so it returns onto the same business day whether open or closed, and only
+   * while the entry it corrects is still in the book. Posting it, or leaving
+   * T16, clears it, exactly as Add and Back clear an entry draft.
    */
   #restoreDraft(storage: SecureStorage | undefined): void {
     if (!storage) return;
     const day = this.store.state.day;
     const held = readDraft(storage);
-    if (held && this.session.state.screen === 'T1' && day.state === 'open' && held.dayId === day.date) {
+    if (
+      held &&
+      held.section === CORRECTION_DRAFT &&
+      this.session.state.screen === 'T1' &&
+      held.dayId === day.date &&
+      held.originalId !== undefined &&
+      this.store.findEntry(held.originalId) !== undefined
+    ) {
+      this.session.openCorrection();
+      this.session.chooseCorrectionTarget(held.originalId);
+      for (const d of held.digits) this.session.press(d as KeypadKey);
+    } else if (held && held.section !== CORRECTION_DRAFT && this.session.state.screen === 'T1' && day.state === 'open' && held.dayId === day.date) {
       this.session.openSection(held.section as Section);
       this.session.selectCommit(held.commit);
       for (const d of held.digits) this.session.press(d as KeypadKey);
@@ -589,8 +687,18 @@ export class Host {
     let kept = held ? JSON.stringify(held) : null;
     const keep = () => {
       const st = this.session.state;
+      const correcting = st.screen === 'T16' ? (st.correction?.originalId ?? null) : null;
       const now =
-        st.entrySection !== null && st.draftPaise !== null
+        correcting !== null && st.draftPaise !== null
+          ? JSON.stringify({
+              dayId: this.store.state.day.date,
+              section: CORRECTION_DRAFT,
+              commit: 0,
+              digits: this.session.typedDigits,
+              partyId: null,
+              originalId: correcting,
+            } satisfies Draft)
+          : st.entrySection !== null && st.draftPaise !== null
           ? JSON.stringify({
               dayId: this.store.state.day.date,
               section: st.entrySection,
@@ -695,6 +803,19 @@ export class Host {
     }
   }
 
+  /**
+   * X4 "Turn on": the same enable flow as S1's switch - the phone's own lock is
+   * asked first. On, and setup goes on to Today. No screen lock: X4 says he can
+   * set one later and offers Continue. Cancelled: X4 stays, Not now is there.
+   * Setup is never blocked.
+   */
+  async turnOnLockFromSetup(): Promise<void> {
+    await this.setAppLock(true);
+    if (this.session.state.appLock === true && this.session.state.screen === 'X4') {
+      this.session.finishLockOffer();
+    }
+  }
+
   /* ---- sign-in -------------------------------------------------------- */
 
   #readAccount(): Account | null {
@@ -788,9 +909,17 @@ export class Host {
     s.authBusy();
     try {
       const sent = await this.client.requestOtp('+91' + phone, s.state.language, this.#readAccount()?.deviceId ?? this.#installId());
-      this.#codeExpiresAt = Date.parse(this.#now()) + sent.expiresInSeconds * 1000;
+      /*
+       * INVITE GATE: an invite reply carries no lifetime - the code's life is
+       * the operator's, not this request's - so only the attempt count can
+       * call it dead here. The server says `code_invalid` for both either way.
+       */
+      this.#codeExpiresAt =
+        sent.expiresInSeconds === undefined
+          ? Number.POSITIVE_INFINITY
+          : Date.parse(this.#now()) + sent.expiresInSeconds * 1000;
       this.#wrongCodes = 0;
-      s.codeSent(resend);
+      s.codeSent(resend, { mode: sent.mode, digits: sent.digits });
     } catch (e) {
       s.authFailed(...this.#problem(e));
     }
@@ -802,8 +931,9 @@ export class Host {
    */
   async verifyCode(): Promise<void> {
     const s = this.session;
-    const { phone, code, busy } = s.state.auth;
-    if (busy || code.length !== OTP_DIGITS) return;
+    // F-1: `code` is ASCII digits already - every way into it (key, paste) goes through codeDigitsOf.
+    const { phone, code, busy, codeDigits } = s.state.auth;
+    if (busy || code.length !== codeDigits) return;
     s.authBusy();
     try {
       const shopName = this.store.state.shopName;
@@ -938,8 +1068,14 @@ export class Host {
    * be sent"; it just stops costing a request on every drain.
    */
   #parkRefused(rejected: readonly { readonly id: string; readonly field: string; readonly message: string }[]): void {
-    if (rejected.length === 0) return;
-    this.store.parkOutbox(rejected.map((r) => ({ id: r.id, reason: (r.field + ': ' + r.message).slice(0, 200) })));
+    /*
+     * CANCEL THIS ENTRY: `cancel_target_missing` is the server not holding the
+     * entry yet (it is behind in the queue, or in a batch still to come). Not a
+     * refusal of the cancel: it stays queued and goes again on the next drain.
+     */
+    const parked = rejected.filter((r) => !RETRYABLE_REFUSALS.has(r.field));
+    if (parked.length === 0) return;
+    this.store.parkOutbox(parked.map((r) => ({ id: r.id, reason: (r.field + ': ' + r.message).slice(0, 200) })));
   }
 
   async sync(): Promise<SyncOutcome> {
@@ -1054,6 +1190,10 @@ export class Host {
       this.#account?.write(null);
       this.#planCache?.write(null);
       this.session.setPlanAnswer(null);
+      // RTI-7: the dismissed device ids belonged to the account that is gone.
+      this.#notices?.write(null);
+      this.#dismissed.length = 0;
+      this.session.newPhoneSeen(null);
       return true;
     } catch (e) {
       this.session.refuse('eraseLocal', (e as Error).message);
@@ -1110,6 +1250,52 @@ export class Host {
       s.setMyData('failed');
       s.refuse('share', (e as Error).message);
     }
+  }
+
+  /**
+   * F-1: "Paste code" on A4. What the phone's clipboard holds goes through the
+   * same cleaning as every key (`codeDigitsOf`), and a paste that fills the
+   * boxes verifies, as the last keypad digit does. No bridge, or nothing
+   * readable, changes nothing.
+   */
+  async pasteCode(): Promise<void> {
+    let text: string;
+    try {
+      text = (await this.#device?.readClipboardText?.()) ?? '';
+    } catch {
+      return;
+    }
+    if (this.session.enterCode(text)) await this.verifyCode();
+  }
+
+  /**
+   * RTI-7: IS THERE A NEW PHONE ON THIS SHOP? One `GET /v1/devices` per launch
+   * and per foreground - Root calls it on the same two edges as the restarting
+   * drain and `refreshPlan` - never on the 30-second tick or a store write.
+   * Before this, `listDevices` ran only when S14 was opened from Settings, so
+   * nothing told the old phone. Signed out, it asks nothing. A failure
+   * leaves the notice as it was: no signal is not evidence that nothing
+   * happened, and it is not evidence that something did.
+   */
+  async checkNewPhone(): Promise<void> {
+    if (!this.client.session) return;
+    let list: Awaited<ReturnType<ApiClient['listDevices']>>;
+    try {
+      list = await this.client.listDevices();
+    } catch {
+      return;
+    }
+    this.session.newPhoneSeen(newPhoneOf(list, Date.parse(this.#now()), new Set(this.#dismissed)));
+  }
+
+  /** RTI-7: "It was me" - this device's notice goes, on this phone, for good. The server is not told. */
+  dismissNewPhone(deviceId: string): void {
+    if (!this.#dismissed.includes(deviceId)) {
+      this.#dismissed.push(deviceId);
+      this.#dismissed.splice(0, Math.max(0, this.#dismissed.length - NOTICES_KEPT));
+      this.#notices?.write(JSON.stringify(this.#dismissed));
+    }
+    if (this.session.state.newPhone?.id === deviceId) this.session.newPhoneSeen(null);
   }
 
   /** M3, S14: the shop's phones, as the server lists them. A failure is said, never guessed around. */

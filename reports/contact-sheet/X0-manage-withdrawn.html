@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>X0-manage-withdrawn</title>
+<style>
+@font-face { font-family: "AnekOdia-Regular"; src: url("../../apps/mobile/assets/fonts/AnekOdia-Regular.ttf") format("truetype"); font-display: block; }
+@font-face { font-family: "AnekOdia-Medium"; src: url("../../apps/mobile/assets/fonts/AnekOdia-Medium.ttf") format("truetype"); font-display: block; }
+@font-face { font-family: "AnekOdia-Bold"; src: url("../../apps/mobile/assets/fonts/AnekOdia-Bold.ttf") format("truetype"); font-display: block; }
+@font-face { font-family: "SwaftoIcons"; src: url("../../apps/mobile/assets/fonts/SwaftoIcons.ttf") format("truetype"); font-display: block; }
+html,body{margin:0;padding:0;}
+body{width:360px;height:800px;overflow:hidden;}
+#root{width:100%;height:100%;display:flex;}
+#root > *{flex:1;}
+</style>
+<style id="react-native-stylesheet">[stylesheet-group="0"]{}
+body{margin:0;}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0;}
+html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0,0,0,0);}
+input::-webkit-search-cancel-button,input::-webkit-search-decoration,input::-webkit-search-results-button,input::-webkit-search-results-decoration{display:none;}
+[stylesheet-group="1"]{}
+.css-accessibilityImage-9pa8cd{bottom:0px;height:100%;left:0px;opacity:0;position:absolute;right:0px;top:0px;width:100%;z-index:-1;}
+.css-text-146c3p1{background-color:rgba(0,0,0,0.00);border:0 solid black;box-sizing:border-box;color:rgba(0,0,0,1.00);display:inline;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;list-style:none;margin:0px;padding:0px;position:relative;text-align:start;text-decoration:none;white-space:pre-wrap;word-wrap:break-word;}
+.css-textHasAncestor-1jxf684{background-color:rgba(0,0,0,0.00);border:0 solid black;box-sizing:border-box;color:inherit;display:inline;font:inherit;list-style:none;margin:0px;padding:0px;position:relative;text-align:inherit;text-decoration:none;white-space:inherit;word-wrap:break-word;}
+.css-textinput-11aywtz{-moz-appearance:textfield;-webkit-appearance:none;background-color:rgba(0,0,0,0.00);border-bottom-left-radius:0px;border-bottom-right-radius:0px;border-top-left-radius:0px;border-top-right-radius:0px;border:0 solid black;box-sizing:border-box;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0px;padding:0px;resize:none;}
+.css-view-g5y9jx{align-content:flex-start;align-items:stretch;background-color:rgba(0,0,0,0.00);border:0 solid black;box-sizing:border-box;display:flex;flex-basis:auto;flex-direction:column;flex-shrink:0;list-style:none;margin:0px;min-height:0px;min-width:0px;padding:0px;position:relative;text-decoration:none;z-index:0;}
+[stylesheet-group="2"]{}
+.r-borderColor-4a18lf{border-bottom-color:rgba(255,0,0,1.00);border-left-color:rgba(255,0,0,1.00);border-right-color:rgba(255,0,0,1.00);border-top-color:rgba(255,0,0,1.00);}
+.r-borderColor-60ke3l{border-bottom-color:rgba(0,128,0,1.00);border-left-color:rgba(0,128,0,1.00);border-right-color:rgba(0,128,0,1.00);border-top-color:rgba(0,128,0,1.00);}
+.r-borderColor-fx7oqy{border-bottom-color:rgba(0,0,255,1.00);border-left-color:rgba(0,0,255,1.00);border-right-color:rgba(0,0,255,1.00);border-top-color:rgba(0,0,255,1.00);}
+.r-borderWidth-d045u9{border-bottom-width:2px;border-left-width:2px;border-right-width:2px;border-top-width:2px;}
+.r-borderWidth-rs99b7{border-bottom-width:1px;border-left-width:1px;border-right-width:1px;border-top-width:1px;}
+.r-display-krxsd3{display:-webkit-box;}
+.r-display-xoduu5{display:inline-flex;}
+.r-flex-13awgt0{flex:1;}
+.r-overflow-1qsk4np{overflow-x:clip;overflow-y:clip;}
+.r-overflow-1udh08x{overflow-x:hidden;overflow-y:hidden;}
+[stylesheet-group="3"]{}
+.r-WebkitBoxOrient-8akbws{-webkit-box-orient:vertical;}
+.r-WebkitOverflowScrolling-150rngu{-webkit-overflow-scrolling:touch;}
+.r-backgroundColor-1niwhzg{background-color:rgba(0,0,0,0.00);}
+.r-backgroundColor-u92y06{background-color:rgba(255,165,0,1.00);}
+.r-backgroundPosition-1mrlafo{background-position:0;}
+.r-backgroundPosition-vvn4in{background-position:center;}
+.r-backgroundRepeat-17leim2{background-repeat:repeat;}
+.r-backgroundRepeat-u6sd8q{background-repeat:no-repeat;}
+.r-backgroundSize-1sxrcry{background-size:auto;}
+.r-backgroundSize-4gszlv{background-size:cover;}
+.r-backgroundSize-ehq7j7{background-size:contain;}
+.r-backgroundSize-x3cy2q{background-size:100% 100%;}
+.r-bottom-1p0dtai{bottom:0px;}
+.r-caretColor-van48c{caret-color:transparent;}
+.r-cursor-1loqt21{cursor:pointer;}
+.r-flexBasis-1mlwlqe{flex-basis:auto;}
+.r-flexDirection-18u37iz{flex-direction:row;}
+.r-flexDirection-1d5kdc7{flex-direction:column-reverse;}
+.r-flexDirection-1euycsn{flex-direction:row-reverse;}
+.r-flexDirection-eqz5dr{flex-direction:column;}
+.r-flexGrow-16y2uox{flex-grow:1;}
+.r-flexShrink-1wbh5a2{flex-shrink:1;}
+.r-height-1pi2tsx{height:100%;}
+.r-justifyContent-1777fci{justify-content:center;}
+.r-left-1d2f490{left:0px;}
+.r-maxWidth-dnmrzs{max-width:100%;}
+.r-overflowX-11yh6sk{overflow-x:hidden;}
+.r-overflowX-lltvgl{overflow-x:auto;}
+.r-overflowY-1rnoaur{overflow-y:auto;}
+.r-overflowY-buy8e9{overflow-y:hidden;}
+.r-placeholderTextColor-6taxm2:-ms-input-placeholder{color:var(--placeholderTextColor);opacity:1;}
+.r-placeholderTextColor-6taxm2::-moz-placeholder{color:var(--placeholderTextColor);opacity:1;}
+.r-placeholderTextColor-6taxm2::-webkit-input-placeholder{color:var(--placeholderTextColor);opacity:1;}
+.r-placeholderTextColor-6taxm2::placeholder{color:var(--placeholderTextColor);opacity:1;}
+.r-pointerEvents-105ug2t{pointer-events:auto!important;}
+.r-pointerEvents-12vffkv>* {pointer-events:auto;}
+.r-pointerEvents-12vffkv{pointer-events:none!important;}
+.r-pointerEvents-633pao>* {pointer-events:none;}
+.r-pointerEvents-633pao{pointer-events:none!important;}
+.r-pointerEvents-ah5dr5>* {pointer-events:none;}
+.r-pointerEvents-ah5dr5{pointer-events:auto!important;}
+.r-position-gtdqiz{position:-webkit-sticky;position:sticky;}
+.r-position-u8s1d{position:absolute;}
+.r-right-zchlnj{right:0px;}
+.r-scrollSnapAlign-cpa5s6{scroll-snap-align:start;}
+.r-scrollSnapType-1ocf4r9{scroll-snap-type:y mandatory;}
+.r-scrollSnapType-mfh4gg{scroll-snap-type:x mandatory;}
+.r-scrollbarWidth-2eszeu::-webkit-scrollbar{display:none}
+.r-scrollbarWidth-2eszeu{scrollbar-width:none;}
+.r-textOverflow-1udbk01{text-overflow:ellipsis;}
+.r-top-ipm5af{top:0px;}
+.r-touchAction-19z077z{touch-action:none;}
+.r-touchAction-1otgn73{touch-action:manipulation;}
+.r-transform-10v3vxq{transform:scaleX(-1);}
+.r-transform-173mzie{transform:scaleY(-1);}
+.r-transform-agouwx{transform:translateZ(0);}
+.r-userSelect-1xnzce8{-moz-user-select:text;-webkit-user-select:text;user-select:text;}
+.r-userSelect-lrvibr{-moz-user-select:none;-webkit-user-select:none;user-select:none;}
+.r-whiteSpace-3s2u2q{white-space:nowrap;}
+.r-width-13qz1uu{width:100%;}
+.r-width-19wmn03{width:20px;}
+.r-wordWrap-1iln25a{word-wrap:normal;}
+.r-zIndex-1wyyakw{z-index:-1;}
+.r-zIndex-417010{z-index:0;}
+.r-zIndex-mhe3cw{z-index:10;}</style>
+</head><body><div id="root" data-caption="X0 What you agreed to - one switch turned off, in effect now, no Save"><div class="css-view-g5y9jx r-flex-13awgt0 r-pointerEvents-12vffkv"><div class="css-view-g5y9jx r-flex-13awgt0 r-pointerEvents-12vffkv"><div class="css-view-g5y9jx" style="flex:1;background-color:rgba(255,246,234,1.00)" data-testid="x0"><div class="css-view-g5y9jx" style="flex:1"><div class="css-view-g5y9jx" style="flex-direction:column;padding-right:16px;padding-left:16px;padding-top:8px;padding-bottom:8px;background-color:rgba(10,107,102,1.00);min-height:64px;border-bottom-left-radius:24px;border-bottom-right-radius:24px;border-bottom-width:1px;border-bottom-color:rgba(201,188,163,1.00)"><div class="css-view-g5y9jx" style="flex-direction:row;align-items:center;flex-wrap:wrap"><button aria-label="ପଛକୁ ଯାଆନ୍ତୁ" role="button" tabindex="0" class="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73" style="min-height:56px;min-width:56px;margin-right:8px;border-top-left-radius:16px;border-top-right-radius:16px;border-bottom-right-radius:16px;border-bottom-left-radius:16px;align-items:center;justify-content:center" data-testid="x0-back" type="button"><div class="css-view-g5y9jx" data-testid="x0-back-mark"><div dir="auto" class="css-text-146c3p1" style="font-family:SwaftoIcons;font-size:28px;line-height:28px;width:28px;height:28px;text-align:center;color:rgba(255,255,255,1.00)"></div></div></button><div dir="auto" class="css-text-146c3p1" style="flex:1;font-family:AnekOdia-Bold;font-size:21px;line-height:38px;color:rgba(255,255,255,1.00)" data-testid="x0-title">ଆପଣ କ’ଣ ପାଇଁ ହଁ କହିଥିଲେ</div></div></div><div class="css-view-g5y9jx r-WebkitOverflowScrolling-150rngu r-flexDirection-eqz5dr r-flexGrow-16y2uox r-flexShrink-1wbh5a2 r-overflowX-11yh6sk r-overflowY-1rnoaur r-transform-agouwx" style="flex:1;min-height:0px" data-testid="x0-body"><div class="css-view-g5y9jx" style="flex-grow:1"><div dir="auto" class="css-text-146c3p1" style="padding-left:16px;padding-right:16px;padding-top:16px;padding-bottom:16px;font-family:AnekOdia-Regular;font-size:17px;line-height:31px;color:rgba(43,33,24,1.00)" data-testid="x0-intro">SWAFTO ଏହା ରଖେ, ଏବଂ ଏଥିପାଇଁ ରଖେ। ଅନ୍ୟ କୌଣସି କାରଣରୁ କିଛି ରଖାଯାଏ ନାହିଁ।</div><div class="css-view-g5y9jx" style="padding-right:16px;padding-left:16px;padding-top:8px;padding-bottom:8px;border-bottom-width:1px;border-bottom-color:rgba(230,213,191,1.00)" data-testid="x0-purpose-account_and_ledger"><div dir="auto" class="css-text-146c3p1" style="font-family:AnekOdia-Regular;font-size:17px;line-height:31px;color:rgba(43,33,24,1.00)">ଆପଣଙ୍କ ନମ୍ବର, ଦୋକାନ ନାମ, ଏବଂ ଆପଣ ଲେଖିଥିବା ବିଷୟ</div><div dir="auto" class="css-text-146c3p1" style="font-family:AnekOdia-Regular;font-size:17px;line-height:31px;color:rgba(94,78,65,1.00)" data-testid="x0-required-account_and_ledger">ଖାତା ରଖିବାକୁ ଆବଶ୍ୟକ</div></div><div class="css-view-g5y9jx" style="padding-right:16px;padding-left:16px;padding-top:8px;padding-bottom:8px;border-bottom-width:1px;border-bottom-color:rgba(230,213,191,1.00)" data-testid="x0-purpose-sms_reminders"><div dir="auto" class="css-text-146c3p1" style="font-family:AnekOdia-Regular;font-size:17px;line-height:31px;color:rgba(43,33,24,1.00)">ମୋତେ SMS ରେ ମନେ ପକାନ୍ତୁ</div><div aria-label="ମୋତେ SMS ରେ ମନେ ପକାନ୍ତୁ" role="switch" tabindex="0" class="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73" style="flex-direction:row;align-items:center;flex-wrap:wrap;min-height:64px;min-width:56px;padding-top:8px;padding-bottom:8px" data-testid="x0-toggle-sms_reminders"><div class="css-view-g5y9jx" style="flex:1;min-width:72px;margin-right:8px"><div dir="auto" data-font-scale="body" class="css-text-146c3p1" style="font-family:AnekOdia-Medium;font-size:17px;line-height:31px;color:rgba(43,33,24,1.00)">ମୋତେ SMS ରେ ମନେ ପକାନ୍ତୁ</div></div><div class="css-view-g5y9jx" style="flex-direction:row;align-items:center"><div class="css-view-g5y9jx" style="width:64px;flex-direction:row;justify-content:flex-start;padding-left:4px;padding-right:4px;padding-top:4px;padding-bottom:4px;border-top-left-radius:999px;border-top-right-radius:999px;border-bottom-right-radius:999px;border-bottom-left-radius:999px;border-top-width:2px;border-right-width:2px;border-bottom-width:2px;border-left-width:2px;border-top-color:rgba(138,117,96,1.00);border-right-color:rgba(138,117,96,1.00);border-bottom-color:rgba(138,117,96,1.00);border-left-color:rgba(138,117,96,1.00);background-color:rgba(246,234,218,1.00)" data-testid="x0-toggle-sms_reminders-track"><div class="css-view-g5y9jx" style="width:28px;height:28px;border-top-left-radius:999px;border-top-right-radius:999px;border-bottom-right-radius:999px;border-bottom-left-radius:999px;align-items:center;justify-content:center;background-color:rgba(94,78,65,1.00)" data-testid="x0-toggle-sms_reminders-thumb"><div dir="auto" class="css-text-146c3p1" style="font-family:SwaftoIcons;font-size:20px;line-height:20px;width:20px;height:20px;text-align:center;color:rgba(255,255,255,1.00)"></div></div></div><div dir="auto" class="css-text-146c3p1" style="margin-left:8px;font-family:AnekOdia-Bold;font-size:17px;line-height:31px;color:rgba(94,78,65,1.00)" data-testid="x0-toggle-sms_reminders-word">ନା</div></div></div><div aria-live="polite" class="css-view-g5y9jx" style="margin-right:12px;margin-left:12px;margin-top:8px;padding-right:12px;padding-left:12px;padding-top:8px;padding-bottom:8px;min-height:64px;justify-content:center;border-top-left-radius:20px;border-top-right-radius:20px;border-bottom-right-radius:20px;border-bottom-left-radius:20px;border-top-width:2px;border-right-width:2px;border-bottom-width:2px;border-left-width:2px;border-top-color:rgba(36,80,143,1.00);border-right-color:rgba(36,80,143,1.00);border-bottom-color:rgba(36,80,143,1.00);border-left-color:rgba(36,80,143,1.00);background-color:rgba(231,235,242,1.00)" data-testid="x0-withdrawn-sms_reminders"><div class="css-view-g5y9jx" style="flex-direction:row;align-items:center"><div class="css-view-g5y9jx" style="margin-right:8px"><div dir="auto" class="css-text-146c3p1" style="font-family:SwaftoIcons;font-size:24px;line-height:24px;width:24px;height:24px;text-align:center;color:rgba(36,80,143,1.00)"></div></div><div dir="auto" data-font-scale="body" class="css-text-146c3p1" style="flex:1;font-family:AnekOdia-Medium;font-size:17px;line-height:31px;color:rgba(36,80,143,1.00)" data-testid="x0-withdrawn-sms_reminders-text">ବନ୍ଦ ହେଲା। ଏହା ଏବେଠାରୁ ଲାଗୁ।</div></div></div></div><div class="css-view-g5y9jx" style="padding-right:16px;padding-left:16px;padding-top:8px;padding-bottom:8px;border-bottom-width:1px;border-bottom-color:rgba(230,213,191,1.00)" data-testid="x0-purpose-crash_diagnostics"><div dir="auto" class="css-text-146c3p1" style="font-family:AnekOdia-Regular;font-size:17px;line-height:31px;color:rgba(43,33,24,1.00)">କ୍ରାସ ରିପୋର୍ଟ ପଠାନ୍ତୁ, ଟଙ୍କା କିମ୍ବା ନାମ କେବେ ନୁହେଁ</div><div aria-label="କ୍ରାସ ରିପୋର୍ଟ ପଠାନ୍ତୁ, ଟଙ୍କା କିମ୍ବା ନାମ କେବେ ନୁହେଁ" role="switch" tabindex="0" class="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73" style="flex-direction:row;align-items:center;flex-wrap:wrap;min-height:64px;min-width:56px;padding-top:8px;padding-bottom:8px" data-testid="x0-toggle-crash_diagnostics"><div class="css-view-g5y9jx" style="flex:1;min-width:72px;margin-right:8px"><div dir="auto" data-font-scale="body" class="css-text-146c3p1" style="font-family:AnekOdia-Medium;font-size:17px;line-height:31px;color:rgba(43,33,24,1.00)">କ୍ରାସ ରିପୋର୍ଟ ପଠାନ୍ତୁ, ଟଙ୍କା କିମ୍ବା ନାମ କେବେ ନୁହେଁ</div></div><div class="css-view-g5y9jx" style="flex-direction:row;align-items:center"><div class="css-view-g5y9jx" style="width:64px;flex-direction:row;justify-content:flex-start;padding-left:4px;padding-right:4px;padding-top:4px;padding-bottom:4px;border-top-left-radius:999px;border-top-right-radius:999px;border-bottom-right-radius:999px;border-bottom-left-radius:999px;border-top-width:2px;border-right-width:2px;border-bottom-width:2px;border-left-width:2px;border-top-color:rgba(138,117,96,1.00);border-right-color:rgba(138,117,96,1.00);border-bottom-color:rgba(138,117,96,1.00);border-left-color:rgba(138,117,96,1.00);background-color:rgba(246,234,218,1.00)" data-testid="x0-toggle-crash_diagnostics-track"><div class="css-view-g5y9jx" style="width:28px;height:28px;border-top-left-radius:999px;border-top-right-radius:999px;border-bottom-right-radius:999px;border-bottom-left-radius:999px;align-items:center;justify-content:center;background-color:rgba(94,78,65,1.00)" data-testid="x0-toggle-crash_diagnostics-thumb"><div dir="auto" class="css-text-146c3p1" style="font-family:SwaftoIcons;font-size:20px;line-height:20px;width:20px;height:20px;text-align:center;color:rgba(255,255,255,1.00)"></div></div></div><div dir="auto" class="css-text-146c3p1" style="margin-left:8px;font-family:AnekOdia-Bold;font-size:17px;line-height:31px;color:rgba(94,78,65,1.00)" data-testid="x0-toggle-crash_diagnostics-word">ନା</div></div></div></div><div dir="auto" class="css-text-146c3p1" style="padding-left:16px;padding-right:16px;padding-top:16px;padding-bottom:16px;font-family:AnekOdia-Regular;font-size:17px;line-height:31px;color:rgba(94,78,65,1.00)" data-testid="x0-rights">ଆପଣ ସବୁକିଛି ଦେଖିପାରିବେ, ସଂଶୋଧନ କରିପାରିବେ, କିମ୍ବା ହଟାଇପାରିବେ। ଏହି ପସନ୍ଦ ପରେ ମଧ୍ୟ ସହଜରେ ବଦଳାଇପାରିବେ।</div></div></div></div></div></div></div></div></body></html>

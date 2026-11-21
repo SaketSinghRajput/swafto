@@ -73,7 +73,8 @@ export function CorrectDay({
    * not corrected (they are settled, or the sale returned again - `buildCorrection`
    * refuses them), so they are not offered.
    */
-  const entries = closed ? store.state.entries.filter((e) => !isEventSection(e.section)) : [];
+  // A cancelled pair is not corrected: it no longer counts.
+  const entries = closed ? store.live.filter((e) => !isEventSection(e.section)) : [];
   const held = store.state.heldCorrections ?? [];
   const target = correction?.originalId ? store.findEntry(correction.originalId) : undefined;
   const outcome = correction?.outcome ?? null;

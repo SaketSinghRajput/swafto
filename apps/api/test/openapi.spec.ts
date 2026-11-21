@@ -154,7 +154,8 @@ describe('4.2 · routes that take nothing refuse something', () => {
     const { call } = await session();
     const res = await call(method, url);
     expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body).message).toMatch(/must NOT have additional properties/);
+    // F-2: the Ajv text is no longer sent; the status (400, not an ignored parameter) is what this proves.
+    expect(JSON.parse(res.body)).toMatchObject({ error: 'invalid_input' });
   });
 
   it.each([

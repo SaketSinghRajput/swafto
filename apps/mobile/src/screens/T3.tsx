@@ -105,7 +105,7 @@ export function TodayClosed({
   const t = tokens(display);
   const s = strings(language);
 
-  const entries = store.state.entries;
+  const entries = store.live;
   const day = store.state.day;
   const closedTime = timeOf(day.closedAt);
   const progress = progressOf(store);

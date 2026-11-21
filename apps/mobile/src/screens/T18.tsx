@@ -243,6 +243,8 @@ export function ReturnOrExchange({
           value={flow?.settleMode ?? 'cash'}
           onChange={onSettleMode}
           display={display}
+          // "Refund cash" / "Refund UPI" are phrases; a third of the tray clipped one word of them.
+          columns={2}
         />
         {tooMuch ? sentence('t18-too-much', 't18.tooMuchSettle', true) : null}
       </Shell>
@@ -322,6 +324,7 @@ export function ReturnOrExchange({
           value={flow.settlement}
           onChange={onSettlement}
           display={display}
+          columns={2}
         />
 
         {/*

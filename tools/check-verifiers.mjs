@@ -482,6 +482,28 @@ export const VERIFIERS = [
     },
   },
   {
+    id: 'layout-fonts',
+    command: 'npm run check:layout',
+    file: 'tools/shipped-fonts.mjs',
+    claims:
+      'check:layout measures with the SHIPPED fonts and refuses to measure without them: every Anek Odia weight and SwaftoIcons is inlined into each page as a data: URL, and before anything is measured every declared FontFace must report status "loaded" and document.fonts.check must hold for every family-and-weight a rendered element uses. A page whose fonts did not load is a failure, never a measurement in a fallback face.',
+    benchmarks: ['B31'],
+    /*
+     * THE PLANT IS THE DEFECT THIS GUARD WAS WRITTEN FOR (2026-11-20). Until then
+     * the fonts were declared as file:// URLs, which Chromium refuses from a
+     * setContent page without an error; document.fonts.ready resolved, every OS
+     * measured its own fallback (FreeSerif for Odia on Linux), and Windows and
+     * Linux disagreed. The plant puts the file:// URL back. Without the load
+     * assertion it passes - which is exactly how the instrument stayed green
+     * while 43 overflows (Windows) and 45 (Linux) went unmeasured.
+     */
+    defect: {
+      file: 'tools/shipped-fonts.mjs',
+      find: '(relativeTo === undefined ? dataUrl(file) : relUrl(relativeTo, file))',
+      replace: '(relativeTo === undefined ? pathToFileURL(file).href : relUrl(relativeTo, file))',
+    },
+  },
+  {
     id: 'client-logs',
     command: 'npm run check:client-logs',
     file: 'tools/check-client-logs.mjs',
@@ -975,6 +997,10 @@ const RESPONSES = {
      */
     plantIsResponse:
       'B31 is "0 overflow". The plant removes the style that lets the list give up its space and the keypad lands below the fold. Beyond the plant, the instrument has already tracked a moving subject: 18 overflows on its first run, then 7, then 1, then 0, as each underlying defect was fixed.',
+  },
+  'layout-fonts': {
+    plantIsResponse:
+      'Zero-tolerance: B31 is "0 overflow", and this guard admits no page whose shipped fonts did not load. The plant restores the file:// font URL and every one of the 930 measured pages reports its four faces unloaded, moving the count of pages measured in a fallback face from 0 to 930.',
   },
   'push-payload': {
     plantIsResponse:

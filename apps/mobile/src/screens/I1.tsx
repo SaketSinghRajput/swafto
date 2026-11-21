@@ -72,7 +72,8 @@ export function ItemsForSale({
   const s = strings(language);
   const premium = allows(plan, 'items');
   const closed = store.state.day.state === 'closed';
-  const sales = store.state.entries.filter((e) => ITEM_SALE_SECTIONS.includes(e.section));
+  // A cancelled sale takes no item lines.
+  const sales = store.live.filter((e) => ITEM_SALE_SECTIONS.includes(e.section));
   const sale = flow?.saleId ? sales.find((e) => e.id === flow.saleId) : undefined;
   const lines = sale ? store.saleLines(sale.id) : [];
   const items = store.items;

@@ -4,7 +4,7 @@
  * removes it. The compare-and-set behaviour is the API's (apps/api/test/refresh-rotation.spec.ts).
  */
 import { describe, it, expect } from 'vitest';
-import { allMigrationsDown, allMigrationsUp, migration4Down, migration4Up } from '../src/spec.ts';
+import { allMigrationsDown, allMigrationsUp, migration4Down, migration4Up, migration5Down, migration5Up, migration6Down, migration6Up } from '../src/spec.ts';
 
 describe('migration 0004 · devices.refresh_gen', () => {
   it('adds one NOT NULL column defaulting to 0 (the generation of every pre-rotation token)', () => {
@@ -24,7 +24,10 @@ describe('migration 0004 · devices.refresh_gen', () => {
   it('is Postgres only, last up and first down', () => {
     expect(migration4Up('sqlite')).toEqual([]);
     expect(migration4Down('sqlite')).toEqual([]);
-    expect(allMigrationsUp('postgres').slice(-3)).toEqual(migration4Up('postgres'));
-    expect(allMigrationsDown('postgres').slice(0, 3)).toEqual(migration4Down('postgres'));
+    // 0005 (invite codes) now follows it going up and precedes it going down.
+    const up5 = migration5Up('postgres').length + migration6Up('postgres').length;
+    const down5 = migration6Down('postgres').length + migration5Down('postgres').length;
+    expect(allMigrationsUp('postgres').slice(-3 - up5, -up5)).toEqual(migration4Up('postgres'));
+    expect(allMigrationsDown('postgres').slice(down5, down5 + 3)).toEqual(migration4Down('postgres'));
   });
 });

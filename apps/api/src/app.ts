@@ -36,6 +36,7 @@ import { registerBillingRoutes, RTDN_ROUTE, type BillingDeps } from './billing/r
 import { isClientDataError, isInfraError, RETRY_AFTER_SECONDS } from './db/errors.ts';
 import { makeShopLimitHooks, type ShopLimitSpec } from './sync/shop-limit.ts';
 import { errorFields, serializeErr } from './error-event.ts';
+import type { DemoLogin } from './auth/demo.ts';
 
 export interface AppDeps {
   readonly repo: Repo;
@@ -44,6 +45,14 @@ export interface AppDeps {
   /** ISO-8601 UTC. Injected so a test can hold the clock still. */
   readonly now: () => string;
   readonly signingKey: string;
+  /**
+   * AUTH_MODE (config.ts). 'invite': `/v1/auth/otp/request` and `/v1/deletion/request` answer a
+   * constant reply and touch nothing (no database, no message). Absent means 'sms', so every
+   * caller that predates invite codes builds unchanged.
+   */
+  readonly authMode?: 'invite' | 'sms';
+  /** The demo login (auth/demo.ts). Absent or null = off. Works in either AUTH_MODE. */
+  readonly demo?: DemoLogin | null;
   /**
    * The rate limiter, as the one method the routes use.
    *
@@ -396,6 +405,17 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   /* ---- 4 · errors leave nothing behind ---------------------------------- */
   app.setErrorHandler(async (error: { statusCode?: number; code?: string; message?: string }, req, reply) => {
     let status = typeof error.statusCode === 'number' ? error.statusCode : 500;
+    /*
+     * F-2 · A SCHEMA VIOLATION IS `invalid_input` AND NOTHING MORE. Ajv's text names the property path, the
+     * limit and the enum ("body/phone must NOT have more than 16 characters"), and the code is the
+     * framework's (FST_ERR_VALIDATION). Neither helps a shopkeeper's phone, and both describe our schema to a
+     * stranger. The detail stays in OUR log.
+     */
+    if (error.code === 'FST_ERR_VALIDATION' || (error as { validation?: unknown }).validation !== undefined) {
+      req.log.info({ validation: error.message }, 'request failed validation');
+      await reply.code(400).send({ error: 'invalid_input', message: 'the request is not valid', requestId: req.id });
+      return;
+    }
     /*
      * C-06 · A database that is down, saturated or timing out is "try again",
      * not "something broke": 503 with Retry-After, so a phone keeps its outbox

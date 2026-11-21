@@ -175,6 +175,57 @@ export const STRINGS = {
   'advance.no': { en: 'No, go back', hi: 'नहीं, पीछे जाएँ', or: 'ନା, ପଛକୁ ଯାଆନ୍ତୁ' },
   'advance.label': { en: 'Advance', hi: 'अग्रिम', or: 'ଅଗ୍ରୀମ' },
   /*
+   * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md section 4). An entry on
+   * an open day, undone by a new row; the original stays, struck through. hi /
+   * or are a DRAFT (H13) - not reviewed by a native reader.
+   */
+  'cancel.action': { en: 'Cancel this entry', hi: 'यह एंट्री रद्द करें', or: 'ଏହି ଏଣ୍ଟ୍ରି ବାତିଲ କରନ୍ତୁ' },
+  'cancel.title': { en: 'Cancel this entry?', hi: 'यह एंट्री रद्द करें?', or: 'ଏହି ଏଣ୍ଟ୍ରି ବାତିଲ କରିବେ?' },
+  'cancel.body': {
+    en: 'It stays in the book, struck through, and no longer counts in any total.',
+    hi: 'यह बही में कटी हुई दिखेगी और किसी जोड़ में नहीं गिनी जाएगी।',
+    or: 'ଏହା ଖାତାରେ କଟା ହୋଇ ରହିବ, ଏବଂ କୌଣସି ମୋଟରେ ଗଣାଯିବ ନାହିଁ।',
+  },
+  'cancel.keep': { en: 'Keep it', hi: 'रहने दें', or: 'ରହିବାକୁ ଦିଅନ୍ତୁ' },
+  'cancel.cancelled': { en: 'cancelled', hi: 'रद्द', or: 'ବାତିଲ' },
+  'cancel.done': {
+    en: 'Cancelled {amount}. It no longer counts.',
+    hi: '{amount} रद्द हुआ। अब यह नहीं गिना जाएगा।',
+    or: '{amount} ବାତିଲ ହେଲା। ଏହା ଆଉ ଗଣାଯିବ ନାହିଁ।',
+  },
+  'cancel.enterAgain': {
+    en: 'Enter it again correctly',
+    hi: 'फिर से सही डालें',
+    or: 'ପୁଣି ଠିକ୍ ଭାବରେ ଦିଅନ୍ତୁ',
+  },
+  'cancel.linkedTitle': {
+    en: 'Cancel the return first',
+    hi: 'पहले वापसी रद्द करें',
+    or: 'ପ୍ରଥମେ ଫେରସ୍ତ ବାତିଲ କରନ୍ତୁ',
+  },
+  'cancel.linkedFirst': {
+    en: 'A return or a correction is linked to this entry, so it cannot be cancelled. Cancel the return first.',
+    hi: 'इस एंट्री से एक वापसी या सुधार जुड़ा है, इसलिए यह रद्द नहीं हो सकती। पहले वापसी रद्द करें।',
+    or: 'ଏହି ଏଣ୍ଟ୍ରି ସହ ଫେରସ୍ତ କିମ୍ବା ସଂଶୋଧନ ଯୋଡ଼ା ଅଛି, ତେଣୁ ଏହା ବାତିଲ ହୋଇପାରିବ ନାହିଁ। ପ୍ରଥମେ ଫେରସ୍ତ ବାତିଲ କରନ୍ତୁ।',
+  },
+  'cancel.refusal.already': {
+    en: 'This entry is already cancelled.',
+    hi: 'यह एंट्री पहले ही रद्द है।',
+    or: 'ଏହି ଏଣ୍ଟ୍ରି ଆଗରୁ ବାତିଲ ଅଛି।',
+  },
+  'cancel.refusal.cannot': {
+    en: 'This entry cannot be cancelled. Enter the right figure as a new entry instead.',
+    hi: 'यह एंट्री रद्द नहीं हो सकती। इसके बदले सही रकम नई एंट्री में डालें।',
+    or: 'ଏହି ଏଣ୍ଟ୍ରି ବାତିଲ ହୋଇପାରିବ ନାହିଁ। ଏହା ବଦଳରେ ଠିକ୍ ରାଶି ନୂଆ ଏଣ୍ଟ୍ରିରେ ଦିଅନ୍ତୁ।',
+  },
+  'refusal.partyKind': {
+    en: 'That person is the wrong kind for this entry. Choose again.',
+    hi: 'यह व्यक्ति इस एंट्री के लिए सही नहीं है। फिर से चुनें।',
+    or: 'ଏହି ବ୍ୟକ୍ତି ଏହି ଏଣ୍ଟ୍ରି ପାଇଁ ଠିକ୍ ନୁହେଁ। ପୁଣି ବାଛନ୍ତୁ।',
+  },
+  /* LIVE DEMO S3-1: a sale that came back in full. Its line stays (D1). hi / or DRAFT (H13). */
+  'entry.returned': { en: 'returned', hi: 'लौटा', or: 'ଫେରିଛି' },
+  /*
    * C-09: THE PER-ENTRY CEILING (Rs 1 crore). The figure is in the words rather
    * than filled in, so the string cannot disagree with ENTRY_MAX_PAISE by
    * formatting. hi / or are a DRAFT (H13) - not reviewed by a native reader.
@@ -207,6 +258,17 @@ export const STRINGS = {
     or: 'ଏହି ଫୋନର ତାରିଖ ଭୁଲ ଲାଗୁଛି। ଆପଣଙ୍କ ଖାତା {date} ରେ ଅଛି, ଯାହା ଆଜିଠାରୁ ଆଗରେ। କିଛି ହଜିନାହିଁ। ଫୋନର ତାରିଖ ଓ ସମୟ ଯାଞ୍ଚ କରନ୍ତୁ।',
   },
   // C-19: a closed day saved under a wrong phone date. hi / or DRAFT, H13.
+  /*
+   * RTI-7: another phone signed in to this shop in the last 72 hours. Said as a
+   * fact to check, never an alarm; the action is the existing screen's own name
+   * (s14.title). hi / or are a DRAFT (H13).
+   */
+  't1.newPhone.body': {
+    en: "A new phone signed in to your shop on {date}. If this wasn't you, open Signed-in phones and sign it out.",
+    hi: '{date} को आपकी दुकान में एक नया फ़ोन साइन इन हुआ। अगर यह आप नहीं थे, तो साइन-इन फ़ोन खोलें और उसे साइन आउट करें।',
+    or: '{date} ରେ ଆପଣଙ୍କ ଦୋକାନରେ ଏକ ନୂଆ ଫୋନ୍ ସାଇନ୍ ଇନ୍ କଲା। ଏହା ଆପଣ ନ ଥିଲେ, ସାଇନ୍-ଇନ୍ ଫୋନ ଖୋଲି ତାକୁ ସାଇନ୍ ଆଉଟ୍ କରନ୍ତୁ।',
+  },
+  't1.newPhone.dismiss': { en: 'It was me', hi: 'यह मैं ही था', or: 'ଏହା ମୁଁ ହିଁ ଥିଲି' },
   't1.misdated.body': {
     en: 'One day was saved under a wrong phone date ({date}). It is kept as recorded.',
     hi: 'एक दिन फ़ोन की गलत तारीख़ ({date}) के साथ सहेजा गया था। वह जैसा दर्ज हुआ वैसा ही रखा गया है।',
@@ -637,6 +699,31 @@ export const STRINGS = {
     or: 'ବାଧ୍ୟତାମୂଳକ ନୁହେଁ। ଛାଡ଼ିଦେଲେ "ଆଜି" ପ୍ରଥମ ବିକ୍ରି ପୂର୍ବରୁ ପଚାରିବ।',
   },
   'x1.start': { en: 'Start the day', hi: 'दिन शुरू करें', or: 'ଦିନ ଆରମ୍ଭ କରନ୍ତୁ' },
+
+  /*
+   * X4 - THE APP-LOCK OFFER at the end of setup (Saket, 2026-11-20). The lock is
+   * the phone's own screen lock, so nothing here says PIN. hi / or are a DRAFT
+   * (H13), built from the S1 lock strings already in use.
+   */
+  'x4.title': { en: 'App lock', hi: 'ऐप लॉक', or: 'ଆପ୍ ଲକ୍' },
+  'x4.question': {
+    en: "Lock SWAFTO with your phone's screen lock?",
+    hi: 'SWAFTO को फ़ोन के स्क्रीन लॉक से लॉक करें?',
+    or: 'SWAFTO କୁ ଫୋନର ସ୍କ୍ରୀନ୍ ଲକ୍ ଦେଇ ଲକ୍ କରିବେ?',
+  },
+  'x4.why': {
+    en: 'Then nobody else can open your book on this phone. You can change this later in Settings.',
+    hi: 'तब इस फ़ोन पर कोई और आपका खाता नहीं खोल पाएगा। इसे बाद में सेटिंग में बदल सकते हैं।',
+    or: 'ତାହାହେଲେ ଏହି ଫୋନରେ ଆଉ କେହି ଆପଣଙ୍କ ଖାତା ଖୋଲିପାରିବେ ନାହିଁ। ଏହାକୁ ପରେ ସେଟିଂରେ ବଦଳାଇପାରିବେ।',
+  },
+  'x4.turnOn': { en: 'Turn on', hi: 'चालू करें', or: 'ଚାଲୁ କରନ୍ତୁ' },
+  'x4.notNow': { en: 'Not now', hi: 'अभी नहीं', or: 'ଏବେ ନୁହେଁ' },
+  'x4.noScreenLock': {
+    en: 'This phone has no screen lock. You can set one in the phone settings later, then turn on the app lock in Settings.',
+    hi: 'इस फ़ोन में स्क्रीन लॉक नहीं है। बाद में फ़ोन की सेटिंग में लगा सकते हैं, फिर सेटिंग में ऐप लॉक चालू करें।',
+    or: 'ଏହି ଫୋନରେ ସ୍କ୍ରୀନ୍ ଲକ୍ ନାହିଁ। ପରେ ଫୋନ୍ ସେଟିଂରେ ଲଗାଇପାରିବେ, ତା’ପରେ ସେଟିଂରେ ଆପ୍ ଲକ୍ ଚାଲୁ କରନ୍ତୁ।',
+  },
+  'x4.continue': { en: 'Continue', hi: 'आगे बढ़ें', or: 'ଆଗକୁ ବଢ଼ନ୍ତୁ' },
   'x1.refusal.shopName': {
     en: 'Type the shop name first.',
     hi: 'पहले दुकान का नाम लिखें।',
@@ -647,6 +734,21 @@ export const STRINGS = {
   'p1.title': { en: 'Ledger', hi: 'खाता', or: 'ଖାତା' },
   'p1.toCollect': { en: 'Udhar to collect', hi: 'वसूली बाकी', or: 'ଆଦାୟ ବାକି' },
   'p1.youOwe': { en: 'You owe suppliers', hi: 'आपको देना है', or: 'ଆପଣଙ୍କୁ ଦେବାର' },
+  /*
+   * LIVE DEMO S3-6: the same two totals below zero - money paid ahead, said as
+   * an advance rather than a minus sign. hi / or are a DRAFT (H13), built from
+   * `advance.label` and the party words already in use.
+   */
+  'p1.advanceToSuppliers': {
+    en: 'Advance to suppliers',
+    hi: 'आपूर्तिकर्ताओं को अग्रिम',
+    or: 'ଯୋଗାଣକାରୀଙ୍କୁ ଅଗ୍ରୀମ',
+  },
+  'p1.advanceFromCustomers': {
+    en: 'Advance from customers',
+    hi: 'ग्राहकों से अग्रिम',
+    or: 'ଗ୍ରାହକଙ୍କଠାରୁ ଅଗ୍ରୀମ',
+  },
   'p1.customers': { en: 'Customers', hi: 'ग्राहक', or: 'ଗ୍ରାହକ' },
   'p1.suppliers': { en: 'Suppliers', hi: 'आपूर्तिकर्ता', or: 'ଯୋଗାଣକାରୀ' },
   'p1.changeToday': { en: 'Change today', hi: 'आज का बदलाव', or: 'ଆଜିର ପରିବର୍ତ୍ତନ' },
@@ -1416,6 +1518,26 @@ export const STRINGS = {
     or: 'ଭାରତୀୟ ମୋବାଇଲ୍ ନମ୍ବର 6, 7, 8 କିମ୍ବା 9 ରେ ଆରମ୍ଭ ହୁଏ। ପ୍ରଥମ ଅଙ୍କ ଯାଞ୍ଚ କରନ୍ତୁ।',
   },
   'a3.send': { en: 'Send code', hi: 'कोड भेजें', or: 'କୋଡ୍ ପଠାନ୍ତୁ' },
+  /*
+   * LIVE DEMO S3-4: before the server has said SMS or invite, no digit count and
+   * no promise of an SMS. hi / or are a DRAFT (H13), built from the phrases the
+   * two lines above already use.
+   */
+  'a3.neutral.help': {
+    en: 'Type your number. Then type the code that confirms it is you.',
+    hi: 'अपना नंबर डालें। फिर वह कोड डालें जो पक्का करे कि यह आप ही हैं।',
+    or: 'ଆପଣଙ୍କ ନମ୍ବର ଦିଅନ୍ତୁ। ତା’ପରେ ଏହା ଆପଣ ବୋଲି ନିଶ୍ଚିତ କରିବାକୁ କୋଡ୍ ଦିଅନ୍ତୁ।',
+  },
+  /*
+   * INVITE GATE: no SMS is sent in invite mode, so nothing here says one is.
+   * The code is the one SWAFTO handed over. hi / or are a DRAFT (H13).
+   */
+  'a3.invite.help': {
+    en: 'Type your number, then the {digits}-digit code SWAFTO gave you.',
+    hi: 'अपना नंबर डालें, फिर SWAFTO का दिया {digits} अंकों का कोड डालें।',
+    or: 'ଆପଣଙ୍କ ନମ୍ବର ଦିଅନ୍ତୁ, ତା’ପରେ SWAFTO ଦେଇଥିବା {digits} ଅଙ୍କର କୋଡ୍ ଦିଅନ୍ତୁ।',
+  },
+  'a3.next': { en: 'Next', hi: 'आगे', or: 'ଆଗକୁ' },
   'a3.sending': { en: 'Sending…', hi: 'भेज रहे हैं…', or: 'ପଠାଉଛୁ…' },
   'a3.changed': {
     en: 'I changed my number.',
@@ -1431,6 +1553,14 @@ export const STRINGS = {
     or: '+91 {phone} କୁ ପଠାଗଲା',
   },
   'a4.edit': { en: 'Edit', hi: 'बदलें', or: 'ବଦଳାନ୍ତୁ' },
+  // INVITE GATE: in place of "Sent to" - nothing was sent. hi / or DRAFT (H13).
+  'a4.invite.for': {
+    en: 'Type the code SWAFTO gave you for +91 {phone}',
+    hi: '+91 {phone} के लिए SWAFTO का दिया कोड डालें',
+    or: '+91 {phone} ପାଇଁ SWAFTO ଦେଇଥିବା କୋଡ୍ ଦିଅନ୍ତୁ',
+  },
+  // F-1: the code from the clipboard, cleaned to its digits. hi / or DRAFT (H13).
+  'a4.paste': { en: 'Paste code', hi: 'कोड पेस्ट करें', or: 'କୋଡ୍ ପେଷ୍ଟ କରନ୍ତୁ' },
   'a4.checking': { en: 'Checking…', hi: 'जाँच रहे हैं…', or: 'ଯାଞ୍ଚ କରୁଛୁ…' },
   'a4.resend': { en: 'Resend code', hi: 'कोड दोबारा भेजें', or: 'କୋଡ୍ ପୁଣି ପଠାନ୍ତୁ' },
   'a4.trouble': {
@@ -1438,7 +1568,8 @@ export const STRINGS = {
     hi: 'दिक्कत? मैंने अपना नंबर बदल लिया है।',
     or: 'ଅସୁବିଧା? ମୁଁ ମୋ ନମ୍ବର ବଦଳାଇଛି।',
   },
-  'a5.bar': { en: 'OTP problems', hi: 'OTP में दिक्कत', or: 'OTP ସମସ୍ୟା' },
+  // LIVE DEMO S3-4: "OTP" is a word a shopkeeper may not know; the rest of sign-in says "code". hi / or DRAFT (H13).
+  'a5.bar': { en: 'Problem with the code', hi: 'कोड में दिक्कत', or: 'କୋଡ୍ ସମସ୍ୟା' },
   'a5.mismatch.title': {
     en: "That code doesn't match.",
     hi: 'यह कोड मेल नहीं खाता।',
@@ -1460,6 +1591,12 @@ export const STRINGS = {
     or: 'କୋଡ୍ {minutes} ମିନିଟ୍ ପର୍ଯ୍ୟନ୍ତ ଚାଲେ। ଆମେ ନୂଆ ପଠାଇଦେବୁ।',
   },
   'a5.expired.cta': { en: 'Send a new code', hi: 'नया कोड भेजें', or: 'ନୂଆ କୋଡ୍ ପଠାନ୍ତୁ' },
+  // INVITE GATE: the app cannot send an invite; only SWAFTO can issue one. hi / or DRAFT (H13).
+  'a5.invite.ask': {
+    en: 'Ask SWAFTO for a new code.',
+    hi: 'SWAFTO से नया कोड माँगें।',
+    or: 'SWAFTO ଠାରୁ ନୂଆ କୋଡ୍ ମାଗନ୍ତୁ।',
+  },
   'a5.locked.title': { en: 'Too many tries.', hi: 'बहुत बार कोशिश हुई।', or: 'ବହୁତ ଥର ଚେଷ୍ଟା ହେଲା।' },
   'a5.locked.body': {
     en: 'For your safety, try again in {minutes} minutes.',

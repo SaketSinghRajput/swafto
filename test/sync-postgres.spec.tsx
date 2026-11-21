@@ -28,7 +28,7 @@ import { Host, type FetchLike } from '../apps/mobile/src/host.tsx';
 import { PUSH_MAX_ITEMS as CLIENT_MAX } from '../apps/mobile/src/net/client.ts';
 import { Store, DayClosedViolation } from '../apps/mobile/src/store/index.ts';
 import { sqlitePort, type Db } from '../apps/mobile/src/store/sqlite.ts';
-import { migrationUp } from '@swafto/schema';
+import { allMigrationsUp } from '@swafto/schema';
 import type { Entry } from '@swafto/formula-engine';
 
 const URL = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:55432/swafto_test';
@@ -57,7 +57,8 @@ try {
   });
   await p.query('DROP SCHEMA IF EXISTS e2e_sync CASCADE');
   await p.query('CREATE SCHEMA e2e_sync');
-  for (const s of migrationUp('postgres')) await p.query(s);
+  // Every migration, not 0001 alone: the repository writes entries.cancels_entry_id (0006) and relies on its guard trigger.
+  for (const s of allMigrationsUp('postgres')) await p.query(s);
   pool = p;
 } catch (e) {
   skipReason = (e as Error).message;

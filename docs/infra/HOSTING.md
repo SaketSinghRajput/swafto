@@ -186,9 +186,27 @@ document.
 | Security group | new | **see below - no port 22** |
 | Storage | **8 GiB** | **20 GiB gp3** - see below |
 | IAM instance profile | not set | **`swafto-ec2`** - see below |
-| User data | empty | paste `infra/cloud-init.yaml` |
+| User data | empty | **gzip it with `infra/make-user-data.sh`** and launch from the CLI - see below; pasting is impossible (30 KB) |
 | Metadata version | default | **IMDSv2 required** |
 | Credit specification | unlimited (default) | **keep unlimited** - see below |
+
+**Why the user data is gzipped (and cannot be pasted).** `infra/cloud-init.yaml` is
+about 30 KB and EC2 rejects user data over 16 KB (raw, before base64); the
+console box takes text only. Compressed it is about 11 KB, and cloud-init
+unpacks gzip user data by itself, so nothing about what runs changes. This was
+chosen over slimming the file because slimming means moving the scripts out and
+having the instance download them at first boot, which then has to be pinned and
+hash-checked. Build it, then launch with the CLI (it base64-encodes a
+`fileb://` file itself):
+
+```bash
+infra/make-user-data.sh --domain api.example.com --acme-email ops@example.com     --bucket swafto-backups-001 --out user-data.yaml.gz
+aws ec2 run-instances ... --user-data fileb://user-data.yaml.gz
+```
+
+The script fills the three `REPLACE_ME` values, refuses if one is left or if
+the result is over 16,384 bytes, and checks the gzip. In the console, "User
+data" must stay empty; use the CLI.
 
 **Why 20 GiB and not 8.** Ubuntu plus Node plus the CloudWatch agent is roughly
 4 GiB before your application exists. Add a 2 GB swapfile, Caddy's logs, apt's
@@ -265,16 +283,21 @@ compromised instance cannot enumerate the account.
    encryption ON**, **not publicly accessible**, security group `swafto-db`,
    backup retention 7 days, backup window 20:00-21:00 UTC, minor version
    auto-upgrade on, deletion protection on.
-3. **SSM parameters**, all three as **SecureString**:
+3. **SSM parameters**, all as **SecureString** (the three database roles
+   are created by `swafto-db-roles` in step 8; their URLs name the fixed role
+   names (each with its own generated password) `swafto_app`, `swafto_system`, `swafto_backup`):
    ```
-   /swafto/prod/DATABASE_URL         postgresql://USER:PASS@HOST:5432/swafto
+   /swafto/prod/MASTER_DATABASE_URL  libpq URL of the RDS master user
+   /swafto/prod/DATABASE_URL         same host and database, user swafto_app
+   /swafto/prod/SYSTEM_DATABASE_URL  same host and database, user swafto_system
+   /swafto/prod/BACKUP_DATABASE_URL  same host and database, user swafto_backup
    /swafto/prod/SESSION_SIGNING_KEY  openssl rand -hex 32
    /swafto/prod/RATE_LIMIT_KEY       openssl rand -hex 32
    ```
    Generate the two keys with `openssl rand -hex 32`. Do not reuse a value from
    anywhere, and do not let them reach a shell history file.
-4. **Launch EC2** with the table above and `infra/cloud-init.yaml` as user
-   data, having edited its three `REPLACE_ME` values.
+4. **Launch EC2** with the table above and the gzipped user data from
+   `infra/make-user-data.sh` (see "Why the user data is gzipped").
 5. **Cloudflare**: an `A` record for your API hostname pointing at the Elastic
    IP, **proxy off (grey cloud)**. With the orange cloud on, Cloudflare
    terminates TLS and reads every request - which breaks AD-008 and moves
@@ -294,7 +317,7 @@ compromised instance cannot enumerate the account.
    ```bash
    aws s3 cp s3://YOUR_BUCKET/releases/swafto.tgz /tmp/swafto.tgz
    sudo -u swafto tar -xzf /tmp/swafto.tgz -C /srv/swafto
-   cd /srv/swafto && sudo -u swafto npm ci --omit=dev
+   cd /srv/swafto && sudo -u swafto npm ci   # NOT --omit=dev yet: fastify and pg are root devDependencies
    ```
    Source arrives via S3 using the instance role, so **no GitHub credential
    ever lives on the server**. `npm ci` must run at the repository root, not
@@ -310,6 +333,21 @@ compromised instance cannot enumerate the account.
    psql -v ON_ERROR_STOP=1 \
         -f /srv/swafto/packages/schema/migrations/0001_init.postgres.up.sql
    ```
+   Then create the roles. This must run after every migration, as the RDS
+   master, and is idempotent:
+   ```bash
+   sudo swafto-db-roles
+   ```
+   **RDS note.** The master is a member of `rds_superuser`, which is NOT a
+   superuser, so Postgres refuses it any `ALTER ROLE` that names `SUPERUSER` or
+   `REPLICATION`, even `NOSUPERUSER`. `roles.postgres.sql` therefore does not name
+   them (both are the `CREATE ROLE` default) and instead refuses to continue if a
+   swafto role holds either. RDS does let the master set `BYPASSRLS` (checked on
+   the live instance), so the system and backup roles need no SECURITY DEFINER
+   workaround and tenancy is unchanged: `swafto_app` is NOBYPASSRLS and binds
+   to RLS. If a future RDS change takes `BYPASSRLS` away from the master, the
+   fallback is SECURITY DEFINER functions for the five system lookups; do not
+   weaken `swafto_app`.
 9. **Start it**: `systemctl start swafto-api && systemctl status swafto-api`
 10. **Prove it from outside.** Three URLs, not one - the last two are the ones
     Google Play's reviewer will open, and a 404 there is a rejected submission:
@@ -378,6 +416,16 @@ promises *"encrypted backups rotate out within 90 days and are never
 restored"*. That sentence is a commitment to users and the first half of L-06.
 If you change the S3 lifecycle, change the policy in the same commit, or you
 have created a false statement in a document users rely on.
+
+### Which database role each job uses
+
+| Job | Role | Why |
+|---|---|---|
+| `swafto-backup` | `BACKUP_DATABASE_URL` -> `swafto_backup` | `pg_dump` has to read every row of every table. `swafto_app` is bound by row-level security, so a dump through it fails or is empty. `swafto_backup` is BYPASSRLS with SELECT on all tables and sequences and **nothing else**: a leaked backup credential can read but not change data. Granted per table by `roles.postgres.sql`, so it needs nothing the RDS master lacks. |
+| `swafto-restore-drill` | `MASTER_DATABASE_URL` | It must CREATE and DROP a database, which `swafto_backup` deliberately cannot. It only ever touches the database `swafto_drill`. |
+
+`pg_dump` is `postgresql-client-18`, matching RDS 18.3: a v17 client refuses a
+v18 server. When RDS moves to a new major, bump the package in `cloud-init.yaml`.
 
 ### The drill
 
@@ -454,6 +502,21 @@ application publishing its own error-rate metric, which is application work,
 not infrastructure work.
 
 ---
+
+
+## Current deployment (first deploy, 2026-11-20)
+
+| | |
+|---|---|
+| API origin | `https://api.rohinova.com` (DNS `A` record, TTL 600, -> the Elastic IP). Verified live 2026-11-20 (cert issued by Let's Encrypt). |
+| Elastic IP | `EIP_ALLOCATION_ID`, ELASTIC_IP, tagged `Name=swafto-api`, `Project=swafto` |
+| TLS | Let's Encrypt, issued and renewed by Caddy; no ACME e-mail configured (no expiry notices) |
+| Site domain lives in | `SWAFTO_DOMAIN` in `/etc/swafto/site.env` (the Caddyfile reads it). Change it, then `systemctl restart caddy`. At build time it is `make-user-data.sh --domain`. |
+| Releases | `/srv/releases/<sha>`, `/srv/swafto` is the symlink; procedure in [`docs/runbooks/deploy.md`](../runbooks/deploy.md) |
+| Staging switch | `ALLOW_STUB_SMS=1` in `swafto-api.service.d/staging.conf`: no SMS provider (H1), nobody can really sign in |
+
+Only point DNS at the server and start (or restart) Caddy once the name resolves to the
+EIP, or the ACME challenge fails, and repeated failures rate-limit the domain.
 
 ## Appendix: things that will bite you
 

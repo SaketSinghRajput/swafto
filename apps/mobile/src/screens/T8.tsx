@@ -10,7 +10,7 @@
  * THE HEADLINE IS P7, WHAT THE SHOP IS OWED. The figure a shopkeeper opens this
  * screen to change.
  */
-import { EntryForm, type CommitOption } from '../components/EntryForm.tsx';
+import { EntryForm, type CancelControls, type CommitOption } from '../components/EntryForm.tsx';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
 import type { RenderLanguage } from '../i18n/strings.ts';
@@ -58,6 +58,8 @@ export interface FormBProps {
   readonly onSelectCommit?: (index: number) => void;
   /** Explicit `| undefined`: the project runs `exactOptionalPropertyTypes`. */
   readonly onBack?: (() => void) | undefined;
+  /** Cancel this entry: the session's half (EntryForm's CancelControls). */
+  readonly cancel?: CancelControls | undefined;
   readonly onRetry?: () => void;
 }
 
@@ -82,6 +84,7 @@ export function FormB({
   selectedCommit = 0,
   onSelectCommit = () => {},
   onBack,
+  cancel,
   onRetry = () => {},
 }: FormBProps) {
   /*
@@ -125,6 +128,7 @@ export function FormB({
       selectedCommit={selectedCommit}
       onSelectCommit={onSelectCommit}
       onBack={onBack}
+      cancel={cancel}
       onRetry={onRetry}
     />
   );

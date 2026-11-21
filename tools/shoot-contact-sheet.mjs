@@ -22,6 +22,7 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { generate, VIEWPORT } from './gen-contact-sheet.mjs';
+import { assertFontsLoaded } from './shipped-fonts.mjs';
 
 const SHEET = 'docs/contact-sheet';
 
@@ -90,7 +91,9 @@ export async function shoot() {
   for (const panel of panels) {
     await page.goto(pathToFileURL(resolve(panel.file)).href, { waitUntil: 'load' });
     // Without this the first panel can be captured in a fallback typeface.
-    await page.evaluate(() => document.fonts.ready);
+    // `document.fonts.ready` alone is not enough: it resolves just as happily
+    // when a face was refused and never fetched, so the load is asserted.
+    await assertFontsLoaded(page, panel.id);
     const out = join(SHEET, panel.id + '.png');
     await page.screenshot({ path: out, animations: 'disabled' });
     shot.push({ ...panel, png: out });

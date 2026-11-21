@@ -91,12 +91,15 @@ function Mark({
   n,
   label,
   display,
+  inset = false,
 }: {
   readonly testID: string;
   readonly state: State;
   readonly n: number;
   readonly label: string;
   readonly display: DisplayMode;
+  /** Carry the row's left inset on the mark itself (a section row - see there). */
+  readonly inset?: boolean;
 }) {
   const t = tokens(display);
   const open = state === 'untouched';
@@ -115,6 +118,7 @@ function Mark({
       style={{
         width: t.disc.sm,
         height: t.disc.sm,
+        ...(inset ? { marginLeft: t.space.md } : {}),
         marginRight: t.space.gutter,
         borderRadius: t.radius.pill,
         backgroundColor: done ? t.color.brand : t.color.surfaceRaised,
@@ -194,7 +198,7 @@ export function DayCloseList({
   const subOf = (section: Entry['section'], state: State): string => {
     if (state === 'skipped') return s('state.skipped');
     if (state === 'untouched') return s('state.untouched');
-    const n = store.state.entries.filter((e) => e.section === section).length;
+    const n = store.live.filter((e) => e.section === section).length;
     return n === 1 ? s('t5.entry') : fill(s('t5.entries'), { n });
   };
 
@@ -365,7 +369,10 @@ export function DayCloseList({
       <View
         testID="t5-list"
         style={{
-          marginHorizontal: t.space.md,
+          // gutter, as every Card under it on this screen: the list and the UPI
+          // card no longer start at two different edges, and the lakh figures in
+          // the rows get the 8px.
+          marginHorizontal: t.space.gutter,
           marginVertical: t.space.md,
           borderRadius: t.radius.lg,
           backgroundColor: t.color.surface,
@@ -458,9 +465,15 @@ export function DayCloseList({
                   flexWrap: 'wrap',
                   minHeight: t.control.lg,
                   minWidth: t.touchTarget,
-                  // sm on the right, as the row had before the figure moved inside
-                  // the target: a lakh figure at 2.0x needs every pixel of it.
-                  paddingLeft: t.space.md,
+                  /*
+                   * NO LEFT PADDING: THE MARK CARRIES THE INSET. When a lakh figure
+                   * at 2.0x cannot share the line it wraps to a line of its own,
+                   * and that line began 16px in, behind padding that only the mark
+                   * needed. In Focus at 2.0 "₹2,49,300.01" ran 3px out of the row on
+                   * CI (Linux run 44348374411) and 11px with the shipped face
+                   * loaded. The mark sits exactly where it did; the figure's line
+                   * now starts at the row's edge and right-aligns as before.
+                   */
                   paddingRight: t.space.sm,
                   paddingVertical: t.space.xs,
                 }}
@@ -471,6 +484,7 @@ export function DayCloseList({
                   n={i + 2}
                   label={s(('state.' + state) as StringKey)}
                   display={display}
+                  inset
                 />
                 <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: '50%', marginRight: t.space.sm }}>
                   <Text {...t.bodyText} style={textStyle(false, t.type.body)}>

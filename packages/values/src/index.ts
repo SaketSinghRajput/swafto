@@ -69,6 +69,15 @@ export const OTP_DIGITS = 6;
 export const APP_LOCK_PIN_DIGITS = 4;
 
 /**
+ * The beta INVITE CODE is EIGHT digits, a DIFFERENT VALUE from the six-digit OTP, and named
+ * separately for the reason APP_LOCK_PIN_DIGITS is (the registry check must not read one
+ * as a claim about the other). Founder decision D1, 2026-11-20. One invite allows five
+ * guesses in total and cannot be re-minted by a stranger, so the arithmetic is 5 in 10^8.
+ * `check:registry` holds every document that says "N-digit invite code" to this value.
+ */
+export const INVITE_CODE_DIGITS = 8;
+
+/**
  * The OTP rate limits, transcribed from SECURITY-AUDIT TB6 - which is OUR document,
  * so these are ours. `lockoutSeconds: 0` marks a telemetry-only rule that can never
  * deny (R-007: carrier-grade NAT means one address can be a whole neighbourhood).

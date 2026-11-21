@@ -1,0 +1,505 @@
+{
+  "VIEWPORT": {
+    "width": 360,
+    "height": 800
+  },
+  "SCALES": [
+    1,
+    1.5,
+    2
+  ],
+  "results": [
+    {
+      "id": "I1-canonical",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 292,
+        "i1-item-item-atta": "HIDDEN (top 402, body 73-365)",
+        "i1-item-item-dal": "HIDDEN (top 466, body 73-365)",
+        "i1-item-item-tea": "HIDDEN (top 530, body 73-365)",
+        "i1-item-other": "HIDDEN (top 594, body 73-365)"
+      }
+    },
+    {
+      "id": "I1-adversarial",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 292,
+        "i1-item-item-atta": "HIDDEN (top 425, body 73-365)",
+        "i1-item-item-dal": "HIDDEN (top 489, body 73-365)",
+        "i1-item-item-tea": "HIDDEN (top 553, body 73-365)",
+        "i1-item-other": "HIDDEN (top 617, body 73-365)"
+      }
+    },
+    {
+      "id": "I1-adversarial-focus",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 292,
+        "i1-item-item-atta": "HIDDEN (top 486, body 73-365)",
+        "i1-item-item-dal": "HIDDEN (top 568, body 73-365)",
+        "i1-item-item-tea": "HIDDEN (top 632, body 73-365)",
+        "i1-item-other": "HIDDEN (top 696, body 73-365)"
+      }
+    },
+    {
+      "id": "I1-longest",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 240,
+        "i1-item-item-atta": "HIDDEN (top 486, body 73-313)",
+        "i1-item-item-dal": "HIDDEN (top 568, body 73-313)",
+        "i1-item-item-tea": "HIDDEN (top 632, body 73-313)",
+        "i1-item-other": "HIDDEN (top 696, body 73-313)"
+      }
+    },
+    {
+      "id": "I1-list",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 727
+      }
+    },
+    {
+      "id": "I1-pick",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 639,
+        "i1-item-item-atta": "in view",
+        "i1-item-item-dal": "in view",
+        "i1-item-item-tea": "in view",
+        "i1-item-other": "in view"
+      }
+    },
+    {
+      "id": "T7-canonical",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 316
+      }
+    },
+    {
+      "id": "T7-adversarial",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 316
+      }
+    },
+    {
+      "id": "T7-adversarial-focus",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 297
+      }
+    },
+    {
+      "id": "T7-longest",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 316
+      }
+    },
+    {
+      "id": "T7-hindi",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 297
+      }
+    },
+    {
+      "id": "T7-longest-focus",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 297
+      }
+    },
+    {
+      "id": "T7-returns-link",
+      "scale": 1,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 297,
+        "t7-secondary": "in view"
+      }
+    },
+    {
+      "id": "I1-canonical",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 183,
+        "i1-item-item-atta": "HIDDEN (top 519, body 74-257)",
+        "i1-item-item-dal": "HIDDEN (top 583, body 74-257)",
+        "i1-item-item-tea": "HIDDEN (top 647, body 74-257)",
+        "i1-item-other": "HIDDEN (top 711, body 74-257)"
+      }
+    },
+    {
+      "id": "I1-adversarial",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 183,
+        "i1-item-item-atta": "HIDDEN (top 658, body 74-257)",
+        "i1-item-item-dal": "HIDDEN (top 761, body 74-257)",
+        "i1-item-item-tea": "HIDDEN (top 825, body 74-257)",
+        "i1-item-other": "HIDDEN (top 889, body 74-257)"
+      }
+    },
+    {
+      "id": "I1-adversarial-focus",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 76,
+        "i1-item-item-atta": "HIDDEN (top 690, body 85-161)",
+        "i1-item-item-dal": "HIDDEN (top 808, body 85-161)",
+        "i1-item-item-tea": "HIDDEN (top 872, body 85-161)",
+        "i1-item-other": "HIDDEN (top 938, body 85-161)"
+      }
+    },
+    {
+      "id": "I1-longest",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 76,
+        "i1-item-item-atta": "HIDDEN (top 744, body 85-161)",
+        "i1-item-item-dal": "HIDDEN (top 862, body 85-161)",
+        "i1-item-item-tea": "HIDDEN (top 926, body 85-161)",
+        "i1-item-other": "HIDDEN (top 992, body 85-161)"
+      }
+    },
+    {
+      "id": "I1-list",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 726
+      }
+    },
+    {
+      "id": "I1-pick",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 638,
+        "i1-item-item-atta": "in view",
+        "i1-item-item-dal": "in view",
+        "i1-item-item-tea": "in view",
+        "i1-item-other": "HIDDEN (top 664, body 74-712)"
+      }
+    },
+    {
+      "id": "T7-canonical",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 216
+      }
+    },
+    {
+      "id": "T7-adversarial",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 216
+      }
+    },
+    {
+      "id": "T7-adversarial-focus",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 33
+      }
+    },
+    {
+      "id": "T7-longest",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 216
+      }
+    },
+    {
+      "id": "T7-hindi",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 146
+      }
+    },
+    {
+      "id": "T7-longest-focus",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 105
+      }
+    },
+    {
+      "id": "T7-returns-link",
+      "scale": 1.5,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 105,
+        "t7-secondary": "HIDDEN (top 270, body 85-190)"
+      }
+    },
+    {
+      "id": "I1-canonical",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 161,
+        "i1-item-item-atta": "HIDDEN (top 581, body 74-235)",
+        "i1-item-item-dal": "HIDDEN (top 645, body 74-235)",
+        "i1-item-item-tea": "HIDDEN (top 709, body 74-235)",
+        "i1-item-other": "HIDDEN (top 773, body 74-235)"
+      }
+    },
+    {
+      "id": "I1-adversarial",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 161,
+        "i1-item-item-atta": "HIDDEN (top 674, body 74-235)",
+        "i1-item-item-dal": "HIDDEN (top 777, body 74-235)",
+        "i1-item-item-tea": "HIDDEN (top 841, body 74-235)",
+        "i1-item-other": "HIDDEN (top 905, body 74-235)"
+      }
+    },
+    {
+      "id": "I1-adversarial-focus",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 50,
+        "i1-item-item-atta": "HIDDEN (top 800, body 85-135)",
+        "i1-item-item-dal": "HIDDEN (top 918, body 85-135)",
+        "i1-item-item-tea": "HIDDEN (top 982, body 85-135)",
+        "i1-item-other": "HIDDEN (top 1048, body 85-135)"
+      }
+    },
+    {
+      "id": "I1-longest",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 50,
+        "i1-item-item-atta": "HIDDEN (top 960, body 85-135)",
+        "i1-item-item-dal": "HIDDEN (top 1078, body 85-135)",
+        "i1-item-item-tea": "HIDDEN (top 1142, body 85-135)",
+        "i1-item-other": "HIDDEN (top 1208, body 85-135)"
+      }
+    },
+    {
+      "id": "I1-list",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 726
+      }
+    },
+    {
+      "id": "I1-pick",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 638,
+        "i1-item-item-atta": "in view",
+        "i1-item-item-dal": "in view",
+        "i1-item-item-tea": "HIDDEN (top 709, body 74-712)",
+        "i1-item-other": "HIDDEN (top 773, body 74-712)"
+      }
+    },
+    {
+      "id": "T7-canonical",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 195
+      }
+    },
+    {
+      "id": "T7-adversarial",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 123
+      }
+    },
+    {
+      "id": "T7-adversarial-focus",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 7
+      }
+    },
+    {
+      "id": "T7-longest",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 195
+      }
+    },
+    {
+      "id": "T7-hindi",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 120
+      }
+    },
+    {
+      "id": "T7-longest-focus",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 79
+      }
+    },
+    {
+      "id": "T7-returns-link",
+      "scale": 2,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "chromeBelowFoldPx": 0,
+      "overflowing": [],
+      "visible": {
+        "bodyH": 79,
+        "t7-secondary": "HIDDEN (top 296, body 85-164)"
+      }
+    }
+  ]
+}

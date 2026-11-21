@@ -292,7 +292,8 @@ export function tablesDDL(d: Dialect): string[] {
   label           ${t.text()},
   corrects_day_id ${date},
   refers_to_entry_id ${uuid},
-  created_at      ${ts} NOT NULL,
+${d === 'sqlite' ? `  cancels_entry_id ${uuid},
+` : ''}  created_at      ${ts} NOT NULL,
   source          ${t.text()} NOT NULL DEFAULT 'manual',
   device_id       ${uuid},
   CONSTRAINT entries_section_ck CHECK (${inList('section', ENTRY_SECTIONS)}),
@@ -319,7 +320,10 @@ export function tablesDDL(d: Dialect): string[] {
   CONSTRAINT entries_shop_id_uq UNIQUE (shop_id, id),
   -- Same shop, by construction: a link can never reach another shop's ledger (S-11).
   CONSTRAINT entries_refers_fk FOREIGN KEY (shop_id, refers_to_entry_id) REFERENCES entries(shop_id, id),
-  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
+${d === 'sqlite' ? `  CONSTRAINT entries_cancels_fk FOREIGN KEY (shop_id, cancels_entry_id) REFERENCES entries(shop_id, id),
+  CONSTRAINT entries_cancel_self_ck CHECK (${CANCEL_SELF_CHECK}),
+  CONSTRAINT entries_cancel_plain_ck CHECK (${CANCEL_PLAIN_CHECK}),
+` : ''}  FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 )`,
 
     // ---- Section skips -----------------------------------------------
@@ -582,8 +586,10 @@ export function billingDDL(d: Dialect): string[] {
   ];
 }
 
-export function indexesDDL(_d: Dialect): string[] {
+export function indexesDDL(d: Dialect): string[] {
   return [
+    // Cancel this entry: ONE cancel row per entry. Postgres gets the same index from migration 0006.
+    ...(d === 'sqlite' ? [CANCEL_ONCE_INDEX] : []),
     // The hot path: every derived figure reads one day's entries (derive-on-read).
     `CREATE INDEX entries_day_idx ON entries (shop_id, day_id)`,
     // Party ledgers (P7/P8) and the aging badges.
@@ -607,9 +613,9 @@ export function indexesDDL(_d: Dialect): string[] {
     `CREATE INDEX party_credit_limits_party_idx ON party_credit_limits (shop_id, party_id)`,
     // Every rate-limit decision is "count rows in this bucket since T", and every
     // prune is "delete rows before T". One composite index serves both.
-    ...(_d === 'postgres' ? [`CREATE INDEX rate_events_bucket_idx ON rate_events (bucket, at)`] : []),
+    ...(d === 'postgres' ? [`CREATE INDEX rate_events_bucket_idx ON rate_events (bucket, at)`] : []),
     // The entitlement read: a shop's tokens, then each token's latest answer.
-    ...(_d === 'postgres'
+    ...(d === 'postgres'
       ? [
           `CREATE INDEX plan_purchases_shop_idx ON plan_purchases (shop_id)`,
           `CREATE INDEX plan_purchase_states_token_idx ON plan_purchase_states (purchase_token, fetched_at)`,
@@ -672,6 +678,8 @@ WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) 
 BEGIN
   SELECT RAISE(ABORT, 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)');
 END`,
+      // Cancel this entry (RT-C1, RT-C6): the link rules, in the database. SQLite has one writer, so the check alone suffices.
+      ...sqliteLinkGuards(),
       // Decisions 2 and 3: the day facts get the entries' two guarantees.
       ...DAY_FACT_TABLES.flatMap((tbl) => [
         `CREATE TRIGGER ${tbl}_no_update
@@ -1117,14 +1125,183 @@ export function migration4Down(d: Dialect): string[] {
   ];
 }
 
+/*
+ * ---- MIGRATION 0005 · beta invite codes (docs/auth/INVITE-CODES.md) -----------------------
+ *
+ * `otp_pending.kind` says who wrote the row and for what: 'sms' (requestOtp; the default, so
+ * every pre-existing row and every existing writer is unchanged), 'invite_new' (an invite for a
+ * number with no account) or 'invite_recovery' (a sign-in on a new phone for an existing
+ * account). `verifyOtp` returns the kind and the route refuses a kind that does not fit the
+ * account (T2).
+ *
+ * `invite_audit` is the operator's trail: one row per `issue` or `revoke`, written ONLY by the
+ * invite CLI. It holds NO code and NO full number: `phone_hmac` is keyed with RATE_LIMIT_KEY and
+ * `phone_masked` shows the last four digits. Append-only by trigger. The one way through is the
+ * retention purge (decision D4): a DELETE is allowed only inside a transaction that set
+ * `swafto.invite_audit_purge`, and only for a row older than INVITE_AUDIT_RETENTION_MONTHS, so
+ * even a caller that sets the flag cannot remove recent history. Server-only and outside RLS
+ * (it is written before any shop exists), so Postgres only.
+ */
+export const INVITE_AUDIT_RETENTION_MONTHS = 12;
+
+export function migration5Up(d: Dialect): string[] {
+  if (d !== 'postgres') return [];
+  return [
+    `ALTER TABLE otp_pending ADD COLUMN kind TEXT NOT NULL DEFAULT 'sms' CHECK (kind IN ('sms', 'invite_new', 'invite_recovery'))`,
+    `CREATE TABLE invite_audit (
+  id            BIGSERIAL PRIMARY KEY,
+  at            TIMESTAMPTZ NOT NULL,
+  action        TEXT NOT NULL CHECK (action IN ('issue', 'revoke')),
+  kind          TEXT CHECK (kind IN ('invite_new', 'invite_recovery')),
+  phone_hmac    TEXT NOT NULL,
+  phone_masked  TEXT NOT NULL,
+  ticket        TEXT NOT NULL
+)`,
+    'CREATE INDEX invite_audit_at ON invite_audit (at)',
+    `CREATE OR REPLACE FUNCTION invite_audit_append_only() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'DELETE'
+     AND current_setting('swafto.invite_audit_purge', true) = 'on'
+     AND OLD.at < now() - interval '${INVITE_AUDIT_RETENTION_MONTHS} months' THEN
+    RETURN OLD;
+  END IF;
+  RAISE EXCEPTION 'invite_audit is append-only: it is purged only after ${INVITE_AUDIT_RETENTION_MONTHS} months, never % now', TG_OP;
+END;
+$$ LANGUAGE plpgsql`,
+    `CREATE TRIGGER invite_audit_no_update_or_delete
+BEFORE UPDATE OR DELETE ON invite_audit
+FOR EACH ROW EXECUTE FUNCTION invite_audit_append_only()`,
+  ];
+}
+
+/** Migration 0005, down. Applied BEFORE `migration4Down`. */
+export function migration5Down(d: Dialect): string[] {
+  if (d !== 'postgres') return [];
+  return [
+    'DROP TABLE IF EXISTS invite_audit',
+    'DROP FUNCTION IF EXISTS invite_audit_append_only()',
+    'ALTER TABLE IF EXISTS otp_pending DROP COLUMN IF EXISTS kind',
+  ];
+}
+
+/*
+ * ---- MIGRATION 0006 · cancel this entry (docs/design/CANCEL-ENTRY-GATE.md) -----------------
+ *
+ * One nullable column and three guards, nothing else. `cancels_entry_id` names the entry a cancel row
+ * cancels. The FK is on (shop_id, cancels_entry_id), so a cancel can never reach another shop's ledger
+ * (S-11). The partial UNIQUE index is the double-cancel guard, and idempotent across sync: the same row id
+ * is a replay, a second different cancel row hits the index. The cancel row copies its target's section,
+ * mode, party and amount (positive whole paise), so every existing CHECK passes and none is edited.
+ * entries_cancel_plain_ck keeps a cancel row from also being a return leg or a correction. The closed-day
+ * trigger already refuses an insert into a closed day, so a cancel of a closed day's entry is refused with
+ * no new trigger; the same-day, cancel-of-cancel and has-referrers rules live in the engine and the sync
+ * route (`assertCancelFits`). SQLite carries the same column in its CREATE TABLE (a phone has no ALTER path
+ * for this reference schema); Postgres only is migrated.
+ */
+/** The SQLite twins of entries_link_guard: one cancel row per entry is the index; these are the rest. */
+function sqliteLinkGuards(): string[] {
+  const target = (alias: string, col: string) => `${alias}.shop_id = NEW.shop_id AND ${alias}.id = NEW.${col}`;
+  return [
+    `CREATE TRIGGER entries_cancel_guard
+BEFORE INSERT ON entries
+WHEN NEW.cancels_entry_id IS NOT NULL
+BEGIN
+  SELECT RAISE(ABORT, 'cancel_guard:cancel_other_day') WHERE EXISTS (SELECT 1 FROM entries t WHERE ${target('t', 'cancels_entry_id')} AND t.day_id <> NEW.day_id);
+  SELECT RAISE(ABORT, 'cancel_guard:cancel_of_cancel') WHERE EXISTS (SELECT 1 FROM entries t WHERE ${target('t', 'cancels_entry_id')} AND t.cancels_entry_id IS NOT NULL);
+  SELECT RAISE(ABORT, 'cancel_guard:cancel_event_leg') WHERE EXISTS (SELECT 1 FROM entries t WHERE ${target('t', 'cancels_entry_id')} AND ${inList('t.section', EVENT_SECTIONS)});
+  SELECT RAISE(ABORT, 'cancel_guard:has_linked_entries') WHERE EXISTS (SELECT 1 FROM entries r WHERE r.shop_id = NEW.shop_id AND r.refers_to_entry_id = NEW.cancels_entry_id);
+END`,
+    `CREATE TRIGGER entries_refer_guard
+BEFORE INSERT ON entries
+WHEN NEW.refers_to_entry_id IS NOT NULL
+BEGIN
+  SELECT RAISE(ABORT, 'cancel_guard:target_cancelled') WHERE EXISTS (SELECT 1 FROM entries t WHERE ${target('t', 'refers_to_entry_id')} AND t.cancels_entry_id IS NOT NULL)
+     OR EXISTS (SELECT 1 FROM entries c WHERE c.shop_id = NEW.shop_id AND c.cancels_entry_id = NEW.refers_to_entry_id);
+END`,
+  ];
+}
+
+const CANCEL_SELF_CHECK = 'cancels_entry_id IS NULL OR cancels_entry_id <> id';
+const CANCEL_PLAIN_CHECK =
+  'cancels_entry_id IS NULL OR (refers_to_entry_id IS NULL AND corrects_day_id IS NULL AND due_date IS NULL)';
+const CANCEL_ONCE_INDEX =
+  'CREATE UNIQUE INDEX entries_cancel_once_uq ON entries (shop_id, cancels_entry_id) WHERE cancels_entry_id IS NOT NULL';
+
+export function migration6Up(d: Dialect): string[] {
+  if (d !== 'postgres') return [];
+  return [
+    'ALTER TABLE entries ADD COLUMN cancels_entry_id UUID',
+    'ALTER TABLE entries ADD CONSTRAINT entries_cancels_fk FOREIGN KEY (shop_id, cancels_entry_id) REFERENCES entries(shop_id, id)',
+    `ALTER TABLE entries ADD CONSTRAINT entries_cancel_self_ck CHECK (${CANCEL_SELF_CHECK})`,
+    `ALTER TABLE entries ADD CONSTRAINT entries_cancel_plain_ck CHECK (${CANCEL_PLAIN_CHECK})`,
+    CANCEL_ONCE_INDEX,
+    /*
+     * THE LINK GUARD (RT-C1, RT-C2, RT-C6). One BEFORE INSERT trigger for a row that cancels or refers to another.
+     * It first takes a transaction-scoped ADVISORY lock keyed on the target, so a cancel and a return of the same
+     * entry QUEUE rather than race: the second one waits for the first to commit and then sees its row (every query
+     * in a volatile trigger takes a fresh snapshot). Then, for a cancel: same day as the target, the target is not
+     * itself a cancel row, not an event leg, and nothing refers to it. For anything that refers to an entry (a
+     * return, a settlement, a correction): the target is not a cancel row and has no cancel row. An advisory lock
+     * and not a row lock because the app role has no UPDATE privilege on the append-only entries, which FOR
+     * UPDATE / FOR SHARE would need. The error text carries the code the sync route maps to the phone.
+     */
+    `CREATE OR REPLACE FUNCTION entries_link_guard() RETURNS TRIGGER AS $$
+DECLARE
+  tgt UUID;
+  t RECORD;
+BEGIN
+  tgt := COALESCE(NEW.cancels_entry_id, NEW.refers_to_entry_id);
+  IF tgt IS NULL THEN
+    RETURN NEW;
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended('entries_link:' || NEW.shop_id::text || ':' || tgt::text, 0));
+  SELECT day_id, section, cancels_entry_id INTO t FROM entries WHERE shop_id = NEW.shop_id AND id = tgt;
+  IF NOT FOUND THEN
+    RETURN NEW; -- the composite FK refuses a target that is not this shop's
+  END IF;
+  IF NEW.cancels_entry_id IS NOT NULL THEN
+    IF t.day_id <> NEW.day_id THEN RAISE EXCEPTION 'cancel_guard:cancel_other_day'; END IF;
+    IF t.cancels_entry_id IS NOT NULL THEN RAISE EXCEPTION 'cancel_guard:cancel_of_cancel'; END IF;
+    IF ${inList('t.section', EVENT_SECTIONS)} THEN RAISE EXCEPTION 'cancel_guard:cancel_event_leg'; END IF;
+    IF EXISTS (SELECT 1 FROM entries r WHERE r.shop_id = NEW.shop_id AND r.refers_to_entry_id = tgt) THEN
+      RAISE EXCEPTION 'cancel_guard:has_linked_entries';
+    END IF;
+  ELSE
+    IF t.cancels_entry_id IS NOT NULL
+       OR EXISTS (SELECT 1 FROM entries c WHERE c.shop_id = NEW.shop_id AND c.cancels_entry_id = tgt) THEN
+      RAISE EXCEPTION 'cancel_guard:target_cancelled';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql`,
+    `CREATE TRIGGER entries_link_guard
+BEFORE INSERT ON entries
+FOR EACH ROW EXECUTE FUNCTION entries_link_guard()`,
+  ];
+}
+
+/** Migration 0006, down. Applied BEFORE `migration5Down`. */
+export function migration6Down(d: Dialect): string[] {
+  if (d !== 'postgres') return [];
+  return [
+    'DROP TRIGGER IF EXISTS entries_link_guard ON entries',
+    'DROP FUNCTION IF EXISTS entries_link_guard()',
+    'DROP INDEX IF EXISTS entries_cancel_once_uq',
+    'ALTER TABLE IF EXISTS entries DROP CONSTRAINT IF EXISTS entries_cancel_plain_ck',
+    'ALTER TABLE IF EXISTS entries DROP CONSTRAINT IF EXISTS entries_cancel_self_ck',
+    'ALTER TABLE IF EXISTS entries DROP COLUMN IF EXISTS cancels_entry_id',
+  ];
+}
+
 /** Every migration, in order: what a database needs to be at the current schema. */
 export function allMigrationsUp(d: Dialect): string[] {
-  return [...migrationUp(d), ...migration2Up(d), ...migration3Up(d), ...migration4Up(d)];
+  return [...migrationUp(d), ...migration2Up(d), ...migration3Up(d), ...migration4Up(d), ...migration5Up(d), ...migration6Up(d)];
 }
 
 /** Every migration undone, newest first: a clean slate. */
 export function allMigrationsDown(d: Dialect): string[] {
-  return [...migration4Down(d), ...migration3Down(d), ...migration2Down(d), ...migrationDown(d)];
+  return [...migration6Down(d), ...migration5Down(d), ...migration4Down(d), ...migration3Down(d), ...migration2Down(d), ...migrationDown(d)];
 }
 
 /** Emit a migration as a single SQL script. */

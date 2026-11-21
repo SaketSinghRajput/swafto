@@ -12,6 +12,13 @@
  * so a sign-in code cannot delete a shop and the reverse.
  */
 
+/**
+ * WHO WROTE A PENDING ROW, AND FOR WHAT (migration 0005). 'sms' is `requestOtp`; the two
+ * invite kinds are written only by the invite CLI. `verifyOtp` returns it so the route can
+ * refuse a kind that does not fit the account (INVITE-CODES T2).
+ */
+export type OtpKind = 'sms' | 'invite_new' | 'invite_recovery';
+
 export interface PendingOtp {
   readonly phone: string;
   /** HMAC of the code. The code itself is never written anywhere. */
@@ -21,6 +28,8 @@ export interface PendingOtp {
   readonly attempts: number;
   /** When this code was minted. Drives the resend cooldown. */
   readonly createdAt: string;
+  /** Absent means 'sms', so `requestOtp` and every pre-invite caller need no edit. */
+  readonly kind?: OtpKind;
 }
 
 export interface OtpStore {
@@ -40,9 +49,17 @@ export interface OtpStore {
    * comparison (get, compare, then bump) let a concurrent burst compare far more than
    * `cap` guesses against one code: every caller read the code before any had counted.
    */
-  takeAttempt(key: string, nowIso: string, cap: number): Promise<{ readonly hash: string; readonly attempts: number } | null>;
-  /** Delete the code. `true` only for the caller that actually removed it (single use). */
-  clear(key: string): Promise<boolean>;
+  takeAttempt(
+    key: string,
+    nowIso: string,
+    cap: number,
+  ): Promise<{ readonly hash: string; readonly attempts: number; readonly kind: OtpKind } | null>;
+  /**
+   * Delete the code. `true` only for the caller that actually removed it (single use). With `onlyHash` it is a
+   * COMPARE-AND-DELETE: the row goes only if it still holds that hash, so a verify that compared an OLD row
+   * cannot delete the row an operator re-issued in the meantime (RTI-1, RTI-2).
+   */
+  clear(key: string, onlyHash?: string): Promise<boolean>;
 }
 
 export const MEMORY_OTP_MAX_ENTRIES = 10_000;
@@ -63,7 +80,9 @@ export function memoryOtpStore(opts: { readonly maxEntries?: number } = {}): Otp
       if (
         existing &&
         live(existing, pending.createdAt) &&
-        Date.parse(existing.createdAt) > Date.parse(pending.createdAt) - cooldownSeconds * 1000
+        // A LIVE INVITE IS NEVER OVERWRITTEN (INVITE-CODES; WHATSAPP-OTP): only the CLI replaces one.
+        ((existing.kind ?? 'sms') !== 'sms' ||
+          Date.parse(existing.createdAt) > Date.parse(pending.createdAt) - cooldownSeconds * 1000)
       ) {
         return false;
       }
@@ -88,9 +107,10 @@ export function memoryOtpStore(opts: { readonly maxEntries?: number } = {}): Otp
       const p = byKey.get(key);
       if (!p || !live(p, nowIso) || p.attempts >= cap) return null;
       byKey.set(key, { ...p, attempts: p.attempts + 1 }); // check and count: no await between
-      return { hash: p.hash, attempts: p.attempts + 1 };
+      return { hash: p.hash, attempts: p.attempts + 1, kind: p.kind ?? 'sms' };
     },
-    async clear(key) {
+    async clear(key, onlyHash) {
+      if (onlyHash !== undefined && byKey.get(key)?.hash !== onlyHash) return false;
       return byKey.delete(key);
     },
   };

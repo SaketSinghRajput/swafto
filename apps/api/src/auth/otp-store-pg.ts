@@ -4,7 +4,8 @@
  * Table, created by the API-DATA migration - this file codes against exactly this:
  *   otp_pending(phone text primary key, code_hash text not null,
  *               expires_at timestamptz not null, attempts integer not null default 0,
- *               created_at timestamptz not null default now())
+ *               created_at timestamptz not null default now(),
+ *               kind text not null default 'sms')      -- migration 0005
  *
  * `phone` holds the sign-in number or `delete:<number>`. The code itself is never
  * stored - `code_hash` is the HMAC `hashOtp` produced - and the limiter's own table
@@ -17,7 +18,7 @@
  * Same `sql` style as `rate-limit/store.ts`: a `query(text, params)` and nothing else.
  */
 import type { SqlRunner } from '../rate-limit/store.ts';
-import type { OtpStore, PendingOtp } from './otp-store.ts';
+import type { OtpKind, OtpStore, PendingOtp } from './otp-store.ts';
 
 const iso = (v: unknown): string => (v instanceof Date ? v.toISOString() : new Date(String(v)).toISOString());
 
@@ -34,24 +35,25 @@ export function pgOtpStore(sql: Pick<SqlRunner, 'query'>): OtpStore {
        * than the cooldown. Zero rows back means a live, recent code was kept.
        */
       const res = await sql.query(
-        `INSERT INTO otp_pending (phone, code_hash, expires_at, attempts, created_at)
-         VALUES ($1, $2, $3::timestamptz, 0, $4::timestamptz)
+        `INSERT INTO otp_pending (phone, code_hash, expires_at, attempts, created_at, kind)
+         VALUES ($1, $2, $3::timestamptz, 0, $4::timestamptz, $6)
          ON CONFLICT (phone) DO UPDATE
            SET code_hash = EXCLUDED.code_hash,
                expires_at = EXCLUDED.expires_at,
                attempts = 0,
-               created_at = EXCLUDED.created_at
+               created_at = EXCLUDED.created_at,
+               kind = EXCLUDED.kind
            WHERE otp_pending.expires_at <= $4::timestamptz
-              OR otp_pending.created_at <= $5::timestamptz
+              OR (otp_pending.created_at <= $5::timestamptz AND otp_pending.kind = 'sms')
          RETURNING phone`,
-        [pending.phone, pending.hash, pending.expiresAt, pending.createdAt, cooledBefore.toISOString()],
+        [pending.phone, pending.hash, pending.expiresAt, pending.createdAt, cooledBefore.toISOString(), pending.kind ?? 'sms'],
       );
       return res.rows.length === 1;
     },
 
     async get(key, nowIso) {
       const res = await sql.query(
-        `SELECT phone, code_hash, expires_at, attempts, created_at
+        `SELECT phone, code_hash, expires_at, attempts, created_at, kind
            FROM otp_pending WHERE phone = $1 AND expires_at > $2::timestamptz`,
         [key, nowIso],
       );
@@ -63,6 +65,7 @@ export function pgOtpStore(sql: Pick<SqlRunner, 'query'>): OtpStore {
         expiresAt: iso(r.expires_at),
         attempts: Number(r.attempts),
         createdAt: iso(r.created_at),
+        kind: String(r.kind) as OtpKind,
       };
       return out;
     },
@@ -72,15 +75,19 @@ export function pgOtpStore(sql: Pick<SqlRunner, 'query'>): OtpStore {
       const res = await sql.query(
         `UPDATE otp_pending SET attempts = attempts + 1
           WHERE phone = $1 AND attempts < $3 AND expires_at > $2::timestamptz
-          RETURNING code_hash, attempts`,
+          RETURNING code_hash, attempts, kind`,
         [key, nowIso, cap],
       );
-      return res.rows[0] ? { hash: String(res.rows[0].code_hash), attempts: Number(res.rows[0].attempts) }
-        : null;
+      const row = res.rows[0];
+      return row ? { hash: String(row.code_hash), attempts: Number(row.attempts), kind: String(row.kind) as OtpKind } : null;
     },
 
-    async clear(key) {
-      const res = await sql.query('DELETE FROM otp_pending WHERE phone = $1 RETURNING phone', [key]);
+    async clear(key, onlyHash) {
+      // One statement, so the hash test and the delete cannot be separated by a re-issue (RTI-1, RTI-2).
+      const res = await sql.query(
+        'DELETE FROM otp_pending WHERE phone = $1 AND ($2::text IS NULL OR code_hash = $2) RETURNING phone',
+        [key, onlyHash ?? null],
+      );
       return res.rows.length === 1;
     },
   };

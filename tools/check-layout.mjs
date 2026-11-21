@@ -33,14 +33,14 @@
  */
 import { chromium } from 'playwright';
 import { build } from 'esbuild';
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CHROME_FONT_SCALE_CAP } from '../packages/values/src/index.ts';
+import { fontFaces, assertFontsLoaded } from './shipped-fonts.mjs';
 
 const OUT = 'reports';
 const VIEWPORT = { width: 360, height: 800 };
-const FONT_DIR = resolve('apps/mobile/assets/fonts');
 
 /**
  * 1.0 is the baseline. The cap is what the product promises chrome will survive.
@@ -49,7 +49,14 @@ const FONT_DIR = resolve('apps/mobile/assets/fonts');
  */
 const SCALES = [1, CHROME_FONT_SCALE_CAP, 2];
 
-// SwaftoIcons: the icon font (M3). Unloaded, every icon would measure as an empty box.
+/*
+ * THE FONTS ARE LOADED AND PROVEN LOADED (tools/shipped-fonts.mjs). Until
+ * 2026-11-20 they were declared as file:// URLs, which Chromium refuses from a
+ * setContent page without a word, so every OS measured its own fallback and
+ * Windows and Linux disagreed about which screens overflowed. Every page now
+ * asserts FontFace.status === 'loaded' for each shipped face before anything is
+ * measured, and a page that cannot is a failure, never a measurement.
+ */
 const FONTS = ['AnekOdia-Regular', 'AnekOdia-Medium', 'AnekOdia-Bold', 'SwaftoIcons'];
 
 /**
@@ -75,22 +82,6 @@ const IN_VIEW = ['t7-items', 't7-secondary'];
 const IN_VIEW_TOTALS = ['t7-headline', 't8-headline', 't9-headline', 't10-headline'];
 const inViewFor = (panel, scale) =>
   panel.display === 'comfort' || scale === 1 ? [...IN_VIEW, ...IN_VIEW_TOTALS] : IN_VIEW;
-
-function fontFaces() {
-  return FONTS.map((family) => {
-    const file = join(FONT_DIR, family + '.ttf');
-    if (!existsSync(file)) {
-      throw new Error('cannot measure a layout without the shipped font: ' + file);
-    }
-    return (
-      '@font-face { font-family: "' +
-      family +
-      '"; src: url("' +
-      pathToFileURL(file).href +
-      '") format("truetype"); font-display: block; }'
-    );
-  }).join('\n');
-}
 
 async function bundle() {
   mkdirSync(OUT, { recursive: true });
@@ -247,12 +238,20 @@ const panels = mod.renderEvery();
 const browser = await chromium.launch();
 const failures = [];
 const results = [];
+let fontsProven = 0;
 
 for (const scale of SCALES) {
   for (const panel of panels) {
     const p = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 1 });
     await p.setContent(page(panel.css, panel.html), { waitUntil: 'load' });
-    await p.evaluate(() => document.fonts.ready);
+    try {
+      await assertFontsLoaded(p, panel.id + ' at font scale ' + scale);
+    } catch (e) {
+      failures.push(e.message);
+      await p.close();
+      continue;
+    }
+    fontsProven += 1;
     const m = await p.evaluate(measureInPage, [scale, VIEWPORT.width, CHROME_FONT_SCALE_CAP, inViewFor(panel, scale)]);
     await p.close();
 
@@ -304,6 +303,7 @@ console.log('  viewport           : ' + VIEWPORT.width + 'x' + VIEWPORT.height +
 console.log(
   '  font scales        : ' + SCALES.join(', ') + ' (chrome cap is ' + CHROME_FONT_SCALE_CAP + ')',
 );
+console.log('  fonts proven loaded: ' + fontsProven + ' of ' + panels.length * SCALES.length + ' pages');
 console.log('  results            : ' + join(OUT, 'layout.json'));
 
 if (failures.length) {

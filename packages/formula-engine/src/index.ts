@@ -29,6 +29,7 @@ export * from './forecast.ts';
 export * from './comparisons.ts';
 export * from './items.ts';
 export * from './credit.ts';
+export * from './cancel.ts';
 
 import { computePrimary } from './primary.ts';
 import { computeOperational, type OperationalContext } from './operational.ts';

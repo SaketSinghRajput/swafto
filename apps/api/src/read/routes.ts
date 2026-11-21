@@ -34,6 +34,7 @@ import {
   addDays,
   daysBetween,
   captureCountedCash,
+  liveEntries,
   parseIsoDate,
   type DayInput,
   type Entry,
@@ -72,7 +73,8 @@ function foldStep(
 ): { credit: Paise; supplier: Paise } {
   const partial: DayInput = {
     day: { date: d, state: 'closed', openingCash: 0, countedCash: null } as DayInput['day'],
-    entries,
+    // CANCEL THIS ENTRY: a cancelled entry and its cancel row are both out of every figure, the credit fold included.
+    entries: liveEntries(entries),
     priorCreditOutstanding: credit,
     priorSupplierOutstanding: supplier,
   };
@@ -196,7 +198,7 @@ export async function dayInputFor(
       ...(day?.differenceReason ? { differenceReason: day.differenceReason } : {}),
       ...(day?.closedAt ? { closedAt: day.closedAt } : {}),
     } as DayInput['day'],
-    entries: today,
+    entries: liveEntries(today),
     adjustments: facts.adjustments,
     upiConfirmations: facts.upiConfirmations,
     priorCreditOutstanding: credit,
@@ -578,7 +580,7 @@ export function registerReadRoutes(
     for (const d of [...byDay.keys()].sort()) {
       const input: DayInput = {
         day: { date: d, state: 'closed', openingCash: 0, countedCash: null } as DayInput['day'],
-        entries: byDay.get(d)!,
+        entries: liveEntries(byDay.get(d)!),
         priorCreditOutstanding: credit,
         priorSupplierOutstanding: supplier,
       };

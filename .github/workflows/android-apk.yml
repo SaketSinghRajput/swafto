@@ -1,0 +1,119 @@
+# THE TEST-BRANCH APK PIPELINE.
+#
+# WHY A SEPARATE FILE. ci.yml is the repository's quality gate and is not changed
+# by this one. This workflow answers a different question: "can a tester get an
+# installable build of the branch they are looking at?" It runs on the two
+# non-main branches the autonomous run works on, and by hand.
+#
+# DEBUG, NOT RELEASE, AND WHY. app/build.gradle defines no signing config for
+# `release` unless the four SWAFTO_UPLOAD_* settings exist (OPS-13: there is
+# deliberately no debug-key fallback), and generateReleaseBuildConfig refuses to
+# run without an https SWAFTO_API_BASE_URL (C-16, a human decision, H5). No upload
+# key exists, and this file invents no signing secret. So the build is
+# `assembleDebug`: debug-signed, never a release, and it embeds the JS bundle
+# (debuggableVariants = []), so it runs without Metro. Its API base URL is
+# the Gradle default (localhost:8787 over `adb reverse`) unless the repository
+# variable SWAFTO_TEST_API_URL is set, in which case it is passed as
+# -PSWAFTO_API_BASE_URL. It is NOT a store artefact.
+#
+# AWS IS OPTIONAL. The S3 upload uses OIDC (no access keys, no secrets) and is
+# guarded on the repository variable AWS_TEST_ROLE_ARN. Unset, the job stays green
+# and prints a notice; the APK is still an artifact on the run. The role and the
+# bucket are in infra/terraform/test/ (written, not applied; see design/BLOCKERS.md
+# B1 and B2).
+
+name: android-apk
+
+on:
+  push:
+    branches: [redesign-autonomous, test]
+  workflow_dispatch:
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    permissions:
+      contents: read
+      # Needed only to mint the OIDC token for the guarded AWS steps below.
+      id-token: write
+
+    env:
+      APK_NAME: app-v1.${{ github.run_number }}.apk
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install exactly what the lockfile says
+        run: npm ci
+
+      # Lint fails the build; it does not warn.
+      - name: Android lint
+        working-directory: apps/mobile/android
+        run: ./gradlew lintDebug --no-daemon --console=plain
+
+      - name: Build the debug APK
+        working-directory: apps/mobile/android
+        env:
+          TEST_API_URL: ${{ vars.SWAFTO_TEST_API_URL }}
+        run: |
+          extra=()
+          if [ -n "$TEST_API_URL" ]; then extra+=("-PSWAFTO_API_BASE_URL=$TEST_API_URL"); fi
+          ./gradlew assembleDebug --no-daemon --console=plain "${extra[@]}"
+
+      - name: Name the APK
+        run: |
+          cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
+          ls -l "$APK_NAME"
+
+      - name: Upload the APK as a workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_NAME }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: AWS upload skipped
+        if: vars.AWS_TEST_ROLE_ARN == ''
+        run: |
+          echo "::notice title=S3 upload skipped::AWS_TEST_ROLE_ARN is not set, so the APK was not copied to S3. See infra/terraform/test/README.md and design/BLOCKERS.md (B1, B2)."
+
+      - name: Assume the test role (OIDC, no stored keys)
+        if: vars.AWS_TEST_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ vars.AWS_TEST_ROLE_ARN }}
+          aws-region: ap-south-1
+          role-session-name: swafto-apk-${{ github.run_number }}
+
+      - name: Upload the APK to S3
+        if: vars.AWS_TEST_ROLE_ARN != ''
+        env:
+          APK_BUCKET: ${{ vars.APK_BUCKET }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          test -n "$APK_BUCKET" || { echo "::error::APK_BUCKET variable is not set"; exit 1; }
+          aws s3 cp "$APK_NAME" "s3://${APK_BUCKET}/apk/v1.${RUN_NUMBER}/${APK_NAME}" --only-show-errors
+          echo "uploaded s3://${APK_BUCKET}/apk/v1.${RUN_NUMBER}/${APK_NAME}"

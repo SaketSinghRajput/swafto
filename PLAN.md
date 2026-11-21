@@ -534,7 +534,7 @@ SOURCES: package.json · docs/governance/VERIFIERS.md
 7de37bc9c491bedf  benchmarksResults  docs/benchmarks/BENCHMARKS-RESULTS.md
 b89e4d932c2b86a2  decisions  docs/governance/DECISIONS-AUTONOMOUS.md
 4a44974bd0ff4052  deferred  docs/handover/DEFERRED.md
-fe9bb22cfe403767  humanActions  docs/handover/HUMAN-ACTIONS.md
+126375d44712dab9  humanActions  docs/handover/HUMAN-ACTIONS.md
 ecdfd659e5c7e247  legal  docs/audits/LEGAL-AUDIT.md
 a3108c480133b9e6  security  docs/audits/SECURITY-AUDIT.md
 c5434732575831f1  techDecisions  docs/spec/TECH-DECISIONS.md

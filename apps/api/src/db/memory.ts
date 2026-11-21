@@ -15,6 +15,7 @@
  */
 import {
   assertLineFits,
+  isEventSection,
   isUpiReceipt,
   type Adjustment,
   type CreditLimit,
@@ -43,6 +44,7 @@ import {
   foreignParty,
   partyNotInShop,
   refersToNotInShop,
+  cancelsNotInShop,
   type ConsentRow,
   type DayRow,
   type DeviceRow,
@@ -139,6 +141,41 @@ function memoryRepoUnwrapped(): Repo & { readonly dump: () => unknown } {
     // EX-3: the composite FK (shop_id, refers_to_entry_id), as Postgres has it.
     if (entry.refersToEntryId !== undefined && book.get(entry.refersToEntryId)?.shopId !== shopId) {
       throw refersToNotInShop(entry.refersToEntryId);
+    }
+    /*
+     * THE TWIN OF THE entries_link_guard TRIGGER (RT-C1, RT-C2, RT-C6). Synchronous from here to the write, so
+     * in memory the check and the insert cannot be separated by another request - what the per-target advisory
+     * lock gives Postgres.
+     */
+    if (entry.refersToEntryId !== undefined && entry.cancelsEntryId === undefined) {
+      const t = book.get(entry.refersToEntryId);
+      if (t && t.shopId === shopId) {
+        const cancelled =
+          t.cancelsEntryId !== undefined ||
+          [...entries.values()].some((x) => x.shopId === shopId && x.cancelsEntryId === entry.refersToEntryId);
+        if (cancelled) throw new WriteRefused('target_cancelled', 'that entry is cancelled, so nothing can be linked to it.');
+      }
+    }
+    if (entry.cancelsEntryId !== undefined) {
+      const t = book.get(entry.cancelsEntryId);
+      if (t && t.shopId === shopId) {
+        if (t.dayId !== entry.dayId) throw new WriteRefused('cancel_other_day', 'an entry is cancelled on its own day.');
+        if (t.cancelsEntryId !== undefined) throw new WriteRefused('cancel_of_cancel', 'a cancellation cannot itself be cancelled.');
+        if (isEventSection(t.section)) throw new WriteRefused('cancel_event_leg', 'a return and its settlement are not cancelled one leg at a time.');
+        if ([...entries.values()].some((x) => x.shopId === shopId && x.refersToEntryId === entry.cancelsEntryId)) {
+          throw new WriteRefused('has_linked_entries', 'this entry has a return or a correction linked to it.');
+        }
+      }
+    }
+    // The composite FK (shop_id, cancels_entry_id), the partial UNIQUE (one cancel per entry), and the self-cancel CHECK.
+    if (entry.cancelsEntryId !== undefined) {
+      if (book.get(entry.cancelsEntryId)?.shopId !== shopId) throw cancelsNotInShop(entry.cancelsEntryId);
+      if (entry.cancelsEntryId === entry.id) throw new WriteRefused('entries_cancel_self_ck', 'an entry cannot cancel itself.');
+      for (const x of entries.values()) {
+        if (x.shopId === shopId && x.cancelsEntryId === entry.cancelsEntryId) {
+          throw new WriteRefused('entries_cancel_once_uq', 'that entry is already cancelled.');
+        }
+      }
     }
     const day = days.get(key(shopId, entry.dayId));
     if (!day) {
@@ -332,6 +369,30 @@ function memoryRepoUnwrapped(): Repo & { readonly dump: () => unknown } {
         .map((e) => strip(e) as Entry);
     },
 
+    async findEntries(shopId, ids) {
+      const want = new Set(ids);
+      return [...entries.values()].filter((e) => e.shopId === shopId && want.has(e.id)).map((e) => strip(e) as Entry);
+    },
+
+    async entriesReferringToAny(shopId, ids) {
+      const want = new Set(ids);
+      return [...entries.values()]
+        .filter((e) => e.shopId === shopId && e.refersToEntryId !== undefined && want.has(e.refersToEntryId))
+        .map((e) => strip(e) as Entry);
+    },
+
+    async entriesCancellingAny(shopId, ids) {
+      const want = new Set(ids);
+      return [...entries.values()]
+        .filter((e) => e.shopId === shopId && e.cancelsEntryId !== undefined && want.has(e.cancelsEntryId))
+        .map((e) => strip(e) as Entry);
+    },
+
+    async entryCancelling(shopId, id) {
+      const e = [...entries.values()].find((x) => x.shopId === shopId && x.cancelsEntryId === id);
+      return e ? (strip(e) as Entry) : null;
+    },
+
     async entriesFor(shopId, date) {
       return (byShop.get(shopId)?.get(date) ?? []).map((e) => strip(e) as Entry);
     },
@@ -488,7 +549,8 @@ function memoryRepoUnwrapped(): Repo & { readonly dump: () => unknown } {
       const existing = parties.get(party.id);
       if (existing && existing.shopId !== shopId) throw foreignParty(party.id);
 
-      parties.set(party.id, { ...party, shopId });
+      // RT2-1: a re-pushed id keeps the kind it was stored with (Postgres's conflict branch never sets `kind`).
+      parties.set(party.id, { ...party, kind: existing?.kind ?? party.kind, shopId });
     },
 
     async exportUser(userId) {

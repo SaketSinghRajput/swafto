@@ -699,7 +699,14 @@ describe('C-16 - the API base URL', () => {
     const gradle = readFileSync(new URL('../android/app/build.gradle', import.meta.url), 'utf8');
     expect(gradle).toContain('generateReleaseBuildConfig');
     expect(gradle).toContain("startsWith('https://')");
-    expect(gradle).toContain('buildConfigField "String", "API_BASE_URL", \'"http://localhost:8787"\'');
+    /*
+     * INVITE GATE (2026-11-20): THE DEBUG BUILD HONOURS -PSWAFTO_API_BASE_URL,
+     * and falls back to the adb-reverse dev server only when it is not given.
+     * A deliberate behaviour change, not a loosening: both halves are asserted,
+     * inside the debug block, so a debug build that dropped either one fails.
+     */
+    const debug = /debug \{([\s\S]*?)\r?\n {8}\}\r?\n {8}release \{/.exec(gradle)?.[1] ?? '';
+    expect(debug).toMatch(/if \(swaftoApiBaseUrl\) \{\s*buildConfigField "String", "API_BASE_URL", "\\"\$\{swaftoApiBaseUrl\}\\""\s*\} else \{\s*buildConfigField "String", "API_BASE_URL", '"http:\/\/localhost:8787"'\s*\}/);
     const props = readFileSync(new URL('../android/gradle.properties', import.meta.url), 'utf8');
     expect(props).toMatch(/^SWAFTO_API_BASE_URL=\s*$/m);
     const root = readFileSync(new URL('../src/platform/Root.tsx', import.meta.url), 'utf8');

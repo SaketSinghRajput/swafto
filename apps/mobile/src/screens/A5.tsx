@@ -12,13 +12,26 @@
  * "Still no code?" has no WhatsApp button. The reference opens WhatsApp to a
  * support number, and this repository has no support number to open; inventing
  * one would send a shopkeeper's message to a stranger. BLOCKED on a human.
+ *
+ * INVITE GATE: THE APP CANNOT SEND AN INVITE. In invite mode nothing offers to
+ * send a new code - only SWAFTO can issue one - so "expired" says "Ask SWAFTO
+ * for a new code" and has no button, and the mismatch and lockout cards add
+ * that line under their own, since the server's 401 cannot say whether the
+ * invite is still alive. The digit count is the server's (`digits`).
+ *
+ * LIVE DEMO S3-4: A MISTYPED CODE IS NOT A DEAD END. "It does not match" had only
+ * Back, so a wrong digit stranded him on a screen with nothing to press. It now
+ * has "Try again", straight back to an empty code entry for the same number.
+ * The words are the same for every wrong code - the server's 401 does not say
+ * why, and neither does this. A lock-out has no such button: the server would
+ * only refuse it.
  */
 import { View, Text } from '@swafto/ui';
 import { Shell, PrimaryButton, type LoadStatus } from '../components/Shell.tsx';
 import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
 import { strings, type RenderLanguage, type StringKey } from '../i18n/strings.ts';
-import { OTP_DIGITS, OTP_TTL_SECONDS } from '@swafto/values';
-import type { AuthProblem } from '../app/session.tsx';
+import { OTP_TTL_SECONDS } from '@swafto/values';
+import { digitsForMode, type AuthProblem, type CodeMode } from '../app/session.tsx';
 import { AuthNotice, fill } from './authParts.tsx';
 
 /**
@@ -42,11 +55,16 @@ const minutes = (seconds: number): number => Math.ceil(seconds / 60);
 export interface CodeProblemProps {
   readonly problem?: AuthProblem | null;
   readonly retryAfterSeconds?: number | null;
+  /** INVITE GATE: how the code request was answered, and how many digits it said. */
+  readonly mode?: CodeMode;
+  readonly digits?: number;
   readonly busy?: boolean;
   readonly status?: LoadStatus;
   readonly language?: RenderLanguage;
   readonly display?: DisplayMode;
   readonly onSendNew?: () => void;
+  /** LIVE DEMO S3-4: "Try again" after a code that does not match - back to code entry. */
+  readonly onTryAgain?: () => void;
   readonly onBack?: (() => void) | undefined;
   readonly onRetry?: () => void;
 }
@@ -54,27 +72,35 @@ export interface CodeProblemProps {
 export function CodeProblem({
   problem = 'mismatch',
   retryAfterSeconds = null,
+  mode = 'sms',
+  digits = digitsForMode(mode),
   busy = false,
   status = 'ready',
   language = 'en',
   display = 'comfort',
   onSendNew = () => {},
+  onTryAgain = () => {},
   onBack,
   onRetry = () => {},
 }: CodeProblemProps) {
   const t = tokens(display);
   const s = strings(language);
   const card = problem === null ? undefined : CARD[problem];
+  const invite = mode === 'invite';
   const body =
-    problem === 'locked' && retryAfterSeconds === null
-      ? s('a5.locked.later')
-      : card === undefined
-        ? ''
-        : fill(s(card.body), {
-            digits: OTP_DIGITS,
-            minutes: minutes(problem === 'locked' ? (retryAfterSeconds ?? 0) : OTP_TTL_SECONDS),
-          });
-  const canSend = problem === 'expired' || problem === 'offline' || problem === 'failed';
+    invite && problem === 'expired'
+      ? s('a5.invite.ask')
+      : problem === 'locked' && retryAfterSeconds === null
+        ? s('a5.locked.later')
+        : card === undefined
+          ? ''
+          : fill(s(card.body), {
+              digits,
+              minutes: minutes(problem === 'locked' ? (retryAfterSeconds ?? 0) : OTP_TTL_SECONDS),
+            });
+  // The ask line under a card whose own words do not already say it.
+  const ask = invite && (problem === 'mismatch' || problem === 'locked');
+  const canSend = (problem === 'expired' && !invite) || problem === 'offline' || problem === 'failed';
 
   return (
     <Shell
@@ -92,6 +118,13 @@ export function CodeProblem({
             label={s(problem === 'expired' ? 'a5.expired.cta' : 'common.retry')}
             onPress={onSendNew}
             disabled={busy}
+            display={display}
+          />
+        ) : problem === 'mismatch' ? (
+          <PrimaryButton
+            testID="a5-try-again"
+            label={s('common.retry')}
+            onPress={onTryAgain}
             display={display}
           />
         ) : undefined
@@ -135,6 +168,21 @@ export function CodeProblem({
           >
             {body}
           </Text>
+          {ask ? (
+            <Text
+              testID="a5-ask"
+              maxFontSizeMultiplier={t.maxFontScale}
+              style={{
+                marginTop: t.space.xs,
+                fontFamily: t.font.bold,
+                fontSize: t.type.body,
+                lineHeight: t.leading(t.type.body),
+                color: t.color.ink,
+              }}
+            >
+              {s('a5.invite.ask')}
+            </Text>
+          ) : null}
         </View>
       )}
       <AuthNotice problem={problem} s={s} display={display} />

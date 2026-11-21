@@ -11,7 +11,7 @@
  * say so. The lock policy (host.tsx) reads 'unavailable' as "let him in, with a
  * note" - never as "lock him out".
  */
-import { NativeModules } from 'react-native';
+import { NativeModules, Clipboard } from 'react-native';
 
 /** What a confirm came to. 'unavailable': the phone cannot ask (no screen lock, no activity). */
 export type ConfirmResult = 'ok' | 'cancelled' | 'unavailable';
@@ -28,6 +28,11 @@ export interface DeviceBridge {
    * need not draw it; rejects when the binary or the phone cannot.
    */
   openDateSettings?(): Promise<void>;
+  /**
+   * F-1: the text on the phone's clipboard, for A4's "Paste code" - read only
+   * when he taps it. Optional, so a fake bridge need not; rejects when it cannot.
+   */
+  readClipboardText?(): Promise<string>;
 }
 
 interface NativeDevice {
@@ -67,5 +72,14 @@ export const device: DeviceBridge = {
       throw new Error('date settings cannot be opened in this build');
     }
     await native.openDateSettings();
+  },
+  async readClipboardText() {
+    /*
+     * React Native's own ClipboardModule (MainReactPackage), which 0.81 still
+     * ships though it marks the JS face deprecated in favour of a community
+     * package this build does not install. When that goes, this rejects and
+     * A4 simply has no paste - the keypad is unaffected.
+     */
+    return await Clipboard.getString();
   },
 };

@@ -22,7 +22,7 @@
  * path that refuses bad input by naming the field it refused.
  */
 import { View, Text, Pressable } from '@swafto/ui';
-import { formatPaise, partyRule, subtract, type Mode as PaymentMode, type Paise, type Entry } from '@swafto/formula-engine';
+import { formatPaise, partyRule, returnableOf, subtract, type Mode as PaymentMode, type Paise, type Entry } from '@swafto/formula-engine';
 import { Money } from './Money.tsx';
 import { Keypad, type KeypadKey } from './Keypad.tsx';
 import { Shell, Row, Card, Segmented, PrimaryButton, type LoadStatus } from './Shell.tsx';
@@ -31,6 +31,22 @@ import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
 import { strings, type RenderLanguage, type StringKey } from '../i18n/strings.ts';
 import type { Store } from '../store/index.ts';
 import { fill } from './DayParts.tsx';
+import { Sheet } from './Sheet.tsx';
+
+/**
+ * CANCEL THIS ENTRY (docs/design/CANCEL-ENTRY-GATE.md section 4): the session's
+ * half, handed to the form. Absent, the lines are plain rows, as they always were.
+ */
+export interface CancelControls {
+  /** The line waiting on the confirm sheet, or null. */
+  readonly asking: string | null;
+  /** The line just cancelled, for "Enter it again correctly", or null. */
+  readonly justCancelled: string | null;
+  readonly onAsk: (entryId: string) => void;
+  readonly onConfirm: () => void;
+  readonly onDismiss: () => void;
+  readonly onEnterAgain: () => void;
+}
 
 /** One button at the bottom of the form: what it says, and what it commits. */
 export interface CommitOption {
@@ -116,6 +132,8 @@ export interface EntryFormProps {
   readonly advanceConfirm?: { readonly extra: Paise } | null;
   readonly onConfirmAdvance?: (option: CommitOption) => void;
   readonly onCancelAdvance?: () => void;
+  /** Cancel this entry: tap a line on an open day, confirm, and the pair stops counting. */
+  readonly cancel?: CancelControls | undefined;
 }
 
 /**
@@ -131,6 +149,22 @@ const MODE_KEY: Readonly<Record<PaymentMode, StringKey>> = {
   shop_stock: 't9.mode.shop_stock',
 };
 const MODE_NAMED_BY_SECTION: ReadonlySet<string> = new Set(['cash_sales', 'upi_sales', 'udhar_sales']);
+
+/**
+ * LIVE DEMO S3-1: A SALE THAT CAME BACK SAYS SO ON ITS OWN LINE. After a refund
+ * the Sales total was net while the ₹5,000 line still read as a live sale, and
+ * nothing on the screen joined the two. The line stays, at its original figure
+ * (D1: the original is never hidden or rewritten); it gains " · returned", or
+ * " · part returned", read from the engine's `returnableOf` over the rows that
+ * refer to it - the same figure T18 offers - so the words cannot disagree with
+ * the book. Every other line is unchanged.
+ */
+const returnWord = (e: Entry, store: Store, s: (key: StringKey) => string): string => {
+  if (!MODE_NAMED_BY_SECTION.has(e.section)) return '';
+  const left = returnableOf(e, store.entriesReferringTo(e.id));
+  if (left === e.amount) return '';
+  return ' · ' + s(left <= 0 ? 'entry.returned' : 't18.partReturned');
+};
 
 /**
  * ITEM 6: WHEN A LINE WAS TYPED, as " · 14:32" - the stamp's hh:mm as written.
@@ -176,6 +210,7 @@ export function EntryForm({
   advanceConfirm = null,
   onConfirmAdvance = () => {},
   onCancelAdvance = () => {},
+  cancel,
 }: EntryFormProps) {
   const t = tokens(display);
   const s = strings(language);
@@ -224,7 +259,29 @@ export function EntryForm({
    * chronological by construction (D1), so reversing it is newest first without
    * a second ordering that could disagree.
    */
-  const lines = store.state.entries.filter((e) => sections.includes(e.section)).slice().reverse();
+  /*
+   * CANCEL THIS ENTRY: a cancel row is never a line of its own. The original it
+   * cancels carries it, struck through with "cancelled", so the book shows one
+   * thing that happened rather than two figures that cancel out.
+   */
+  const lines = store.state.entries
+    .filter((e) => sections.includes(e.section) && e.cancelsEntryId === undefined)
+    .slice()
+    .reverse();
+  const day = store.state.day;
+  // On an OPEN day only, today's lines. A closed day keeps "Post a correction" (T16).
+  const cancellable = (e: Entry): boolean =>
+    cancel !== undefined && day.state === 'open' && e.dayId === day.date && store.cancelOf(e.id) === undefined;
+  const asked = cancel?.asking ? lines.find((e) => e.id === cancel.asking) : undefined;
+  // A return or a correction points at it: that is undone first, and the sheet says so.
+  const linked = asked === undefined ? false : store.entriesReferringTo(asked.id).length > 0;
+  const lineLabel = (e: Entry): string =>
+    s(('section.' + e.section) as StringKey) +
+    (e.partyId ? ' - ' + (parties.get(e.partyId) ?? e.partyId) : '') +
+    (MODE_NAMED_BY_SECTION.has(e.section) ? '' : ' - ' + s(MODE_KEY[e.mode])) +
+    (e.label ? ' - ' + e.label : '') +
+    timeOf(e.createdAt);
+  const justCancelled = cancel?.justCancelled ? lines.find((e) => e.id === cancel.justCancelled) : undefined;
   const saved = savedId === null ? undefined : lines.find((e) => e.id === savedId);
   /* What this person owes now, over every day this phone holds - shown where he chooses and above the pad. */
   const partyBalance = entryPartyId === null || partyName === null ? null : store.partyBalance(entryPartyId);
@@ -247,7 +304,6 @@ export function EntryForm({
         flex: 1,
         minHeight: t.touchTarget,
         minWidth: t.touchTarget,
-        marginHorizontal: t.space.xs,
         paddingHorizontal: t.space.sm,
         borderRadius: t.radius.md,
         alignItems: 'center',
@@ -377,7 +433,7 @@ export function EntryForm({
           {!showItems && secondaryAction === undefined ? null : (
             <View
               testID={id + '-links'}
-              style={{ flexDirection: 'row', marginHorizontal: t.space.xs }}
+              style={{ flexDirection: 'row' }}
             >
               {showItems ? link(id + '-items', itemsAction.labelKey, itemsAction.onPress) : null}
               {secondaryAction === undefined
@@ -401,7 +457,7 @@ export function EntryForm({
             testID={id + '-total'}
             style={{
               flexDirection: 'row',
-              alignItems: 'center',
+              alignItems: 'baseline',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
               marginHorizontal: t.space.sm,
@@ -414,7 +470,10 @@ export function EntryForm({
             <Text
               maxFontSizeMultiplier={t.maxFontScale}
               style={{
+                flexGrow: 1,
                 flexShrink: 1,
+                flexBasis: 0,
+                minWidth: '33%',
                 marginRight: t.space.sm,
                 fontFamily: t.font.regular,
                 fontSize: t.type.label,
@@ -435,6 +494,51 @@ export function EntryForm({
               size="body"
             />
           </View>
+          {/*
+            CANCEL THIS ENTRY: WHAT WAS CANCELLED, AND THE WAY TO TYPE IT RIGHT.
+            "Enter it again correctly" sets the segment to that entry's section
+            and mode and nothing else: the amount is his to type (no inference).
+            UNDER the total, not above it: above, at font 2.0 it pushed the Sales
+            total out of view (check:layout, HT-60's rule), and the total is the
+            figure the cancel just changed.
+          */}
+          {justCancelled === undefined || cancel === undefined ? null : (
+            <View
+              testID={id + '-cancelled'}
+              accessibilityLiveRegion="polite"
+              style={{
+                marginHorizontal: t.space.sm,
+                marginBottom: t.space.xs,
+                paddingHorizontal: t.space.md,
+                borderRadius: t.radius.md,
+                backgroundColor: t.color.surfaceRaised,
+                borderWidth: t.hairline,
+                borderColor: t.color.borderStrong,
+              }}
+            >
+              <Text
+                testID={id + '-cancelled-text'}
+                {...t.bodyText}
+                style={{
+                  paddingTop: t.space.xs,
+                  fontFamily: t.font.medium,
+                  fontSize: t.type.body,
+                  lineHeight: t.leadingUncapped(t.type.body),
+                  color: t.color.ink,
+                }}
+              >
+                {fill(s('cancel.done'), { amount: formatPaise(justCancelled.amount) })}
+              </Text>
+              <PrimaryButton
+                testID={id + '-enter-again'}
+                label={s('cancel.enterAgain')}
+                display={display}
+                variant="ghost"
+                size="md"
+                onPress={cancel.onEnterAgain}
+              />
+            </View>
+          )}
           {advanceConfirm === null ? null : (
             <View
               testID={id + '-advance'}
@@ -670,6 +774,42 @@ export function EntryForm({
             onCancel={onCancelPartyPicker}
             newParty={newParty}
           />
+        ) : asked !== undefined && cancel !== undefined ? (
+          /*
+            THE CONFIRM SHOWS WHAT IS BEING CANCELLED - the line as it reads in
+            the list, and its figure - so the tap he confirms is the entry he
+            meant. With a return or correction on it there is no cancel button,
+            only the reason.
+          */
+          <Sheet
+            testID={id + '-cancel-sheet'}
+            title={s(linked ? 'cancel.linkedTitle' : 'cancel.title')}
+            body={s(linked ? 'cancel.linkedFirst' : 'cancel.body')}
+            closeLabel={s('cancel.keep')}
+            onClose={cancel.onDismiss}
+            display={display}
+            showClose={linked}
+          >
+            <Row testID={id + '-cancel-target'} label={lineLabel(asked)} amount={asked.amount} display={display} />
+            {linked ? null : (
+              <>
+                <PrimaryButton
+                  testID={id + '-cancel-keep'}
+                  label={s('cancel.keep')}
+                  onPress={cancel.onDismiss}
+                  display={display}
+                />
+                <PrimaryButton
+                  testID={id + '-cancel-yes'}
+                  label={s('cancel.action')}
+                  onPress={cancel.onConfirm}
+                  display={display}
+                  variant="tonal"
+                  size="lg"
+                />
+              </>
+            )}
+          </Sheet>
         ) : null
       }
       footer={
@@ -737,10 +877,20 @@ export function EntryForm({
               // than running off the side - the same decision as the header, for
               // the same reason: money is content and content is never capped.
               flexWrap: 'wrap',
-              paddingHorizontal: t.space.md,
-              // HT-60: xs, not sm. The eight pixels went to the body, where the
-              // running total now has to fit under the links at font 2.0.
-              paddingVertical: t.space.xs,
+              /*
+               * sm, not md: the same 8dp edge as the mode segment above and the
+               * keypad below. The sixteen pixels let Add sit beside a typed
+               * ₹5,000 at the chrome cap in Focus instead of taking a row of
+               * its own - that row was the 13px that put T10's keypad below
+               * the fold on CI (Linux run 44348374411).
+               */
+              paddingHorizontal: t.space.sm,
+              /*
+               * No vertical padding. HT-60 took it from sm to xs; the last
+               * 8px went to the body as well, where the Sales total has to
+               * fit under the two links at font 2.0. The label's 1.8 line box
+               * is already the breathing room above it.
+               */
               backgroundColor: t.color.surface,
               borderTopWidth: t.hairline,
               borderTopColor: t.color.borderStrong,
@@ -756,7 +906,7 @@ export function EntryForm({
               wrap as one, which is both fewer lines and the more obvious
               reading: this word belongs to this number.
             */}
-            <View style={{ flexShrink: 1, marginRight: t.space.sm }}>
+            <View style={{ flexShrink: 1 }}>
               <Text
                 maxFontSizeMultiplier={t.maxFontScale}
                 style={{
@@ -800,7 +950,7 @@ export function EntryForm({
               nothing. The disabled look is kept for states that are really
               disabled, and on this form there is none.
             */}
-            <View style={{ flexGrow: 1, flexBasis: '45%' }}>
+            <View style={{ flexGrow: 1, flexBasis: 'auto' }}>
               <PrimaryButton
                 testID={id + '-commit'}
                 label={s('common.add')}
@@ -835,15 +985,13 @@ export function EntryForm({
           <Row
             key={e.id}
             testID={id + '-line-' + e.id}
-            label={
-              s(('section.' + e.section) as StringKey) +
-              (e.partyId ? ' - ' + (parties.get(e.partyId) ?? e.partyId) : '') +
-              (MODE_NAMED_BY_SECTION.has(e.section) ? '' : ' - ' + s(MODE_KEY[e.mode])) +
-              (e.label ? ' - ' + e.label : '') +
-              timeOf(e.createdAt)
-            }
+            label={lineLabel(e) + returnWord(e, store, s)}
             amount={e.amount}
             display={display}
+            {...(store.cancelOf(e.id) === undefined ? {} : { struck: true, note: s('cancel.cancelled') })}
+            {...(cancellable(e) && cancel !== undefined
+              ? { onPress: () => cancel.onAsk(e.id), accessibleLabel: lineLabel(e) + ', ' + s('cancel.action') }
+              : {})}
           />
         ))}
       </Card>

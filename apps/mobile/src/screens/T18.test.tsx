@@ -351,6 +351,19 @@ describe('T18 against both fixtures and every language', () => {
     expect(byTestId(tree, 't18-replacement')).toBeTruthy();
   });
 
+  it('the settlement choices are phrases, so they sit two to a row and never three', () => {
+    // "ନଗଦ ଫେରାଇଲେ" holds one word wider than a third of the tray at the chrome
+    // cap: three to a row it ran out of its segment (check:layout, CI Linux run
+    // 44348374411). The entry forms' one-word modes keep three to a row.
+    const tree = render(<App session={onForm(canonicalStore(), 'c-01')} />);
+    for (const key of ['cash', 'upi', 'udhar', 'pending', 'exchange']) {
+      expect(byTestId(tree, 't18-settlement-' + key).props.style?.flexBasis, key).toBe('45%');
+    }
+    const s = sessionOn(canonicalStore());
+    s.goTo('T7');
+    expect(byTestId(render(<App session={s} />), 't7-mode-0').props.style?.flexBasis).toBe('30%');
+  });
+
   it('chrome is capped; money is not', () => {
     const tree = render(<App session={onForm(canonicalStore(), 'c-01')} />);
     expect(byTestId(tree, 't18-title').props?.maxFontSizeMultiplier).toBe(CHROME_FONT_SCALE_CAP);

@@ -147,17 +147,23 @@ export function PartiesList({
         the bar shows the one figure the screen is about, and this card is the
         PAIR, which is what makes either of them mean anything.
       */}
+      {/*
+        LIVE DEMO S3-6: BELOW ZERO IS AN ADVANCE, SAID IN WORDS. "You owe
+        suppliers -₹300.00" sat beside Today's "Advance ₹300.00" for the same
+        payment. The figure is the same engine figure; only the words and the
+        sign change, as Today and the entry forms already do (QA-03).
+      */}
       <Card testID="p1-totals" display={display} title={s('p1.shopTotals')}>
         <Row
           testID="p1-to-collect"
-          label={s('p1.toCollect')}
-          amount={primary.p7CreditOutstanding.value}
+          label={s(primary.p7CreditOutstanding.value < 0 ? 'p1.advanceFromCustomers' : 'p1.toCollect')}
+          amount={unsigned(primary.p7CreditOutstanding.value)}
           display={display}
         />
         <Row
           testID="p1-you-owe"
-          label={s('p1.youOwe')}
-          amount={primary.p8SupplierOutstanding.value}
+          label={s(primary.p8SupplierOutstanding.value < 0 ? 'p1.advanceToSuppliers' : 'p1.youOwe')}
+          amount={unsigned(primary.p8SupplierOutstanding.value)}
           display={display}
         />
       </Card>
@@ -176,6 +182,9 @@ export function PartiesList({
     </Shell>
   );
 }
+
+/** A balance below zero, as the size of the advance: the words carry the direction. */
+const unsigned = (amount: Paise): Paise => (amount < 0 ? subtract(0, amount) : amount);
 
 /**
  * ONE PERSON IN THE BOOK: the name large, what is owed larger, and today's
@@ -283,11 +292,22 @@ function PartyRow({
           {s(balanceWord(kind, balance))}
         </Text>
         {/* QA-03: below zero is an advance, said in words above - the figure is its size. */}
+        {/*
+          `heading`, NOT `figure`, MEASURED (check:layout, 2026-11-20, with the
+          shipped face actually loaded). Money grows without a cap, and a lakh
+          balance at `figure` in Focus at font 2.0 is 322px - wider than the
+          308px a card row has on a 360dp screen, so it ran out of the row on
+          Linux and sat 1px from failing on Windows. A figure has no break
+          opportunity; the only honest room is a step down the type scale.
+          `heading` is still larger than the name and today's change, so the
+          balance stays the biggest thing in the row (USABILITY item 5), and the
+          same figure now has about 30px to spare.
+        */}
         <Money
           testID={testID + '-balance'}
           amount={balance < 0 ? subtract(0, balance) : balance}
           mode={display}
-          size="figure"
+          size="heading"
         />
       </View>
     </Pressable>

@@ -19,6 +19,8 @@
  */
 import type { Repo } from '../db/port.ts';
 import { DELETION_GRACE_DAYS } from '@swafto/values';
+import type { SqlClient } from '../db/postgres.ts';
+import { purgeInviteAudit, sweepExpiredOtp } from '../admin/invite-store.ts';
 
 export interface PurgeReport {
   /** The cutoff used, so a run can be explained without re-deriving it. */
@@ -65,10 +67,18 @@ export async function runNightly(
   repo: Repo,
   limiter: { prune(): Promise<number> },
   now: string,
-): Promise<PurgeReport & { readonly rateEventsPruned: number }> {
+  /**
+   * Beta invite codes. Absent, nothing changes. Present: expired `otp_pending` rows go (each holds a full
+   * phone number, and invite mode has no sends to trigger the store's own sweep), and `invite_audit`
+   * rows past their retention (12 months, decision D4) are purged through the trigger's one way in.
+   */
+  sql?: SqlClient,
+): Promise<PurgeReport & { readonly rateEventsPruned: number; readonly otpSwept: number; readonly inviteAuditPurged: number }> {
   const report = await purgeDue(repo, now);
   const rateEventsPruned = await limiter.prune();
-  return { ...report, rateEventsPruned };
+  const otpSwept = sql ? await sweepExpiredOtp(sql, now) : 0;
+  const inviteAuditPurged = sql ? await purgeInviteAudit(sql, now) : 0;
+  return { ...report, rateEventsPruned, otpSwept, inviteAuditPurged };
 }
 
 /*
@@ -98,6 +108,7 @@ if (process.argv[1] && process.argv[1].endsWith('purge-due.ts')) {
       pgRepo(db.sql),
       new RateLimiter(db.sql, { secret: config.rateLimitKey }),
       new Date().toISOString(),
+      db.sql,
     );
     /*
      * COUNTS AND IDS, NEVER A NAME OR A NUMBER. This is the one place in the
@@ -113,6 +124,10 @@ if (process.argv[1] && process.argv[1].endsWith('purge-due.ts')) {
         report.failed.length +
         ', rate events pruned ' +
         report.rateEventsPruned +
+        ', expired codes swept ' +
+        report.otpSwept +
+        ', invite audit rows purged ' +
+        report.inviteAuditPurged +
         '\n',
     );
     for (const f of report.failed) {

@@ -18,6 +18,21 @@ export interface RecordedSend {
   readonly at: string;
 }
 
+export interface StubStagingOptions {
+  /** Exact normalised numbers whose OTP is written out. Empty or absent: nothing is ever written. */
+  readonly stagingTestPhones?: readonly string[];
+  /** Where the one tester line goes (a full JSON line, newline included). */
+  readonly emit?: (line: string) => void;
+}
+
+/**
+ * The single deliberate OTP disclosure: a pino-shaped `warn` line, built by hand so it is not subject to
+ * the app logger's redaction (which stays strict for every other line). Only for allow-listed numbers.
+ */
+export function stagingOtpLine(phone: string, code: string, at: Date): string {
+  return JSON.stringify({ level: 40, time: at.getTime(), msg: 'staging test otp', phone, code }) + '\n';
+}
+
 export class StubSmsPort implements SmsPort {
   private readonly sent: RecordedSend[] = [];
   /**
@@ -25,8 +40,12 @@ export class StubSmsPort implements SmsPort {
    * that signs people in for weeks does not grow without bound. Tests never come near the default.
    */
   private readonly maxKept: number;
-  constructor(maxKept = 1000) {
+  private readonly staging: ReadonlySet<string>;
+  private readonly emit: (line: string) => void;
+  constructor(maxKept = 1000, staging: StubStagingOptions = {}) {
     this.maxKept = maxKept;
+    this.staging = new Set(staging.stagingTestPhones ?? []);
+    this.emit = staging.emit ?? (() => undefined);
   }
   /** Set to make the next send fail, for testing carrier-failure paths. */
   public failNext = false;
@@ -45,6 +64,10 @@ export class StubSmsPort implements SmsPort {
       at: new Date().toISOString(),
     });
     if (this.sent.length > this.maxKept) this.sent.splice(0, this.sent.length - this.maxKept);
+    const code = req.variables[0];
+    if (this.staging.has(req.phone) && req.templateId.startsWith('otp_') && code !== undefined) {
+      this.emit(stagingOtpLine(req.phone, code, new Date()));
+    }
   }
 
   all(): readonly RecordedSend[] {

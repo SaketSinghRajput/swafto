@@ -180,6 +180,43 @@ export function partyRule(section: Entry['section'], mode: Entry['mode']): Party
   }
 }
 
+/**
+ * WHICH KIND OF PARTY A SECTION MAY NAME. A supplier is paid and bought from; a customer buys, owes, is
+ * collected from and has returns. A section that names a party of the other kind records a credit
+ * balance against the wrong book (a supplier owed on a customer's udhar sale), so it is refused.
+ * `null` for the sections that name nobody. The parsers have only a party id, so the kind is checked
+ * by `assertPartyKind`, which the phone and the sync route both call with the party they hold.
+ */
+export function partyKindFor(section: Entry['section']): 'customer' | 'supplier' | null {
+  switch (section) {
+    case 'purchase':
+    case 'party_payment':
+      return 'supplier';
+    case 'udhar_sales':
+    case 'udhar_collection':
+    case 'sales_return':
+    case 'exchange_out':
+    case 'exchange_receipt':
+    case 'refund_paid':
+      return 'customer';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Refuses (`EntryInputError`, field `party_kind_mismatch`) an entry whose party is of the wrong kind for its
+ * section. A party that is not known here is not this function's refusal (the store refuses a party that is not
+ * the shop's); nor is an entry that names nobody.
+ */
+export function assertPartyKind(entry: Pick<Entry, 'section' | 'partyId'>, party: { readonly kind: 'customer' | 'supplier' } | undefined): void {
+  if (entry.partyId === undefined || party === undefined) return;
+  const need = partyKindFor(entry.section);
+  if (need !== null && party.kind !== need) {
+    throw new EntryInputError('party_kind_mismatch', 'this entry needs a ' + need + ', and that party is a ' + party.kind + '.');
+  }
+}
+
 function requireParty(draft: EntryDraft, why: string): void {
   if (!draft.partyId) throw new EntryInputError('partyId', why);
 }

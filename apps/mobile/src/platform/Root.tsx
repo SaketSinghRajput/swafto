@@ -81,6 +81,8 @@ export function Root() {
         draft: sqliteSecureStorage(db, 'draft'),
         // PR-7: the server's last plan answer, so the plan survives a launch with no signal.
         planCache: sqliteSecureStorage(db, 'plan'),
+        // RTI-7: which "new phone signed in" notices he dismissed. Device ids only.
+        notices: sqliteSecureStorage(db, 'notices'),
         // PR-7: Play Billing. A build or device without it answers 'unavailable', never success.
         billing: playBilling(NativeModules.SwaftoBilling as NativeBilling | undefined),
         /*
@@ -129,6 +131,8 @@ export function Root() {
     drain(true);
     // PR-7: what the plan is now. Offline, the cached answer stands until its own expiry.
     void host.refreshPlan();
+    // RTI-7: is there a new phone on this shop? One device-list request, launch and foreground only.
+    void host.checkNewPhone();
     // HT-4: and whenever the book changes while the app is in front.
     const unsubscribe = host.session.subscribe(() => void host.syncLatest());
 
@@ -142,6 +146,7 @@ export function Root() {
         host.session.refreshDay(); // F-19: last night's close gives way to today
         drain(true);
         void host.refreshPlan();
+        void host.checkNewPhone();
       }
     };
     const subscription = AppState.addEventListener('change', onChange);
@@ -233,6 +238,8 @@ export function Root() {
       // F-23: the policy, terms and deletion page open in the phone's browser.
       onUnlock={() => void host.unlock()}
       onToggleAppLock={() => void host.setAppLock(host.session.state.appLock !== true)}
+      // X4: the lock offered at the end of setup - the same enable flow.
+      onTurnOnAppLock={() => void host.turnOnLockFromSetup()}
       onOpenUrl={(url) => {
         Linking.openURL(url).catch((e: Error) => host.session.refuse('openUrl', e.message));
       }}
@@ -254,6 +261,8 @@ export function Root() {
       onExportMyData={() => void host.exportMyData()}
       onLoadDevices={() => void host.loadDevices()}
       onSignOutDevice={(id) => void host.signOutDevice(id)}
+      // RTI-7: "It was me" on Today's new-phone notice. Stored on this phone only.
+      onDismissNewPhone={(id) => host.dismissNewPhone(id)}
       /*
        * R5 FR-1: HIS WhatsApp, opened with the text in it; he presses send. The
        * app link first; with WhatsApp not installed, the web link, which offers

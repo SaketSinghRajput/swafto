@@ -113,6 +113,16 @@ export interface TodayProps {
    * only while the question is up; the session decides when, Root does the exit.
    */
   readonly exitPrompt?: ExitPrompt | undefined;
+  /**
+   * RTI-7: ANOTHER PHONE SIGNED IN TO THIS SHOP in the last 72 hours, as the
+   * host derived it from the server's device list. `date` is the local
+   * 'YYYY-MM-DD' it happened on. Absent draws nothing.
+   */
+  readonly newPhone?: { readonly id: string; readonly date: string } | undefined;
+  /** RTI-7: to Signed-in phones (S14, C-21), where it can be signed out. */
+  readonly onOpenDevices?: () => void;
+  /** RTI-7: "It was me" - this notice goes, on this phone, for that device. */
+  readonly onDismissNewPhone?: () => void;
 }
 
 export function Today({
@@ -131,11 +141,14 @@ export function Today({
   closesAt = DEFAULT_CLOSES_AT,
   onOpenDateSettings,
   exitPrompt,
+  newPhone,
+  onOpenDevices = () => {},
+  onDismissNewPhone = () => {},
 }: TodayProps) {
   const t = tokens(display);
   const s = strings(language);
 
-  const entries = store.state.entries;
+  const entries = store.live;
   const progress = progressOf(store);
   const unlocked = cashCheckUnlocked(store.input);
   // C-17 / C-19: derived on read from the clock, like every other figure here.
@@ -244,6 +257,34 @@ export function Today({
           display={display}
         />
       ) : null}
+
+      {/*
+        RTI-7: A NEW PHONE SIGNED IN. A fact from the server's own list, said
+        once and kept until he answers it: the way to sign it out, or "It was
+        me". Warning, not refused - nothing was refused, and a second phone of
+        his own is the usual reason. First on the page, because a forwarded
+        recovery code is the one thing on Today he cannot afford to scroll past.
+      */}
+      {newPhone === undefined ? null : (
+        <View testID="t1-new-phone">
+          <Banner
+            testID="t1-new-phone-banner"
+            kind="warning"
+            icon="alert"
+            text={fill(s('t1.newPhone.body'), { date: dateLine(newPhone.date, s) })}
+            display={display}
+            action={{ testID: 't1-new-phone-open', label: s('s14.title'), onPress: onOpenDevices }}
+          />
+          <PrimaryButton
+            testID="t1-new-phone-dismiss"
+            label={s('t1.newPhone.dismiss')}
+            onPress={onDismissNewPhone}
+            variant="ghost"
+            size="md"
+            display={display}
+          />
+        </View>
+      )}
 
       {/* Item 3: the one figure, with its working. */}
       <CashInBox id="t1" store={store} s={s} display={display} />

@@ -59,3 +59,41 @@ describe('A5 Code problem', () => {
     expect(undersizedTargets(tree)).toEqual([]);
   });
 });
+
+describe('INVITE GATE - A5 cannot send an invite; it says who can', () => {
+  it('expired in invite mode: "Ask SWAFTO for a new code." and no send button', () => {
+    const tree = render(<CodeProblem problem="expired" mode="invite" digits={8} />);
+    expect(text(byTestId(tree, 'a5-message'))).toBe('Ask SWAFTO for a new code.');
+    expect(ids(tree)).not.toContain('a5-send-new');
+  });
+
+  it('mismatch and lockout in invite mode keep their own words, with eight digits, and add the ask line', () => {
+    const mismatch = render(<CodeProblem problem="mismatch" mode="invite" digits={8} />);
+    expect(text(byTestId(mismatch, 'a5-message'))).toBe('Check the 8 digits and try again.');
+    expect(text(byTestId(mismatch, 'a5-ask'))).toBe('Ask SWAFTO for a new code.');
+    const locked = render(<CodeProblem problem="locked" retryAfterSeconds={598} mode="invite" digits={8} />);
+    expect(text(byTestId(locked, 'a5-message'))).toContain('10 minutes');
+    expect(text(byTestId(locked, 'a5-ask'))).toBe('Ask SWAFTO for a new code.');
+  });
+
+  it('sms mode is unchanged: "Send a new code", six digits, no ask line', () => {
+    const expired = render(<CodeProblem problem="expired" mode="sms" />);
+    expect(text(byTestId(expired, 'a5-send-new'))).toBe('Send a new code');
+    expect(ids(expired)).not.toContain('a5-ask');
+    expect(text(byTestId(render(<CodeProblem problem="mismatch" />), 'a5-message'))).toBe(
+      'Check the 6 digits and try again.',
+    );
+  });
+
+  it('the ask line in Hindi and Odia, and the floors at the worst case', () => {
+    for (const language of ['hi', 'or'] as const) {
+      const tree = render(<CodeProblem problem="expired" mode="invite" language={language} />);
+      expect(text(byTestId(tree, 'a5-message'))).toContain('SWAFTO');
+    }
+    const worst = render(
+      <CodeProblem problem="locked" retryAfterSeconds={598} mode="invite" language="longest" display="focus" />,
+    );
+    expect(failingContrast(worst)).toEqual([]);
+    expect(undersizedTargets(worst)).toEqual([]);
+  });
+});

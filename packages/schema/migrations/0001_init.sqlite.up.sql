@@ -80,6 +80,7 @@ CREATE TABLE entries (
   label           TEXT,
   corrects_day_id TEXT,
   refers_to_entry_id TEXT,
+  cancels_entry_id TEXT,
   created_at      TEXT NOT NULL,
   source          TEXT NOT NULL DEFAULT 'manual',
   device_id       TEXT,
@@ -118,6 +119,9 @@ CREATE TABLE entries (
   CONSTRAINT entries_shop_id_uq UNIQUE (shop_id, id),
   -- Same shop, by construction: a link can never reach another shop's ledger (S-11).
   CONSTRAINT entries_refers_fk FOREIGN KEY (shop_id, refers_to_entry_id) REFERENCES entries(shop_id, id),
+  CONSTRAINT entries_cancels_fk FOREIGN KEY (shop_id, cancels_entry_id) REFERENCES entries(shop_id, id),
+  CONSTRAINT entries_cancel_self_ck CHECK (cancels_entry_id IS NULL OR cancels_entry_id <> id),
+  CONSTRAINT entries_cancel_plain_ck CHECK (cancels_entry_id IS NULL OR (refers_to_entry_id IS NULL AND corrects_day_id IS NULL AND due_date IS NULL)),
   FOREIGN KEY (shop_id, day_id) REFERENCES days(shop_id, date)
 );
 
@@ -210,6 +214,8 @@ CREATE TABLE outbox (
   queued_at   TEXT NOT NULL
 );
 
+CREATE UNIQUE INDEX entries_cancel_once_uq ON entries (shop_id, cancels_entry_id) WHERE cancels_entry_id IS NOT NULL;
+
 CREATE INDEX entries_day_idx ON entries (shop_id, day_id);
 
 CREATE INDEX entries_party_idx ON entries (shop_id, party_id);
@@ -265,6 +271,24 @@ BEFORE INSERT ON entries
 WHEN (SELECT state FROM days WHERE shop_id = NEW.shop_id AND date = NEW.day_id) = 'closed'
 BEGIN
   SELECT RAISE(ABORT, 'that day is closed: post a correction on the open day, never an entry into a closed one (decision D7, CP-4)');
+END;
+
+CREATE TRIGGER entries_cancel_guard
+BEFORE INSERT ON entries
+WHEN NEW.cancels_entry_id IS NOT NULL
+BEGIN
+  SELECT RAISE(ABORT, 'cancel_guard:cancel_other_day') WHERE EXISTS (SELECT 1 FROM entries t WHERE t.shop_id = NEW.shop_id AND t.id = NEW.cancels_entry_id AND t.day_id <> NEW.day_id);
+  SELECT RAISE(ABORT, 'cancel_guard:cancel_of_cancel') WHERE EXISTS (SELECT 1 FROM entries t WHERE t.shop_id = NEW.shop_id AND t.id = NEW.cancels_entry_id AND t.cancels_entry_id IS NOT NULL);
+  SELECT RAISE(ABORT, 'cancel_guard:cancel_event_leg') WHERE EXISTS (SELECT 1 FROM entries t WHERE t.shop_id = NEW.shop_id AND t.id = NEW.cancels_entry_id AND t.section IN ('sales_return', 'exchange_out', 'exchange_receipt', 'refund_paid'));
+  SELECT RAISE(ABORT, 'cancel_guard:has_linked_entries') WHERE EXISTS (SELECT 1 FROM entries r WHERE r.shop_id = NEW.shop_id AND r.refers_to_entry_id = NEW.cancels_entry_id);
+END;
+
+CREATE TRIGGER entries_refer_guard
+BEFORE INSERT ON entries
+WHEN NEW.refers_to_entry_id IS NOT NULL
+BEGIN
+  SELECT RAISE(ABORT, 'cancel_guard:target_cancelled') WHERE EXISTS (SELECT 1 FROM entries t WHERE t.shop_id = NEW.shop_id AND t.id = NEW.refers_to_entry_id AND t.cancels_entry_id IS NOT NULL)
+     OR EXISTS (SELECT 1 FROM entries c WHERE c.shop_id = NEW.shop_id AND c.cancels_entry_id = NEW.refers_to_entry_id);
 END;
 
 CREATE TRIGGER upi_confirmations_no_update

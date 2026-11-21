@@ -21,7 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { memoryRepo } from '../src/db/memory.ts';
 import { pgRepo } from '../src/db/postgres.ts';
 import { WriteRefused, type Repo } from '../src/db/port.ts';
-import { migrationUp } from '@swafto/schema';
+import { allMigrationsUp } from '@swafto/schema';
 import type { Entry, IsoDate, Party } from '@swafto/formula-engine';
 
 const URL = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:55432/swafto_test';
@@ -71,7 +71,8 @@ try {
   await c.query('DROP SCHEMA IF EXISTS equivalence CASCADE');
   await c.query('CREATE SCHEMA equivalence');
   await c.query('SET search_path TO equivalence');
-  for (const s of migrationUp('postgres')) await c.query(s);
+  // Every migration, not 0001 alone: the repository now writes `entries.cancels_entry_id` (migration 0006).
+  for (const s of allMigrationsUp('postgres')) await c.query(s);
   client = c;
   reachable = true;
 } catch (e) {

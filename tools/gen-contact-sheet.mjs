@@ -11,7 +11,8 @@
  *
  * The panels are the REAL screen components and the REAL fixtures, laid out by
  * react-native-web in a headless Chromium at a budget-handset viewport, with the
- * SHIPPED Anek Odia files loaded by @font-face. That makes it a faithful answer to
+ * SHIPPED Anek Odia files loaded by @font-face (by relative URL, proven loaded
+ * before each shot - see tools/shipped-fonts.mjs). That makes it a faithful answer to
  * the questions above, because Chromium and Android both shape Indic text with
  * HarfBuzz and both resolve `tnum` through the same OpenType feature.
  *
@@ -27,12 +28,12 @@
  * "which style produced that", and a picture cannot answer it.
  */
 import { build } from 'esbuild';
-import { mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { fontFaces } from './shipped-fonts.mjs';
 
 const OUT = 'reports/contact-sheet';
-const FONT_DIR = resolve('apps/mobile/assets/fonts');
 
 /**
  * A budget Android handset in CSS pixels. The product is built for a 7,000-rupee
@@ -40,40 +41,14 @@ const FONT_DIR = resolve('apps/mobile/assets/fonts');
  */
 export const VIEWPORT = { width: 360, height: 800 };
 
-const FONTS = [
-  ['AnekOdia-Regular', 'AnekOdia-Regular.ttf'],
-  ['AnekOdia-Medium', 'AnekOdia-Medium.ttf'],
-  ['AnekOdia-Bold', 'AnekOdia-Bold.ttf'],
-  // The icon font (M3): without it every Icon renders as an empty box in the sheet.
-  ['SwaftoIcons', 'SwaftoIcons.ttf'],
-];
-
 /**
- * The families are declared under the exact names the tokens use. A near-miss here
- * silently falls back to a system font, which on a machine that happens to have an
- * Odia font installed looks fine and proves nothing - the one failure mode this
- * artifact must not have.
+ * The fonts come from tools/shipped-fonts.mjs under the exact family names the
+ * tokens use, referenced by a URL RELATIVE to this directory - not inlined,
+ * because these HTML files are tracked and base64 font data both bloats them and
+ * trips check:secrets. The screenshot step opens them as file:// pages and
+ * asserts every face loaded before it shoots, so a panel in the wrong typeface
+ * fails instead of being published.
  */
-function fontFaces() {
-  const missing = FONTS.filter(([, file]) => !existsSync(join(FONT_DIR, file)));
-  if (missing.length) {
-    throw new Error(
-      'the contact sheet needs the shipped font files and these are absent: ' +
-        missing.map(([, f]) => f).join(', ') +
-        '. Rendering without them would fall back to a system font and the panel ' +
-        'would be a picture of the wrong typeface.',
-    );
-  }
-  return FONTS.map(
-    ([family, file]) =>
-      '@font-face { font-family: "' +
-      family +
-      '"; src: url("' +
-      pathToFileURL(join(FONT_DIR, file)).href +
-      '") format("truetype"); font-display: block; }',
-  ).join('\n');
-}
-
 /** esbuild resolves everything except React, which must be the generator's own copy. */
 async function bundleEntry() {
   mkdirSync(OUT, { recursive: true });
@@ -100,7 +75,7 @@ const page = (title, caption, css, body) =>
   '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">\n<title>' +
   title +
   '</title>\n<style>\n' +
-  fontFaces() +
+  fontFaces({ relativeTo: OUT }) +
   '\nhtml,body{margin:0;padding:0;}\nbody{width:' +
   VIEWPORT.width +
   'px;height:' +

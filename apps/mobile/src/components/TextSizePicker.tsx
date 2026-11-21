@@ -64,6 +64,14 @@ export function TextSizePicker({ testID, s, value, onChange, display = 'comfort'
         value={value}
         onChange={onChange}
         display={display}
+        /*
+         * TWO TO A ROW. With the shipped Anek Odia face actually loaded
+         * (check:layout, 2026-11-20), "ସାଧାରଣ" in the bold of the chosen option
+         * is 108px in a 104px third of the tray at the chrome cap in Focus - one
+         * word, no break opportunity. This picker lives in Settings' scrolling
+         * body, where the second row costs nothing.
+         */
+        columns={2}
       />
       <View
         testID={testID + '-preview'}

@@ -27,7 +27,7 @@
  * Android is readable by more than people think.
  */
 import type { OutboxRow } from '../store/index.ts';
-import type { ConsentPurpose } from '@swafto/values';
+import { OTP_DIGITS, INVITE_CODE_DIGITS, type ConsentPurpose } from '@swafto/values';
 import type { PlanAnswer } from '../app/plan.ts';
 
 /* ---- the ports -------------------------------------------------------- */
@@ -158,6 +158,33 @@ export interface PushResult {
  */
 const wireLocale = (locale: 'en' | 'hi' | 'or'): 'en' | 'hi' | 'od' =>
   locale === 'or' ? 'od' : locale;
+
+/**
+ * INVITE GATE: WHAT A CODE REQUEST CAME TO. `sms` sent a code by SMS; `invite`
+ * sent nothing, and the code is the one SWAFTO handed over (INVITE-CODES-GATE
+ * section 4, the frozen contract). A missing or unknown `mode` is `sms`, so an
+ * older server reads exactly as before. `digits` is believed only when it is
+ * one of the two lengths this app has boxes for; anything else is the six-digit
+ * OTP, because a box count the server got wrong is a code nobody can finish.
+ */
+export interface CodeRequestAnswer {
+  readonly mode: 'sms' | 'invite';
+  readonly digits: number;
+  /** SMS mode only: the server's own lifetime for the code it sent. */
+  readonly expiresInSeconds?: number;
+}
+
+export function codeRequestAnswer(body: unknown): CodeRequestAnswer {
+  const b = (body ?? {}) as { mode?: unknown; digits?: unknown; expiresInSeconds?: unknown };
+  const digits = b.digits === INVITE_CODE_DIGITS ? INVITE_CODE_DIGITS : OTP_DIGITS;
+  return {
+    mode: b.mode === 'invite' ? 'invite' : 'sms',
+    digits,
+    ...(typeof b.expiresInSeconds === 'number' && Number.isFinite(b.expiresInSeconds)
+      ? { expiresInSeconds: b.expiresInSeconds }
+      : {}),
+  };
+}
 
 export class ApiClient {
   readonly #transport: Transport;
@@ -323,7 +350,7 @@ export class ApiClient {
     locale: 'en' | 'hi' | 'or' = 'en',
     /** F-24: this install's id, the key of the server's per-device send limit. */
     deviceId?: string,
-  ): Promise<{ expiresInSeconds: number }> {
+  ): Promise<CodeRequestAnswer> {
     const body = await this.#unwrap(
       await this.#send({
         method: 'POST',
@@ -332,7 +359,7 @@ export class ApiClient {
         headers: {},
       }),
     );
-    return body as { expiresInSeconds: number };
+    return codeRequestAnswer(body);
   }
 
   /**
@@ -423,6 +450,8 @@ export class ApiClient {
     readonly {
       readonly id: string;
       readonly platform: string;
+      /** RTI-7: when the server first signed this device in. Null from an older server. */
+      readonly createdAt: string | null;
       readonly lastSeenAt: string | null;
       readonly revokedAt: string | null;
       readonly current: boolean;
@@ -438,6 +467,7 @@ export class ApiClient {
       return {
         id: d.id,
         platform: d.platform,
+        createdAt: typeof d.createdAt === 'string' ? d.createdAt : null,
         lastSeenAt: typeof d.lastSeenAt === 'string' ? d.lastSeenAt : null,
         revokedAt: typeof d.revokedAt === 'string' ? d.revokedAt : null,
         current: d.current === true,

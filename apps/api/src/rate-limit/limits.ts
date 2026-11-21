@@ -29,6 +29,7 @@
 import {
   OTP_TTL_SECONDS as REGISTRY_TTL,
   OTP_DIGITS as REGISTRY_DIGITS,
+  INVITE_CODE_DIGITS as REGISTRY_INVITE_DIGITS,
   OTP_LIMITS as REGISTRY_LIMITS,
 } from '@swafto/values';
 
@@ -88,6 +89,9 @@ export const OTP_TTL_SECONDS = REGISTRY_TTL;
 
 /** 6 digits, per TB6 and B.3. The registry owns the number; this re-exports it. */
 export const OTP_DIGITS = REGISTRY_DIGITS;
+
+/** The beta invite code length (founder decision D1). The registry owns the number. */
+export const INVITE_DIGITS = REGISTRY_INVITE_DIGITS;
 
 export const OTP_LIMITS = {
   /** TB6: per phone number - send - 3 per 15 min, lockout 1 h. */
@@ -225,6 +229,19 @@ export const OTP_LIMITS = {
     max: 100,
     lockoutSeconds: HOUR,
     source: 'SECURITY-AUDIT TB6, verify abuse across numbers; Wave 2 default (C-03d, SEC-103)',
+  },
+
+  /**
+   * The DEMO LOGIN's attempt ticket (auth/demo.ts). The demo number has a fixed code, so unlike a
+   * real code it cannot be burned by five wrong guesses; this rule is what stops brute force. Taken
+   * before the compare (atomic), every attempt counts: 5 in an hour, then refused for an hour.
+   */
+  verifyDemo: {
+    name: 'otp:verify:demo',
+    windowSeconds: HOUR,
+    max: 5,
+    lockoutSeconds: HOUR,
+    source: 'SECURITY-AUDIT TB6 verify abuse, the demo-login ticket (CTO spec 2026-11-20): 5 attempts, then one hour',
   },
 } as const satisfies Record<string, RateRule>;
 

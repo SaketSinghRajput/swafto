@@ -145,6 +145,9 @@ function translate(error: unknown): never {
   }
   // P0001 is a RAISE from one of the append-only or closed-day triggers.
   if (e.code === 'P0001') {
+    // entries_link_guard (migration 0006): the message names the refusal, e.g. `cancel_guard:target_cancelled`.
+    const guard = /^cancel_guard:([a-z_]+)/.exec(e.message ?? '');
+    if (guard) throw new WriteRefused(guard[1]!, 'the ledger refused this link (' + guard[1] + ').');
     /*
      * BE-12: the trigger's own text names the schema, so it never reaches a
      * client. A closed day is the one refusal a phone must recognise, and it is
@@ -160,6 +163,35 @@ function translate(error: unknown): never {
     throw new WriteRefused('tenancy', 'that record cannot be written by this shop.');
   }
   throw error;
+}
+
+/**
+ * RT2-2 · TAKE EVERY PER-TARGET LOCK UP FRONT, IN ONE SORTED ORDER. The `entries_link_guard` trigger takes a
+ * transaction-scoped advisory lock on the target of each cancel or link, row by row. Two pushes over the same
+ * targets in opposite orders would each hold one lock and wait for the other (40P01, a retryable 503). Taking
+ * the whole set first, sorted by lock key, in one statement, makes every push acquire in the same order, so none
+ * can wait on a lock held by a push that is waiting on it. The trigger's own lock is then a re-entrant no-op.
+ * The key is exactly the trigger's: hashtextextended('entries_link:' || shop || ':' || target).
+ * `OFFSET 0` stops the planner flattening the sort away; the aggregate then locks in the subquery's order.
+ */
+async function lockTargetsSorted(
+  c: { query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }> },
+  shopId: string,
+  entries: readonly Entry[],
+): Promise<void> {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const targets = new Set<string>();
+  for (const e of entries) {
+    const t = e.cancelsEntryId ?? e.refersToEntryId;
+    if (t !== undefined && UUID.test(t)) targets.add(t.toLowerCase());
+  }
+  if (targets.size === 0) return;
+  await c.query(
+    `SELECT count(pg_advisory_xact_lock(k)) FROM (
+       SELECT hashtextextended('entries_link:' || $1::text || ':' || t, 0) AS k
+         FROM unnest($2::text[]) AS t ORDER BY 1 OFFSET 0) s`,
+    [shopId.toLowerCase(), [...targets]],
+  );
 }
 
 /** RT-W3-2 · how much per-row or retry work one push may cost before it is told to come back. */
@@ -294,6 +326,7 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
       ...(r.label ? { label: String(r.label) } : {}),
       ...(r.corrects_day_id ? { correctsDayId: day(r.corrects_day_id) } : {}),
       ...(r.refers_to_entry_id ? { refersToEntryId: String(r.refers_to_entry_id) } : {}),
+      ...(r.cancels_entry_id ? { cancelsEntryId: String(r.cancels_entry_id) } : {}),
     }) as Entry;
 
   /** Same content, by every field the shopkeeper typed. `createdAt` is compared as an instant. */
@@ -308,6 +341,7 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
     (a.label ?? '') === (b.label ?? '') &&
     (a.correctsDayId ?? null) === (b.correctsDayId ?? null) &&
     (a.refersToEntryId ?? null) === (b.refersToEntryId ?? null) &&
+    (a.cancelsEntryId ?? null) === (b.cancelsEntryId ?? null) &&
     (a.source ?? 'manual') === (b.source ?? 'manual') &&
     Date.parse(a.createdAt) === Date.parse(b.createdAt);
 
@@ -348,9 +382,10 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
        */
       const res = await c.query(
         `INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party_id,
-                              due_date, label, corrects_day_id, created_at, source, refers_to_entry_id)
+                              due_date, label, corrects_day_id, created_at, source, refers_to_entry_id,
+                              cancels_entry_id)
          SELECT $1::uuid, $2::uuid, $3::date, $4::text, $5::bigint, $6::text, $7::uuid,
-                $8::date, $9::text, $10::date, $11::timestamptz, $12::text, $13::uuid
+                $8::date, $9::text, $10::date, $11::timestamptz, $12::text, $13::uuid, $14::uuid
           WHERE NOT EXISTS (SELECT 1 FROM entries WHERE id = $1::uuid)
          ON CONFLICT (id) DO NOTHING
          RETURNING id`,
@@ -368,6 +403,7 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
           entry.createdAt,
           entry.source ?? 'manual',
           entry.refersToEntryId ?? null,
+          entry.cancelsEntryId ?? null,
         ],
       );
       inserted = res.rows.length === 1;
@@ -729,11 +765,12 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
       if (batch.length === 0) return [];
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       return scoped(shopId, async (c) => {
+        await lockTargetsSorted(c, shopId, batch);
         const out: EntryOutcome[] = new Array(batch.length);
         const perRow = new Set<number>();
         const cand: number[] = [];
         batch.forEach((e, i) => {
-          if (!UUID.test(e.id) || (e.partyId !== undefined && !UUID.test(e.partyId)) || (e.refersToEntryId !== undefined && !UUID.test(e.refersToEntryId))) {
+          if (!UUID.test(e.id) || (e.partyId !== undefined && !UUID.test(e.partyId)) || (e.refersToEntryId !== undefined && !UUID.test(e.refersToEntryId)) || (e.cancelsEntryId !== undefined && !UUID.test(e.cancelsEntryId))) {
             perRow.add(i); // malformed: the real path gives today's answer
           } else cand.push(i);
         });
@@ -805,12 +842,15 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
           try {
             const res = await c.query(
               `INSERT INTO entries (id, shop_id, day_id, section, amount, mode, party_id,
-                                    due_date, label, corrects_day_id, created_at, source, refers_to_entry_id)
+                                    due_date, label, corrects_day_id, created_at, source, refers_to_entry_id,
+                                    cancels_entry_id)
                SELECT u.id, $13::uuid, u.day_id, u.section, u.amount, u.mode, u.party_id,
-                      u.due_date, u.label, u.corrects_day_id, u.created_at, u.source, u.refers_to_entry_id
+                      u.due_date, u.label, u.corrects_day_id, u.created_at, u.source, u.refers_to_entry_id,
+                      u.cancels_entry_id
                  FROM unnest($1::uuid[], $2::date[], $3::text[], $4::bigint[], $5::text[], $6::uuid[],
-                             $7::date[], $8::text[], $9::date[], $10::timestamptz[], $11::text[], $12::uuid[])
-                      AS u(id, day_id, section, amount, mode, party_id, due_date, label, corrects_day_id, created_at, source, refers_to_entry_id)
+                             $7::date[], $8::text[], $9::date[], $10::timestamptz[], $11::text[], $12::uuid[],
+                             $14::uuid[])
+                      AS u(id, day_id, section, amount, mode, party_id, due_date, label, corrects_day_id, created_at, source, refers_to_entry_id, cancels_entry_id)
                 WHERE NOT EXISTS (SELECT 1 FROM entries x WHERE x.id = u.id)
                ON CONFLICT (id) DO NOTHING
                RETURNING id`,
@@ -828,6 +868,7 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
                 col((e) => e.source ?? 'manual'),
                 col((e) => e.refersToEntryId ?? null),
                 shopId,
+                col((e) => e.cancelsEntryId ?? null),
               ],
             );
             await c.query('RELEASE SAVEPOINT bulk_entries');
@@ -889,6 +930,7 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
     // EX-5: an event's legs on ONE connection in ONE transaction; any refusal rolls all back.
     async appendEvent(shopId, legs) {
       return scoped(shopId, async (c) => {
+        await lockTargetsSorted(c, shopId, legs);
         let inserted = 0;
         for (const leg of legs) if ((await appendWith(c, shopId, leg)).inserted) inserted += 1;
         return { inserted, alreadyPresent: legs.length - inserted };
@@ -909,6 +951,37 @@ export function pgRepo(sql: SqlClient, options: PgRepoOptions = {}): Repo {
           [shopId, id],
         );
         return res.rows.map(rowToEntry);
+      });
+    },
+
+    async findEntries(shopId, ids) {
+      if (ids.length === 0) return [];
+      return scoped(shopId, async (sql) => {
+        const res = await sql.query('SELECT * FROM entries WHERE shop_id = $1 AND id = ANY($2::uuid[])', [shopId, ids]);
+        return res.rows.map(rowToEntry);
+      });
+    },
+
+    async entriesReferringToAny(shopId, ids) {
+      if (ids.length === 0) return [];
+      return scoped(shopId, async (sql) => {
+        const res = await sql.query('SELECT * FROM entries WHERE shop_id = $1 AND refers_to_entry_id = ANY($2::uuid[])', [shopId, ids]);
+        return res.rows.map(rowToEntry);
+      });
+    },
+
+    async entriesCancellingAny(shopId, ids) {
+      if (ids.length === 0) return [];
+      return scoped(shopId, async (sql) => {
+        const res = await sql.query('SELECT * FROM entries WHERE shop_id = $1 AND cancels_entry_id = ANY($2::uuid[])', [shopId, ids]);
+        return res.rows.map(rowToEntry);
+      });
+    },
+
+    async entryCancelling(shopId, id) {
+      return scoped(shopId, async (sql) => {
+        const res = await sql.query('SELECT * FROM entries WHERE shop_id = $1 AND cancels_entry_id = $2', [shopId, id]);
+        return res.rows[0] ? rowToEntry(res.rows[0]) : null;
       });
     },
 

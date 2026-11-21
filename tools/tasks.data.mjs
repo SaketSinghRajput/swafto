@@ -211,6 +211,14 @@ export const COMMITTED_SCREENS = {
      */
     'S13', // Your data - everything the server holds, to the share sheet
     'S14', // Signed-in phones - the shop's devices, and signing a lost one out
+
+    /*
+     * X4 - the app-lock offer at the end of first-time setup, decided by Saket
+     * (2026-11-20, after the A36 live demo found the lock was never met). It
+     * follows X1 in the onboarding family, outside the map's [TPRX] ids. Same
+     * eight children as everything above.
+     */
+    'X4', // App lock offer - once, after setup: the phone's own screen lock, or Not now
   ],
   /**
    * Committed ids the build map does not have, with the name the map would have
@@ -228,6 +236,7 @@ export const COMMITTED_SCREENS = {
     S12: 'Entries for your accountant (R5 FR-4, 2026-10-26)',
     S13: 'Your data - access and export (DPDP, M3 2026-11-18)',
     S14: 'Signed-in phones - lost-device sign-out (C-21, M3 2026-11-18)',
+    X4: 'App lock offer at the end of setup (Saket, 2026-11-20)',
   },
 };
 

@@ -11,7 +11,7 @@ Every fact is labelled **STATIC** (read from the source: cheap, complete, blind 
 anything computed at runtime) or **MEASURED** (render and instrument output: expensive,
 partial, and the only thing that tells the truth about a layout).
 
-**40 committed screens, 40 implemented.**
+**41 committed screens, 41 implemented.**
 
 > **No measured data.** `reports/design/measured.json` does not exist, so every MEASURED cell
 > reads `-`. The screen instruments that would produce it are tasks `I-001` through
@@ -629,7 +629,7 @@ partial, and the only thing that tells the truth about a layout).
 | keypad | no | - |
 | bottom nav | no | - |
 | states | loading [ ] · empty [x] · error [x] · loaded [x] | - |
-| screenshots | canonical [ ] · adversarial [ ] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
 
 **RAW VALUES** — this table should be empty.
 
@@ -651,6 +651,28 @@ partial, and the only thing that tells the truth about a layout).
 | keypad | no | - |
 | bottom nav | no | - |
 | states | loading [x] · empty [x] · error [x] · loaded [x] | - |
+| screenshots | canonical [x] · adversarial [x] | - |
+
+**RAW VALUES** — this table should be empty.
+
+*none*
+
+**CONTRAST PAIRS THIS SCREEN PRODUCES**
+
+*none found statically*
+
+### X4 — (not in the build map)
+
+`apps/mobile/src/screens/X4.tsx`
+
+| property | STATIC | MEASURED |
+|---|---|---|
+| feature IDs (TRACEABILITY) | - | - |
+| components composed | PrimaryButton, Shell, Text, View | - |
+| tokens used | **none** | - |
+| keypad | no | - |
+| bottom nav | no | - |
+| states | loading [ ] · empty [ ] · error [ ] · loaded [ ] | - |
 | screenshots | canonical [ ] · adversarial [ ] | - |
 
 **RAW VALUES** — this table should be empty.
@@ -668,7 +690,7 @@ partial, and the only thing that tells the truth about a layout).
 | property | STATIC | MEASURED |
 |---|---|---|
 | feature IDs (TRACEABILITY) | - | - |
-| components composed | Banner, PrimaryButton, Shell, Switch, Text, View | - |
+| components composed | Banner, LinkRow, PrimaryButton, Shell, Switch, Text, View | - |
 | tokens used | CONSENT_PURPOSES | - |
 | keypad | no | - |
 | bottom nav | no | - |
@@ -913,7 +935,7 @@ partial, and the only thing that tells the truth about a layout).
 | `Avatar` | apps/mobile/src/components/Avatar.tsx | P1 | 0 | 0 |
 | `Banner` | apps/mobile/src/components/Banner.tsx | T1, S13, S14, X0 | 0 | 0 |
 | `DUES` | apps/mobile/src/components/BasicReports.tsx | **nothing** | 0 | 0 |
-| `PrimaryButton` | apps/mobile/src/components/Button.tsx | T1, T5, T11, T12, T13, T14, T6, T2, T3, X1, P2, R1, T16, T19, M1, C1, S9, I1, S11, P6, S13, S14, X0, S7, S8, T18, S10 | 0 | 0 |
+| `PrimaryButton` | apps/mobile/src/components/Button.tsx | T1, T5, T11, T12, T13, T14, T6, T2, T3, X1, P2, R1, T16, T19, M1, C1, S9, I1, S11, P6, S13, S14, X4, X0, S7, S8, T18, S10 | 0 | 0 |
 | `UpiCheckCard` | apps/mobile/src/components/DayFacts.tsx | T5, T12, T13, T14 | 0 | 0 |
 | `ProgressRing` | apps/mobile/src/components/DayParts.tsx | T5 | 0 | 0 |
 | `EntryForm` | apps/mobile/src/components/EntryForm.tsx | T7, T8, T9, T10 | 0 | 0 |
@@ -924,7 +946,7 @@ partial, and the only thing that tells the truth about a layout).
 | `PartyPicker` | apps/mobile/src/components/PartyPicker.tsx | T18 | 0 | 0 |
 | `Reading` | apps/mobile/src/components/ReportParts.tsx | R1, M1 | 0 | 0 |
 | `Sheet` | apps/mobile/src/components/Sheet.tsx | S14 | 0 | 0 |
-| `Shell` | apps/mobile/src/components/Shell.tsx | T1, T5, T11, T12, T13, T14, T6, T2, T3, X1, P1, R1, T16, T19, M1, C1, S9, I1, S11, P6, S12, S13, S14, X0, S1, S2, S3, S4, S5, S6, S7, S8, T18, S10 | 0 | 0 |
+| `Shell` | apps/mobile/src/components/Shell.tsx | T1, T5, T11, T12, T13, T14, T6, T2, T3, X1, P1, R1, T16, T19, M1, C1, S9, I1, S11, P6, S12, S13, S14, X4, X0, S1, S2, S3, S4, S5, S6, S7, S8, T18, S10 | 0 | 0 |
 | `SKELETON` | apps/mobile/src/components/States.tsx | **nothing** | 0 | 0 |
 | `Switch` | apps/mobile/src/components/Switch.tsx | X0 | 0 | 0 |
 | `TextSizePicker` | apps/mobile/src/components/TextSizePicker.tsx | S3 | 0 | 0 |
@@ -963,8 +985,9 @@ component.
 | token | references |
 |---|---|
 | `OTP_TTL_SECONDS` | 5 |
-| `OTP_DIGITS` | 8 |
-| `OTP_LIMITS` | 4 |
+| `OTP_DIGITS` | 5 |
+| `INVITE_CODE_DIGITS` | 3 |
+| `OTP_LIMITS` | 5 |
 | `DELETION_GRACE_DAYS` | 3 |
 | `MAX_ENTRY_PAISE` | 3 |
 | `EXPORT_DISCLAIMER` | 2 |

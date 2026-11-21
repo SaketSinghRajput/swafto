@@ -228,8 +228,14 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            // The dev server over `adb reverse` (src/platform/endpoint.ts). Debug only.
-            buildConfigField "String", "API_BASE_URL", '"http://localhost:8787"'
+            // -PSWAFTO_API_BASE_URL when given (a debug build pointed at staging or a
+            // LAN API), else the dev server over `adb reverse` (src/platform/endpoint.ts).
+            // The release guard below is unchanged: it still demands https for release.
+            if (swaftoApiBaseUrl) {
+                buildConfigField "String", "API_BASE_URL", "\"${swaftoApiBaseUrl}\""
+            } else {
+                buildConfigField "String", "API_BASE_URL", '"http://localhost:8787"'
+            }
         }
         release {
             // C-16: from -PSWAFTO_API_BASE_URL or ~/.gradle/gradle.properties; checked below.

@@ -26,6 +26,7 @@ import { describeRole, enforceRoles } from './db/roles.ts';
 import { pgOtpStore } from './auth/otp-store-pg.ts';
 import { RateLimiter } from './rate-limit/store.ts';
 import { StubSmsPort } from './sms/stub.ts';
+import { smsPortFor } from './sms/for-mode.ts';
 import { gracefulShutdown } from './shutdown.ts';
 import { processErrorLine } from './error-event.ts';
 
@@ -104,8 +105,18 @@ export async function start(): Promise<{ stop: () => Promise<void> }> {
      * ALLOW_STUB_SMS=1 (loudly); the adapter implements the same port, which
      * `assertSendable` already guards, so no route changes when the real one arrives.
      */
-    const sms = new StubSmsPort(100);
-    assertSmsPort(config, sms instanceof StubSmsPort, (line) => process.stderr.write(line));
+    // STAGING_TEST_PHONES is empty unless ALLOW_STUB_SMS=1 (loadConfig refuses otherwise). The tester OTP
+    // line goes to stdout (journald), deliberately not through the app logger, whose redaction stays as is.
+    // AUTH_MODE=invite wires the throwing port and never the stub (sms/for-mode.ts).
+    const sms = smsPortFor(
+      config.authMode,
+      () =>
+        new StubSmsPort(100, {
+          stagingTestPhones: config.stagingTestPhones,
+          emit: (line) => process.stdout.write(line),
+        }),
+    );
+    if (config.authMode === 'sms') assertSmsPort(config, sms instanceof StubSmsPort, (line) => process.stderr.write(line));
 
     const sql = appDb.sql;
     /*
@@ -135,6 +146,8 @@ export async function start(): Promise<{ stop: () => Promise<void> }> {
       otp: pgOtpStore(sql),
       now: () => new Date().toISOString(),
       signingKey: config.signingKey,
+      authMode: config.authMode,
+      demo: config.demoLogin,
       rate: new RateLimiter(sql, { secret: config.rateLimitKey }),
       trustProxy: config.trustProxy,
       // C-06 · `/ready`: the database answers `select 1`, or it is a 503.

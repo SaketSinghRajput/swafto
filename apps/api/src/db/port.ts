@@ -146,6 +146,12 @@ export const refersToNotInShop = (id: string) =>
     'entry ' + id + ' is not an entry of this shop. Sync the sale before its return.',
   );
 
+export const cancelsNotInShop = (id: string) =>
+  new WriteRefused(
+    'entries_cancels_fk',
+    'entry ' + id + ' is not an entry of this shop, so it cannot be cancelled.',
+  );
+
 /**
  * RT-W3-8 · a row a push did not get to because the push was too hard to apply in one go (too many
  * refused rows, or too many needing individual handling). It is RETRYABLE, not a verdict on the row:
@@ -319,6 +325,14 @@ export interface Repo {
   findEntry(shopId: string, id: string): Promise<Entry | null>;
   /** Every entry of this shop whose `refersToEntryId` is this id. */
   entriesReferringTo(shopId: string, id: string): Promise<readonly Entry[]>;
+  /** RT-C5: the entries of this shop with these ids, in ONE query (a push judges its links from this, not per row). */
+  findEntries(shopId: string, ids: readonly string[]): Promise<readonly Entry[]>;
+  /** RT-C5: every entry of this shop that refers to any of these ids, in one query. */
+  entriesReferringToAny(shopId: string, ids: readonly string[]): Promise<readonly Entry[]>;
+  /** RT-C5: every cancel row of this shop whose target is any of these ids, in one query. */
+  entriesCancellingAny(shopId: string, ids: readonly string[]): Promise<readonly Entry[]>;
+  /** The cancel row of this shop that cancels entry `id` (`cancelsEntryId === id`), or null. At most one exists. */
+  entryCancelling(shopId: string, id: string): Promise<Entry | null>;
   entriesFor(shopId: string, date: IsoDate): Promise<readonly Entry[]>;
   /**
    * DECISION 3: "this UPI receipt arrived". Refused unless it names a UPI

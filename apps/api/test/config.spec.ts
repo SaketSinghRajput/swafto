@@ -21,6 +21,8 @@ const good = {
   DATABASE_URL: 'postgres://u:p@localhost:5432/db',
   SESSION_SIGNING_KEY: SIGNING,
   RATE_LIMIT_KEY: BUCKET,
+  // Required when NODE_ENV is unset or production (no default): every case below says how people sign in.
+  AUTH_MODE: 'sms',
 } as NodeJS.ProcessEnv;
 
 describe('the configuration is validated before anything listens', () => {
@@ -191,5 +193,40 @@ describe('RT-W4 · production refuses settings that switch a protection off', ()
     expect(warned).toHaveLength(0);
     assertSmsPort(loadConfig({ ...good, ALLOW_STUB_SMS: '1' }), true, (l) => warned.push(l));
     expect(warned.join('')).toMatch(/NO SMS IS SENT/);
+  });
+});
+
+describe('STAGING_TEST_PHONES · the tester OTP allow-list is refused unless it is safe', () => {
+  const staging = { ...good, ALLOW_STUB_SMS: '1' } as NodeJS.ProcessEnv;
+
+  it('is empty when unset, and parses and normalises a valid list', () => {
+    expect(loadConfig(staging).stagingTestPhones).toEqual([]);
+    const c = loadConfig({ ...staging, STAGING_TEST_PHONES: '+919999900001, 99999 00002 ,+919999900001' });
+    expect(c.stagingTestPhones).toEqual(['+919999900001', '+919999900002']);
+  });
+
+  it('refuses to boot without ALLOW_STUB_SMS=1', () => {
+    expect(() => loadConfig({ ...good, STAGING_TEST_PHONES: '+919999900001' })).toThrow(/STAGING_TEST_PHONES requires ALLOW_STUB_SMS=1/);
+    expect(() => loadConfig({ ...good, ALLOW_STUB_SMS: 'true', STAGING_TEST_PHONES: '+919999900001' })).toThrow(/ALLOW_STUB_SMS=1/);
+  });
+
+  it('refuses any number outside the +91 99999 0xxxx test range, without printing it', () => {
+    for (const bad of ['+919812345678', '+919999910001', '+919999900001,+919876500001', 'not-a-number']) {
+      let message = '';
+      try {
+        loadConfig({ ...staging, STAGING_TEST_PHONES: bad });
+      } catch (e) {
+        message = (e as Error).message;
+      }
+      expect(message, bad).toMatch(/test range/);
+      expect(message).not.toContain('9812345678');
+      expect(message).not.toContain('9876500001');
+    }
+  });
+
+  it('refuses more than 20 numbers, accepts exactly 20', () => {
+    const list = (n: number) => Array.from({ length: n }, (_, i) => '+91999990' + String(1000 + i)).join(',');
+    expect(loadConfig({ ...staging, STAGING_TEST_PHONES: list(20) }).stagingTestPhones).toHaveLength(20);
+    expect(() => loadConfig({ ...staging, STAGING_TEST_PHONES: list(21) })).toThrow(/at most 20/);
   });
 });

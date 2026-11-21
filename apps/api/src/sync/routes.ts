@@ -26,6 +26,8 @@ import type { FastifyInstance } from 'fastify';
 import {
   ENTRY_PARSERS,
   assertLegFits,
+  assertCancelFits,
+  assertPartyKind,
   isEventSection,
   captureCountedCash,
   parseIsoDate,
@@ -116,6 +118,8 @@ const entrySchema = {
     correctsDayId: { type: 'string', minLength: 10, maxLength: 10 },
     // EX-3: the row this one is about - a return's sale, a settlement's return, a correction's original.
     refersToEntryId: { type: 'string', pattern: UUID_PATTERN },
+    // CANCEL THIS ENTRY: the entry this row cancels. The row repeats it exactly (see `assertCancelFits`).
+    cancelsEntryId: { type: 'string', pattern: UUID_PATTERN },
     source: { type: 'string', enum: ['manual', 'imported'] },
     createdAt: { type: 'string', minLength: 20, maxLength: 30 },
   },
@@ -224,6 +228,14 @@ const PUBLIC_REFUSALS = new Set([
   'parties_tenancy',
   'entries_party_fk',
   'entries_refers_fk',
+  'entries_cancels_fk',
+  'entries_cancel_once_uq',
+  'entries_cancel_self_ck',
+  'target_cancelled',
+  'cancel_other_day',
+  'cancel_of_cancel',
+  'cancel_event_leg',
+  'has_linked_entries',
   'entries_tenancy',
   'entries_append_only',
   'entries_closed_day',
@@ -600,7 +612,10 @@ export function registerSyncRoutes(
        * exactly the order the per-row loop produced.
        */
       const queue: Entry[] = [];
-      const order: ({ rej: { id: string; field: string; message: string } } | { slot: number })[] = [];
+      const cancels: Entry[] = [];
+      let kinds: Map<string, Party> | undefined;
+      const order: ({ rej: { id: string; field: string; message: string } } | { slot: number } | { pending: number })[] = [];
+      const settled = new Map<number, { rej: { id: string; field: string; message: string } } | { slot: number }>();
       for (const raw of body.entries ?? []) {
         const section = raw.section as Section;
         const id = String(raw.id ?? '');
@@ -620,7 +635,7 @@ export function registerSyncRoutes(
            * date on anything but a credit purchase, and `dueDate: undefined` is
            * still a dueDate key as far as an exactOptional type is concerned.
            */
-          const entry: Entry = parse({
+          const parsed: Entry = parse({
             id,
             dayId: raw.dayId as IsoDate,
             amount: raw.amount,
@@ -635,6 +650,16 @@ export function registerSyncRoutes(
               : { correctsDayId: raw.correctsDayId as IsoDate }),
             ...(raw.refersToEntryId === undefined ? {} : { refersToEntryId: String(raw.refersToEntryId) }),
           });
+          const entry: Entry = raw.cancelsEntryId === undefined ? parsed : { ...parsed, cancelsEntryId: String(raw.cancelsEntryId) };
+
+          // A party of the wrong KIND (a customer on a supplier payment, a supplier on an udhar sale) is refused
+          // before anything else: it would post a balance into the wrong book. Parties pushed in this request
+          // are already stored by now. Read once per push, and only when a row names a party.
+          // (A cancel row copies its target's party exactly; `assertCancelFits` refuses any other, with its own code.)
+          if (entry.partyId !== undefined && entry.cancelsEntryId === undefined) {
+            kinds ??= new Map((await deps.repo.partiesFor(shopId)).map((p) => [p.id, p]));
+            assertPartyKind(entry, kinds.get(entry.partyId));
+          }
 
           // C-23: a future dayId. (A past one needs its day to exist already, so it cannot be new.)
           refuseOutsideWindow(entry.dayId, false);
@@ -652,6 +677,25 @@ export function registerSyncRoutes(
                   ' is what that mode means.',
               },
             });
+            continue;
+          }
+
+          if (entry.cancelsEntryId !== undefined) {
+            /*
+             * CANCEL THIS ENTRY. The target must be this shop's (findEntry is shop-scoped, so another shop's id
+             * is "missing", never an oracle), and the same engine rule the phone ran decides the rest: a cancel of
+             * a cancel, an event leg, an entry with a return or correction linked to it, a second cancel, another
+             * day, or a copy that does not match. A closed day is the database's refusal (D7 trigger).
+             */
+            if (entry.refersToEntryId !== undefined || entry.correctsDayId !== undefined || entry.dueDate !== undefined) {
+              throw new EntryInputError('cancel_mismatch', 'a cancel is not also a return leg, a correction or a due date.');
+            }
+            /*
+             * VALIDATED AFTER THE LOOP (RT-C4): a cancel listed before its target in the same push must work, so
+             * every plain row is queued first and the cancels are judged against queue + store together.
+             */
+            order.push({ pending: cancels.length });
+            cancels.push(entry);
             continue;
           }
 
@@ -676,14 +720,78 @@ export function registerSyncRoutes(
           order.push({ rej: { id, ...rowFailure(e, 'entry', rowLog) } });
         }
       }
-      const outcomes = queue.length > 0 ? await deps.repo.appendEntries(shopId, queue) : [];
-      for (const item of order) {
+      /*
+       * ---- the links to a cancelled entry, judged with THREE queries for the whole push (RT-C5) ----------------
+       *
+       * One read each: the stored rows the push points at, the stored rows that refer to a cancel's target, and the
+       * stored cancels of every row the push points at. Everything after is decided in memory. The store enforces
+       * the same rules again at insert, under a per-target lock (RT-C2, RT-C6), so this is the friendly refusal, not
+       * the only one.
+       */
+      const rowsRaw = body.entries ?? [];
+      const cancelTargets = [...new Set(cancels.map((c) => c.cancelsEntryId!))];
+      const correctionTargets = [...new Set(queue.map((q) => q.refersToEntryId).filter((t): t is string => t !== undefined))];
+      const wanted = [...new Set([...cancelTargets, ...correctionTargets])];
+      const storedById = new Map<string, Entry>();
+      let referredTo: readonly Entry[] = [];
+      let cancelledBy: readonly Entry[] = [];
+      if (wanted.length > 0) {
+        for (const e of await deps.repo.findEntries(shopId, wanted)) storedById.set(e.id, e);
+        cancelledBy = await deps.repo.entriesCancellingAny(shopId, wanted);
+      }
+      if (cancelTargets.length > 0) referredTo = await deps.repo.entriesReferringToAny(shopId, cancelTargets);
+      const rawRefersTo = (id: string) => rowsRaw.filter((r) => r.refersToEntryId === id).map((r) => ({ id: String(r.id) }) as Entry);
+      const acceptedCancels = new Map<string, Entry>(); // target id -> the cancel row accepted in this push
+      cancels.forEach((entry, i) => {
+        try {
+          const targetId = entry.cancelsEntryId!;
+          const target = queue.find((q) => q.id === targetId) ?? storedById.get(targetId);
+          if (!target) {
+            throw new EntryInputError('cancel_target_missing', 'the entry to cancel is not in this shop’s ledger yet.');
+          }
+          const referrers: Entry[] = [
+            ...referredTo.filter((r) => r.refersToEntryId === targetId),
+            ...queue.filter((q) => q.refersToEntryId === targetId),
+            // a return or correction pushed beside the cancel, not yet parsed or stored
+            ...rawRefersTo(targetId),
+          ];
+          const prior = acceptedCancels.get(targetId) ?? cancelledBy.find((c) => c.cancelsEntryId === targetId) ?? null;
+          assertCancelFits(entry, target, referrers, prior);
+          acceptedCancels.set(targetId, entry);
+          settled.set(i, { slot: queue.push(entry) - 1 });
+        } catch (e) {
+          settled.set(i, { rej: { id: entry.id, ...rowFailure(e, 'entry', rowLog) } });
+        }
+      });
+      // A correction (a plain row that refers to another) must not point at a cancelled entry or at a cancel row.
+      const droppedCorrections = new Set<number>();
+      queue.forEach((q, slot) => {
+        if (q.refersToEntryId === undefined || q.cancelsEntryId !== undefined) return;
+        const t = storedById.get(q.refersToEntryId);
+        const cancelled =
+          acceptedCancels.has(q.refersToEntryId) ||
+          cancelledBy.some((c) => c.cancelsEntryId === q.refersToEntryId) ||
+          t?.cancelsEntryId !== undefined;
+        if (cancelled) droppedCorrections.add(slot);
+      });
+      const outcomes = queue.length > 0 ? await deps.repo.appendEntries(shopId, queue.filter((_, slot) => !droppedCorrections.has(slot))) : [];
+      const outcomeAt = new Map<number, (typeof outcomes)[number]>();
+      let next = 0;
+      queue.forEach((_, slot) => {
+        if (!droppedCorrections.has(slot)) outcomeAt.set(slot, outcomes[next++]!);
+      });
+      for (const raw of order) {
+        const item = 'pending' in raw ? settled.get(raw.pending)! : raw;
         if ('rej' in item) {
           rejected.push(item.rej);
           continue;
         }
         const entry = queue[item.slot]!;
-        const outcome = outcomes[item.slot]!;
+        if (droppedCorrections.has(item.slot)) {
+          rejected.push({ id: entry.id, ...rowFailure(new EntryInputError('target_cancelled', 'that entry is cancelled, so nothing can be linked to it.'), 'entry', rowLog) });
+          continue;
+        }
+        const outcome = outcomeAt.get(item.slot)!;
         if ('error' in outcome) {
           rejected.push({ id: entry.id, ...rowFailure(outcome.error, 'entry', rowLog) });
         } else if (outcome.inserted) inserted += 1;
@@ -715,6 +823,10 @@ export function registerSyncRoutes(
               ...(await deps.repo.entriesReferringTo(shopId, targetId)),
               ...accepted.filter((e) => e.refersToEntryId === targetId),
             ];
+            // RT-C1: nothing is linked to a cancelled entry or to a cancel row (the mirror of has_linked_entries).
+            if (target && (target.cancelsEntryId !== undefined || (await deps.repo.entryCancelling(shopId, target.id)) !== null)) {
+              throw new EntryInputError('target_cancelled', 'that entry is cancelled, so a return cannot be recorded against it.');
+            }
             assertLegFits(leg, target ?? undefined, siblings);
             accepted.push(leg);
           }

@@ -14,18 +14,27 @@
  * label needs a timer, and these screens are pure functions of their props.
  * The server's own burst limit (TB6) is what actually stops a resend storm, and
  * its 429 lands on A5 "Too many tries" with the wait it states.
+ *
+ * INVITE GATE: EIGHT BOXES, IN TWO FOURS, AND NOTHING ABOUT AN SMS. In invite
+ * mode the code is the one SWAFTO handed over, shown to him as `4821 0937`, so
+ * the boxes are grouped the same way. "Sent to" becomes "the code SWAFTO gave
+ * you", and Resend and "Still no code?" go: no SMS was sent, and asking for
+ * another reaches nobody. "Paste code" is offered (F-1), because a recovery
+ * code arrives in WhatsApp and copying it is how he will want to enter it.
  */
 import { View, Text } from '@swafto/ui';
 import { Shell, PrimaryButton, type LoadStatus } from '../components/Shell.tsx';
 import { Keypad, type KeypadKey } from '../components/Keypad.tsx';
 import { tokens, type Mode as DisplayMode } from '../theme/tokens.ts';
 import { strings, type RenderLanguage } from '../i18n/strings.ts';
-import { OTP_DIGITS } from '@swafto/values';
-import type { AuthProblem } from '../app/session.tsx';
+import { digitsForMode, type AuthProblem, type CodeMode } from '../app/session.tsx';
 import { AuthNotice, fill, formatPhone } from './authParts.tsx';
 
 /** After this many resends the reference offers its "Still no code?" state. */
 export const NO_CODE_AFTER_RESENDS = 2;
+
+/** INVITE GATE: a code longer than the SMS one is shown in fours, `4821 0937`. */
+export const CODE_GROUP = 4;
 
 export interface CodeEntryProps {
   readonly phone?: string;
@@ -33,6 +42,9 @@ export interface CodeEntryProps {
   readonly busy?: boolean;
   readonly problem?: AuthProblem | null;
   readonly resends?: number;
+  /** INVITE GATE: how the code request was answered, and how many digits it said. */
+  readonly mode?: CodeMode;
+  readonly digits?: number;
   readonly status?: LoadStatus;
   readonly language?: RenderLanguage;
   readonly display?: DisplayMode;
@@ -42,6 +54,8 @@ export interface CodeEntryProps {
   readonly onRetryVerify?: () => void;
   readonly onTrouble?: () => void;
   readonly onNoCode?: () => void;
+  /** F-1: read the clipboard into the boxes. Absent draws no button. Invite mode only. */
+  readonly onPaste?: (() => void) | undefined;
   readonly onBack?: (() => void) | undefined;
   readonly onRetry?: () => void;
 }
@@ -52,6 +66,8 @@ export function CodeEntry({
   busy = false,
   problem = null,
   resends = 0,
+  mode = 'sms',
+  digits = digitsForMode(mode),
   status = 'ready',
   language = 'en',
   display = 'comfort',
@@ -61,6 +77,7 @@ export function CodeEntry({
   onRetryVerify = () => {},
   onTrouble = () => {},
   onNoCode = () => {},
+  onPaste,
   onBack,
   onRetry = () => {},
 }: CodeEntryProps) {
@@ -72,7 +89,10 @@ export function CodeEntry({
     lineHeight: t.leading(t.type.body),
     color: t.color.inkMuted,
   } as const;
-  const boxes = Array.from({ length: OTP_DIGITS }, (_, i) => code[i] ?? '');
+  const invite = mode === 'invite';
+  const boxes = Array.from({ length: digits }, (_, i) => code[i] ?? '');
+  // A gap between the fours, wider than between boxes, so the eye reads two groups.
+  const groupStart = (i: number) => digits > 6 && i > 0 && i % CODE_GROUP === 0;
 
   return (
     <Shell
@@ -97,6 +117,7 @@ export function CodeEntry({
                   flex: 1,
                   minHeight: t.control.md,
                   margin: t.space.xs,
+                  ...(groupStart(i) ? { marginLeft: t.space.md } : {}),
                   borderRadius: t.radius.md,
                   borderWidth: t.hairline * 2,
                   borderColor: i === code.length ? t.color.brand : t.color.inkMuted,
@@ -148,7 +169,7 @@ export function CodeEntry({
         }}
       >
         <Text testID="a4-sent-to" maxFontSizeMultiplier={t.maxFontScale} style={body}>
-          {fill(s('a4.sentTo'), { phone: formatPhone(phone) })}
+          {fill(s(invite ? 'a4.invite.for' : 'a4.sentTo'), { phone: formatPhone(phone) })}
         </Text>
         <PrimaryButton
           testID="a4-edit"
@@ -180,16 +201,29 @@ export function CodeEntry({
         />
       ) : null}
 
-      <PrimaryButton
-        testID="a4-resend"
-        label={s('a4.resend')}
-        onPress={onResend}
-        disabled={busy}
-        variant="ghost"
-        size="md"
-        display={display}
-      />
-      {resends >= NO_CODE_AFTER_RESENDS ? (
+      {invite && onPaste !== undefined ? (
+        <PrimaryButton
+          testID="a4-paste"
+          label={s('a4.paste')}
+          onPress={onPaste}
+          disabled={busy}
+          variant="ghost"
+          size="md"
+          display={display}
+        />
+      ) : null}
+      {invite ? null : (
+        <PrimaryButton
+          testID="a4-resend"
+          label={s('a4.resend')}
+          onPress={onResend}
+          disabled={busy}
+          variant="ghost"
+          size="md"
+          display={display}
+        />
+      )}
+      {!invite && resends >= NO_CODE_AFTER_RESENDS ? (
         <PrimaryButton
           testID="a4-no-code"
           label={s('a5.noCode.title')}

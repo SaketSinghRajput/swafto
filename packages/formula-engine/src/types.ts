@@ -105,6 +105,12 @@ export interface Entry {
    * A pointer, never a copy: nothing about the referenced row is restated here.
    */
   readonly refersToEntryId?: string;
+  /**
+   * CANCEL THIS ENTRY: set only on a cancel row, and names the entry it cancels. The cancel row copies that
+   * entry's section, mode, party, day and amount; `liveEntries` drops both before any figure is derived.
+   * A cancelled entry is never edited or deleted (D1). See `cancel.ts`.
+   */
+  readonly cancelsEntryId?: string;
   readonly createdAt: string;
   readonly source: 'manual' | 'imported';
 }

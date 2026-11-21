@@ -36,7 +36,7 @@ import { runNightly } from '../src/jobs/purge-due.ts';
 import { dayInputFor, REPORT_MAX_DAYS } from '../src/read/routes.ts';
 import { istCalendarDate, shopToday } from '../src/business-date.ts';
 import { MAX_ENTRY_PAISE } from '@swafto/values';
-import { allMigrationsDown, allMigrationsUp, migration2Down, migration2Up, migration3Down, migration4Down, migrationDown, migrationUp } from '@swafto/schema';
+import { allMigrationsDown, allMigrationsUp, migration2Down, migration2Up, migration3Down, migration4Down, migration5Down, migration6Down, migrationDown, migrationUp } from '@swafto/schema';
 import { add, type Entry, type IsoDate } from '@swafto/formula-engine';
 
 const KEY = 'test-signing-key-at-least-32-chars!!';
@@ -274,7 +274,7 @@ describe('C-01 · every DB use on behalf of a shop runs in a transaction that bi
   });
 
   it('production config requires SYSTEM_DATABASE_URL; elsewhere it is optional', () => {
-    const base = { DATABASE_URL: 'postgres://u@h/db', SESSION_SIGNING_KEY: KEY, RATE_LIMIT_KEY: RATE_KEY } as NodeJS.ProcessEnv;
+    const base = { DATABASE_URL: 'postgres://u@h/db', SESSION_SIGNING_KEY: KEY, RATE_LIMIT_KEY: RATE_KEY, AUTH_MODE: 'sms' } as NodeJS.ProcessEnv;
     expect(() => loadConfig({ ...base, NODE_ENV: 'production' })).toThrow(/SYSTEM_DATABASE_URL/);
     expect(loadConfig({ ...base, NODE_ENV: 'production', SYSTEM_DATABASE_URL: 'postgres://s@h/db' }).systemDatabaseUrl).toBe('postgres://s@h/db');
     expect(loadConfig(base).systemDatabaseUrl).toBeNull();
@@ -301,7 +301,7 @@ describe('C-04 · production refuses the stub SMS port', () => {
     expect(lines).toEqual([]);
   });
   it('only the exact value 1 counts as the flag', () => {
-    const base = { DATABASE_URL: 'postgres://u@h/db', SESSION_SIGNING_KEY: KEY, RATE_LIMIT_KEY: RATE_KEY, SYSTEM_DATABASE_URL: 'postgres://s@h/db', NODE_ENV: 'production' } as NodeJS.ProcessEnv;
+    const base = { DATABASE_URL: 'postgres://u@h/db', SESSION_SIGNING_KEY: KEY, RATE_LIMIT_KEY: RATE_KEY, SYSTEM_DATABASE_URL: 'postgres://s@h/db', NODE_ENV: 'production', AUTH_MODE: 'sms' } as NodeJS.ProcessEnv;
     expect(loadConfig({ ...base, ALLOW_STUB_SMS: 'true' }).allowStubSms).toBe(false);
     expect(loadConfig({ ...base, ALLOW_STUB_SMS: '1' }).allowStubSms).toBe(true);
   });
@@ -767,7 +767,7 @@ describe('C-02 · migration 0002 creates exactly otp_pending, server-side only',
     // 0003 (ARCH-09) now follows 0002: 0002 is the statement right after 0001, and is undone right before it.
     expect(up[migrationUp('postgres').length]).toMatch(/otp_pending/);
     const down = allMigrationsDown('postgres');
-    // 0004 (RT-10) and 0003 are undone first, so 0002's drop follows both.
-    expect(down[migration4Down('postgres').length + migration3Down('postgres').length]).toMatch(/DROP TABLE IF EXISTS otp_pending/);
+    // 0005, 0004 (RT-10) and 0003 are undone first, so 0002's drop follows both.
+    expect(down[migration6Down('postgres').length + migration5Down('postgres').length + migration4Down('postgres').length + migration3Down('postgres').length]).toMatch(/DROP TABLE IF EXISTS otp_pending/);
   });
 });

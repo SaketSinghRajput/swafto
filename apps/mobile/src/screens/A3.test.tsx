@@ -130,3 +130,30 @@ describe('HT-34 - a footer taller than the screen scrolls, it is not cut off', (
     expect(inside).toContain('a3-send');
   });
 });
+
+describe('INVITE GATE - A3 in invite mode says no SMS is coming', () => {
+  it('invite: the help line names the code SWAFTO gave him, with its eight digits, and the button is "Next"', () => {
+    const tree = render(<PhoneNumber phone="9876543210" mode="invite" digits={8} />);
+    expect(text(byTestId(tree, 'a3-help'))).toBe('Type your number, then the 8-digit code SWAFTO gave you.');
+    expect(text(byTestId(tree, 'a3-help'))).not.toMatch(/send|SMS/i);
+    expect(text(byTestId(tree, 'a3-send'))).toBe('Next');
+  });
+
+  it('sms (and no mode): unchanged - "We will send a 6-digit code", "Send code"', () => {
+    for (const tree of [render(<PhoneNumber phone="9876543210" mode="sms" />), render(<PhoneNumber phone="9876543210" />)]) {
+      expect(text(byTestId(tree, 'a3-help'))).toBe('We will send a 6-digit code to confirm it is you.');
+      expect(text(byTestId(tree, 'a3-send'))).toBe('Send code');
+    }
+  });
+
+  it('invite copy in Hindi and Odia, and the floors at the worst case', () => {
+    for (const language of ['hi', 'or'] as const) {
+      const help = text(byTestId(render(<PhoneNumber mode="invite" digits={8} language={language} />), 'a3-help'));
+      expect(help).toContain('SWAFTO');
+      expect(help).toContain('8');
+    }
+    const worst = render(<PhoneNumber phone="9876543210" mode="invite" digits={8} language="longest" display="focus" />);
+    expect(undersizedTargets(worst)).toEqual([]);
+    expect(failingContrast(worst)).toEqual([]);
+  });
+});

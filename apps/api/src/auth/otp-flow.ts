@@ -43,6 +43,8 @@ import {
 import type { RateDecision } from '../rate-limit/store.ts';
 import type { UserRow } from '../db/port.ts';
 import type { SmsPort } from '../sms/port.ts';
+import type { OtpKind } from './otp-store.ts';
+import { DEMO_PROTECTED_TEMPLATES, isDemoPhone, maskPhone } from './demo.ts';
 import { hashOtp, mintOtp } from './tokens.ts';
 
 /** Guesses one code survives in total (TB6 "5 per code"; B37). */
@@ -61,7 +63,9 @@ export const isLoopback = (ip: string): boolean =>
 
 export type RequestOutcome =
   | { readonly kind: 'limited'; readonly decision: RateDecision }
-  | { readonly kind: 'accepted' };
+  | { readonly kind: 'accepted' }
+  /** The demo phone asked for a code that would let its holder change or lock the demo account. */
+  | { readonly kind: 'refused' };
 
 export async function requestOtp(
   deps: AppDeps,
@@ -82,6 +86,16 @@ export async function requestOtp(
     readonly log?: { fatal(obj: object, msg: string): void };
   },
 ): Promise<RequestOutcome> {
+  /*
+   * THE DEMO NUMBER (auth/demo.ts). Number change (either side) and the app-lock PIN reset are refused
+   * for it, so nobody who got in with the fixed code can hijack or lock the demo account. And it NEVER
+   * sends: a sign-in or deletion request for it runs every limit exactly as for any number, then mints
+   * and sends nothing, so the caller sees the reply every other number gets.
+   */
+  const demoPhone = isDemoPhone(deps.demo, o.phone);
+  if (demoPhone && DEMO_PROTECTED_TEMPLATES.includes(o.templateId)) return { kind: 'refused' };
+  if (demoPhone && o.send) return requestOtp(deps, { ...o, send: false });
+
   const nowIso = deps.now();
   /** Mint and store a code (the cooldown gate lives in `put`); true if this call stored it. */
   const mintAndStore = async (): Promise<string | null> => {
@@ -168,14 +182,33 @@ export async function requestOtp(
   return { kind: 'accepted' };
 }
 
+/**
+ * F-1 · THE SHAPE OF A CODE, checked BEFORE any attempt ticket is taken, so a typo or a pasted "4821 0937"
+ * costs no guess and cannot burn an invite: DIGITS ONLY. The caller answers 400 `invalid_input` when this is
+ * false. The server does not repair input. LENGTH is the route schema's 4 to 10, not the mode's exact 6 or 8:
+ * the abuse suite (abuse-invite.spec.ts, "a leading-zero code is compared as a string") requires a wrong-length
+ * digit string to be a plain 401, so the exact-length rule asked for in the fix round is NOT applied; see the
+ * report. `deps` and `phone` are kept so the rule can tighten without touching the callers.
+ */
+export function codeShapeOk(_deps: Pick<AppDeps, 'authMode' | 'demo'>, _phone: string, code: string): boolean {
+  return /^[0-9]+$/.test(code);
+}
+
 export type VerifyOutcome =
-  | { readonly ok: true }
+  /** `demo` is set only for the demo login (auth/demo.ts), so the route can log it. */
+  | { readonly ok: true; readonly kind: OtpKind; readonly demo?: true }
   | { readonly ok: false; readonly status: 401 }
   | { readonly ok: false; readonly status: 429; readonly retryAfterSeconds: number };
 
 export async function verifyOtp(
   deps: AppDeps,
-  o: { readonly key: string; readonly code: string; readonly ip: string },
+  o: {
+    readonly key: string;
+    readonly code: string;
+    readonly ip: string;
+    /** The request logger, for the one `invite_burned` warn line (masked number, kind, no code). */
+    readonly log?: { warn(obj: object, msg: string): void };
+  },
 ): Promise<VerifyOutcome> {
   // Cross-number guessing from one address (SEC-103), counted before anything else.
   if (!isLoopback(o.ip)) {
@@ -183,20 +216,53 @@ export async function verifyOtp(
     if (!gate.allowed) return { ok: false, status: 429, retryAfterSeconds: gate.retryAfterSeconds };
   }
 
+  // INVITE-CODES T4: the HMAC is computed BEFORE the ticket, so a number with no live code
+  // costs the same CPU as one with a code and the two cannot be told apart by timing.
+  const given = Buffer.from(hashOtp(deps.signingKey, o.key, o.code));
+
+  /*
+   * THE DEMO LOGIN. The key is the sign-in key (never `delete:`), so a demo code cannot delete a shop.
+   * A fixed code cannot be burned by five wrong guesses the way a minted one is, so the ticket is the
+   * `verifyDemo` rule, taken BEFORE the compare: 5 attempts an hour, then an hour's lockout, answered
+   * with the same bare 401 as any other failure. The compare is constant time against the config hash.
+   */
+  if (deps.demo && o.key === deps.demo.phone) {
+    const ticketed = await deps.rate.consumeAll([{ rule: OTP_LIMITS.verifyDemo, identifier: o.key }]);
+    if (!ticketed.allowed) return { ok: false, status: 401 };
+    const wantedDemo = Buffer.from(deps.demo.codeHash);
+    if (!(given.length === wantedDemo.length && timingSafeEqual(given, wantedDemo))) return { ok: false, status: 401 };
+    return { ok: true, kind: 'sms', demo: true };
+  }
+
   // The ticket FIRST. No ticket - no live code, or its five attempts are spent - means
   // refused without comparing anything, however many callers arrive at once.
   const ticket = await deps.otp.takeAttempt(o.key, deps.now(), MAX_VERIFY_ATTEMPTS);
   if (!ticket) return { ok: false, status: 401 };
 
-  const given = Buffer.from(hashOtp(deps.signingKey, o.key, o.code));
   const wanted = Buffer.from(ticket.hash);
   if (!(given.length === wanted.length && timingSafeEqual(given, wanted))) {
-    // The fifth wrong guess kills the code outright, so the owner can ask for another.
-    if (ticket.attempts >= MAX_VERIFY_ATTEMPTS) await deps.otp.clear(o.key);
+    // The fifth wrong guess kills the code outright, so the owner can ask for another. It kills the row
+    // that was GUESSED AT (RTI-2): a re-issue that landed meanwhile is a different row and is left alone.
+    if (ticket.attempts >= MAX_VERIFY_ATTEMPTS && (await clearIfSame(deps, o.key, ticket.hash)) && ticket.kind !== 'sms') {
+      o.log?.warn({ event: 'invite_burned', kind: ticket.kind, phoneMasked: maskPhone(o.key) }, 'invite burned by wrong guesses');
+    }
     return { ok: false, status: 401 };
   }
 
-  // Single use, atomically: of two concurrent correct submissions only one removes it.
-  if (!(await deps.otp.clear(o.key))) return { ok: false, status: 401 };
-  return { ok: true };
+  // Single use, atomically: of two concurrent correct submissions only one removes it, and only the row
+  // that was compared (RTI-1): an old code that lost a race with a re-issue signs nobody in and destroys nothing.
+  if (!(await clearIfSame(deps, o.key, ticket.hash))) return { ok: false, status: 401 };
+  return { ok: true, kind: ticket.kind };
+}
+
+/**
+ * COMPARE-AND-DELETE. Remove the pending row for `key` only if it is still the one whose hash was compared.
+ * The store's `clear(key, hash)` is the atomic step (one DELETE ... WHERE code_hash = $2); the `get` before it
+ * is belt and braces for a store that does not honour the second argument, and costs a read only on the
+ * two paths that clear (a correct code, a fifth wrong guess).
+ */
+async function clearIfSame(deps: AppDeps, key: string, hash: string): Promise<boolean> {
+  const live = await deps.otp.get(key, deps.now());
+  if (!live || live.hash !== hash) return false;
+  return deps.otp.clear(key, hash);
 }

@@ -28,10 +28,11 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { shopOf, type AppDeps } from '../app.ts';
-import { OTP_LIMITS, OTP_TTL_SECONDS, OTP_DIGITS } from '../rate-limit/limits.ts';
+import { OTP_LIMITS, OTP_TTL_SECONDS, OTP_DIGITS, INVITE_DIGITS } from '../rate-limit/limits.ts';
+import { maskPhone } from './demo.ts';
 import { mintToken, newId, verifyToken } from './tokens.ts';
 import { INVALID_PHONE, normaliseIndianMobile } from './phone.ts';
-import { requestOtp, verifyOtp } from './otp-flow.ts';
+import { codeShapeOk, requestOtp, verifyOtp } from './otp-flow.ts';
 import type { DeviceRow } from '../db/port.ts';
 import { NO_BODY, NO_QUERY } from '../schemas.ts';
 
@@ -61,6 +62,12 @@ type DeviceListingRepo = {
 
 /** Identical in shape whatever happened, so nothing can be learned from the reply. */
 const OTP_SENT = { sent: true, expiresInSeconds: OTP_TTL_SECONDS, digits: OTP_DIGITS } as const;
+
+/** A malformed field, said without naming it (no Ajv text, no framework code). */
+export const INVALID_INPUT = { error: 'invalid_input', message: 'the request is not valid' } as const;
+
+/** The whole reply to a code request in invite mode: the same for every number, and the contract with the app. */
+export const INVITE_MODE_REPLY = { sent: false, mode: 'invite', digits: INVITE_DIGITS } as const;
 
 export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
   const nowSeconds = () => Math.floor(Date.parse(deps.now()) / 1000);
@@ -96,6 +103,14 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
       };
       const phone = normaliseIndianMobile(body.phone);
       if (!phone) return reply.code(400).send(INVALID_PHONE);
+
+      /*
+       * INVITE MODE (INVITE-CODES T4). A CONSTANT REPLY, BEFORE ANY DATABASE READ. No account lookup, no
+       * `requestOtp`, no limiter write, no message: so the bytes and the work are the same for a number
+       * with an invite, one with an account and one with neither, and a stranger's request can never
+       * overwrite or burn an invite. The app learns the mode from this reply (`sent: false`).
+       */
+      if (deps.authMode === 'invite') return reply.code(202).send(INVITE_MODE_REPLY);
 
       /*
        * Everything the old inline version did, and the RT-3 / RT-4 / SEC-101 fixes, now
@@ -174,7 +189,10 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
       const phone = normaliseIndianMobile(body.phone);
       if (!phone) return reply.code(400).send(INVALID_PHONE);
 
-      const checked = await verifyOtp(deps, { key: phone, code: body.code, ip: req.ip });
+      // F-1: a malformed code is a 400 BEFORE the attempt ticket, so it never spends one of the five guesses.
+      if (!codeShapeOk(deps, phone, body.code)) return reply.code(400).send(INVALID_INPUT);
+
+      const checked = await verifyOtp(deps, { key: phone, code: body.code, ip: req.ip, log: req.log });
       if (!checked.ok) {
         if (checked.status === 429) {
           return reply
@@ -187,6 +205,22 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
 
       const now = deps.now();
       let user = await deps.repo.findUserByPhone(phone);
+
+      /*
+       * PURPOSE (INVITE-CODES T2). The row is already cleared by `verifyOtp`, so a refusal here spends
+       * the code. `invite_new` on a number that already has an account, or `invite_recovery` on one
+       * with none, means the operator issued the wrong kind or the wrong number: fail closed, no
+       * tokens, one `warn` line (no number) to alert on. Only the holder of a correct code sees this.
+       */
+      if ((checked.kind === 'invite_new' && user) || (checked.kind === 'invite_recovery' && !user)) {
+        req.log.warn({ event: 'invite_refused_kind', kind: checked.kind }, 'invite code refused: wrong kind for this number');
+        return reply.code(401).send({ error: 'code_invalid' });
+      }
+      if (checked.demo) {
+        req.log.warn({ event: 'demo_login', phoneMasked: maskPhone(phone) }, 'demo login');
+      } else if (checked.kind !== 'sms') {
+        req.log.info({ event: 'invite_consumed', kind: checked.kind }, 'invite code used');
+      }
 
       if (!user) {
         /*

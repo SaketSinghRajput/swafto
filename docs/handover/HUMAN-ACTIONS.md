@@ -44,8 +44,13 @@ a telecom operator's DLT portal by a person with authority to bind that entity.
 **What to do.**
 1. Register the entity on any operator DLT portal (Jio, Airtel, VI, BSNL - they share
    a common registry). You get a **Principal Entity ID (PEID)**.
-2. Register a 6-character **header** (sender ID). **Since 6 May 2025 it must carry a
-   category suffix** - for OTP traffic that is the transactional category.
+2. Register the 6-character **header** `SWAFTO` (sender ID) under the **transactional**
+   category. Do NOT add a suffix yourself: since 6 May 2025 the operator appends the
+   category suffix (`-T` for transactional) automatically during DLT scrubbing, from the
+   registered template's category (corrected 2026-11-20; see `docs/spec/SMS-TEMPLATES.md` §2).
+   Register all **15** OTP templates (5 messages × en/hi/od); the hi/od ten need native
+   review (H10) before submission. A step-by-step checklist with copyable templates is the
+   private page "SWAFTO DLT Registration".
 3. Register the OTP **content template**. Use exactly the text in
    `apps/api/src/sms/templates.ts`, variable placeholders included - a mismatch
    between the registered template and the sent message causes carrier-level rejection
@@ -560,7 +565,7 @@ printed or logged. The RDS master password was reset to the one in `MASTER_DATAB
 the database had 0 connections in 24 h and only the SWAFTO app security group could reach it.
 **Not done yet:** the roles `swafto_app` and `swafto_system` do not exist in the database until the one-time
 `swafto-db-roles` bootstrap runs on the API server, because RDS is private and cannot be reached from a laptop.
-**Status.** Partly done: the parameters are created; the role bootstrap waits for the API server (Wave 6).
+**Status.** Done for the database roles. On 2026-11-18, after Phase C created the API server, the one-time `swafto-db-roles` bootstrap ran on it over SSM. `swafto_app` (NOBYPASSRLS) and `swafto_system` (BYPASSRLS) both log in to RDS, and neither is a superuser. A fourth parameter, `/swafto/prod/BACKUP_DATABASE_URL`, was generated the same way on Saket's approval, for the read-only `swafto_backup` role used by `pg_dump`; its login test passed. Table grants are applied when the first deploy runs the migrations.
 
 ## H23 · New-phone sign-in lockout: accept the residual, or add a second factor (RT-3)
 

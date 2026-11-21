@@ -9,7 +9,7 @@
  *
  * THE HEADLINE IS P6, what the day has cost him so far.
  */
-import { EntryForm, type CommitOption } from '../components/EntryForm.tsx';
+import { EntryForm, type CancelControls, type CommitOption } from '../components/EntryForm.tsx';
 import type { LoadStatus } from '../components/Shell.tsx';
 import type { Mode as DisplayMode } from '../theme/tokens.ts';
 import type { RenderLanguage } from '../i18n/strings.ts';
@@ -87,6 +87,8 @@ export interface FormCProps {
   readonly section?: 'expense' | 'purchase';
   /** Explicit `| undefined`: the project runs `exactOptionalPropertyTypes`. */
   readonly onBack?: (() => void) | undefined;
+  /** Cancel this entry: the session's half (EntryForm's CancelControls). */
+  readonly cancel?: CancelControls | undefined;
   readonly onRetry?: () => void;
 }
 
@@ -109,6 +111,7 @@ export function FormC({
   onSelectCommit = () => {},
   section = 'expense',
   onBack,
+  cancel,
   onRetry = () => {},
 }: FormCProps) {
   const face = FACE[section];
@@ -141,6 +144,7 @@ export function FormC({
       selectedCommit={selectedCommit}
       onSelectCommit={onSelectCommit}
       onBack={onBack}
+      cancel={cancel}
       onRetry={onRetry}
     />
   );

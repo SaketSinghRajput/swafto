@@ -88,3 +88,58 @@ describe('HT-34 - the code being typed stays beside the keypad at any text size'
     expect(byTestId(render(<CodeEntry code="987654" busy />), 'a4-boxes')).toBeTruthy();
   });
 });
+
+describe('INVITE GATE - A4 with an eight-digit invite code', () => {
+  it('eight boxes in two fours: 4821 0937 - the gap is before the fifth box, and only there', () => {
+    const tree = render(<CodeEntry phone="9876543210" code="48210937" mode="invite" digits={8} />);
+    const boxes = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => byTestId(tree, 'a4-box-' + i));
+    expect(boxes.map((b) => text(b)).join('')).toBe('48210937');
+    expect(ids(tree)).not.toContain('a4-box-8');
+    const left = boxes.map((b) => (b.props.style.marginLeft ?? b.props.style.margin) as number);
+    expect(left[4]).toBeGreaterThan(left[3] as number);
+    expect(new Set(left.filter((_, i) => i !== 4)).size).toBe(1);
+  });
+
+  it('six digits (sms) stay six boxes in one run, with no group gap', () => {
+    const tree = render(<CodeEntry code="123456" mode="sms" digits={6} />);
+    expect(ids(tree)).toContain('a4-box-5');
+    expect(ids(tree)).not.toContain('a4-box-6');
+    const left = [0, 1, 2, 3, 4, 5].map((i) => byTestId(tree, 'a4-box-' + i).props.style.marginLeft);
+    expect(left.every((m) => m === undefined)).toBe(true);
+  });
+
+  it('invite: no "Sent to", no Resend, no "Still no code?" - and "Paste code" reaches its handler', () => {
+    let pasted = 0;
+    const tree = render(
+      <CodeEntry phone="9876543210" mode="invite" digits={8} resends={5} onPaste={() => (pasted += 1)} />,
+    );
+    expect(text(byTestId(tree, 'a4-sent-to'))).toBe('Type the code SWAFTO gave you for +91 98765 43210');
+    expect(ids(tree)).not.toContain('a4-resend');
+    expect(ids(tree)).not.toContain('a4-no-code');
+    byTestId(tree, 'a4-paste').props.onPress();
+    expect(pasted).toBe(1);
+  });
+
+  it('sms: "Sent to" and Resend as before, and no paste button', () => {
+    const tree = render(<CodeEntry phone="9876543210" mode="sms" onPaste={() => {}} />);
+    expect(text(byTestId(tree, 'a4-sent-to'))).toBe('Sent to +91 98765 43210');
+    expect(ids(tree)).toContain('a4-resend');
+    expect(ids(tree)).not.toContain('a4-paste');
+  });
+
+  it('the session takes eight digits once the reply says invite, and a pasted "4821 0937" fills them', () => {
+    const s = new Session(canonicalStore(), { now: () => '', newId: () => 'x', screen: 'A3' });
+    s.codeSent(false, { mode: 'invite', digits: 8 });
+    expect(s.state.auth.codeDigits).toBe(8);
+    expect(s.enterCode('4821 0937')).toBe(true);
+    expect(s.state.auth.code).toBe('48210937');
+  });
+
+  it('clears the floors at the worst case in invite mode', () => {
+    const tree = render(
+      <CodeEntry language="longest" display="focus" code="48210" mode="invite" digits={8} onPaste={() => {}} />,
+    );
+    expect(failingContrast(tree)).toEqual([]);
+    expect(undersizedTargets(tree)).toEqual([]);
+  });
+});

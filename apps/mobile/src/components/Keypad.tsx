@@ -62,7 +62,7 @@ export function Keypad({ onKey, s, mode = 'comfort', testID = 'keypad' }: Keypad
        * and the `inkMuted` edge §9 reserves for a control boundary. Any one of
        * them alone is what was there before.
        */
-      style={{ backgroundColor: t.color.surfaceRaised, padding: t.space.xs }}
+      style={{ backgroundColor: t.color.surfaceRaised, paddingHorizontal: t.space.xs }}
       /*
        * v2 "Mitra" (DESIGN-SYSTEM-V2 3.8): NO ELEVATION ON ANY KEY. Twelve
        * shadowed views were the heaviest GPU work on a budget handset. The key
